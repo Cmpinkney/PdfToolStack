@@ -69,6 +69,7 @@
                         <div class="field-item">
                             <label class="field-label">
                                 @FormatFieldName(field.Name)
+                                <span class="field-technical-name">@field.Name</span>
                             </label>
 
                             @if (field.FieldType == "checkbox")
@@ -399,16 +400,43 @@
 
     private string FormatFieldName(string name)
     {
-        return name
+        var cleaned = name;
+
+        // IRS forms use dot notation — split and take the last part
+        if (cleaned.Contains('.'))
+        {
+            var parts = cleaned.Split('.');
+            cleaned = parts[parts.Length - 1];
+        }
+
+        // Remove array indices like [0]
+        cleaned = System.Text.RegularExpressions
+            .Regex.Replace(cleaned, @"\[\d+\]", "");
+
+        // Convert F1_01 → Line 01
+        cleaned = System.Text.RegularExpressions
+            .Regex.Replace(cleaned,
+                @"^[Ff]\d+_0*(\d+)$", "Line $1");
+
+        // Convert f1_01 → Line 01
+        cleaned = System.Text.RegularExpressions
+            .Regex.Replace(cleaned,
+                @"^[Ff](\d+)_(\d+)$", "Part $1 Line $2");
+
+        // Clean up underscores and extra spaces
+        cleaned = cleaned
             .Replace("_", " ")
             .Replace("-", " ")
-            .Replace(".", " ");
+            .Trim();
+
+        cleaned = System.Text.RegularExpressions
+            .Regex.Replace(cleaned, @"\s+", " ");
+
+        // Capitalize first letter
+        if (!string.IsNullOrEmpty(cleaned))
+            cleaned = char.ToUpper(cleaned[0])
+                    + cleaned.Substring(1);
+
+        return string.IsNullOrWhiteSpace(cleaned) ? name : cleaned;
     }
 }
-```
-
----
-
-## Rebuild
-```
-Build → Rebuild Solution

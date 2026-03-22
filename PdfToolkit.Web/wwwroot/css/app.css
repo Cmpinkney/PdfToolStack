@@ -752,3 +752,12 @@ body {
     position: relative;
     z-index: 10;
 }
+
+.field-technical-name {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: var(--gray);
+    font-family: 'Courier New', monospace;
+    margin-top: 0.15rem;
+}
