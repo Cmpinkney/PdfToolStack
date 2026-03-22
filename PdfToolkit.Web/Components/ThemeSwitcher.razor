@@ -1,0 +1,48 @@
+﻿@inject IJSRuntime JS
+
+<div class="theme-switcher">
+    <button class="theme-btn @(CurrentTheme == "ocean" ? "active" : "")"
+            title="Ocean"
+            @onclick='() => SetTheme("ocean")'>
+        🌊
+    </button>
+    <button class="theme-btn @(CurrentTheme == "dark" ? "active" : "")"
+            title="Dark"
+            @onclick='() => SetTheme("dark")'>
+        🌙
+    </button>
+    <button class="theme-btn @(CurrentTheme == "forest" ? "active" : "")"
+            title="Forest"
+            @onclick='() => SetTheme("forest")'>
+        🌿
+    </button>
+    <button class="theme-btn @(CurrentTheme == "sunset" ? "active" : "")"
+            title="Sunset"
+            @onclick='() => SetTheme("sunset")'>
+        🌅
+    </button>
+</div>
+
+@code {
+    private string CurrentTheme = "ocean";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            CurrentTheme = await JS.InvokeAsync<string>(
+                "getTheme") ?? "ocean";
+            StateHasChanged();
+        }
+    }
+
+    private async Task SetTheme(string theme)
+    {
+        CurrentTheme = theme;
+        await JS.InvokeVoidAsync("setTheme", theme);
+        StateHasChanged();
+    }
+}
+@code {
+
+}

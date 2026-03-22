@@ -1,5 +1,8 @@
-﻿<nav class="navbar">
+﻿@using PdfToolkit.Web.Components
+
+<nav class="navbar">
     <a href="/" class="nav-brand">⚡ PDFToolkit</a>
+
     <div class="nav-links">
         <a href="/compress-pdf" class="nav-link">Compress PDF</a>
         <a href="/pdf-to-word" class="nav-link">PDF to Word</a>
@@ -7,4 +10,6 @@
         <a href="/fill-pdf-form" class="nav-link">Fill Form</a>
         <a href="/redact-pdf" class="nav-link">Redact PDF</a>
     </div>
+
+    <ThemeSwitcher />
 </nav>

@@ -9,6 +9,28 @@
     <link rel="stylesheet" href="css/app.css" />
 </head>
 <body>
+    <script>
+        // Apply theme immediately to prevent flash
+        (function () {
+            const theme = localStorage.getItem('pdftoolkit-theme') || 'ocean';
+            if (theme !== 'ocean') {
+                document.documentElement.setAttribute('data-theme', theme);
+            }
+        })();
+
+        window.setTheme = (theme) => {
+            if (theme === 'ocean') {
+                document.documentElement.removeAttribute('data-theme');
+            } else {
+                document.documentElement.setAttribute('data-theme', theme);
+            }
+            localStorage.setItem('pdftoolkit-theme', theme);
+        };
+
+        window.getTheme = () => {
+            return localStorage.getItem('pdftoolkit-theme') || 'ocean';
+        };
+    </script>
     <div id="app">
         <div style="text-align:center;padding:4rem;">
             <p>Loading...</p>

@@ -24,14 +24,15 @@
 
 body {
     font-family: 'Segoe UI', system-ui, sans-serif;
-    background: var(--light-gray);
-    color: var(--dark);
+    background: var(--bg);
+    color: var(--text);
     min-height: 100vh;
+    transition: background 0.3s ease, color 0.3s ease;
 }
 
 /* ── Navbar ───────────────────────────────────────────────── */
 .navbar {
-    background: var(--white);
+    background: var(--navbar-bg);
     border-bottom: 2px solid var(--primary-light);
     padding: 0 2rem;
     height: 64px;
@@ -111,13 +112,13 @@ body {
 }
 
 .tool-card {
-    background: var(--white);
+    background: var(--card-bg);
     border: 2px solid transparent;
     border-radius: var(--radius);
     padding: 2rem 1.5rem;
     text-align: center;
     text-decoration: none;
-    color: var(--dark);
+    color: var(--text);
     transition: var(--transition);
     box-shadow: var(--shadow);
     cursor: pointer;
@@ -160,7 +161,7 @@ body {
 }
 
 .tool-container {
-    background: var(--white);
+    background: var(--card-bg);
     border-radius: var(--radius);
     padding: 2.5rem;
     box-shadow: var(--shadow);
@@ -429,7 +430,7 @@ body {
 
 /* ── FAQ ──────────────────────────────────────────────────── */
 .faq-section {
-    background: var(--white);
+    background: var(--card-bg);
     border-radius: var(--radius);
     padding: 2.5rem;
     box-shadow: var(--shadow);
@@ -761,3 +762,114 @@ body {
     font-family: 'Courier New', monospace;
     margin-top: 0.15rem;
 }
+
+/* ── Default Theme (Ocean) ────────────────────────────────── */
+:root {
+    --primary: #2563EB;
+    --primary-dark: #1D4ED8;
+    --primary-light: #EFF6FF;
+    --accent: #10B981;
+    --dark: #1A1A2E;
+    --mid: #3B4A6B;
+    --gray: #6B7280;
+    --light-gray: #F3F4F6;
+    --white: #FFFFFF;
+    --bg: #F3F4F6;
+    --error: #EF4444;
+    --shadow: 0 4px 24px rgba(37,99,235,0.10);
+    --radius: 16px;
+    --transition: all 0.2s ease;
+    --navbar-bg: #FFFFFF;
+    --card-bg: #FFFFFF;
+    --text: #1A1A2E;
+}
+
+/* ── Dark Theme ───────────────────────────────────────────── */
+[data-theme="dark"] {
+    --primary: #7C3AED;
+    --primary-dark: #6D28D9;
+    --primary-light: #1E1B4B;
+    --accent: #10B981;
+    --dark: #F9FAFB;
+    --mid: #E5E7EB;
+    --gray: #9CA3AF;
+    --light-gray: #1F2937;
+    --white: #111827;
+    --bg: #0F172A;
+    --error: #EF4444;
+    --shadow: 0 4px 24px rgba(124,58,237,0.20);
+    --navbar-bg: #1E293B;
+    --card-bg: #1E293B;
+    --text: #F9FAFB;
+}
+
+/* ── Forest Theme ─────────────────────────────────────────── */
+[data-theme="forest"] {
+    --primary: #059669;
+    --primary-dark: #047857;
+    --primary-light: #ECFDF5;
+    --accent: #D97706;
+    --dark: #064E3B;
+    --mid: #065F46;
+    --gray: #6B7280;
+    --light-gray: #F0FDF4;
+    --white: #FFFFFF;
+    --bg: #F0FDF4;
+    --error: #EF4444;
+    --shadow: 0 4px 24px rgba(5,150,105,0.12);
+    --navbar-bg: #FFFFFF;
+    --card-bg: #FFFFFF;
+    --text: #064E3B;
+}
+
+/* ── Sunset Theme ─────────────────────────────────────────── */
+[data-theme="sunset"] {
+    --primary: #EA580C;
+    --primary-dark: #C2410C;
+    --primary-light: #FFF7ED;
+    --accent: #DB2777;
+    --dark: #431407;
+    --mid: #7C2D12;
+    --gray: #6B7280;
+    --light-gray: #FFF7ED;
+    --white: #FFFFFF;
+    --bg: #FFF7ED;
+    --error: #EF4444;
+    --shadow: 0 4px 24px rgba(234,88,12,0.12);
+    --navbar-bg: #FFFFFF;
+    --card-bg: #FFFFFF;
+    --text: #431407;
+}
+
+/* ── Theme Switcher ───────────────────────────────────────── */
+.theme-switcher {
+    display: flex;
+    gap: 0.4rem;
+    align-items: center;
+}
+
+.theme-btn {
+    background: none;
+    border: 2px solid transparent;
+    border-radius: 8px;
+    width: 36px;
+    height: 36px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+    padding: 0;
+}
+
+    .theme-btn:hover {
+        border-color: var(--primary);
+        background: var(--primary-light);
+        transform: scale(1.1);
+    }
+
+    .theme-btn.active {
+        border-color: var(--primary);
+        background: var(--primary-light);
+    }
