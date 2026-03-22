@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\PDFToolkit.Domain\PDFToolkit.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Factories\" />
+    <Folder Include="DTOs\" />
+    <Folder Include="Strategies\" />
+    <Folder Include="Services\" />
+  </ItemGroup>
+
+</Project>

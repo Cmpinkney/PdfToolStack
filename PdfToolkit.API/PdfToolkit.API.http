@@ -1,0 +1,6 @@
+@PdfToolkit.API_HostAddress = http://localhost:5208
+
+GET {{PdfToolkit.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

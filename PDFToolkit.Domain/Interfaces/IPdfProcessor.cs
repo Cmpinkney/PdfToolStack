@@ -1,0 +1,18 @@
+﻿using PDFToolkit.Domain.Enums;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace PDFToolkit.Domain.Interfaces
+{
+    public interface IPdfProcessor
+    {
+        ToolType ToolType { get; }
+
+        Task<byte[]> ProcessAsync(
+            byte[] fileBytes,
+            CancellationToken cancellationToken = default);
+    }
+}
