@@ -1,0 +1,509 @@
+﻿@page "/redact-pdf"
+@using PdfToolkit.Web.Components
+@using PdfToolkit.Web.Services
+@inject ApiService ApiService
+@inject IJSRuntime JS
+@implements IDisposable
+
+<PageTitle>Redact PDF Free Online — Permanently Remove Sensitive Text</PageTitle>
+
+<HeadContent>
+    <meta name="description"
+          content="Redact PDF files free online. Permanently remove
+                   sensitive information from PDF documents.
+                   No signup required." />
+    <meta name="keywords"
+          content="redact pdf, pdf redaction, remove text from pdf,
+                   black out pdf text free" />
+    <link rel="canonical"
+          href="https://yoursite.com/redact-pdf" />
+</HeadContent>
+
+<div class="tool-page">
+
+    <AdSlot Size="banner" />
+
+    <div class="tool-container">
+        <h1>Redact PDF Online</h1>
+        <p class="tool-subtitle">
+            Permanently remove sensitive information from your PDF.
+            Draw over areas to redact. No signup required.
+            Files deleted within 1 hour.
+        </p>
+
+        @if (CurrentState == PageState.Upload)
+        {
+            <FileUpload OnFileSelected="HandleFileSelected"
+                        OnFileRemoved="HandleFileRemoved" />
+
+            @if (SelectedFile != null)
+            {
+                <button class="process-button"
+                        @onclick="LoadPdf">
+                    Load PDF for Redaction
+                </button>
+            }
+        }
+
+        @if (CurrentState == PageState.Redact)
+        {
+            <div class="redact-container">
+                <div class="redact-toolbar">
+                    <div class="page-controls">
+                        <button class="page-btn"
+                                @onclick="PreviousPage"
+                                disabled="@(CurrentPage <= 1)">
+                            ◀ Prev
+                        </button>
+                        <span class="page-info">
+                            Page @CurrentPage of @TotalPages
+                        </span>
+                        <button class="page-btn"
+                                @onclick="NextPage"
+                                disabled="@(CurrentPage >= TotalPages)">
+                            Next ▶
+                        </button>
+                    </div>
+                    <div class="redact-actions">
+                        <span class="redact-hint">
+                            🖊 Draw rectangles over areas to redact
+                        </span>
+                        <button class="clear-btn"
+                                @onclick="ClearCurrentPage">
+                            Clear Page
+                        </button>
+                    </div>
+                </div>
+
+                <div class="canvas-wrapper"
+                     style="position: relative; display: inline-block; width: 100%; margin-bottom: 1rem;">
+                    <canvas id="pdfCanvas"
+                            style="display: block; max-width: 100%; border-radius: 8px; border: 2px solid var(--primary-light);">
+                    </canvas>
+                    <canvas id="redactCanvas"
+                            style="position: absolute; top: 0; left: 0;">
+                    </canvas>
+                </div>
+
+                @if (AllRegions.Any())
+                {
+                    <div class="regions-summary">
+                        <p>@RegionsSummary</p>
+                    </div>
+                }
+
+                <div class="redact-buttons">
+                    <button class="process-button"
+                            @onclick="ApplyRedaction"
+                            disabled="@(!AllRegions.Any() || IsProcessing)">
+                        @if (IsProcessing)
+                        {
+                            <span>Processing...</span>
+                        }
+                        else
+                        {
+                            <span>Apply Redaction</span>
+                        }
+                    </button>
+                    <button class="reset-button"
+                            @onclick="Reset"
+                            disabled="@IsProcessing">
+                        Start Over
+                    </button>
+                </div>
+            </div>
+        }
+
+        @if (CurrentState == PageState.Processing)
+        {
+            <div class="processing-container">
+                <div class="spinner"></div>
+                <p>Applying permanent redactions...</p>
+            </div>
+        }
+
+        @if (CurrentState == PageState.Complete)
+        {
+            <AdSlot Size="rectangle" />
+
+            <div class="result-container">
+                <span class="result-icon">✅</span>
+                <h2>Redaction Complete!</h2>
+                <p style="color: var(--gray); margin-bottom: 1.5rem;">
+                    @CompletionSummary
+                </p>
+
+                <button class="download-button"
+                        @onclick="DownloadFile">
+                    Download Redacted PDF
+                </button>
+
+                <button class="reset-button"
+                        @onclick="Reset">
+                    Redact Another PDF
+                </button>
+            </div>
+        }
+
+        @if (CurrentState == PageState.Error)
+        {
+            <div class="error-container">
+                <span class="error-icon">❌</span>
+                <p class="error-message">@ErrorMessage</p>
+                <button class="reset-button" @onclick="Reset">
+                    Try Again
+                </button>
+            </div>
+        }
+    </div>
+
+    <div class="faq-section">
+        <h2>Frequently Asked Questions</h2>
+
+        <div class="faq-item">
+            <h3>Is the redaction permanent?</h3>
+            <p>
+                Yes — redacted areas are permanently removed from
+                the PDF. The content cannot be recovered or revealed
+                by removing a black box.
+            </p>
+        </div>
+
+        <div class="faq-item">
+            <h3>Who needs PDF redaction?</h3>
+            <p>
+                Legal professionals, HR teams, healthcare providers,
+                and anyone sharing documents that contain sensitive
+                personal information like SSNs, addresses, or
+                financial data.
+            </p>
+        </div>
+
+        <div class="faq-item">
+            <h3>Is metadata also removed?</h3>
+            <p>
+                Yes — document metadata including author information
+                and edit history is stripped during redaction to
+                prevent hidden data leaks.
+            </p>
+        </div>
+
+        <div class="faq-item">
+            <h3>Is this PDF redaction tool free?</h3>
+            <p>Yes — completely free with no signup required.</p>
+        </div>
+
+        <div class="faq-item">
+            <h3>Is my PDF stored on your servers?</h3>
+            <p>
+                Your files are automatically deleted within 1 hour.
+                We never store your documents permanently.
+            </p>
+        </div>
+    </div>
+</div>
+
+@code {
+    private enum PageState
+    {
+        Upload, Redact, Processing, Complete, Error
+    }
+
+    private PageState CurrentState = PageState.Upload;
+    private IBrowserFile? SelectedFile;
+    private byte[]? UploadedBytes;
+    private byte[]? RedactedBytes;
+    private string? ErrorMessage;
+    private int CurrentPage = 1;
+    private int TotalPages = 1;
+    private bool IsDrawing = false;
+    private double StartX, StartY;
+    private int _completedRegionCount = 0;
+    private bool IsProcessing = false;
+
+    private List<RedactionRegionModel> AllRegions = new();
+
+    private List<RedactionRegionModel> CurrentPageRegions =>
+        AllRegions.Where(r => r.PageNumber == CurrentPage)
+                  .ToList();
+
+    private string RegionsSummary
+    {
+        get
+        {
+            var count = AllRegions.Count;
+            var pageCount = AllRegions
+                .Select(r => r.PageNumber)
+                .Distinct()
+                .Count();
+            var areaWord = count != 1 ? "areas" : "area";
+            var pageWord = pageCount != 1 ? "pages" : "page";
+            return $"{count} redaction {areaWord} marked across {pageCount} {pageWord}";
+        }
+    }
+
+    private string CompletionSummary
+    {
+        get
+        {
+            var areaWord = _completedRegionCount != 1
+                ? "areas have" : "area has";
+            return $"{_completedRegionCount} redaction {areaWord} been permanently redacted from your PDF.";
+        }
+    }
+
+    private class RedactionRegionModel
+    {
+        public float X1 { get; set; }
+        public float Y1 { get; set; }
+        public float X2 { get; set; }
+        public float Y2 { get; set; }
+        public int PageNumber { get; set; }
+    }
+
+    private async Task HandleFileSelected(IBrowserFile file)
+    {
+        SelectedFile = file;
+        ErrorMessage = null;
+
+        try
+        {
+            using var stream = file.OpenReadStream(
+                maxAllowedSize: 52428800);
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            UploadedBytes = ms.ToArray();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Could not read file: {ex.Message}";
+            SelectedFile = null;
+            UploadedBytes = null;
+        }
+
+        StateHasChanged();
+    }
+
+    private void HandleFileRemoved()
+    {
+        SelectedFile = null;
+        UploadedBytes = null;
+        ErrorMessage = null;
+    }
+
+    private async Task LoadPdf()
+    {
+        if (UploadedBytes == null) return;
+
+        try
+        {
+            TotalPages = await ApiService.GetPageCountAsync(
+                UploadedBytes, SelectedFile!.Name);
+
+            CurrentPage = 1;
+            CurrentState = PageState.Redact;
+            StateHasChanged();
+
+            await JS.InvokeVoidAsync(
+                "renderPdfPage",
+                Convert.ToBase64String(UploadedBytes),
+                CurrentPage);
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Error loading PDF: {ex.Message}";
+            CurrentState = PageState.Error;
+        }
+
+        StateHasChanged();
+    }
+
+
+
+    private async Task PreviousPage()
+    {
+        if (CurrentPage <= 1) return;
+        CurrentPage--;
+        await RenderCurrentPage();
+    }
+
+    private async Task NextPage()
+    {
+        if (CurrentPage >= TotalPages) return;
+        CurrentPage++;
+        await RenderCurrentPage();
+    }
+
+    private async Task RenderCurrentPage()
+    {
+        await JS.InvokeVoidAsync(
+            "renderPdfPage",
+            Convert.ToBase64String(UploadedBytes!),
+            CurrentPage);
+        await RedrawRegions();
+    }
+
+    private async Task RedrawRegions()
+    {
+        var regions = CurrentPageRegions
+            .Select(r => new { r.X1, r.Y1, r.X2, r.Y2 })
+            .ToArray();
+        await JS.InvokeVoidAsync("redrawRegions",
+            (object)regions);
+    }
+
+    private void StartDrawing(MouseEventArgs e)
+    {
+        IsDrawing = true;
+        StartX = e.OffsetX;
+        StartY = e.OffsetY;
+    }
+
+    private async Task Drawing(MouseEventArgs e)
+    {
+        if (!IsDrawing) return;
+        await JS.InvokeVoidAsync("drawRedactPreview",
+            StartX, StartY, e.OffsetX, e.OffsetY);
+    }
+
+    private async Task StopDrawing(MouseEventArgs e)
+    {
+        if (!IsDrawing) return;
+        IsDrawing = false;
+
+        var x1 = (float)Math.Min(StartX, e.OffsetX);
+        var y1 = (float)Math.Min(StartY, e.OffsetY);
+        var x2 = (float)Math.Max(StartX, e.OffsetX);
+        var y2 = (float)Math.Max(StartY, e.OffsetY);
+
+        if (x2 - x1 < 5 || y2 - y1 < 5) return;
+
+        AllRegions.Add(new RedactionRegionModel
+        {
+            X1 = x1,
+            Y1 = y1,
+            X2 = x2,
+            Y2 = y2,
+            PageNumber = CurrentPage
+        });
+
+        await RedrawRegions();
+        StateHasChanged();
+    }
+
+    private async Task ClearCurrentPage()
+    {
+        AllRegions.RemoveAll(
+            r => r.PageNumber == CurrentPage);
+        await JS.InvokeVoidAsync("clearRedactCanvas");
+        StateHasChanged();
+    }
+
+    private async Task ApplyRedaction()
+    {
+        if (!AllRegions.Any() || UploadedBytes == null)
+            return;
+
+        _completedRegionCount = AllRegions.Count;
+        IsProcessing = true;
+        CurrentState = PageState.Processing;
+        StateHasChanged();
+
+        // Small delay to let UI update before heavy processing
+        await Task.Delay(50);
+
+        try
+        {
+            RedactedBytes = await ApiService.RedactPdfAsync(
+                UploadedBytes,
+                SelectedFile!.Name,
+                AllRegions.Select(r => new
+                {
+                    r.X1,
+                    r.Y1,
+                    r.X2,
+                    r.Y2,
+                    r.PageNumber
+                }).ToList());
+
+            if (RedactedBytes != null)
+                CurrentState = PageState.Complete;
+            else
+            {
+                ErrorMessage = "Redaction failed. Please try again.";
+                CurrentState = PageState.Error;
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Error: {ex.Message}";
+            CurrentState = PageState.Error;
+        }
+        finally
+        {
+            IsProcessing = false;
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task DownloadFile()
+    {
+        if (RedactedBytes == null) return;
+
+        var fileName = Path.GetFileNameWithoutExtension(
+            SelectedFile?.Name ?? "document") + "_redacted.pdf";
+
+        await JS.InvokeVoidAsync(
+            "downloadFile",
+            fileName,
+            Convert.ToBase64String(RedactedBytes));
+    }
+
+    private void Reset()
+    {
+        CurrentState = PageState.Upload;
+        SelectedFile = null;
+        UploadedBytes = null;
+        RedactedBytes = null;
+        AllRegions.Clear();
+        ErrorMessage = null;
+        CurrentPage = 1;
+        TotalPages = 1;
+        IsDrawing = false;
+        IsProcessing = false;
+        _completedRegionCount = 0;
+    }
+
+    private DotNetObjectReference<RedactPdf>? _dotNetRef;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _dotNetRef = DotNetObjectReference.Create(this);
+            await JS.InvokeVoidAsync(
+                "initRedactCanvas", _dotNetRef);
+        }
+    }
+
+    public void Dispose()
+    {
+        _dotNetRef?.Dispose();
+    }
+
+    [JSInvokable]
+    public void AddRegion(float x1, float y1, float x2, float y2)
+    {
+        if (x2 - x1 < 5 || y2 - y1 < 5) return;
+        AllRegions.Add(new RedactionRegionModel
+        {
+            X1 = x1,
+            Y1 = y1,
+            X2 = x2,
+            Y2 = y2,
+            PageNumber = CurrentPage
+        });
+        StateHasChanged();
+    }
+}

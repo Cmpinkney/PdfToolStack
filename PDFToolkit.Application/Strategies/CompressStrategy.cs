@@ -1,32 +1,42 @@
-﻿using PDFToolkit.Application.DTOs;
-using PDFToolkit.Domain.Entities;
-using PDFToolkit.Domain.Enums;
+﻿using PdfToolkit.Domain.Entities;
+using PdfToolkit.Domain.Enums;
+using PdfToolkit.Domain.Interfaces;
+using PdfToolkit.Application.DTOs;
 
-namespace PDFToolkit.Application.Strategies
+namespace PdfToolkit.Application.Strategies
 {
     public class CompressStrategy : IProcessingStrategy
     {
         public ToolType ToolType => ToolType.CompressPdf;
+
+        private readonly IPdfProcessor _processor;
+
+        public CompressStrategy(IPdfProcessor processor)
+        {
+            _processor = processor;
+        }
+
         public async Task<ProcessingResult> ExecuteAsync(
             ProcessRequest request,
             CancellationToken cancellationToken = default)
         {
             try
             {
-                // Validate input
-                if (request.FileBytes == null || request.FileBytes.Length == 0)
-                    return ProcessingResult.Failure("File is empty or invalid.");
+                if (request.FileBytes == null
+                    || request.FileBytes.Length == 0)
+                    return ProcessingResult.Failure(
+                        "File is empty or invalid.");
 
-                // Check PDF magic bytes — %PDF
                 if (!IsPdf(request.FileBytes))
-                    return ProcessingResult.Failure("File is not a valid PDF.");
+                    return ProcessingResult.Failure(
+                        "File is not a valid PDF.");
 
-                // Compression logic will be implemented in Infrastructure
-                // This strategy delegates to the injected processor
-                await Task.CompletedTask;
+                // Call the real iTextSharp processor
+                var outputBytes = await _processor.ProcessAsync(
+                    request.FileBytes, cancellationToken);
 
                 return ProcessingResult.Success(
-                    request.FileBytes,
+                    outputBytes,
                     request.FileSizeBytes);
             }
             catch (Exception ex)
@@ -38,7 +48,6 @@ namespace PDFToolkit.Application.Strategies
 
         private static bool IsPdf(byte[] bytes)
         {
-            // PDF magic bytes: %PDF = 0x25 0x50 0x44 0x46
             return bytes.Length >= 4 &&
                    bytes[0] == 0x25 &&
                    bytes[1] == 0x50 &&

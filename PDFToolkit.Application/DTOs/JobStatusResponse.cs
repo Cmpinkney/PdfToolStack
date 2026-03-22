@@ -1,6 +1,6 @@
-﻿using PDFToolkit.Domain.Enums;
+﻿using PdfToolkit.Domain.Enums;
 
-namespace PDFToolkit.Application.DTOs
+namespace PdfToolkit.Application.DTOs
 {
     public class JobStatusResponse
     {

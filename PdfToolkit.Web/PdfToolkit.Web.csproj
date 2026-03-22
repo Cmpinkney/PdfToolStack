@@ -12,12 +12,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\PDFToolkit.Domain\PDFToolkit.Domain.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Components\" />
-    <Folder Include="Services\" />
+    <ProjectReference Include="..\PDFToolkit.Application\PdfToolkit.Application.csproj" />
+    <ProjectReference Include="..\PDFToolkit.Domain\PdfToolkit.Domain.csproj" />
   </ItemGroup>
 
 </Project>

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace PDFToolkit.Domain.Entities
+namespace PdfToolkit.Domain.Entities
 {
     public class ProcessingResult
     {

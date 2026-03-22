@@ -1,0 +1,414 @@
+﻿@page "/fill-pdf-form"
+@using PdfToolkit.Web.Components
+@using PdfToolkit.Web.Services
+@using PdfToolkit.Domain.Entities
+@inject ApiService ApiService
+@inject IJSRuntime JS
+
+<PageTitle>Fill PDF Form Online Free — Fill Out PDF Forms Instantly</PageTitle>
+
+<HeadContent>
+    <meta name="description"
+          content="Fill out PDF forms online for free.
+                   No signup required. Fill and download
+                   your completed PDF instantly." />
+    <meta name="keywords"
+          content="fill pdf form, fill out pdf online,
+                   pdf form filler free, complete pdf form" />
+    <link rel="canonical"
+          href="https://yoursite.com/fill-pdf-form" />
+</HeadContent>
+
+<div class="tool-page">
+
+    <AdSlot Size="banner" />
+
+    <div class="tool-container">
+        <h1>Fill PDF Form Online</h1>
+        <p class="tool-subtitle">
+            Upload a fillable PDF form, complete the fields,
+            and download your filled document for free.
+            No signup required.
+        </p>
+
+        @if (CurrentState == PageState.Upload)
+        {
+            <FileUpload OnFileSelected="HandleFileSelected"
+                        OnFileRemoved="HandleFileRemoved" />
+
+            @if (SelectedFile != null && !IsDetecting)
+            {
+                <button class="process-button"
+                        @onclick="DetectFields">
+                    Load Form Fields
+                </button>
+            }
+
+            @if (IsDetecting)
+            {
+                <div class="processing-container">
+                    <div class="spinner"></div>
+                    <p>Detecting form fields...</p>
+                </div>
+            }
+        }
+
+        @if (CurrentState == PageState.FillFields)
+        {
+            <div class="form-fields-container">
+                <h2 class="fields-title">
+                    Fill in your form fields
+                </h2>
+                <p class="fields-subtitle">
+                    @FormFields.Count field@(FormFields.Count != 1 ? "s" : "") detected
+                </p>
+
+                <div class="fields-list">
+                    @foreach (var field in FormFields)
+                    {
+                        <div class="field-item">
+                            <label class="field-label">
+                                @FormatFieldName(field.Name)
+                            </label>
+
+                            @if (field.FieldType == "checkbox")
+                            {
+                                <div class="checkbox-wrapper">
+                                    <input type="checkbox"
+                                           class="field-checkbox"
+                                           @onchange="e => HandleCheckboxChange(field.Name, e.Value)" />
+                                    <span>Check this box</span>
+                                </div>
+                            }
+                            else if (field.FieldType == "dropdown"
+                            && field.Options.Count > 0)
+                            {
+                                <select class="field-input"
+                                        @onchange="e => HandleSelectChange(field.Name, e.Value)">
+                                    <option value="">
+                                        Select an option...
+                                    </option>
+                                    @foreach (var option in field.Options)
+                                    {
+                                        <option value="@option">
+                                            @option
+                                        </option>
+                                    }
+                                </select>
+                            }
+                            else
+                            {
+                                <input type="text"
+                                       class="field-input"
+                                       placeholder="@($"Enter {FormatFieldName(field.Name)}...")"
+                                       @oninput="e => HandleInputChange(field.Name, e.Value)" />
+                            }
+                        </div>
+                    }
+                </div>
+
+                <button class="process-button"
+                        @onclick="FillForm">
+                    Fill & Download PDF
+                </button>
+
+                <button class="reset-button"
+                        style="margin-top: 1rem;"
+                        @onclick="Reset">
+                    Upload Different PDF
+                </button>
+            </div>
+        }
+
+        @if (CurrentState == PageState.NoFields)
+        {
+            <div class="error-container">
+                <span class="error-icon">⚠️</span>
+                <p>This PDF does not contain fillable form fields.</p>
+                <p style="color: var(--gray); font-size: 0.9rem; margin-top: 0.5rem;">
+                    Only PDFs with interactive form fields
+                    can be filled using this tool.
+                </p>
+                <button class="reset-button"
+                        style="margin-top: 1rem;"
+                        @onclick="Reset">
+                    Try Another PDF
+                </button>
+            </div>
+        }
+
+        @if (CurrentState == PageState.Processing)
+        {
+            <div class="processing-container">
+                <div class="spinner"></div>
+                <p>Filling your PDF form...</p>
+            </div>
+        }
+
+        @if (CurrentState == PageState.Complete)
+        {
+            <AdSlot Size="rectangle" />
+
+            <div class="result-container">
+                <span class="result-icon">✅</span>
+                <h2>Form Filled Successfully!</h2>
+                <p style="color: var(--gray); margin-bottom: 1.5rem;">
+                    Your completed PDF is ready to download.
+                </p>
+
+                <button class="download-button"
+                        @onclick="DownloadFile">
+                    Download Filled PDF
+                </button>
+
+                <button class="reset-button"
+                        @onclick="Reset">
+                    Fill Another Form
+                </button>
+            </div>
+        }
+
+        @if (CurrentState == PageState.Error)
+        {
+            <div class="error-container">
+                <span class="error-icon">❌</span>
+                <p class="error-message">@ErrorMessage</p>
+                <button class="reset-button" @onclick="Reset">
+                    Try Again
+                </button>
+            </div>
+        }
+    </div>
+
+    <div class="faq-section">
+        <h2>Frequently Asked Questions</h2>
+
+        <div class="faq-item">
+            <h3>What types of PDF forms can I fill?</h3>
+            <p>
+                Any PDF with interactive form fields — including
+                government forms, applications, contracts, and
+                tax documents.
+            </p>
+        </div>
+
+        <div class="faq-item">
+            <h3>Is the filled PDF stored on your servers?</h3>
+            <p>
+                Your files are automatically deleted within 1 hour.
+                We never store your documents permanently.
+            </p>
+        </div>
+
+        <div class="faq-item">
+            <h3>Can I fill any PDF?</h3>
+            <p>
+                Only PDFs with interactive form fields can be filled.
+                Scanned or flat PDFs without form fields are not
+                supported by this tool.
+            </p>
+        </div>
+
+        <div class="faq-item">
+            <h3>Is this PDF form filler free?</h3>
+            <p>Yes — completely free with no signup required.</p>
+        </div>
+
+        <div class="faq-item">
+            <h3>Will the filled fields be permanent?</h3>
+            <p>
+                Yes — once downloaded the filled values are
+                permanently embedded in the PDF and cannot
+                be edited further.
+            </p>
+        </div>
+    </div>
+</div>
+
+@code {
+    private enum PageState
+    {
+        Upload, FillFields, NoFields,
+        Processing, Complete, Error
+    }
+
+    private PageState CurrentState = PageState.Upload;
+    private IBrowserFile? SelectedFile;
+    private byte[]? UploadedBytes;
+    private List<PdfFormField> FormFields = new();
+    private Dictionary<string, string> FieldValues = new();
+    private byte[]? FilledBytes;
+    private string? ErrorMessage;
+    private bool IsDetecting = false;
+
+    private async Task HandleFileSelected(IBrowserFile file)
+    {
+        SelectedFile = file;
+        ErrorMessage = null;
+
+        try
+        {
+            using var stream = file.OpenReadStream(
+                maxAllowedSize: 52428800);
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            UploadedBytes = ms.ToArray();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Could not read file: {ex.Message}";
+            SelectedFile = null;
+            UploadedBytes = null;
+        }
+
+        StateHasChanged();
+    }
+
+    private void HandleFileRemoved()
+    {
+        SelectedFile = null;
+        UploadedBytes = null;
+        ErrorMessage = null;
+    }
+
+    private async Task DetectFields()
+    {
+        if (UploadedBytes == null) return;
+
+        IsDetecting = true;
+        StateHasChanged();
+
+        try
+        {
+            var response = await ApiService.DetectFormFieldsAsync(
+                UploadedBytes, SelectedFile!.Name);
+
+            if (response == null)
+            {
+                ErrorMessage = "Could not detect form fields.";
+                CurrentState = PageState.Error;
+                return;
+            }
+
+            if (!response.HasFields ||
+                response.Fields.Count == 0)
+            {
+                CurrentState = PageState.NoFields;
+                return;
+            }
+
+            FormFields = response.Fields;
+            FieldValues = FormFields.ToDictionary(
+                f => f.Name, f => f.Value);
+            CurrentState = PageState.FillFields;
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Error: {ex.Message}";
+            CurrentState = PageState.Error;
+        }
+        finally
+        {
+            IsDetecting = false;
+        }
+
+        StateHasChanged();
+    }
+
+    private void UpdateFieldValue(string fieldName, string value)
+    {
+        FieldValues[fieldName] = value;
+    }
+
+    private void HandleCheckboxChange(
+        string fieldName, object? value)
+    {
+        var isChecked = value?.ToString() == "True";
+        UpdateFieldValue(fieldName, isChecked ? "Yes" : "Off");
+    }
+
+    private void HandleSelectChange(
+        string fieldName, object? value)
+    {
+        UpdateFieldValue(fieldName,
+            value?.ToString() ?? string.Empty);
+    }
+
+    private void HandleInputChange(
+        string fieldName, object? value)
+    {
+        UpdateFieldValue(fieldName,
+            value?.ToString() ?? string.Empty);
+    }
+
+    private async Task FillForm()
+    {
+        if (UploadedBytes == null) return;
+
+        CurrentState = PageState.Processing;
+        StateHasChanged();
+
+        try
+        {
+            FilledBytes = await ApiService.FillFormAsync(
+                UploadedBytes,
+                SelectedFile!.Name,
+                FieldValues);
+
+            if (FilledBytes != null)
+                CurrentState = PageState.Complete;
+            else
+            {
+                ErrorMessage = "Form fill failed. Please try again.";
+                CurrentState = PageState.Error;
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Error: {ex.Message}";
+            CurrentState = PageState.Error;
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task DownloadFile()
+    {
+        if (FilledBytes == null) return;
+
+        var fileName = Path.GetFileNameWithoutExtension(
+            SelectedFile?.Name ?? "filled") + "_filled.pdf";
+
+        await JS.InvokeVoidAsync(
+            "downloadFile",
+            fileName,
+            Convert.ToBase64String(FilledBytes));
+    }
+
+    private void Reset()
+    {
+        CurrentState = PageState.Upload;
+        SelectedFile = null;
+        UploadedBytes = null;
+        FormFields.Clear();
+        FieldValues.Clear();
+        FilledBytes = null;
+        ErrorMessage = null;
+        IsDetecting = false;
+    }
+
+    private string FormatFieldName(string name)
+    {
+        return name
+            .Replace("_", " ")
+            .Replace("-", " ")
+            .Replace(".", " ");
+    }
+}
+```
+
+---
+
+## Rebuild
+```
+Build → Rebuild Solution

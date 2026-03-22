@@ -1,11 +1,11 @@
-﻿using PDFToolkit.Domain.Enums;
+﻿using PdfToolkit.Domain.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace PDFToolkit.Domain.Interfaces
+namespace PdfToolkit.Domain.Interfaces
 {
     public interface IPdfProcessor
     {

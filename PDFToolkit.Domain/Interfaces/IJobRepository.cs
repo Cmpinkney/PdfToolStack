@@ -1,6 +1,6 @@
-﻿using PDFToolkit.Domain.Entities;
+﻿using PdfToolkit.Domain.Entities;
 
-namespace PDFToolkit.Domain.Interfaces
+namespace PdfToolkit.Domain.Interfaces
 {
     public interface IJobRepository
     {

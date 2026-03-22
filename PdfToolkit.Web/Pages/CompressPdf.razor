@@ -1,0 +1,266 @@
+﻿@page "/compress-pdf"
+@using PdfToolkit.Web.Components
+@using PdfToolkit.Web.Services
+@using PdfToolkit.Domain.Enums
+@inject ApiService ApiService
+@inject IJSRuntime JS
+
+<PageTitle>Compress PDF Online Free — Reduce PDF Size Instantly</PageTitle>
+
+<HeadContent>
+    <meta name="description"
+          content="Compress your PDF file online for free.
+                   No signup required. Reduce PDF size without
+                   losing quality in seconds." />
+    <meta name="keywords"
+          content="compress pdf, reduce pdf size, pdf compressor,
+                   free pdf compression" />
+    <link rel="canonical" href="https://yoursite.com/compress-pdf" />
+</HeadContent>
+
+<div class="tool-page">
+
+    <!-- Ad slot top -->
+    <AdSlot Size="banner" />
+
+    <div class="tool-container">
+        <h1>Compress PDF Online</h1>
+        <p class="tool-subtitle">
+            Reduce your PDF file size for free.
+            No signup required. Files deleted within 1 hour.
+        </p>
+
+        @if (CurrentState == PageState.Upload)
+        {
+            <FileUpload OnFileSelected="HandleFileSelected"
+                        OnFileRemoved="HandleFileRemoved" />
+
+            @if (SelectedFile != null)
+            {
+                <button class="process-button"
+                        @onclick="ProcessFile">
+                    Compress PDF
+                </button>
+            }
+        }
+
+        @if (CurrentState == PageState.Processing)
+        {
+            <div class="processing-container">
+                <div class="spinner"></div>
+                <p>Compressing your PDF...</p>
+            </div>
+        }
+
+        @if (CurrentState == PageState.Complete && Response != null)
+        {
+            <!-- Ad slot after completion -->
+            <AdSlot Size="rectangle" />
+
+            <div class="result-container">
+                <span class="result-icon">✅</span>
+                <h2>Compression Complete!</h2>
+
+                <div class="stats">
+                    <div class="stat">
+                        <span class="stat-label">Original Size</span>
+                        <span class="stat-value">
+                            @FormatFileSize(Response.OriginalSizeBytes)
+                        </span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Compressed Size</span>
+                        <span class="stat-value">
+                            @FormatFileSize(Response.OutputSizeBytes)
+                        </span>
+                    </div>
+                    <div class="stat highlight">
+                        <span class="stat-label">You Saved</span>
+                        <span class="stat-value">
+                            @Response.CompressionRatio%
+                        </span>
+                    </div>
+                </div>
+
+                <button class="download-button"
+                        @onclick="DownloadFile">
+                    Download Compressed PDF
+                </button>
+
+                <button class="reset-button"
+                        @onclick="Reset">
+                    Compress Another PDF
+                </button>
+            </div>
+        }
+
+        @if (CurrentState == PageState.Error)
+        {
+            <div class="error-container">
+                <span class="error-icon">❌</span>
+                <p class="error-message">@ErrorMessage</p>
+                <button class="reset-button" @onclick="Reset">
+                    Try Again
+                </button>
+            </div>
+        }
+    </div>
+
+    <!-- FAQ Section — targets long tail SEO keywords -->
+    <div class="faq-section">
+        <h2>Frequently Asked Questions</h2>
+
+        <div class="faq-item">
+            <h3>Is this PDF compressor free?</h3>
+            <p>
+                Yes — completely free with no signup required.
+                Just upload your PDF and download the compressed version.
+            </p>
+        </div>
+
+        <div class="faq-item">
+            <h3>How much can I reduce my PDF size?</h3>
+            <p>
+                Typically between 20% and 80% depending on the content.
+                PDFs with images compress the most.
+            </p>
+        </div>
+
+        <div class="faq-item">
+            <h3>Is my PDF stored on your servers?</h3>
+            <p>
+                Your file is automatically deleted within 1 hour
+                of processing. We never store your documents permanently.
+            </p>
+        </div>
+
+        <div class="faq-item">
+            <h3>What is the maximum file size?</h3>
+            <p>
+                You can upload PDF files up to 50MB.
+                For larger files consider splitting first.
+            </p>
+        </div>
+
+        <div class="faq-item">
+            <h3>Will compression reduce my PDF quality?</h3>
+            <p>
+                Text quality is preserved completely.
+                Images may have minor quality reduction
+                to achieve maximum compression.
+            </p>
+        </div>
+    </div>
+</div>
+
+@code {
+    private enum PageState
+    {
+        Upload, Processing, Complete, Error
+    }
+
+    private PageState CurrentState = PageState.Upload;
+    private IBrowserFile? SelectedFile;
+    private PdfToolkit.Application.DTOs.ProcessResponse? Response;
+    private byte[]? ProcessedBytes;
+    private byte[]? UploadedBytes;
+    private string? ErrorMessage;
+
+    private async Task HandleFileSelected(IBrowserFile file)
+    {
+        SelectedFile = file;
+        ErrorMessage = null;
+
+        try
+        {
+            // Read bytes immediately while file reference is still valid
+            using var stream = file.OpenReadStream(
+                maxAllowedSize: 52428800);
+            using var memoryStream = new MemoryStream();
+            await stream.CopyToAsync(memoryStream);
+            UploadedBytes = memoryStream.ToArray();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Could not read file: {ex.Message}";
+            SelectedFile = null;
+            UploadedBytes = null;
+        }
+
+        StateHasChanged();
+    }
+
+    private void HandleFileRemoved()
+    {
+        SelectedFile = null;
+        UploadedBytes = null;
+        ErrorMessage = null;
+    }
+
+    private async Task ProcessFile()
+    {
+        if (SelectedFile == null || UploadedBytes == null) return;
+
+        CurrentState = PageState.Processing;
+        StateHasChanged();
+
+        try
+        {
+            // Call API with already-read bytes
+            Response = await ApiService.ProcessPdfAsync(
+                UploadedBytes,
+                SelectedFile.Name,
+                ToolType.CompressPdf);
+
+            if (Response != null && Response.IsSuccess)
+            {
+                ProcessedBytes = UploadedBytes;
+                CurrentState = PageState.Complete;
+            }
+            else
+            {
+                ErrorMessage = Response?.ErrorMessage
+                    ?? "Compression failed. Please try again.";
+                CurrentState = PageState.Error;
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Error: {ex.Message}";
+            CurrentState = PageState.Error;
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task DownloadFile()
+    {
+        if (ProcessedBytes == null) return;
+
+        var fileName = Path.GetFileNameWithoutExtension(
+            SelectedFile?.Name ?? "compressed")
+            + "_compressed.pdf";
+
+        await JS.InvokeVoidAsync(
+            "downloadFile",
+            fileName,
+            Convert.ToBase64String(ProcessedBytes));
+    }
+
+    private void Reset()
+    {
+        CurrentState = PageState.Upload;
+        SelectedFile = null;
+        Response = null;
+        ProcessedBytes = null;
+        UploadedBytes = null;
+        ErrorMessage = null;
+    }
+
+    private string FormatFileSize(long bytes)
+    {
+        if (bytes < 1024) return $"{bytes} B";
+        if (bytes < 1024 * 1024) return $"{bytes / 1024} KB";
+        return $"{bytes / (1024 * 1024)} MB";
+    }
+}

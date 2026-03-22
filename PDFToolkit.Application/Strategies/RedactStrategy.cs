@@ -1,28 +1,41 @@
-﻿using PDFToolkit.Application.DTOs;
-using PDFToolkit.Domain.Entities;
-using PDFToolkit.Domain.Enums;
+﻿using PdfToolkit.Domain.Entities;
+using PdfToolkit.Domain.Enums;
+using PdfToolkit.Domain.Interfaces;
+using PdfToolkit.Application.DTOs;
 
-namespace PDFToolkit.Application.Strategies
+namespace PdfToolkit.Application.Strategies
 {
     public class RedactStrategy : IProcessingStrategy
     {
         public ToolType ToolType => ToolType.RedactPdf;
+
+        private readonly IPdfProcessor _processor;
+
+        public RedactStrategy(IPdfProcessor processor)
+        {
+            _processor = processor;
+        }
+
         public async Task<ProcessingResult> ExecuteAsync(
             ProcessRequest request,
             CancellationToken cancellationToken = default)
         {
             try
             {
-                if (request.FileBytes == null || request.FileBytes.Length == 0)
-                    return ProcessingResult.Failure("File is empty or invalid.");
+                if (request.FileBytes == null
+                    || request.FileBytes.Length == 0)
+                    return ProcessingResult.Failure(
+                        "File is empty or invalid.");
 
                 if (!IsPdf(request.FileBytes))
-                    return ProcessingResult.Failure("File is not a valid PDF.");
+                    return ProcessingResult.Failure(
+                        "File is not a valid PDF.");
 
-                await Task.CompletedTask;
+                var outputBytes = await _processor.ProcessAsync(
+                    request.FileBytes, cancellationToken);
 
                 return ProcessingResult.Success(
-                    request.FileBytes,
+                    outputBytes,
                     request.FileSizeBytes);
             }
             catch (Exception ex)

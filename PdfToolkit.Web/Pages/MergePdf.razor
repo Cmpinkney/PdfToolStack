@@ -1,0 +1,315 @@
+﻿@page "/merge-pdf"
+@using PdfToolkit.Web.Components
+@using PdfToolkit.Web.Services
+@using PdfToolkit.Domain.Enums
+@inject ApiService ApiService
+@inject IJSRuntime JS
+
+<PageTitle>Merge PDF Files Free Online — Combine PDFs Instantly</PageTitle>
+
+<HeadContent>
+    <meta name="description"
+          content="Merge multiple PDF files into one document free online.
+                   No signup required. Combine PDFs instantly." />
+    <meta name="keywords"
+          content="merge pdf, combine pdf, join pdf files free,
+                   merge pdf online" />
+    <link rel="canonical"
+          href="https://yoursite.com/merge-pdf" />
+</HeadContent>
+
+<div class="tool-page">
+
+    <AdSlot Size="banner" />
+
+    <div class="tool-container">
+        <h1>Merge PDF Files Online</h1>
+        <p class="tool-subtitle">
+            Combine multiple PDF files into one document for free.
+            No signup required. Files deleted within 1 hour.
+        </p>
+
+        @if (CurrentState == PageState.Upload)
+        {
+            <div class="merge-upload-area">
+                @for (int i = 0; i < UploadedFiles.Count; i++)
+                {
+                    var index = i;
+                    <div class="merge-file-item">
+                        <span class="merge-file-number">
+                            @(index + 1)
+                        </span>
+                        <span class="merge-file-name">
+                            @UploadedFiles[index].Name
+                        </span>
+                        <span class="merge-file-size">
+                            @FormatFileSize(UploadedFileBytes[index].Length)
+                        </span>
+                        <button class="remove-button"
+                                @onclick="() => RemoveFile(index)">
+                            ✕
+                        </button>
+                    </div>
+                }
+
+                @if (UploadedFiles.Count < 10)
+                {
+                    <div class="upload-container @(IsDragging ? "dragging" : "")">
+                        <span class="upload-icon">📄</span>
+                        <p>
+                            @(UploadedFiles.Count == 0
+                                                ? "Upload your first PDF"
+                                                : "Add another PDF")
+                </p>
+                <label class="upload-button">
+                    Browse File
+                    <InputFile OnChange="HandleFileSelected"
+                               accept=".pdf"
+                               style="display:none" />
+                </label>
+                <p class="upload-hint">Maximum 10 files, 50MB each</p>
+            </div>
+                        }
+            </div>
+
+            @if (!string.IsNullOrEmpty(ErrorMessage))
+            {
+                <p class="error-message">@ErrorMessage</p>
+            }
+
+            @if (UploadedFiles.Count >= 2)
+            {
+                <button class="process-button"
+                        @onclick="ProcessFiles">
+                    Merge @UploadedFiles.Count PDFs
+                </button>
+            }
+            else if (UploadedFiles.Count == 1)
+            {
+                <p style="color: var(--gray); margin-top: 1rem;">
+                    Add at least one more PDF to merge
+                </p>
+            }
+        }
+
+        @if (CurrentState == PageState.Processing)
+        {
+            <div class="processing-container">
+                <div class="spinner"></div>
+                <p>Merging your PDFs...</p>
+            </div>
+        }
+
+        @if (CurrentState == PageState.Complete
+                && Response != null)
+        {
+            <AdSlot Size="rectangle" />
+
+            <div class="result-container">
+                <span class="result-icon">✅</span>
+                <h2>Merge Complete!</h2>
+
+                <div class="stats">
+                    <div class="stat">
+                        <span class="stat-label">Files Merged</span>
+                        <span class="stat-value">@MergedFileCount</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Final Size</span>
+                        <span class="stat-value">
+                            @FormatFileSize(Response.OutputSizeBytes)
+                        </span>
+                    </div>
+                </div>
+
+                <button class="download-button"
+                        @onclick="DownloadFile">
+                    Download Merged PDF
+                </button>
+
+                <button class="reset-button"
+                        @onclick="Reset">
+                    Merge More PDFs
+                </button>
+            </div>
+        }
+
+        @if (CurrentState == PageState.Error)
+        {
+            <div class="error-container">
+                <span class="error-icon">❌</span>
+                <p class="error-message">@ErrorMessage</p>
+                <button class="reset-button" @onclick="Reset">
+                    Try Again
+                </button>
+            </div>
+        }
+    </div>
+
+    <div class="faq-section">
+        <h2>Frequently Asked Questions</h2>
+
+        <div class="faq-item">
+            <h3>How many PDFs can I merge at once?</h3>
+            <p>
+                You can merge up to 10 PDF files at once.
+                Each file can be up to 50MB.
+            </p>
+        </div>
+
+        <div class="faq-item">
+            <h3>Will the merged PDF have a watermark?</h3>
+            <p>
+                No watermarks ever. Your merged PDF is completely
+                clean and ready to use.
+            </p>
+        </div>
+
+        <div class="faq-item">
+            <h3>Can I reorder the files before merging?</h3>
+            <p>
+                Files are merged in the order you upload them.
+                Upload them in the order you want them combined.
+            </p>
+        </div>
+
+        <div class="faq-item">
+            <h3>Is my PDF stored on your servers?</h3>
+            <p>
+                Your files are automatically deleted within 1 hour
+                of processing. We never store your documents
+                permanently.
+            </p>
+        </div>
+
+        <div class="faq-item">
+            <h3>Is this PDF merger free?</h3>
+            <p>Yes — completely free with no signup required.</p>
+        </div>
+    </div>
+</div>
+
+@code {
+    private enum PageState
+    {
+        Upload, Processing, Complete, Error
+    }
+
+    private PageState CurrentState = PageState.Upload;
+    private List<IBrowserFile> UploadedFiles = new();
+    private List<byte[]> UploadedFileBytes = new();
+    private PdfToolkit.Application.DTOs.ProcessResponse? Response;
+    private byte[]? MergedBytes;
+    private string? ErrorMessage;
+    private bool IsDragging = false;
+    private int MergedFileCount = 0;
+
+    private async Task HandleFileSelected(
+        InputFileChangeEventArgs e)
+    {
+        ErrorMessage = null;
+        var file = e.File;
+
+        try
+        {
+            using var stream = file.OpenReadStream(
+                maxAllowedSize: 52428800);
+            using var memoryStream = new MemoryStream();
+            await stream.CopyToAsync(memoryStream);
+            var bytes = memoryStream.ToArray();
+
+            UploadedFiles.Add(file);
+            UploadedFileBytes.Add(bytes);
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Could not read {file.Name}: {ex.Message}";
+        }
+
+        StateHasChanged();
+    }
+
+    private void RemoveFile(int index)
+    {
+        UploadedFiles.RemoveAt(index);
+        UploadedFileBytes.RemoveAt(index);
+        StateHasChanged();
+    }
+
+    private async Task ProcessFiles()
+    {
+        if (UploadedFileBytes.Count < 2) return;
+
+        CurrentState = PageState.Processing;
+        MergedFileCount = UploadedFiles.Count;
+        StateHasChanged();
+
+        try
+        {
+            // Send all files to merge endpoint
+            using var content = new MultipartFormDataContent();
+
+            for (int i = 0; i < UploadedFileBytes.Count; i++)
+            {
+                var fileContent = new ByteArrayContent(
+                    UploadedFileBytes[i]);
+                fileContent.Headers.ContentType =
+                    new System.Net.Http.Headers
+                        .MediaTypeHeaderValue("application/pdf");
+                content.Add(fileContent, "files",
+                    UploadedFiles[i].Name);
+            }
+
+            Response = await ApiService.MergePdfsAsync(
+                content);
+
+            if (Response != null && Response.IsSuccess)
+            {
+                MergedBytes = await ApiService
+                    .GetMergedBytesAsync();
+                CurrentState = PageState.Complete;
+            }
+            else
+            {
+                ErrorMessage = Response?.ErrorMessage
+                    ?? "Merge failed. Please try again.";
+                CurrentState = PageState.Error;
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Error: {ex.Message}";
+            CurrentState = PageState.Error;
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task DownloadFile()
+    {
+        if (MergedBytes == null) return;
+
+        await JS.InvokeVoidAsync(
+            "downloadFile",
+            "merged.pdf",
+            Convert.ToBase64String(MergedBytes));
+    }
+
+    private void Reset()
+    {
+        CurrentState = PageState.Upload;
+        UploadedFiles.Clear();
+        UploadedFileBytes.Clear();
+        Response = null;
+        MergedBytes = null;
+        ErrorMessage = null;
+        MergedFileCount = 0;
+    }
+
+    private string FormatFileSize(long bytes)
+    {
+        if (bytes < 1024) return $"{bytes} B";
+        if (bytes < 1024 * 1024) return $"{bytes / 1024} KB";
+        return $"{bytes / (1024 * 1024)} MB";
+    }
+}

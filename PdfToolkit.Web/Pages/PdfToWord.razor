@@ -1,0 +1,262 @@
+﻿@page "/pdf-to-word"
+@using PdfToolkit.Web.Components
+@using PdfToolkit.Web.Services
+@using PdfToolkit.Domain.Enums
+@inject ApiService ApiService
+@inject IJSRuntime JS
+
+<PageTitle>PDF to Word Converter Free Online — Convert PDF to DOCX</PageTitle>
+
+<HeadContent>
+    <meta name="description"
+          content="Convert PDF to Word document free online.
+                   No signup required. Download your DOCX file instantly." />
+    <meta name="keywords"
+          content="pdf to word, convert pdf to word, pdf to docx,
+                   free pdf converter" />
+    <link rel="canonical"
+          href="https://yoursite.com/pdf-to-word" />
+</HeadContent>
+
+<div class="tool-page">
+
+    <AdSlot Size="banner" />
+
+    <div class="tool-container">
+        <h1>PDF to Word Converter</h1>
+        <p class="tool-subtitle">
+            Convert your PDF to an editable Word document for free.
+            No signup required. Files deleted within 1 hour.
+        </p>
+
+        @if (CurrentState == PageState.Upload)
+        {
+            <FileUpload OnFileSelected="HandleFileSelected"
+                        OnFileRemoved="HandleFileRemoved" />
+
+            @if (SelectedFile != null)
+            {
+                <button class="process-button"
+                        @onclick="ProcessFile">
+                    Convert to Word
+                </button>
+            }
+        }
+
+        @if (CurrentState == PageState.Processing)
+        {
+            <div class="processing-container">
+                <div class="spinner"></div>
+                <p>Converting your PDF to Word...</p>
+            </div>
+        }
+
+        @if (CurrentState == PageState.Complete
+                && Response != null)
+        {
+            <AdSlot Size="rectangle" />
+
+            <div class="result-container">
+                <span class="result-icon">✅</span>
+                <h2>Conversion Complete!</h2>
+
+                <div class="stats">
+                    <div class="stat">
+                        <span class="stat-label">
+                            Original PDF Size
+                        </span>
+                        <span class="stat-value">
+                            @FormatFileSize(Response.OriginalSizeBytes)
+                        </span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">
+                            Word Document Size
+                        </span>
+                        <span class="stat-value">
+                            @FormatFileSize(Response.OutputSizeBytes)
+                        </span>
+                    </div>
+                </div>
+
+                <button class="download-button"
+                        @onclick="DownloadFile">
+                    Download Word Document
+                </button>
+
+                <button class="reset-button"
+                        @onclick="Reset">
+                    Convert Another PDF
+                </button>
+            </div>
+        }
+
+        @if (CurrentState == PageState.Error)
+        {
+            <div class="error-container">
+                <span class="error-icon">❌</span>
+                <p class="error-message">@ErrorMessage</p>
+                <button class="reset-button" @onclick="Reset">
+                    Try Again
+                </button>
+            </div>
+        }
+    </div>
+
+    <div class="faq-section">
+        <h2>Frequently Asked Questions</h2>
+
+        <div class="faq-item">
+            <h3>Is this PDF to Word converter free?</h3>
+            <p>
+                Yes — completely free with no signup required.
+                Upload your PDF and download the Word document
+                instantly.
+            </p>
+        </div>
+
+        <div class="faq-item">
+            <h3>What Word format does it convert to?</h3>
+            <p>
+                Your PDF is converted to .docx format which is
+                compatible with Microsoft Word, Google Docs,
+                and all modern word processors.
+            </p>
+        </div>
+
+        <div class="faq-item">
+            <h3>Will the formatting be preserved?</h3>
+            <p>
+                Text content is fully preserved. Complex layouts
+                with images and tables may require minor adjustments
+                after conversion.
+            </p>
+        </div>
+
+        <div class="faq-item">
+            <h3>Is my PDF stored on your servers?</h3>
+            <p>
+                Your file is automatically deleted within 1 hour
+                of processing. We never store your documents
+                permanently.
+            </p>
+        </div>
+
+        <div class="faq-item">
+            <h3>What is the maximum file size?</h3>
+            <p>
+                You can upload PDF files up to 50MB for
+                conversion to Word.
+            </p>
+        </div>
+    </div>
+</div>
+
+@code {
+    private enum PageState
+    {
+        Upload, Processing, Complete, Error
+    }
+
+    private PageState CurrentState = PageState.Upload;
+    private IBrowserFile? SelectedFile;
+    private PdfToolkit.Application.DTOs.ProcessResponse? Response;
+    private byte[]? ProcessedBytes;
+    private byte[]? UploadedBytes;
+    private string? ErrorMessage;
+
+    private async Task HandleFileSelected(IBrowserFile file)
+    {
+        SelectedFile = file;
+        ErrorMessage = null;
+
+        try
+        {
+            using var stream = file.OpenReadStream(
+                maxAllowedSize: 52428800);
+            using var memoryStream = new MemoryStream();
+            await stream.CopyToAsync(memoryStream);
+            UploadedBytes = memoryStream.ToArray();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Could not read file: {ex.Message}";
+            SelectedFile = null;
+            UploadedBytes = null;
+        }
+
+        StateHasChanged();
+    }
+
+    private void HandleFileRemoved()
+    {
+        SelectedFile = null;
+        UploadedBytes = null;
+        ErrorMessage = null;
+    }
+
+    private async Task ProcessFile()
+    {
+        if (SelectedFile == null || UploadedBytes == null) return;
+
+        CurrentState = PageState.Processing;
+        StateHasChanged();
+
+        try
+        {
+            Response = await ApiService.ProcessPdfAsync(
+                UploadedBytes,
+                SelectedFile.Name,
+                ToolType.PdfToWord);
+
+            if (Response != null && Response.IsSuccess)
+            {
+                ProcessedBytes = UploadedBytes;
+                CurrentState = PageState.Complete;
+            }
+            else
+            {
+                ErrorMessage = Response?.ErrorMessage
+                    ?? "Conversion failed. Please try again.";
+                CurrentState = PageState.Error;
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Error: {ex.Message}";
+            CurrentState = PageState.Error;
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task DownloadFile()
+    {
+        if (ProcessedBytes == null) return;
+
+        var fileName = Path.GetFileNameWithoutExtension(
+            SelectedFile?.Name ?? "converted") + ".docx";
+
+        await JS.InvokeVoidAsync(
+            "downloadFile",
+            fileName,
+            Convert.ToBase64String(ProcessedBytes));
+    }
+
+    private void Reset()
+    {
+        CurrentState = PageState.Upload;
+        SelectedFile = null;
+        Response = null;
+        ProcessedBytes = null;
+        UploadedBytes = null;
+        ErrorMessage = null;
+    }
+
+    private string FormatFileSize(long bytes)
+    {
+        if (bytes < 1024) return $"{bytes} B";
+        if (bytes < 1024 * 1024) return $"{bytes / 1024} KB";
+        return $"{bytes / (1024 * 1024)} MB";
+    }
+}

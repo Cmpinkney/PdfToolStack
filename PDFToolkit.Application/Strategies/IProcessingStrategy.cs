@@ -1,8 +1,8 @@
-﻿using PDFToolkit.Application.DTOs;
-using PDFToolkit.Domain.Entities;
-using PDFToolkit.Domain.Enums;
+﻿using PdfToolkit.Application.DTOs;
+using PdfToolkit.Domain.Entities;
+using PdfToolkit.Domain.Enums;
 
-namespace PDFToolkit.Application.Strategies
+namespace PdfToolkit.Application.Strategies
 {
     public interface IProcessingStrategy
     {

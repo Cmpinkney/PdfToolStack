@@ -1,0 +1,31 @@
+﻿@if (IsVisible)
+{
+    <div class="ad-slot ad-slot-@Size">
+        @if (IsAdSenseApproved)
+        {
+            <!-- AdSense code goes here after approval -->
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+                 data-ad-slot="XXXXXXXXXX"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true">
+            </ins>
+        }
+        else
+        {
+            <!-- Placeholder until AdSense approved -->
+            <div class="ad-placeholder">
+                <span>Advertisement</span>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public string Size { get; set; } = "banner";
+    [Parameter] public bool IsVisible { get; set; } = true;
+
+    // Set to true after AdSense approval
+    private bool IsAdSenseApproved = false;
+}

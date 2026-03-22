@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using PdfToolkit.Domain.Enums;
 
-namespace PDFToolkit.Application.DTOs
+namespace PdfToolkit.Application.DTOs
 {
     public class ProcessResponse
     {
@@ -16,7 +12,8 @@ namespace PDFToolkit.Application.DTOs
         public long OutputSizeBytes { get; set; }
         public double CompressionRatio =>
             OriginalSizeBytes > 0
-                ? Math.Round((1 - (double)OutputSizeBytes / OriginalSizeBytes) * 100, 1)
+                ? Math.Round(
+                    (1 - (double)OutputSizeBytes / OriginalSizeBytes) * 100, 1)
                 : 0;
     }
 }

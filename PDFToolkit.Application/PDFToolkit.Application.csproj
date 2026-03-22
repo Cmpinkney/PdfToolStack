@@ -7,11 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\PDFToolkit.Domain\PDFToolkit.Domain.csproj" />
+    <Folder Include="Services\" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Services\" />
+    <ProjectReference Include="..\PdfToolkit.Domain\PdfToolkit.Domain.csproj" />
   </ItemGroup>
 
 </Project>

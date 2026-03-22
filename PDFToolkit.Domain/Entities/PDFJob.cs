@@ -1,6 +1,6 @@
-﻿using PDFToolkit.Domain.Enums;
+﻿using PdfToolkit.Domain.Enums;
 
-namespace PDFToolkit.Domain.Entities
+namespace PdfToolkit.Domain.Entities
 {
     public class PdfJob
     {

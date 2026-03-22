@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace PDFToolkit.Domain.Enums
+namespace PdfToolkit.Domain.Enums
 {
     public enum ToolType
     {
