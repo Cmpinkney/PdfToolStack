@@ -1,11 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using iTextSharp.text;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using PdfToolkit.API.Configuration;
 using PdfToolkit.Application.DTOs;
 using PdfToolkit.Application.Services;
+using PdfToolkit.Domain.Entities;
 using PdfToolkit.Domain.Enums;
 using PdfToolkit.Infrastructure.Processors;
-using PdfToolkit.Domain.Entities;
 using DomainFormField = PdfToolkit.Domain.Entities.PdfFormField;
 using DomainRedactionRegion = PdfToolkit.Domain.Entities.RedactionRegion;
 
@@ -397,6 +398,298 @@ namespace PdfToolkit.API.Controllers
                    bytes[1] == 0x50 &&
                    bytes[2] == 0x44 &&
                    bytes[3] == 0x46;
+        }
+
+        // POST api/pdf/delete-pages
+        [HttpPost("delete-pages")]
+        [RequestSizeLimit(524288000)]
+        public async Task<IActionResult> DeletePages(
+            IFormFile file,
+            [FromForm] string pageNumbers)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest("No file provided.");
+
+            try
+            {
+                using var ms = new MemoryStream();
+                await file.CopyToAsync(ms);
+                var bytes = ms.ToArray();
+
+                var pages = pageNumbers
+                    .Split(',', StringSplitOptions
+                        .RemoveEmptyEntries)
+                    .Select(p => int.Parse(p.Trim()))
+                    .ToList();
+
+                var processor = new DeletePagesProcessor();
+                var result = await processor.ProcessAsync(
+                    bytes, pages);
+
+                return File(result, "application/pdf",
+                    "deleted_pages.pdf");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Delete pages error");
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        // POST api/pdf/word-to-pdf
+        [HttpPost("word-to-pdf")]
+        [RequestSizeLimit(524288000)]
+        public async Task<IActionResult> WordToPdf(IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest("No file provided.");
+
+            try
+            {
+                using var ms = new MemoryStream();
+                await file.CopyToAsync(ms);
+                var bytes = ms.ToArray();
+
+                var processor = new WordToPdfProcessor();
+                var result = await processor.ProcessAsync(bytes);
+
+                return File(result, "application/pdf",
+                    Path.GetFileNameWithoutExtension(
+                        file.FileName) + ".pdf");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Word to PDF error");
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        // POST api/pdf/organize
+        [HttpPost("organize")]
+        [RequestSizeLimit(524288000)]
+        public async Task<IActionResult> OrganizePdf(
+            IFormFile file,
+            [FromForm] string operationsJson)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest("No file provided.");
+
+            try
+            {
+                using var ms = new MemoryStream();
+                await file.CopyToAsync(ms);
+                var bytes = ms.ToArray();
+
+                var operations = System.Text.Json.JsonSerializer
+                    .Deserialize<List<PageOperation>>(
+                        operationsJson)
+                    ?? new List<PageOperation>();
+
+                var processor = new OrganizePdfProcessor();
+                var result = await processor.ProcessAsync(
+                    bytes, operations);
+
+                return File(result, "application/pdf",
+                    "organized.pdf");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Organize PDF error");
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        // POST api/pdf/sign
+        [HttpPost("sign")]
+        [RequestSizeLimit(524288000)]
+        public async Task<IActionResult> SignPdf(
+            IFormFile file,
+            IFormFile signature,
+            [FromForm] float x,
+            [FromForm] float y,
+            [FromForm] float width,
+            [FromForm] float height,
+            [FromForm] int pageNumber = 1)
+        {
+            if (file == null || signature == null)
+                return BadRequest("File and signature required.");
+
+            try
+            {
+                using var fileMs = new MemoryStream();
+                await file.CopyToAsync(fileMs);
+                var fileBytes = fileMs.ToArray();
+
+                using var sigMs = new MemoryStream();
+                await signature.CopyToAsync(sigMs);
+                var sigBytes = sigMs.ToArray();
+
+                var processor = new SignPdfProcessor();
+                var result = await processor.ProcessAsync(
+                    fileBytes, sigBytes,
+                    x, y, width, height, pageNumber);
+
+                return File(result, "application/pdf",
+                    "signed.pdf");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Sign PDF error");
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        // POST api/pdf/edit
+        [HttpPost("edit")]
+        [RequestSizeLimit(524288000)]
+        public async Task<IActionResult> EditPdf(
+            IFormFile file,
+            [FromForm] string annotationsJson)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest("No file provided.");
+
+            try
+            {
+                using var ms = new MemoryStream();
+                await file.CopyToAsync(ms);
+                var bytes = ms.ToArray();
+
+                var annotations = System.Text.Json.JsonSerializer
+                    .Deserialize<List<PdfAnnotationDto>>(
+                        annotationsJson)
+                    ?? new List<PdfAnnotationDto>();
+
+                var iTextAnnotations = annotations.Select(a =>
+                    new PdfAnnotation
+                    {
+                        Type = a.Type,
+                        PageNumber = a.PageNumber,
+                        X = a.X,
+                        Y = a.Y,
+                        X2 = a.X2,
+                        Y2 = a.Y2,
+                        Width = a.Width,
+                        Height = a.Height,
+                        Text = a.Text,
+                        FontSize = a.FontSize,
+                        LineWidth = a.LineWidth,
+                        Color = ParseColor(a.Color)
+                    }).ToList();
+
+                var processor = new EditPdfProcessor();
+                var result = await processor.ProcessAsync(
+                    bytes, iTextAnnotations);
+
+                return File(result, "application/pdf",
+                    "edited.pdf");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Edit PDF error");
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        // POST api/pdf/annotate
+        [HttpPost("annotate")]
+        [RequestSizeLimit(524288000)]
+        public async Task<IActionResult> AnnotatePdf(
+            IFormFile file,
+            [FromForm] string highlightsJson)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest("No file provided.");
+
+            try
+            {
+                using var ms = new MemoryStream();
+                await file.CopyToAsync(ms);
+                var bytes = ms.ToArray();
+
+                var highlights = System.Text.Json.JsonSerializer
+                    .Deserialize<List<PdfHighlightDto>>(
+                        highlightsJson)
+                    ?? new List<PdfHighlightDto>();
+
+                var iTextHighlights = highlights.Select(h =>
+                    new PdfHighlight
+                    {
+                        Type = h.Type,
+                        PageNumber = h.PageNumber,
+                        X = h.X,
+                        Y = h.Y,
+                        Width = h.Width,
+                        Height = h.Height,
+                        LineWidth = h.LineWidth,
+                        StrokeColor = ParseColor(h.Color),
+                        Points = h.Points?.Select(p =>
+                            new Infrastructure.Processors.PointF
+                            {
+                                X = p.X,
+                                Y = p.Y
+                            }).ToList() ?? new()
+                    }).ToList();
+
+                var processor = new AnnotatePdfProcessor();
+                var result = await processor.ProcessAsync(
+                    bytes, iTextHighlights);
+
+                return File(result, "application/pdf",
+                    "annotated.pdf");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Annotate PDF error");
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        private static BaseColor ParseColor(string? hex)
+        {
+            if (string.IsNullOrEmpty(hex)) return new BaseColor(0, 0, 0);
+            hex = hex.TrimStart('#');
+            if (hex.Length < 6) return new BaseColor(0, 0, 0);
+            var r = Convert.ToInt32(hex[..2], 16);
+            var g = Convert.ToInt32(hex[2..4], 16);
+            var b = Convert.ToInt32(hex[4..6], 16);
+            return new BaseColor(r, g, b);
+        }
+
+        // DTOs for JSON deserialization
+        public class PdfAnnotationDto
+        {
+            public string Type { get; set; } = "text";
+            public int PageNumber { get; set; } = 1;
+            public float X { get; set; }
+            public float Y { get; set; }
+            public float X2 { get; set; }
+            public float Y2 { get; set; }
+            public float Width { get; set; }
+            public float Height { get; set; }
+            public string? Text { get; set; }
+            public float FontSize { get; set; } = 12f;
+            public float LineWidth { get; set; } = 1f;
+            public string? Color { get; set; }
+        }
+
+        public class PdfHighlightDto
+        {
+            public string Type { get; set; } = "highlight";
+            public int PageNumber { get; set; } = 1;
+            public float X { get; set; }
+            public float Y { get; set; }
+            public float Width { get; set; }
+            public float Height { get; set; }
+            public float LineWidth { get; set; } = 2f;
+            public string? Color { get; set; }
+            public List<PointDto>? Points { get; set; }
+        }
+
+        public class PointDto
+        {
+            public float X { get; set; }
+            public float Y { get; set; }
         }
     }
 }

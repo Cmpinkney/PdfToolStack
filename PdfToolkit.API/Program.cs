@@ -73,6 +73,12 @@ try
     builder.Services.AddScoped<PdfMerger>();
     builder.Services.AddScoped<PdfToWordConverter>();
     builder.Services.AddScoped<PdfFormFiller>();
+    builder.Services.AddScoped<DeletePagesProcessor>();
+    builder.Services.AddScoped<WordToPdfProcessor>();
+    builder.Services.AddScoped<OrganizePdfProcessor>();
+    builder.Services.AddScoped<SignPdfProcessor>();
+    builder.Services.AddScoped<EditPdfProcessor>();
+    builder.Services.AddScoped<AnnotatePdfProcessor>();
 
     // ── Strategies ────────────────────────────────────────────────────────
     builder.Services.AddScoped<IProcessingStrategy>(sp =>

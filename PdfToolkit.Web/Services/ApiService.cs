@@ -187,9 +187,9 @@ namespace PdfToolkit.Web.Services
         }
 
         public async Task<int> GetPageCountAsync(
-    byte[] fileBytes,
-    string fileName,
-    CancellationToken cancellationToken = default)
+        byte[] fileBytes,
+        string fileName,
+        CancellationToken cancellationToken = default)
         {
             try
             {
@@ -280,6 +280,152 @@ namespace PdfToolkit.Web.Services
                     "Error getting job status for {JobId}", jobId);
                 return null;
             }
+        }
+
+        public async Task<byte[]?> DeletePagesAsync(
+    byte[] fileBytes,
+    string fileName,
+    IEnumerable<int> pages)
+        {
+            using var content = new MultipartFormDataContent();
+            content.Add(
+                new ByteArrayContent(fileBytes),
+                "file", fileName);
+            content.Add(
+                new StringContent(
+                    string.Join(",", pages)),
+                "pageNumbers");
+
+            var response = await _httpClient.PostAsync(
+                "api/pdf/delete-pages", content);
+
+            if (response.IsSuccessStatusCode)
+                return await response.Content.ReadAsByteArrayAsync();
+            return null;
+        }
+
+        public async Task<byte[]?> WordToPdfAsync(
+            byte[] fileBytes,
+            string fileName)
+        {
+            using var content = new MultipartFormDataContent();
+            var fileContent = new ByteArrayContent(fileBytes);
+            fileContent.Headers.ContentType =
+                new System.Net.Http.Headers
+                    .MediaTypeHeaderValue(
+                        "application/vnd.openxmlformats-officedocument" +
+                        ".wordprocessingml.document");
+            content.Add(fileContent, "file", fileName);
+
+            var response = await _httpClient.PostAsync(
+                "api/pdf/word-to-pdf", content);
+
+            if (response.IsSuccessStatusCode)
+                return await response.Content.ReadAsByteArrayAsync();
+            return null;
+        }
+
+        public async Task<byte[]?> OrganizePdfAsync(
+            byte[] fileBytes,
+            string fileName,
+            object operations)
+        {
+            using var content = new MultipartFormDataContent();
+            content.Add(
+                new ByteArrayContent(fileBytes),
+                "file", fileName);
+            content.Add(
+                new StringContent(
+                    System.Text.Json.JsonSerializer
+                        .Serialize(operations)),
+                "operationsJson");
+
+            var response = await _httpClient.PostAsync(
+                "api/pdf/organize", content);
+
+            if (response.IsSuccessStatusCode)
+                return await response.Content.ReadAsByteArrayAsync();
+            return null;
+        }
+
+        public async Task<byte[]?> SignPdfAsync(
+            byte[] fileBytes,
+            string fileName,
+            byte[] signatureBytes,
+            float x, float y,
+            float width, float height,
+            int pageNumber)
+        {
+            using var content = new MultipartFormDataContent();
+            content.Add(
+                new ByteArrayContent(fileBytes),
+                "file", fileName);
+            content.Add(
+                new ByteArrayContent(signatureBytes),
+                "signature", "signature.png");
+            content.Add(new StringContent(
+                x.ToString()), "x");
+            content.Add(new StringContent(
+                y.ToString()), "y");
+            content.Add(new StringContent(
+                width.ToString()), "width");
+            content.Add(new StringContent(
+                height.ToString()), "height");
+            content.Add(new StringContent(
+                pageNumber.ToString()), "pageNumber");
+
+            var response = await _httpClient.PostAsync(
+                "api/pdf/sign", content);
+
+            if (response.IsSuccessStatusCode)
+                return await response.Content.ReadAsByteArrayAsync();
+            return null;
+        }
+
+        public async Task<byte[]?> EditPdfAsync(
+            byte[] fileBytes,
+            string fileName,
+            object annotations)
+        {
+            using var content = new MultipartFormDataContent();
+            content.Add(
+                new ByteArrayContent(fileBytes),
+                "file", fileName);
+            content.Add(
+                new StringContent(
+                    System.Text.Json.JsonSerializer
+                        .Serialize(annotations)),
+                "annotationsJson");
+
+            var response = await _httpClient.PostAsync(
+                "api/pdf/edit", content);
+
+            if (response.IsSuccessStatusCode)
+                return await response.Content.ReadAsByteArrayAsync();
+            return null;
+        }
+
+        public async Task<byte[]?> AnnotatePdfAsync(
+            byte[] fileBytes,
+            string fileName,
+            object highlights)
+        {
+            using var content = new MultipartFormDataContent();
+            content.Add(
+                new ByteArrayContent(fileBytes),
+                "file", fileName);
+            content.Add(
+                new StringContent(
+                    System.Text.Json.JsonSerializer
+                        .Serialize(highlights)),
+                "highlightsJson");
+
+            var response = await _httpClient.PostAsync(
+                "api/pdf/annotate", content);
+
+            if (response.IsSuccessStatusCode)
+                return await response.Content.ReadAsByteArrayAsync();
+            return null;
         }
     }
 }

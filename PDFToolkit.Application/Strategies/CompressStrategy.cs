@@ -34,10 +34,10 @@ namespace PdfToolkit.Application.Strategies
                 // Call the real iTextSharp processor
                 var outputBytes = await _processor.ProcessAsync(
                     request.FileBytes, cancellationToken);
-
                 return ProcessingResult.Success(
                     outputBytes,
                     request.FileSizeBytes);
+
             }
             catch (Exception ex)
             {

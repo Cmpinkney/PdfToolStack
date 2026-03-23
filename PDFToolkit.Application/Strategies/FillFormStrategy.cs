@@ -34,8 +34,11 @@ namespace PdfToolkit.Application.Strategies
                 var outputBytes = await _processor.ProcessAsync(
                     request.FileBytes, cancellationToken);
 
+                var result = await _processor.ProcessAsync(
+                    request.FileBytes, cancellationToken);
+               
                 return ProcessingResult.Success(
-                    outputBytes,
+                    outputBytes!,
                     request.FileSizeBytes);
             }
             catch (Exception ex)
