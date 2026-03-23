@@ -4,6 +4,7 @@
 @using PdfToolkit.Domain.Enums
 @inject ApiService ApiService
 @inject IJSRuntime JS
+@inject PaymentService PaymentService
 
 <PageTitle>Compress PDF Online Free — Reduce PDF Size Instantly</PageTitle>
 
@@ -15,12 +16,11 @@
     <meta name="keywords"
           content="compress pdf, reduce pdf size, pdf compressor,
                    free pdf compression" />
-    <link rel="canonical" href="https://yoursite.com/compress-pdf" />
+    <link rel="canonical" href="https://pdftoolstack.com/compress-pdf" />
 </HeadContent>
 
 <div class="tool-page">
 
-    <!-- Ad slot top -->
     <AdSlot Size="banner" />
 
     <div class="tool-container">
@@ -44,6 +44,14 @@
             }
         }
 
+        @if (CurrentState == PageState.LargeFile)
+        {
+            <LargeFileUpgrade FileSizeBytes="@(SelectedFile?.Size ?? 0)"
+                              FileName="@(SelectedFile?.Name ?? "")"
+                              ToolType="CompressPdf"
+                              OnCancel="Reset" />
+        }
+
         @if (CurrentState == PageState.Processing)
         {
             <div class="processing-container">
@@ -54,7 +62,6 @@
 
         @if (CurrentState == PageState.Complete && Response != null)
         {
-            <!-- Ad slot after completion -->
             <AdSlot Size="rectangle" />
 
             <div class="result-container">
@@ -106,7 +113,6 @@
         }
     </div>
 
-    <!-- FAQ Section — targets long tail SEO keywords -->
     <div class="faq-section">
         <h2>Frequently Asked Questions</h2>
 
@@ -114,31 +120,35 @@
             <h3>Is this PDF compressor free?</h3>
             <p>
                 Yes — completely free with no signup required.
-                Just upload your PDF and download the compressed version.
+                Just upload your PDF and download the
+                compressed version.
             </p>
         </div>
 
         <div class="faq-item">
             <h3>How much can I reduce my PDF size?</h3>
             <p>
-                Typically between 20% and 80% depending on the content.
-                PDFs with images compress the most.
+                Typically between 20% and 80% depending on
+                the content. PDFs with images compress
+                the most.
             </p>
         </div>
 
         <div class="faq-item">
             <h3>Is my PDF stored on your servers?</h3>
             <p>
-                Your file is automatically deleted within 1 hour
-                of processing. We never store your documents permanently.
+                Your file is automatically deleted within
+                1 hour of processing. We never store your
+                documents permanently.
             </p>
         </div>
 
         <div class="faq-item">
             <h3>What is the maximum file size?</h3>
             <p>
-                You can upload PDF files up to 50MB.
-                For larger files consider splitting first.
+                Free processing supports files up to 25MB.
+                For larger files up to 500MB you can use
+                our pay-per-file option for just $0.99.
             </p>
         </div>
 
@@ -156,7 +166,7 @@
 @code {
     private enum PageState
     {
-        Upload, Processing, Complete, Error
+        Upload, Processing, Complete, Error, LargeFile
     }
 
     private PageState CurrentState = PageState.Upload;
@@ -166,19 +176,34 @@
     private byte[]? UploadedBytes;
     private string? ErrorMessage;
 
+    [SupplyParameterFromQuery]
+    private string? Paid { get; set; }
+
+    [SupplyParameterFromQuery]
+    private string? JobId { get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (Paid == "true")
+            CurrentState = PageState.Upload;
+    }
+
     private async Task HandleFileSelected(IBrowserFile file)
     {
         SelectedFile = file;
         ErrorMessage = null;
+        CurrentState = PageState.Upload;
 
         try
         {
-            // Read bytes immediately while file reference is still valid
             using var stream = file.OpenReadStream(
-                maxAllowedSize: 52428800);
+                maxAllowedSize: 524288000);
             using var memoryStream = new MemoryStream();
             await stream.CopyToAsync(memoryStream);
             UploadedBytes = memoryStream.ToArray();
+
+            if (PaymentService.IsFileTooLargeForFree(file.Size))
+                CurrentState = PageState.LargeFile;
         }
         catch (Exception ex)
         {
@@ -206,7 +231,6 @@
 
         try
         {
-            // Call API with already-read bytes
             Response = await ApiService.ProcessPdfAsync(
                 UploadedBytes,
                 SelectedFile.Name,

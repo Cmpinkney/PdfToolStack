@@ -1,0 +1,218 @@
+﻿@page "/contact"
+
+<PageTitle>Contact Us — PDFToolstack</PageTitle>
+
+<div class="legal-page">
+    <div class="legal-container">
+
+        <div class="legal-header">
+            <h1>Contact Us</h1>
+            <p class="legal-date">We'd love to hear from you</p>
+        </div>
+
+        <div class="legal-content">
+
+            <section class="legal-section">
+                <h2>Get in Touch</h2>
+                <p>
+                    Have a question, feedback, or feature request?
+                    We read every message and aim to respond
+                    within 1-2 business days.
+                </p>
+            </section>
+
+            <div class="contact-cards">
+                <div class="contact-card">
+                    <span class="contact-icon">📧</span>
+                    <h3>General Inquiries</h3>
+                    <a href="mailto:hello@pdftoolstack.com">
+                        hello@pdftoolstack.com
+                    </a>
+                </div>
+                <div class="contact-card">
+                    <span class="contact-icon">🔒</span>
+                    <h3>Privacy &amp; Data</h3>
+                    <a href="mailto:privacy@pdftoolstack.com">
+                        privacy@pdftoolstack.com
+                    </a>
+                </div>
+                <div class="contact-card">
+                    <span class="contact-icon">⚖️</span>
+                    <h3>Legal</h3>
+                    <a href="mailto:legal@pdftoolstack.com">
+                        legal@pdftoolstack.com
+                    </a>
+                </div>
+                <div class="contact-card">
+                    <span class="contact-icon">🐛</span>
+                    <h3>Bug Reports</h3>
+                    <a href="mailto:bugs@pdftoolstack.com">
+                        bugs@pdftoolstack.com
+                    </a>
+                </div>
+            </div>
+
+            <section class="legal-section">
+                <h2>Send Us a Message</h2>
+
+                @if (MessageSent)
+                {
+                    <div class="contact-success">
+                        <span>✅</span>
+                        <p>
+                            Thank you for your message! We'll get
+                            back to you within 1-2 business
+                            days.
+                        </p>
+                    </div>
+                }
+                else
+                {
+                    <div class="contact-form">
+                        <div class="form-group">
+                            <label>Your Name</label>
+                            <input type="text"
+                                   class="field-input"
+                                   placeholder="John Smith"
+                                   @bind="ContactName" />
+                        </div>
+                        <div class="form-group">
+                            <label>Email Address</label>
+                            <input type="email"
+                                   class="field-input"
+                                   placeholder="john@example.com"
+                                   @bind="ContactEmail" />
+                        </div>
+                        <div class="form-group">
+                            <label>Subject</label>
+                            <select class="field-input"
+                                    @bind="ContactSubject">
+                                <option value="">
+                                    Select a subject...
+                                </option>
+                                <option value="general">
+                                    General Inquiry
+                                </option>
+                                <option value="feature">
+                                    Feature Request
+                                </option>
+                                <option value="bug">
+                                    Bug Report
+                                </option>
+                                <option value="privacy">
+                                    Privacy Question
+                                </option>
+                                <option value="other">
+                                    Other
+                                </option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Message</label>
+                            <textarea class="field-input contact-textarea"
+                                      placeholder="Tell us how we can help..."
+                                      @bind="ContactMessage">
+                                </textarea>
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(ErrorMessage))
+                        {
+                            <p class="error-message">
+                                @ErrorMessage
+                            </p>
+                        }
+
+                    <button class="process-button"
+                            @onclick="SubmitForm"
+                            disabled="@IsSubmitting">
+                        @(IsSubmitting ? "Sending..."
+                                                : "Send Message")
+                    </button>
+                </div>
+                                }
+            </section>
+
+            <section class="legal-section">
+                <h2>Follow Us</h2>
+                <p>Stay updated with new tools and features:</p>
+                <div class="social-links">
+                    <a href="#"
+                       class="social-link"
+                       target="_blank"
+                       rel="noopener">
+                        📘 Facebook
+                    </a>
+                    <a href="#"
+                       class="social-link"
+                       target="_blank"
+                       rel="noopener">
+                        🐦 Twitter/X
+                    </a>
+                    <a href="#"
+                       class="social-link"
+                       target="_blank"
+                       rel="noopener">
+                        💼 LinkedIn
+                    </a>
+                    <a href="#"
+                       class="social-link"
+                       target="_blank"
+                       rel="noopener">
+                        📷 Instagram
+                    </a>
+                    <a href="#"
+                       class="social-link"
+                       target="_blank"
+                       rel="noopener">
+                        ▶️ YouTube
+                    </a>
+                </div>
+            </section>
+
+        </div>
+    </div>
+</div>
+
+@code {
+    private string ContactName = string.Empty;
+    private string ContactEmail = string.Empty;
+    private string ContactSubject = string.Empty;
+    private string ContactMessage = string.Empty;
+    private string? ErrorMessage;
+    private bool IsSubmitting = false;
+    private bool MessageSent = false;
+
+    private async Task SubmitForm()
+    {
+        ErrorMessage = null;
+
+        if (string.IsNullOrWhiteSpace(ContactName))
+        {
+            ErrorMessage = "Please enter your name.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(ContactEmail) ||
+            !ContactEmail.Contains('@'))
+        {
+            ErrorMessage = "Please enter a valid email address.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(ContactMessage))
+        {
+            ErrorMessage = "Please enter a message.";
+            return;
+        }
+
+        IsSubmitting = true;
+        StateHasChanged();
+
+        // Simulate sending — replace with real email service later
+        await Task.Delay(1000);
+
+        IsSubmitting = false;
+        MessageSent = true;
+        StateHasChanged();
+    }
+}

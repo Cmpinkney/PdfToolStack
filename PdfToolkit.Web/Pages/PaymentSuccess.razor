@@ -1,0 +1,94 @@
+﻿@page "/payment-success"
+@inject PaymentService PaymentService
+@inject NavigationManager Navigation
+@using PdfToolkit.Web.Services
+
+<div class="tool-page">
+    <div class="tool-container">
+
+        @if (IsVerifying)
+        {
+            <div class="processing-container">
+                <div class="spinner"></div>
+                <p>Verifying your payment...</p>
+            </div>
+        }
+        else if (IsVerified)
+        {
+            <div class="result-container">
+                <span class="result-icon">✅</span>
+                <h2>Payment Successful!</h2>
+                <p style="color: var(--gray);
+                               margin-bottom: 1.5rem;">
+                    Your payment has been verified.
+                    You can now process your large file.
+                </p>
+                <button class="process-button"
+                        @onclick="ContinueToTool">
+                    Continue Processing
+                </button>
+            </div>
+        }
+        else
+        {
+            <div class="error-container">
+                <span class="error-icon">❌</span>
+                <p class="error-message">
+                    Payment verification failed.
+                    Please try again.
+                </p>
+                <button class="reset-button"
+                        @onclick="GoHome">
+                    Return Home
+                </button>
+            </div>
+        }
+
+    </div>
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    private string? SessionId { get; set; }
+
+    [SupplyParameterFromQuery]
+    private string? JobId { get; set; }
+
+    [SupplyParameterFromQuery]
+    private string? ToolType { get; set; }
+
+    private bool IsVerifying = true;
+    private bool IsVerified = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!string.IsNullOrEmpty(SessionId))
+        {
+            IsVerified = await PaymentService
+                .VerifyPaymentAsync(SessionId);
+        }
+
+        IsVerifying = false;
+        StateHasChanged();
+    }
+
+    private void ContinueToTool()
+    {
+        var route = ToolType switch
+        {
+            "CompressPdf" => "/compress-pdf",
+            "PdfToWord" => "/pdf-to-word",
+            "MergePdf" => "/merge-pdf",
+            "FillPdfForm" => "/fill-pdf-form",
+            "RedactPdf" => "/redact-pdf",
+            _ => "/"
+        };
+        Navigation.NavigateTo(
+            $"{route}?paid=true&jobId={JobId}");
+    }
+
+    private void GoHome()
+    {
+        Navigation.NavigateTo("/");
+    }
+}

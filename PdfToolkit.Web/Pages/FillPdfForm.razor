@@ -4,6 +4,7 @@
 @using PdfToolkit.Domain.Entities
 @inject ApiService ApiService
 @inject IJSRuntime JS
+@inject PaymentService PaymentService
 
 <PageTitle>Fill PDF Form Online Free — Fill Out PDF Forms Instantly</PageTitle>
 
@@ -51,6 +52,14 @@
                     <p>Detecting form fields...</p>
                 </div>
             }
+        }
+
+        @if (CurrentState == PageState.LargeFile)
+        {
+            <LargeFileUpgrade FileSizeBytes="@(SelectedFile?.Size ?? 0)"
+                              FileName="@(SelectedFile?.Name ?? "")"
+                              ToolType="FillPdfForm"
+                              OnCancel="Reset" />
         }
 
         @if (CurrentState == PageState.FillFields)
@@ -230,7 +239,7 @@
     private enum PageState
     {
         Upload, FillFields, NoFields,
-        Processing, Complete, Error
+        Processing, Complete, Error, LargeFile
     }
 
     private PageState CurrentState = PageState.Upload;
@@ -250,10 +259,17 @@
         try
         {
             using var stream = file.OpenReadStream(
-                maxAllowedSize: 52428800);
+                maxAllowedSize: 524288000);
             using var ms = new MemoryStream();
             await stream.CopyToAsync(ms);
             UploadedBytes = ms.ToArray();
+
+            if (PaymentService.IsFileTooLargeForFree(file.Size))
+            {
+                CurrentState = PageState.LargeFile;
+                StateHasChanged();
+                return;
+            }
         }
         catch (Exception ex)
         {

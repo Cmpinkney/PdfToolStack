@@ -4,6 +4,7 @@
 @using PdfToolkit.Domain.Enums
 @inject ApiService ApiService
 @inject IJSRuntime JS
+@inject PaymentService PaymentService
 
 <PageTitle>PDF to Word Converter Free Online — Convert PDF to DOCX</PageTitle>
 
@@ -15,7 +16,7 @@
           content="pdf to word, convert pdf to word, pdf to docx,
                    free pdf converter" />
     <link rel="canonical"
-          href="https://yoursite.com/pdf-to-word" />
+          href="https://pdftoolstack.com/pdf-to-word" />
 </HeadContent>
 
 <div class="tool-page">
@@ -41,6 +42,14 @@
                     Convert to Word
                 </button>
             }
+        }
+
+        @if (CurrentState == PageState.LargeFile)
+        {
+            <LargeFileUpgrade FileSizeBytes="@(SelectedFile?.Size ?? 0)"
+                              FileName="@(SelectedFile?.Name ?? "")"
+                              ToolType="PdfToWord"
+                              OnCancel="Reset" />
         }
 
         @if (CurrentState == PageState.Processing)
@@ -109,18 +118,17 @@
         <div class="faq-item">
             <h3>Is this PDF to Word converter free?</h3>
             <p>
-                Yes — completely free with no signup required.
-                Upload your PDF and download the Word document
-                instantly.
+                Yes — completely free up to 25MB with no signup
+                required. Larger files available for $0.99.
             </p>
         </div>
 
         <div class="faq-item">
             <h3>What Word format does it convert to?</h3>
             <p>
-                Your PDF is converted to .docx format which is
-                compatible with Microsoft Word, Google Docs,
-                and all modern word processors.
+                Your PDF is converted to .docx format compatible
+                with Microsoft Word, Google Docs, and all modern
+                word processors.
             </p>
         </div>
 
@@ -128,25 +136,25 @@
             <h3>Will the formatting be preserved?</h3>
             <p>
                 Text content is fully preserved. Complex layouts
-                with images and tables may require minor adjustments
-                after conversion.
+                with images and tables may require minor
+                adjustments after conversion.
             </p>
         </div>
 
         <div class="faq-item">
             <h3>Is my PDF stored on your servers?</h3>
             <p>
-                Your file is automatically deleted within 1 hour
-                of processing. We never store your documents
-                permanently.
+                Your file is automatically deleted within 1 hour.
+                We never store your documents permanently.
             </p>
         </div>
 
         <div class="faq-item">
             <h3>What is the maximum file size?</h3>
             <p>
-                You can upload PDF files up to 50MB for
-                conversion to Word.
+                Free processing supports files up to 25MB.
+                For larger files up to 500MB use our
+                pay-per-file option for just $0.99.
             </p>
         </div>
     </div>
@@ -155,7 +163,7 @@
 @code {
     private enum PageState
     {
-        Upload, Processing, Complete, Error
+        Upload, Processing, Complete, Error, LargeFile
     }
 
     private PageState CurrentState = PageState.Upload;
@@ -165,18 +173,31 @@
     private byte[]? UploadedBytes;
     private string? ErrorMessage;
 
+    [SupplyParameterFromQuery]
+    private string? Paid { get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (Paid == "true")
+            CurrentState = PageState.Upload;
+    }
+
     private async Task HandleFileSelected(IBrowserFile file)
     {
         SelectedFile = file;
         ErrorMessage = null;
+        CurrentState = PageState.Upload;
 
         try
         {
             using var stream = file.OpenReadStream(
-                maxAllowedSize: 52428800);
+                maxAllowedSize: 524288000);
             using var memoryStream = new MemoryStream();
             await stream.CopyToAsync(memoryStream);
             UploadedBytes = memoryStream.ToArray();
+
+            if (PaymentService.IsFileTooLargeForFree(file.Size))
+                CurrentState = PageState.LargeFile;
         }
         catch (Exception ex)
         {

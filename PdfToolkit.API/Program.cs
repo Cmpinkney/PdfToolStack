@@ -39,6 +39,13 @@ try
         builder.Configuration.GetSection(
             ProcessingOptions.SectionName));
 
+    // ── Stripe ────────────────────────────────────────────────────────────────
+    builder.Services.Configure<StripeOptions>(
+        builder.Configuration.GetSection(StripeOptions.SectionName));
+
+    builder.Services.Configure<FileLimit>(
+        builder.Configuration.GetSection(FileLimit.SectionName));
+
     // ── Database ──────────────────────────────────────────────────────────
     builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(

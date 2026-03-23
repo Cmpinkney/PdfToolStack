@@ -19,4 +19,7 @@ builder.Services.AddScoped(sp =>
 // Register our API service
 builder.Services.AddScoped<ApiService>();
 
+//Register Payment service
+builder.Services.AddScoped<PaymentService>();
+
 await builder.Build().RunAsync();

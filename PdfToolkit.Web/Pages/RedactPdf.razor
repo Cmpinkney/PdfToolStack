@@ -4,6 +4,7 @@
 @inject ApiService ApiService
 @inject IJSRuntime JS
 @implements IDisposable
+@inject PaymentService PaymentService
 
 <PageTitle>Redact PDF Free Online — Permanently Remove Sensitive Text</PageTitle>
 
@@ -43,6 +44,14 @@
                     Load PDF for Redaction
                 </button>
             }
+        }
+
+        @if (CurrentState == PageState.LargeFile)
+        {
+            <LargeFileUpgrade FileSizeBytes="@(SelectedFile?.Size ?? 0)"
+                              FileName="@(SelectedFile?.Name ?? "")"
+                              ToolType="RedactPdf"
+                              OnCancel="Reset" />
         }
 
         @if (CurrentState == PageState.Redact)
@@ -206,7 +215,7 @@
 @code {
     private enum PageState
     {
-        Upload, Redact, Processing, Complete, Error
+        Upload, Redact, Processing, Complete, Error, LargeFile
     }
 
     private PageState CurrentState = PageState.Upload;
@@ -269,10 +278,17 @@
         try
         {
             using var stream = file.OpenReadStream(
-                maxAllowedSize: 52428800);
+                maxAllowedSize: 524288000);
             using var ms = new MemoryStream();
             await stream.CopyToAsync(ms);
             UploadedBytes = ms.ToArray();
+
+            if (PaymentService.IsFileTooLargeForFree(file.Size))
+            {
+                CurrentState = PageState.LargeFile;
+                StateHasChanged();
+                return;
+            }
         }
         catch (Exception ex)
         {
