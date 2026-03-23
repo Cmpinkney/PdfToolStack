@@ -1,0 +1,8 @@
+﻿global using PdfToolkit.Web.Services;
+global using PdfToolkit.Web.Components;
+global using PdfToolkit.Domain.Enums;
+global using PdfToolkit.Domain.Entities;
+global using PdfToolkit.Application.DTOs;
+global using Microsoft.AspNetCore.Components.Forms;
+global using Microsoft.AspNetCore.Components.Web;
+global using Microsoft.JSInterop;

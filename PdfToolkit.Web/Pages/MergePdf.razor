@@ -1,7 +1,4 @@
 ﻿@page "/merge-pdf"
-@using PdfToolkit.Web.Components
-@using PdfToolkit.Web.Services
-@using PdfToolkit.Domain.Enums
 @inject ApiService ApiService
 @inject IJSRuntime JS
 @inject PaymentService PaymentService
@@ -217,7 +214,7 @@
     private PageState CurrentState = PageState.Upload;
     private List<IBrowserFile> UploadedFiles = new();
     private List<byte[]> UploadedFileBytes = new();
-    private PdfToolkit.Application.DTOs.ProcessResponse? Response;
+    private ProcessResponse? Response;
     private byte[]? MergedBytes;
     private string? ErrorMessage;
     private bool IsDragging = false;

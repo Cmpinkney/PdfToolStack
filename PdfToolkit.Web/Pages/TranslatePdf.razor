@@ -1,0 +1,121 @@
+﻿@page "/translate-pdf"
+@inject ApiService ApiService
+@inject IJSRuntime JS
+@inject PaymentService PaymentService
+
+<PageTitle>Translate PDF Free Online — PDF Translation Tool</PageTitle>
+
+<HeadContent>
+    <meta name="description"
+          content="Translate your PDF document summary free online.
+                   Extract and translate PDF content instantly.
+                   No signup required." />
+    <meta name="keywords"
+          content="translate pdf, pdf translator online free,
+                   pdf translation tool" />
+    <link rel="canonical"
+          href="https://pdftoolstack.com/translate-pdf" />
+</HeadContent>
+
+<div class="tool-page">
+    <AdSlot Size="banner" />
+
+    <div class="tool-container">
+        <h1>Translate PDF Online</h1>
+        <p class="tool-subtitle">
+            Extract and translate the text content of your PDF.
+            No signup required. Files deleted within 1 hour.
+        </p>
+
+        <div class="coming-soon-banner">
+            <span class="coming-soon-icon">🌍</span>
+            <div>
+                <h3>Full AI Translation Coming Soon</h3>
+                <p>
+                    We are integrating AI-powered translation
+                    to support 50+ languages. This feature
+                    will be available shortly.
+                </p>
+                <p>
+                    In the meantime you can use our
+                    <a href="/pdf-to-word">PDF to Word</a>
+                    tool to extract text, then paste it into
+                    Google Translate.
+                </p>
+            </div>
+        </div>
+
+        <div class="notify-section">
+            <h3>Get notified when it launches</h3>
+            @if (NotifySubmitted)
+            {
+                <div class="contact-success">
+                    <span>✅</span>
+                    <p>
+                        We'll notify you when
+                        PDF translation launches!
+                    </p>
+                </div>
+            }
+            else
+            {
+                <div class="notify-form">
+                    <input type="email"
+                           class="field-input"
+                           style="max-width: 300px;"
+                           placeholder="your@email.com"
+                           @bind="NotifyEmail" />
+                    <button class="process-button"
+                            style="max-width: 160px;"
+                            @onclick="SubmitNotify">
+                        Notify Me
+                    </button>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="faq-section">
+        <h2>Frequently Asked Questions</h2>
+        <div class="faq-item">
+            <h3>What languages will be supported?</h3>
+            <p>
+                We plan to support 50+ languages including
+                Spanish, French, German, Chinese, Japanese,
+                Arabic, Portuguese, and many more.
+            </p>
+        </div>
+        <div class="faq-item">
+            <h3>Will the PDF formatting be preserved?</h3>
+            <p>
+                Yes — the translated content will be returned
+                as a new PDF with the same layout as
+                the original.
+            </p>
+        </div>
+        <div class="faq-item">
+            <h3>Will this be free?</h3>
+            <p>
+                Basic translation will be free. Large documents
+                may use our pay-per-file model.
+            </p>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string NotifyEmail = string.Empty;
+    private bool NotifySubmitted = false;
+
+    private async Task SubmitNotify()
+    {
+        if (string.IsNullOrWhiteSpace(NotifyEmail) ||
+            !NotifyEmail.Contains('@'))
+            return;
+
+        // Placeholder — wire to email service later
+        await Task.Delay(500);
+        NotifySubmitted = true;
+        StateHasChanged();
+    }
+}

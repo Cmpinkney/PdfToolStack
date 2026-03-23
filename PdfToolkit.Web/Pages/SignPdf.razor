@@ -1,0 +1,329 @@
+﻿@page "/sign-pdf"
+@inject ApiService ApiService
+@inject IJSRuntime JS
+@inject PaymentService PaymentService
+@implements IDisposable
+
+<PageTitle>Sign PDF Free Online — Add Electronic Signature to PDF</PageTitle>
+
+<HeadContent>
+    <meta name="description"
+          content="Sign PDF documents free online. Draw your
+                   electronic signature and place it on your PDF.
+                   No signup required." />
+    <meta name="keywords"
+          content="sign pdf online free, electronic signature pdf,
+                   add signature to pdf, esign pdf" />
+    <link rel="canonical"
+          href="https://pdftoolstack.com/sign-pdf" />
+</HeadContent>
+
+<div class="tool-page">
+    <AdSlot Size="banner" />
+
+    <div class="tool-container">
+        <h1>Sign PDF Online</h1>
+        <p class="tool-subtitle">
+            Draw your signature and place it on your PDF for free.
+            No signup required. Files deleted within 1 hour.
+        </p>
+
+        @if (CurrentState == PageState.Upload)
+        {
+            <FileUpload OnFileSelected="HandleFileSelected"
+                        OnFileRemoved="HandleFileRemoved" />
+
+            @if (SelectedFile != null)
+            {
+                <div class="sign-section">
+                    <h3>Draw Your Signature</h3>
+                    <p class="sign-hint">
+                        Draw your signature in the box below
+                    </p>
+
+                    <div class="signature-pad-wrapper">
+                        <canvas id="signatureCanvas"
+                                width="600" height="200"
+                                style="border: 2px solid
+                                            var(--primary);
+                                            border-radius: 8px;
+                                            background: white;
+                                            cursor: crosshair;
+                                            max-width: 100%;">
+                        </canvas>
+                    </div>
+
+                    <div class="sign-controls">
+                        <button class="reset-button"
+                                @onclick="ClearSignature">
+                            Clear Signature
+                        </button>
+                        <div class="sign-page-select">
+                            <label>Place on page:</label>
+                            <select class="field-input"
+                                    style="width: auto;
+                                                   padding: 0.4rem
+                                                   0.8rem;"
+                                    @bind="SignaturePage">
+                                @for (int i = 1;
+                                                        i <= TotalPages; i++)
+                                {
+                                    <option value="@i">
+                                        Page @i
+                                    </option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+
+                    <button class="process-button"
+                            @onclick="ProcessFile">
+                        Apply Signature to PDF
+                    </button>
+                </div>
+            }
+        }
+
+        @if (CurrentState == PageState.LargeFile)
+        {
+            <LargeFileUpgrade FileSizeBytes="@(SelectedFile?.Size ?? 0)"
+                              FileName="@(SelectedFile?.Name ?? "")"
+                              ToolType="SignPdf"
+                              OnCancel="Reset" />
+        }
+
+        @if (CurrentState == PageState.Processing)
+        {
+            <div class="processing-container">
+                <div class="spinner"></div>
+                <p>Applying your signature...</p>
+            </div>
+        }
+
+        @if (CurrentState == PageState.Complete
+                && ResultBytes != null)
+        {
+            <AdSlot Size="rectangle" />
+            <div class="result-container">
+                <span class="result-icon">✅</span>
+                <h2>PDF Signed!</h2>
+                <p style="color: var(--gray);
+                               margin-bottom: 1.5rem;">
+                    Your signature has been applied to
+                    the PDF successfully.
+                </p>
+                <button class="download-button"
+                        @onclick="DownloadFile">
+                    Download Signed PDF
+                </button>
+                <button class="reset-button"
+                        @onclick="Reset">
+                    Sign Another PDF
+                </button>
+            </div>
+        }
+
+        @if (CurrentState == PageState.Error)
+        {
+            <div class="error-container">
+                <span class="error-icon">❌</span>
+                <p class="error-message">@ErrorMessage</p>
+                <button class="reset-button" @onclick="Reset">
+                    Try Again
+                </button>
+            </div>
+        }
+    </div>
+
+    <div class="faq-section">
+        <h2>Frequently Asked Questions</h2>
+        <div class="faq-item">
+            <h3>Is an electronic signature legally valid?</h3>
+            <p>
+                Electronic signatures are legally recognized
+                in most countries under laws like the US
+                ESIGN Act and EU eIDAS regulation.
+            </p>
+        </div>
+        <div class="faq-item">
+            <h3>Can I choose which page to sign?</h3>
+            <p>
+                Yes — select which page you want your
+                signature placed on before applying.
+            </p>
+        </div>
+        <div class="faq-item">
+            <h3>Is this tool free?</h3>
+            <p>
+                Yes — completely free up to 25MB with no
+                signup required.
+            </p>
+        </div>
+        <div class="faq-item">
+            <h3>Is my PDF stored on your servers?</h3>
+            <p>
+                Your file is automatically deleted within
+                1 hour. We never store your documents
+                permanently.
+            </p>
+        </div>
+    </div>
+</div>
+
+@code {
+    private enum PageState
+    {
+        Upload, Processing, Complete, Error, LargeFile
+    }
+
+    private PageState CurrentState = PageState.Upload;
+    private IBrowserFile? SelectedFile;
+    private byte[]? UploadedBytes;
+    private byte[]? ResultBytes;
+    private string? ErrorMessage;
+    private int TotalPages = 1;
+    private int SignaturePage = 1;
+    private DotNetObjectReference<SignPdf>? _dotNetRef;
+
+    [SupplyParameterFromQuery]
+    private string? Paid { get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (Paid == "true")
+            CurrentState = PageState.Upload;
+    }
+
+    protected override async Task OnAfterRenderAsync(
+        bool firstRender)
+    {
+        if (firstRender)
+        {
+            _dotNetRef = DotNetObjectReference.Create(this);
+            await JS.InvokeVoidAsync(
+                "initSignaturePad", _dotNetRef);
+        }
+    }
+
+    public void Dispose() => _dotNetRef?.Dispose();
+
+    private async Task HandleFileSelected(IBrowserFile file)
+    {
+        SelectedFile = file;
+        ErrorMessage = null;
+
+        try
+        {
+            using var stream = file.OpenReadStream(
+                maxAllowedSize: 524288000);
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            UploadedBytes = ms.ToArray();
+
+            if (PaymentService.IsFileTooLargeForFree(
+                file.Size))
+            {
+                CurrentState = PageState.LargeFile;
+                StateHasChanged();
+                return;
+            }
+
+            TotalPages = await ApiService
+                .GetPageCountAsync(
+                    UploadedBytes, file.Name);
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage =
+                $"Could not read file: {ex.Message}";
+            SelectedFile = null;
+            UploadedBytes = null;
+        }
+
+        StateHasChanged();
+    }
+
+    private void HandleFileRemoved()
+    {
+        SelectedFile = null;
+        UploadedBytes = null;
+    }
+
+    private async Task ClearSignature()
+    {
+        await JS.InvokeVoidAsync("clearSignaturePad");
+    }
+
+    private async Task ProcessFile()
+    {
+        if (UploadedBytes == null) return;
+
+        CurrentState = PageState.Processing;
+        StateHasChanged();
+
+        try
+        {
+            var signatureBase64 = await JS
+                .InvokeAsync<string>(
+                    "getSignatureImage");
+
+            if (string.IsNullOrEmpty(signatureBase64))
+            {
+                ErrorMessage =
+                    "Please draw your signature first.";
+                CurrentState = PageState.Upload;
+                StateHasChanged();
+                return;
+            }
+
+            var signatureBytes = Convert.FromBase64String(
+                signatureBase64.Replace(
+                    "data:image/png;base64,", ""));
+
+            ResultBytes = await ApiService.SignPdfAsync(
+                UploadedBytes,
+                SelectedFile!.Name,
+                signatureBytes,
+                50f, 50f, 200f, 80f,
+                SignaturePage);
+
+            if (ResultBytes != null)
+                CurrentState = PageState.Complete;
+            else
+            {
+                ErrorMessage =
+                    "Failed to sign PDF. Please try again.";
+                CurrentState = PageState.Error;
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Error: {ex.Message}";
+            CurrentState = PageState.Error;
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task DownloadFile()
+    {
+        if (ResultBytes == null) return;
+        var fileName = Path.GetFileNameWithoutExtension(
+            SelectedFile?.Name ?? "document")
+            + "_signed.pdf";
+        await JS.InvokeVoidAsync("downloadFile",
+            fileName,
+            Convert.ToBase64String(ResultBytes));
+    }
+
+    private void Reset()
+    {
+        CurrentState = PageState.Upload;
+        SelectedFile = null;
+        UploadedBytes = null;
+        ResultBytes = null;
+        ErrorMessage = null;
+        TotalPages = 1;
+        SignaturePage = 1;
+    }
+}

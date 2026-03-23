@@ -214,6 +214,197 @@
             const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
         };
+
+        // PDF Reader
+        window.getPdfPageCount = async (base64Data) => {
+            const bytes = Uint8Array.from(
+                atob(base64Data), c => c.charCodeAt(0));
+            const pdf = await pdfjsLib.getDocument(
+                { data: bytes }).promise;
+            return pdf.numPages;
+        };
+
+        window.renderPdfReaderPage = async (
+            base64Data, pageNum, scale) => {
+            const canvas = document.getElementById(
+                'pdfReaderCanvas');
+            if (!canvas) return;
+            const bytes = Uint8Array.from(
+                atob(base64Data), c => c.charCodeAt(0));
+            const pdf = await pdfjsLib.getDocument(
+                { data: bytes }).promise;
+            const page = await pdf.getPage(pageNum);
+            const viewport = page.getViewport(
+                { scale: scale || 1.0 });
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            const ctx = canvas.getContext('2d');
+            await page.render(
+                { canvasContext: ctx, viewport }).promise;
+        };
+
+        // Signature Pad
+        let signatureDotNet = null;
+        let isSignDrawing = false;
+
+        window.initSignaturePad = (dotNet) => {
+            signatureDotNet = dotNet;
+            setTimeout(() => setupSignaturePad(), 300);
+        };
+
+        function setupSignaturePad() {
+            const canvas = document.getElementById(
+                'signatureCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+
+            canvas.addEventListener('mousedown', (e) => {
+                isSignDrawing = true;
+                const r = canvas.getBoundingClientRect();
+                ctx.beginPath();
+                ctx.moveTo(e.clientX - r.left,
+                    e.clientY - r.top);
+            });
+            canvas.addEventListener('mousemove', (e) => {
+                if (!isSignDrawing) return;
+                const r = canvas.getBoundingClientRect();
+                ctx.lineTo(e.clientX - r.left,
+                    e.clientY - r.top);
+                ctx.stroke();
+            });
+            canvas.addEventListener('mouseup', () => {
+                isSignDrawing = false;
+            });
+            canvas.addEventListener('mouseleave', () => {
+                isSignDrawing = false;
+            });
+        }
+
+        window.clearSignaturePad = () => {
+            const canvas = document.getElementById(
+                'signatureCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        };
+
+        window.getSignatureImage = () => {
+            const canvas = document.getElementById(
+                'signatureCanvas');
+            if (!canvas) return null;
+            return canvas.toDataURL('image/png');
+        };
+
+        // Edit Canvas
+        let editDotNet = null;
+        let isEditDrawing = false;
+        let editStartX = 0, editStartY = 0;
+
+        window.initEditCanvas = (dotNet) => {
+            editDotNet = dotNet;
+            setTimeout(() => setupEditCanvas(), 500);
+        };
+
+        function setupEditCanvas() {
+            const canvas = document.getElementById('editCanvas');
+            const pdfCanvas = document.getElementById('pdfCanvas');
+            if (!canvas || !pdfCanvas) {
+                setTimeout(setupEditCanvas, 300);
+                return;
+            }
+            canvas.width = pdfCanvas.width;
+            canvas.height = pdfCanvas.height;
+            canvas.style.width = pdfCanvas.offsetWidth + 'px';
+            canvas.style.height = pdfCanvas.offsetHeight + 'px';
+
+            canvas.addEventListener('mousedown', (e) => {
+                const r = canvas.getBoundingClientRect();
+                const sx = canvas.width / r.width;
+                const sy = canvas.height / r.height;
+                editStartX = (e.clientX - r.left) * sx;
+                editStartY = (e.clientY - r.top) * sy;
+                isEditDrawing = true;
+            });
+            canvas.addEventListener('mouseup', (e) => {
+                if (!isEditDrawing) return;
+                isEditDrawing = false;
+                const r = canvas.getBoundingClientRect();
+                const sx = canvas.width / r.width;
+                const sy = canvas.height / r.height;
+                const endX = (e.clientX - r.left) * sx;
+                const endY = (e.clientY - r.top) * sy;
+                if (editDotNet) {
+                    editDotNet.invokeMethodAsync(
+                        'AddAnnotation',
+                        editStartX, editStartY,
+                        endX, endY);
+                }
+            });
+        }
+
+        // Annotate Canvas
+        let annotateDotNet = null;
+        let isAnnotateDrawing = false;
+        let annotateStartX = 0, annotateStartY = 0;
+        let freehandPoints = [];
+
+        window.initAnnotateCanvas = (dotNet) => {
+            annotateDotNet = dotNet;
+            setTimeout(() => setupAnnotateCanvas(), 500);
+        };
+
+        function setupAnnotateCanvas() {
+            const canvas = document.getElementById(
+                'annotateCanvas');
+            const pdfCanvas = document.getElementById('pdfCanvas');
+            if (!canvas || !pdfCanvas) {
+                setTimeout(setupAnnotateCanvas, 300);
+                return;
+            }
+            canvas.width = pdfCanvas.width;
+            canvas.height = pdfCanvas.height;
+            canvas.style.width = pdfCanvas.offsetWidth + 'px';
+            canvas.style.height = pdfCanvas.offsetHeight + 'px';
+
+            canvas.addEventListener('mousedown', (e) => {
+                const r = canvas.getBoundingClientRect();
+                const sx = canvas.width / r.width;
+                const sy = canvas.height / r.height;
+                annotateStartX = (e.clientX - r.left) * sx;
+                annotateStartY = (e.clientY - r.top) * sy;
+                isAnnotateDrawing = true;
+                freehandPoints = [[annotateStartX, annotateStartY]];
+            });
+            canvas.addEventListener('mousemove', (e) => {
+                if (!isAnnotateDrawing) return;
+                const r = canvas.getBoundingClientRect();
+                const sx = canvas.width / r.width;
+                const sy = canvas.height / r.height;
+                const x = (e.clientX - r.left) * sx;
+                const y = (e.clientY - r.top) * sy;
+                freehandPoints.push([x, y]);
+            });
+            canvas.addEventListener('mouseup', (e) => {
+                if (!isAnnotateDrawing) return;
+                isAnnotateDrawing = false;
+                const r = canvas.getBoundingClientRect();
+                const sx = canvas.width / r.width;
+                const sy = canvas.height / r.height;
+                const endX = (e.clientX - r.left) * sx;
+                const endY = (e.clientY - r.top) * sy;
+                if (annotateDotNet) {
+                    annotateDotNet.invokeMethodAsync(
+                        'AddHighlight',
+                        annotateStartX, annotateStartY,
+                        endX - annotateStartX,
+                        endY - annotateStartY,
+                        freehandPoints);
+                }
+            });
+        }
     </script>
 </body>
 </html>

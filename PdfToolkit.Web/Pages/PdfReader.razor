@@ -1,0 +1,221 @@
+﻿@page "/pdf-reader"
+@inject IJSRuntime JS
+
+<PageTitle>PDF Reader Free Online — View and Share PDFs</PageTitle>
+
+<HeadContent>
+    <meta name="description"
+          content="Read and view PDF files free online.
+                   No software download required.
+                   Display, navigate, and share PDFs
+                   instantly in your browser." />
+    <meta name="keywords"
+          content="pdf reader online, view pdf free,
+                   pdf viewer online, read pdf online" />
+    <link rel="canonical"
+          href="https://pdftoolstack.com/pdf-reader" />
+</HeadContent>
+
+<div class="tool-page">
+
+    <div class="tool-container">
+        <h1>PDF Reader Online</h1>
+        <p class="tool-subtitle">
+            View your PDF directly in your browser for free.
+            No software required. No signup needed.
+        </p>
+
+        @if (!IsLoaded)
+        {
+            <div class="upload-container">
+                <span class="upload-icon">📖</span>
+                <p>Upload a PDF to start reading</p>
+                <label class="upload-button">
+                    Browse PDF
+                    <InputFile OnChange="HandleFileSelected"
+                               accept=".pdf"
+                               style="display:none" />
+                </label>
+                <p class="upload-hint">
+                    Files are never uploaded to our servers —
+                    everything stays in your browser
+                </p>
+            </div>
+
+            @if (!string.IsNullOrEmpty(ErrorMessage))
+            {
+                <p class="error-message">@ErrorMessage</p>
+            }
+        }
+
+        @if (IsLoaded)
+        {
+            <div class="reader-toolbar">
+                <div class="page-controls">
+                    <button class="page-btn"
+                            @onclick="PreviousPage"
+                            disabled="@(CurrentPage <= 1)">
+                        ◀ Prev
+                    </button>
+                    <span class="page-info">
+                        Page @CurrentPage of @TotalPages
+                    </span>
+                    <button class="page-btn"
+                            @onclick="NextPage"
+                            disabled="@(CurrentPage >= TotalPages)">
+                        Next ▶
+                    </button>
+                </div>
+                <div class="reader-actions">
+                    <button class="page-btn"
+                            @onclick="ZoomOut">
+                        🔍 −
+                    </button>
+                    <span class="zoom-level">@Scale%</span>
+                    <button class="page-btn"
+                            @onclick="ZoomIn">
+                        🔍 +
+                    </button>
+                    <button class="reset-button"
+                            style="padding: 0.4rem 1rem;"
+                            @onclick="Reset">
+                        Close
+                    </button>
+                </div>
+            </div>
+
+            <div class="reader-canvas-wrapper">
+                <canvas id="pdfReaderCanvas"
+                        style="display: block;
+                                   max-width: 100%;
+                                   border-radius: 8px;
+                                   box-shadow: var(--shadow);">
+                </canvas>
+            </div>
+
+            <div class="reader-file-info">
+                <span>📄 @FileName</span>
+            </div>
+        }
+    </div>
+
+    <div class="faq-section">
+        <h2>Frequently Asked Questions</h2>
+        <div class="faq-item">
+            <h3>Is my PDF uploaded to your servers?</h3>
+            <p>
+                No — this PDF reader works entirely in your
+                browser using PDF.js. Your file never leaves
+                your device.
+            </p>
+        </div>
+        <div class="faq-item">
+            <h3>What PDF features are supported?</h3>
+            <p>
+                Page navigation, zoom in/out, and full text
+                rendering. All standard PDF content including
+                images and formatted text.
+            </p>
+        </div>
+        <div class="faq-item">
+            <h3>Is this PDF reader free?</h3>
+            <p>
+                Yes — completely free with no signup required
+                and no file size limits since files stay
+                on your device.
+            </p>
+        </div>
+    </div>
+</div>
+
+@code {
+    private bool IsLoaded = false;
+    private int CurrentPage = 1;
+    private int TotalPages = 1;
+    private int Scale = 100;
+    private string? FileName;
+    private string? ErrorMessage;
+    private string? PdfBase64;
+
+    private async Task HandleFileSelected(
+        InputFileChangeEventArgs e)
+    {
+        ErrorMessage = null;
+        FileName = e.File.Name;
+
+        try
+        {
+            using var stream = e.File.OpenReadStream(
+                maxAllowedSize: 524288000);
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            PdfBase64 = Convert.ToBase64String(
+                ms.ToArray());
+
+            TotalPages = await JS.InvokeAsync<int>(
+                "getPdfPageCount", PdfBase64);
+
+            CurrentPage = 1;
+            IsLoaded = true;
+            StateHasChanged();
+
+            await RenderPage();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage =
+                $"Could not open PDF: {ex.Message}";
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task RenderPage()
+    {
+        if (string.IsNullOrEmpty(PdfBase64)) return;
+        await JS.InvokeVoidAsync(
+            "renderPdfReaderPage",
+            PdfBase64,
+            CurrentPage,
+            Scale / 100.0);
+    }
+
+    private async Task PreviousPage()
+    {
+        if (CurrentPage <= 1) return;
+        CurrentPage--;
+        await RenderPage();
+    }
+
+    private async Task NextPage()
+    {
+        if (CurrentPage >= TotalPages) return;
+        CurrentPage++;
+        await RenderPage();
+    }
+
+    private async Task ZoomIn()
+    {
+        if (Scale >= 200) return;
+        Scale += 25;
+        await RenderPage();
+    }
+
+    private async Task ZoomOut()
+    {
+        if (Scale <= 50) return;
+        Scale -= 25;
+        await RenderPage();
+    }
+
+    private void Reset()
+    {
+        IsLoaded = false;
+        CurrentPage = 1;
+        TotalPages = 1;
+        Scale = 100;
+        FileName = null;
+        PdfBase64 = null;
+        ErrorMessage = null;
+    }
+}

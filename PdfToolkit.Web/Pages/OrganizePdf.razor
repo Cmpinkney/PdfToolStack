@@ -1,0 +1,350 @@
+﻿@page "/organize-pdf"
+@inject ApiService ApiService
+@inject IJSRuntime JS
+@inject PaymentService PaymentService
+
+<PageTitle>Organize PDF Free Online — Rearrange and Rotate Pages</PageTitle>
+
+<HeadContent>
+    <meta name="description"
+          content="Organize your PDF pages free online.
+                   Rearrange, rotate, and delete pages easily.
+                   No signup required." />
+    <meta name="keywords"
+          content="organize pdf, rearrange pdf pages,
+                   rotate pdf pages, reorder pdf free" />
+    <link rel="canonical"
+          href="https://pdftoolstack.com/organize-pdf" />
+</HeadContent>
+
+<div class="tool-page">
+    <AdSlot Size="banner" />
+
+    <div class="tool-container">
+        <h1>Organize PDF Pages</h1>
+        <p class="tool-subtitle">
+            Rearrange, rotate, and delete pages in your PDF.
+            No signup required. Files deleted within 1 hour.
+        </p>
+
+        @if (CurrentState == PageState.Upload)
+        {
+            <FileUpload OnFileSelected="HandleFileSelected"
+                        OnFileRemoved="HandleFileRemoved" />
+
+            @if (SelectedFile != null && Pages.Any())
+            {
+                <div class="organize-container">
+                    <h3>Click arrows to reorder — rotate or delete pages</h3>
+                    <div class="organize-grid">
+                        @for (int i = 0; i < Pages.Count; i++)
+                        {
+                            var idx = i;
+                            var pg = Pages[idx];
+                            <div class="@GetTileClass(pg.IsDeleted)">
+                                <div class="organize-page-num">
+                                    @pg.OriginalPage
+                                </div>
+                                <div class="organize-actions">
+                                    <button class="org-btn"
+                                            title="Move left"
+                                            disabled="@(idx == 0 || pg.IsDeleted)"
+                                            @onclick="() => MoveLeft(idx)">
+                                        ←
+                                    </button>
+                                    <button class="org-btn"
+                                            title="Rotate"
+                                            disabled="@pg.IsDeleted"
+                                            @onclick="() => RotatePage(idx)">
+                                        ↻
+                                    </button>
+                                    <button class="org-btn org-btn-delete"
+                                            title="Delete"
+                                            @onclick="() => ToggleDelete(idx)">
+                                        @GetDeleteLabel(pg.IsDeleted)
+                                    </button>
+                                    <button class="org-btn"
+                                            title="Move right"
+                                            disabled="@(idx == Pages.Count - 1 || pg.IsDeleted)"
+                                            @onclick="() => MoveRight(idx)">
+                                        →
+                                    </button>
+                                </div>
+                                @if (pg.Rotation != 0)
+                                {
+                                    <span class="rotation-badge">@pg.Rotation°</span>
+                                }
+                            </div>
+                        }
+                    </div>
+                    <button class="process-button" @onclick="ProcessFile">
+                        Apply Changes
+                    </button>
+                </div>
+            }
+        }
+
+        @if (CurrentState == PageState.LargeFile)
+        {
+            <LargeFileUpgrade
+                FileSizeBytes="@(SelectedFile?.Size ?? 0)"
+                FileName="@(SelectedFile?.Name ?? "")"
+                ToolType="OrganizePdf"
+                OnCancel="Reset" />
+        }
+
+        @if (CurrentState == PageState.Processing)
+        {
+            <div class="processing-container">
+                <div class="spinner"></div>
+                <p>Organizing your PDF...</p>
+            </div>
+        }
+
+        @if (CurrentState == PageState.Complete && ResultBytes != null)
+        {
+            <AdSlot Size="rectangle" />
+            <div class="result-container">
+                <span class="result-icon">✅</span>
+                <h2>PDF Organized!</h2>
+                <p style="color: var(--gray); margin-bottom: 1.5rem;">
+                    Your PDF pages have been reorganized successfully.
+                </p>
+                <button class="download-button" @onclick="DownloadFile">
+                    Download PDF
+                </button>
+                <button class="reset-button" @onclick="Reset">
+                    Organize Another PDF
+                </button>
+            </div>
+        }
+
+        @if (CurrentState == PageState.Error)
+        {
+            <div class="error-container">
+                <span class="error-icon">❌</span>
+                <p class="error-message">@ErrorMessage</p>
+                <button class="reset-button" @onclick="Reset">Try Again</button>
+            </div>
+        }
+    </div>
+
+    <div class="faq-section">
+        <h2>Frequently Asked Questions</h2>
+        <div class="faq-item">
+            <h3>Can I reorder pages in my PDF?</h3>
+            <p>Yes — use the arrow buttons to move pages
+               left or right into your desired order.</p>
+        </div>
+        <div class="faq-item">
+            <h3>Can I rotate individual pages?</h3>
+            <p>Yes — click the rotate button on any page
+               to rotate it 90 degrees clockwise.</p>
+        </div>
+        <div class="faq-item">
+            <h3>Is this tool free?</h3>
+            <p>Yes — completely free up to 25MB with no
+               signup required.</p>
+        </div>
+    </div>
+</div>
+
+@code {
+    private enum PageState
+    {
+        Upload, Processing, Complete, Error, LargeFile
+    }
+
+    private class PageModel
+    {
+        public int OriginalPage { get; set; }
+        public int Rotation { get; set; } = 0;
+        public bool IsDeleted { get; set; } = false;
+    }
+
+    private PageState CurrentState = PageState.Upload;
+    private IBrowserFile? SelectedFile;
+    private byte[]? UploadedBytes;
+    private byte[]? ResultBytes;
+    private string? ErrorMessage;
+    private List<PageModel> Pages = new();
+
+    [SupplyParameterFromQuery]
+    private string? Paid { get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (Paid == "true")
+            CurrentState = PageState.Upload;
+    }
+
+    private string GetTileClass(bool isDeleted) =>
+        isDeleted ? "organize-tile organize-tile-deleted"
+                  : "organize-tile";
+
+    private string GetDeleteLabel(bool isDeleted) =>
+        isDeleted ? "↩" : "✕";
+
+    private async Task HandleFileSelected(IBrowserFile file)
+    {
+        SelectedFile = file;
+        ErrorMessage = null;
+        Pages.Clear();
+
+        try
+        {
+            using var stream = file.OpenReadStream(
+                maxAllowedSize: 524288000);
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            UploadedBytes = ms.ToArray();
+
+            if (PaymentService.IsFileTooLargeForFree(file.Size))
+            {
+                CurrentState = PageState.LargeFile;
+                StateHasChanged();
+                return;
+            }
+
+            var pageCount = await ApiService
+                .GetPageCountAsync(UploadedBytes, file.Name);
+
+            Pages = Enumerable.Range(1, pageCount)
+                .Select(p => new PageModel { OriginalPage = p })
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Could not read file: {ex.Message}";
+            SelectedFile = null;
+            UploadedBytes = null;
+        }
+
+        StateHasChanged();
+    }
+
+    private void HandleFileRemoved()
+    {
+        SelectedFile = null;
+        UploadedBytes = null;
+        Pages.Clear();
+    }
+
+    private void MoveLeft(int index)
+    {
+        if (index <= 0) return;
+        (Pages[index], Pages[index - 1]) =
+            (Pages[index - 1], Pages[index]);
+        StateHasChanged();
+    }
+
+    private void MoveRight(int index)
+    {
+        if (index >= Pages.Count - 1) return;
+        (Pages[index], Pages[index + 1]) =
+            (Pages[index + 1], Pages[index]);
+        StateHasChanged();
+    }
+
+    private void RotatePage(int index)
+    {
+        Pages[index].Rotation =
+            (Pages[index].Rotation + 90) % 360;
+        StateHasChanged();
+    }
+
+    private void ToggleDelete(int index)
+    {
+        Pages[index].IsDeleted = !Pages[index].IsDeleted;
+        StateHasChanged();
+    }
+
+    private async Task ProcessFile()
+    {
+        if (UploadedBytes == null) return;
+
+        CurrentState = PageState.Processing;
+        StateHasChanged();
+
+        try
+        {
+            var operations = new List<object>();
+            var order = 0;
+
+            foreach (var page in Pages)
+            {
+                if (page.IsDeleted)
+                {
+                    operations.Add(new
+                    {
+                        order = order++,
+                        type = "delete",
+                        pageNumber = page.OriginalPage,
+                        targetIndex = 0,
+                        rotationDegrees = 0
+                    });
+                }
+                else if (page.Rotation != 0)
+                {
+                    operations.Add(new
+                    {
+                        order = order++,
+                        type = "rotate",
+                        pageNumber = page.OriginalPage,
+                        targetIndex = 0,
+                        rotationDegrees = page.Rotation
+                    });
+                }
+            }
+
+            var newOrder = Pages
+                .Where(p => !p.IsDeleted)
+                .Select((p, i) => new
+                {
+                    order = order++,
+                    type = "move",
+                    pageNumber = p.OriginalPage,
+                    targetIndex = i,
+                    rotationDegrees = 0
+                }).ToList();
+
+            operations.AddRange(newOrder.Cast<object>());
+
+            ResultBytes = await ApiService.OrganizePdfAsync(
+                UploadedBytes, SelectedFile!.Name, operations);
+
+            CurrentState = ResultBytes != null
+                ? PageState.Complete
+                : PageState.Error;
+
+            if (ResultBytes == null)
+                ErrorMessage = "Failed to organize PDF. Please try again.";
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Error: {ex.Message}";
+            CurrentState = PageState.Error;
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task DownloadFile()
+    {
+        if (ResultBytes == null) return;
+        var fileName = Path.GetFileNameWithoutExtension(
+            SelectedFile?.Name ?? "document") + "_organized.pdf";
+        await JS.InvokeVoidAsync("downloadFile",
+            fileName, Convert.ToBase64String(ResultBytes));
+    }
+
+    private void Reset()
+    {
+        CurrentState = PageState.Upload;
+        SelectedFile = null;
+        UploadedBytes = null;
+        ResultBytes = null;
+        ErrorMessage = null;
+        Pages.Clear();
+    }
+}

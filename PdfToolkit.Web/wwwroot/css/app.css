@@ -53,21 +53,24 @@ body {
     letter-spacing: -0.5px;
     font-family: 'Open Sans', system-ui, sans-serif;
 }
+@media (max-width: 1200px) {
+    .nav-links {
+        display: none;
+    }
+}
 
 .nav-links {
     display: flex;
-    gap: 1.5rem;
-    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
 }
 
 .nav-link {
-    color: var(--mid);
-    text-decoration: none;
-    font-size: 0.95rem;
-    font-weight: 500;
-    transition: var(--transition);
-    padding: 0.4rem 0.8rem;
-    border-radius: 8px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    padding: 0.3rem 0.6rem;
 }
 
     .nav-link:hover {
@@ -1281,3 +1284,336 @@ body {
     }
 }
 
+/* ── New Tool Pages ───────────────────────────────────────── */
+.page-selector {
+    margin-top: 1.5rem;
+    text-align: left;
+}
+
+    .page-selector h3 {
+        font-weight: 700;
+        color: var(--text);
+        margin-bottom: 0.5rem;
+    }
+
+.page-selector-hint {
+    color: var(--gray);
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+}
+
+.page-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.page-tile {
+    width: 52px;
+    height: 52px;
+    border: 2px solid var(--primary-light);
+    border-radius: 8px;
+    background: var(--card-bg);
+    color: var(--text);
+    font-weight: 600;
+    cursor: pointer;
+    position: relative;
+    transition: var(--transition);
+    font-size: 0.9rem;
+}
+
+    .page-tile:hover {
+        border-color: var(--primary);
+        background: var(--primary-light);
+    }
+
+.page-tile-selected {
+    background: var(--error) !important;
+    border-color: var(--error) !important;
+    color: white !important;
+}
+
+.page-delete-x {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    font-size: 0.7rem;
+    background: var(--error);
+    color: white;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.selected-summary {
+    color: var(--gray);
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+}
+
+.selected-file-info {
+    background: var(--primary-light);
+    border: 1px solid var(--primary);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    margin: 1rem 0;
+    color: var(--text);
+    font-size: 0.9rem;
+}
+
+/* ── Organize PDF ─────────────────────────────────────────── */
+.organize-container {
+    margin-top: 1.5rem;
+}
+
+.organize-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin: 1rem 0;
+}
+
+.organize-tile {
+    width: 90px;
+    background: var(--card-bg);
+    border: 2px solid var(--primary-light);
+    border-radius: 10px;
+    padding: 0.75rem 0.5rem;
+    text-align: center;
+    position: relative;
+    transition: var(--transition);
+}
+
+.organize-tile-deleted {
+    opacity: 0.4;
+    border-color: var(--error) !important;
+}
+
+.organize-page-num {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 0.5rem;
+}
+
+.organize-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+}
+
+.org-btn {
+    background: var(--primary-light);
+    border: none;
+    border-radius: 4px;
+    padding: 2px 4px;
+    cursor: pointer;
+    font-size: 0.75rem;
+    color: var(--primary);
+    transition: var(--transition);
+}
+
+    .org-btn:hover:not(:disabled) {
+        background: var(--primary);
+        color: white;
+    }
+
+    .org-btn:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+    }
+
+.org-btn-delete {
+    color: var(--error) !important;
+}
+
+.rotation-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: var(--accent);
+    color: white;
+    border-radius: 10px;
+    padding: 1px 6px;
+    font-size: 0.7rem;
+    font-weight: 700;
+}
+
+/* ── Sign PDF ─────────────────────────────────────────────── */
+.sign-section {
+    margin-top: 1.5rem;
+    text-align: left;
+}
+
+.sign-hint {
+    color: var(--gray);
+    font-size: 0.9rem;
+    margin-bottom: 0.75rem;
+}
+
+.signature-pad-wrapper {
+    margin-bottom: 1rem;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.sign-controls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+.sign-page-select {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--text);
+}
+
+/* ── Edit / Annotate PDF ──────────────────────────────────── */
+.edit-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    padding: 1rem;
+    background: var(--primary-light);
+    border-radius: 10px;
+}
+
+.tool-options {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.tool-option-btn {
+    background: var(--card-bg);
+    border: 2px solid var(--primary-light);
+    border-radius: 8px;
+    padding: 0.4rem 0.8rem;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: var(--text);
+    transition: var(--transition);
+    font-weight: 500;
+}
+
+    .tool-option-btn:hover {
+        border-color: var(--primary);
+    }
+
+    .tool-option-btn.active {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: white;
+    }
+
+.tool-settings {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+/* ── Reader ───────────────────────────────────────────────── */
+.reader-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    background: var(--primary-light);
+    border-radius: 10px;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.reader-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.zoom-level {
+    font-weight: 700;
+    color: var(--text);
+    min-width: 45px;
+    text-align: center;
+}
+
+.reader-canvas-wrapper {
+    overflow: auto;
+    max-height: 80vh;
+    border-radius: 8px;
+}
+
+.reader-file-info {
+    color: var(--gray);
+    font-size: 0.85rem;
+    margin-top: 0.75rem;
+}
+
+/* ── Coming Soon ──────────────────────────────────────────── */
+.coming-soon-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.5rem;
+    background: var(--primary-light);
+    border: 2px solid var(--primary);
+    border-radius: var(--radius);
+    padding: 2rem;
+    margin-bottom: 2rem;
+    text-align: left;
+}
+
+.coming-soon-icon {
+    font-size: 3rem;
+    flex-shrink: 0;
+}
+
+.coming-soon-banner h3 {
+    font-weight: 800;
+    color: var(--text);
+    margin-bottom: 0.5rem;
+}
+
+.coming-soon-banner p {
+    color: var(--gray);
+    font-size: 0.95rem;
+    margin-bottom: 0.5rem;
+    line-height: 1.6;
+}
+
+.coming-soon-banner a {
+    color: var(--primary);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.notify-section {
+    text-align: center;
+    padding: 1.5rem;
+}
+
+    .notify-section h3 {
+        font-weight: 700;
+        color: var(--text);
+        margin-bottom: 1rem;
+    }
+
+.notify-form {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}

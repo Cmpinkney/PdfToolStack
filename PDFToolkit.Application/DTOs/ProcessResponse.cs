@@ -1,6 +1,4 @@
-﻿using PdfToolkit.Domain.Enums;
-
-namespace PdfToolkit.Application.DTOs
+﻿namespace PdfToolkit.Application.DTOs
 {
     public class ProcessResponse
     {
@@ -10,10 +8,15 @@ namespace PdfToolkit.Application.DTOs
         public string? ErrorMessage { get; set; }
         public long OriginalSizeBytes { get; set; }
         public long OutputSizeBytes { get; set; }
-        public double CompressionRatio =>
-            OriginalSizeBytes > 0
-                ? Math.Round(
-                    (1 - (double)OutputSizeBytes / OriginalSizeBytes) * 100, 1)
-                : 0;
+        public double CompressionRatio
+        {
+            get
+            {
+                if (OriginalSizeBytes == 0) return 0;
+                return Math.Round(
+                    (1 - (double)OutputSizeBytes
+                        / OriginalSizeBytes) * 100, 1);
+            }
+        }
     }
 }
