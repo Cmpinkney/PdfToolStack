@@ -1,5 +1,4 @@
-﻿
-namespace PdfToolkit.Domain.Enums
+﻿namespace PdfToolkit.Domain.Enums
 {
     public enum ToolType
     {
@@ -14,6 +13,26 @@ namespace PdfToolkit.Domain.Enums
         SignPdf = 9,
         EditPdf = 10,
         AnnotatePdf = 11,
-        TranslatePdf = 12
+        TranslatePdf = 12,
+        ExtractPages = 13,
+        RotatePdf = 14,
+        SplitPdf = 15,
+        WatermarkPdf = 16,
+        NumberPages = 17,
+        FlattenPdf = 18,
+        JpgToPdf = 19,
+        PdfToJpg = 20,
+        CropPdf = 21,
+        UnlockPdf = 22,
+        ProtectPdf = 23,
+        PptToPdf = 24,
+        ExcelToPdf = 25,
+        PdfToExcel = 26,
+        PdfToPpt = 27,
+        PdfOcr = 28,
+        AiPdfAssist = 29,
+        ChatWithPdf = 30,
+        AiSummarizer = 31,
+        AiQuestions = 32
     }
 }

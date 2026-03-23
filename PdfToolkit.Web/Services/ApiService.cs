@@ -283,9 +283,9 @@ namespace PdfToolkit.Web.Services
         }
 
         public async Task<byte[]?> DeletePagesAsync(
-    byte[] fileBytes,
-    string fileName,
-    IEnumerable<int> pages)
+        byte[] fileBytes,
+        string fileName,
+        IEnumerable<int> pages)
         {
             using var content = new MultipartFormDataContent();
             content.Add(
@@ -426,6 +426,205 @@ namespace PdfToolkit.Web.Services
             if (response.IsSuccessStatusCode)
                 return await response.Content.ReadAsByteArrayAsync();
             return null;
+        }
+
+        public async Task<byte[]?> ExtractPagesAsync(
+    byte[] fileBytes, string fileName,
+    IEnumerable<int> pages)
+        {
+            using var content = new MultipartFormDataContent();
+            content.Add(new ByteArrayContent(fileBytes),
+                "file", fileName);
+            content.Add(new StringContent(
+                string.Join(",", pages)), "pageNumbers");
+            var response = await _httpClient.PostAsync(
+                "api/pdf/extract-pages", content);
+            return response.IsSuccessStatusCode
+                ? await response.Content.ReadAsByteArrayAsync()
+                : null;
+        }
+
+        public async Task<byte[]?> RotatePdfAsync(
+            byte[] fileBytes, string fileName,
+            int rotation, string? pageNumbers = null)
+        {
+            using var content = new MultipartFormDataContent();
+            content.Add(new ByteArrayContent(fileBytes),
+                "file", fileName);
+            content.Add(new StringContent(
+                rotation.ToString()), "rotation");
+            if (pageNumbers != null)
+                content.Add(new StringContent(pageNumbers),
+                    "pageNumbers");
+            var response = await _httpClient.PostAsync(
+                "api/pdf/rotate", content);
+            return response.IsSuccessStatusCode
+                ? await response.Content.ReadAsByteArrayAsync()
+                : null;
+        }
+
+        public async Task<byte[]?> SplitPdfAsync(
+            byte[] fileBytes, string fileName,
+            int fromPage, int toPage)
+        {
+            using var content = new MultipartFormDataContent();
+            content.Add(new ByteArrayContent(fileBytes),
+                "file", fileName);
+            content.Add(new StringContent(
+                fromPage.ToString()), "fromPage");
+            content.Add(new StringContent(
+                toPage.ToString()), "toPage");
+            var response = await _httpClient.PostAsync(
+                "api/pdf/split", content);
+            return response.IsSuccessStatusCode
+                ? await response.Content.ReadAsByteArrayAsync()
+                : null;
+        }
+
+        public async Task<byte[]?> WatermarkPdfAsync(
+            byte[] fileBytes, string fileName,
+            string watermarkText, float opacity,
+            float fontSize)
+        {
+            using var content = new MultipartFormDataContent();
+            content.Add(new ByteArrayContent(fileBytes),
+                "file", fileName);
+            content.Add(new StringContent(watermarkText),
+                "watermarkText");
+            content.Add(new StringContent(
+                opacity.ToString()), "opacity");
+            content.Add(new StringContent(
+                fontSize.ToString()), "fontSize");
+            var response = await _httpClient.PostAsync(
+                "api/pdf/watermark", content);
+            return response.IsSuccessStatusCode
+                ? await response.Content.ReadAsByteArrayAsync()
+                : null;
+        }
+
+        public async Task<byte[]?> NumberPagesAsync(
+            byte[] fileBytes, string fileName,
+            string position, int startNumber)
+        {
+            using var content = new MultipartFormDataContent();
+            content.Add(new ByteArrayContent(fileBytes),
+                "file", fileName);
+            content.Add(new StringContent(position),
+                "position");
+            content.Add(new StringContent(
+                startNumber.ToString()), "startNumber");
+            var response = await _httpClient.PostAsync(
+                "api/pdf/number-pages", content);
+            return response.IsSuccessStatusCode
+                ? await response.Content.ReadAsByteArrayAsync()
+                : null;
+        }
+
+        public async Task<byte[]?> FlattenPdfAsync(
+            byte[] fileBytes, string fileName)
+        {
+            using var content = new MultipartFormDataContent();
+            content.Add(new ByteArrayContent(fileBytes),
+                "file", fileName);
+            var response = await _httpClient.PostAsync(
+                "api/pdf/flatten", content);
+            return response.IsSuccessStatusCode
+                ? await response.Content.ReadAsByteArrayAsync()
+                : null;
+        }
+
+        public async Task<byte[]?> JpgToPdfAsync(
+            List<byte[]> imageFiles,
+            List<string> fileNames)
+        {
+            using var content = new MultipartFormDataContent();
+            for (int i = 0; i < imageFiles.Count; i++)
+            {
+                content.Add(new ByteArrayContent(imageFiles[i]),
+                    "files", fileNames[i]);
+            }
+            var response = await _httpClient.PostAsync(
+                "api/pdf/jpg-to-pdf", content);
+            return response.IsSuccessStatusCode
+                ? await response.Content.ReadAsByteArrayAsync()
+                : null;
+        }
+
+        public async Task<byte[]?> UnlockPdfAsync(
+            byte[] fileBytes, string fileName,
+            string? password = null)
+        {
+            using var content = new MultipartFormDataContent();
+            content.Add(new ByteArrayContent(fileBytes),
+                "file", fileName);
+            if (password != null)
+                content.Add(new StringContent(password),
+                    "password");
+            var response = await _httpClient.PostAsync(
+                "api/pdf/unlock", content);
+            return response.IsSuccessStatusCode
+                ? await response.Content.ReadAsByteArrayAsync()
+                : null;
+        }
+
+        public async Task<byte[]?> ProtectPdfAsync(
+            byte[] fileBytes, string fileName,
+            string userPassword, string ownerPassword,
+            bool allowPrinting, bool allowCopying)
+        {
+            using var content = new MultipartFormDataContent();
+            content.Add(new ByteArrayContent(fileBytes),
+                "file", fileName);
+            content.Add(new StringContent(userPassword),
+                "userPassword");
+            content.Add(new StringContent(ownerPassword),
+                "ownerPassword");
+            content.Add(new StringContent(
+                allowPrinting.ToString()), "allowPrinting");
+            content.Add(new StringContent(
+                allowCopying.ToString()), "allowCopying");
+            var response = await _httpClient.PostAsync(
+                "api/pdf/protect", content);
+            return response.IsSuccessStatusCode
+                ? await response.Content.ReadAsByteArrayAsync()
+                : null;
+        }
+
+        public async Task<byte[]?> PptToPdfAsync(
+            byte[] fileBytes, string fileName)
+        {
+            using var content = new MultipartFormDataContent();
+            var fileContent = new ByteArrayContent(fileBytes);
+            fileContent.Headers.ContentType =
+                new System.Net.Http.Headers
+                    .MediaTypeHeaderValue(
+                        "application/vnd.openxmlformats-" +
+                        "officedocument.presentationml" +
+                        ".presentation");
+            content.Add(fileContent, "file", fileName);
+            var response = await _httpClient.PostAsync(
+                "api/pdf/ppt-to-pdf", content);
+            return response.IsSuccessStatusCode
+                ? await response.Content.ReadAsByteArrayAsync()
+                : null;
+        }
+
+        public async Task<byte[]?> ExcelToPdfAsync(
+            byte[] fileBytes, string fileName)
+        {
+            using var content = new MultipartFormDataContent();
+            var fileContent = new ByteArrayContent(fileBytes);
+            fileContent.Headers.ContentType =
+                new System.Net.Http.Headers
+                    .MediaTypeHeaderValue(
+                        "application/vnd.openxmlformats-" +
+                        "officedocument.spreadsheetml.sheet");
+            content.Add(fileContent, "file", fileName);
+            var response = await _httpClient.PostAsync(
+                "api/pdf/excel-to-pdf", content);
+            return response.IsSuccessStatusCode
+                ? await response.Content.ReadAsByteArrayAsync()
+                : null;
         }
     }
 }

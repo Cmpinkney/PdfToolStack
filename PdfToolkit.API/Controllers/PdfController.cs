@@ -645,6 +645,330 @@ namespace PdfToolkit.API.Controllers
             }
         }
 
+        // POST api/pdf/extract-pages
+        [HttpPost("extract-pages")]
+        [RequestSizeLimit(524288000)]
+        public async Task<IActionResult> ExtractPages(
+            IFormFile file,
+            [FromForm] string pageNumbers)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest("No file provided.");
+            try
+            {
+                using var ms = new MemoryStream();
+                await file.CopyToAsync(ms);
+                var pages = pageNumbers
+                    .Split(',',
+                        StringSplitOptions.RemoveEmptyEntries)
+                    .Select(p => int.Parse(p.Trim()))
+                    .ToList();
+                var processor = new ExtractPagesProcessor();
+                var result = await processor.ProcessAsync(
+                    ms.ToArray(), pages);
+                return File(result, "application/pdf",
+                    "extracted_pages.pdf");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Extract pages error");
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        // POST api/pdf/rotate
+        [HttpPost("rotate")]
+        [RequestSizeLimit(524288000)]
+        public async Task<IActionResult> RotatePdf(
+            IFormFile file,
+            [FromForm] int rotation = 90,
+            [FromForm] string? pageNumbers = null)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest("No file provided.");
+            try
+            {
+                using var ms = new MemoryStream();
+                await file.CopyToAsync(ms);
+                var pages = pageNumbers != null
+                    ? pageNumbers.Split(',',
+                        StringSplitOptions.RemoveEmptyEntries)
+                        .Select(p => int.Parse(p.Trim()))
+                        .ToList()
+                    : (IEnumerable<int>?)null;
+                var processor = new RotatePdfProcessor();
+                var result = await processor.ProcessAsync(
+                    ms.ToArray(), rotation, pages);
+                return File(result, "application/pdf",
+                    "rotated.pdf");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Rotate PDF error");
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        // POST api/pdf/split
+        [HttpPost("split")]
+        [RequestSizeLimit(524288000)]
+        public async Task<IActionResult> SplitPdf(
+            IFormFile file,
+            [FromForm] int? fromPage = null,
+            [FromForm] int? toPage = null)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest("No file provided.");
+            try
+            {
+                using var ms = new MemoryStream();
+                await file.CopyToAsync(ms);
+                var processor = new SplitPdfProcessor();
+
+                if (fromPage.HasValue && toPage.HasValue)
+                {
+                    var result = await processor.SplitRangeAsync(
+                        ms.ToArray(),
+                        fromPage.Value, toPage.Value);
+                    return File(result, "application/pdf",
+                        $"pages_{fromPage}_{toPage}.pdf");
+                }
+                else
+                {
+                    var pages = await processor.SplitAsync(
+                        ms.ToArray());
+                    // Return first page as example
+                    // Full zip implementation for later
+                    return File(pages[0], "application/pdf",
+                        "page_1.pdf");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Split PDF error");
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        // POST api/pdf/watermark
+        [HttpPost("watermark")]
+        [RequestSizeLimit(524288000)]
+        public async Task<IActionResult> WatermarkPdf(
+            IFormFile file,
+            [FromForm] string watermarkText = "CONFIDENTIAL",
+            [FromForm] float opacity = 0.3f,
+            [FromForm] float fontSize = 48f)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest("No file provided.");
+            try
+            {
+                using var ms = new MemoryStream();
+                await file.CopyToAsync(ms);
+                var processor = new WatermarkPdfProcessor();
+                var result = await processor.ProcessAsync(
+                    ms.ToArray(), watermarkText,
+                    opacity, fontSize);
+                return File(result, "application/pdf",
+                    "watermarked.pdf");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Watermark error");
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        // POST api/pdf/number-pages
+        [HttpPost("number-pages")]
+        [RequestSizeLimit(524288000)]
+        public async Task<IActionResult> NumberPages(
+            IFormFile file,
+            [FromForm] string position = "bottom-center",
+            [FromForm] int startNumber = 1)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest("No file provided.");
+            try
+            {
+                using var ms = new MemoryStream();
+                await file.CopyToAsync(ms);
+                var processor = new NumberPagesPdfProcessor();
+                var result = await processor.ProcessAsync(
+                    ms.ToArray(), position, startNumber);
+                return File(result, "application/pdf",
+                    "numbered.pdf");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Number pages error");
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        // POST api/pdf/flatten
+        [HttpPost("flatten")]
+        [RequestSizeLimit(524288000)]
+        public async Task<IActionResult> FlattenPdf(
+            IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest("No file provided.");
+            try
+            {
+                using var ms = new MemoryStream();
+                await file.CopyToAsync(ms);
+                var processor = new FlattenPdfProcessor();
+                var result = await processor.ProcessAsync(
+                    ms.ToArray());
+                return File(result, "application/pdf",
+                    "flattened.pdf");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Flatten error");
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        // POST api/pdf/jpg-to-pdf
+        [HttpPost("jpg-to-pdf")]
+        [RequestSizeLimit(524288000)]
+        public async Task<IActionResult> JpgToPdf(
+            List<IFormFile> files)
+        {
+            if (files == null || !files.Any())
+                return BadRequest("No files provided.");
+            try
+            {
+                var imageBytes = new List<byte[]>();
+                foreach (var file in files)
+                {
+                    using var ms = new MemoryStream();
+                    await file.CopyToAsync(ms);
+                    imageBytes.Add(ms.ToArray());
+                }
+                var processor = new JpgToPdfProcessor();
+                var result = await processor.ProcessAsync(
+                    imageBytes);
+                return File(result, "application/pdf",
+                    "images.pdf");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "JPG to PDF error");
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        // POST api/pdf/unlock
+        [HttpPost("unlock")]
+        [RequestSizeLimit(524288000)]
+        public async Task<IActionResult> UnlockPdf(
+            IFormFile file,
+            [FromForm] string? password = null)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest("No file provided.");
+            try
+            {
+                using var ms = new MemoryStream();
+                await file.CopyToAsync(ms);
+                var processor = new UnlockPdfProcessor();
+                var result = await processor.ProcessAsync(
+                    ms.ToArray(), password);
+                return File(result, "application/pdf",
+                    "unlocked.pdf");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unlock error");
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        // POST api/pdf/protect
+        [HttpPost("protect")]
+        [RequestSizeLimit(524288000)]
+        public async Task<IActionResult> ProtectPdf(
+            IFormFile file,
+            [FromForm] string userPassword = "",
+            [FromForm] string ownerPassword = "",
+            [FromForm] bool allowPrinting = true,
+            [FromForm] bool allowCopying = false)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest("No file provided.");
+            try
+            {
+                using var ms = new MemoryStream();
+                await file.CopyToAsync(ms);
+                var processor = new ProtectPdfProcessor();
+                var result = await processor.ProcessAsync(
+                    ms.ToArray(), userPassword,
+                    ownerPassword, allowPrinting, allowCopying);
+                return File(result, "application/pdf",
+                    "protected.pdf");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Protect error");
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        // POST api/pdf/ppt-to-pdf
+        [HttpPost("ppt-to-pdf")]
+        [RequestSizeLimit(524288000)]
+        public async Task<IActionResult> PptToPdf(
+            IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest("No file provided.");
+            try
+            {
+                using var ms = new MemoryStream();
+                await file.CopyToAsync(ms);
+                var processor = new PptToPdfProcessor();
+                var result = await processor.ProcessAsync(
+                    ms.ToArray());
+                return File(result, "application/pdf",
+                    Path.GetFileNameWithoutExtension(
+                        file.FileName) + ".pdf");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "PPT to PDF error");
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        // POST api/pdf/excel-to-pdf
+        [HttpPost("excel-to-pdf")]
+        [RequestSizeLimit(524288000)]
+        public async Task<IActionResult> ExcelToPdf(
+            IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest("No file provided.");
+            try
+            {
+                using var ms = new MemoryStream();
+                await file.CopyToAsync(ms);
+                var processor = new ExcelToPdfProcessor();
+                var result = await processor.ProcessAsync(
+                    ms.ToArray());
+                return File(result, "application/pdf",
+                    Path.GetFileNameWithoutExtension(
+                        file.FileName) + ".pdf");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Excel to PDF error");
+                return StatusCode(500, ex.Message);
+            }
+        }
+
         private static BaseColor ParseColor(string? hex)
         {
             if (string.IsNullOrEmpty(hex)) return new BaseColor(0, 0, 0);
