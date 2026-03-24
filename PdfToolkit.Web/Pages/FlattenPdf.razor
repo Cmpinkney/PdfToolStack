@@ -1,0 +1,214 @@
+﻿@page "/flatten-pdf"
+@inject ApiService ApiService
+@inject IJSRuntime JS
+@inject PaymentService PaymentService
+
+<PageTitle>Flatten PDF Free Online — Make PDF Uneditable</PageTitle>
+
+<HeadContent>
+    <meta name="description"
+          content="Flatten your PDF free online. Remove form fields
+                   and make your PDF uneditable. No signup required." />
+    <meta name="keywords"
+          content="flatten pdf, make pdf uneditable,
+                   pdf flatten online free" />
+    <link rel="canonical"
+          href="https://pdftoolstack.com/flatten-pdf" />
+</HeadContent>
+
+<div class="tool-page">
+    <AdSlot Size="banner" />
+    <div class="tool-container">
+        <h1>Flatten PDF Online</h1>
+        <p class="tool-subtitle">
+            Make your PDF uneditable by flattening all form
+            fields and annotations. No signup required.
+        </p>
+
+        @if (CurrentState == PageState.Upload)
+        {
+            <FileUpload OnFileSelected="HandleFileSelected"
+                        OnFileRemoved="HandleFileRemoved" />
+
+            @if (SelectedFile != null)
+            {
+                <button class="process-button"
+                        @onclick="ProcessFile">
+                    Flatten PDF
+                </button>
+            }
+        }
+
+        @if (CurrentState == PageState.LargeFile)
+        {
+            <LargeFileUpgrade
+                FileSizeBytes="@(SelectedFile?.Size ?? 0)"
+                FileName="@(SelectedFile?.Name ?? "")"
+                ToolType="FlattenPdf"
+                OnCancel="Reset" />
+        }
+
+        @if (CurrentState == PageState.Processing)
+        {
+            <div class="processing-container">
+                <div class="spinner"></div>
+                <p>Flattening your PDF...</p>
+            </div>
+        }
+
+        @if (CurrentState == PageState.Complete
+             && ResultBytes != null)
+        {
+            <AdSlot Size="rectangle" />
+            <div class="result-container">
+                <span class="result-icon">✅</span>
+                <h2>PDF Flattened!</h2>
+                <p style="color: var(--gray);
+                           margin-bottom: 1.5rem;">
+                    All form fields and annotations have
+                    been permanently flattened.
+                </p>
+                <button class="download-button"
+                        @onclick="DownloadFile">
+                    Download Flattened PDF
+                </button>
+                <button class="reset-button"
+                        @onclick="Reset">
+                    Flatten Another PDF
+                </button>
+            </div>
+        }
+
+        @if (CurrentState == PageState.Error)
+        {
+            <div class="error-container">
+                <span class="error-icon">❌</span>
+                <p class="error-message">@ErrorMessage</p>
+                <button class="reset-button"
+                        @onclick="Reset">
+                    Try Again
+                </button>
+            </div>
+        }
+    </div>
+
+    <div class="faq-section">
+        <h2>Frequently Asked Questions</h2>
+        <div class="faq-item">
+            <h3>What does flattening a PDF do?</h3>
+            <p>Flattening merges all form fields and
+               annotations into the page content making
+               them permanent and uneditable.</p>
+        </div>
+        <div class="faq-item">
+            <h3>Can I unflatten a PDF?</h3>
+            <p>No — flattening is permanent and cannot
+               be reversed. Make sure to keep a backup
+               of the original.</p>
+        </div>
+        <div class="faq-item">
+            <h3>Is this tool free?</h3>
+            <p>Yes — completely free up to 25MB with no
+               signup required.</p>
+        </div>
+    </div>
+</div>
+
+@code {
+    private enum PageState
+    {
+        Upload, Processing, Complete, Error, LargeFile
+    }
+
+    private PageState CurrentState = PageState.Upload;
+    private IBrowserFile? SelectedFile;
+    private byte[]? UploadedBytes;
+    private byte[]? ResultBytes;
+    private string? ErrorMessage;
+
+    [SupplyParameterFromQuery]
+    private string? Paid { get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (Paid == "true")
+            CurrentState = PageState.Upload;
+    }
+
+    private async Task HandleFileSelected(IBrowserFile file)
+    {
+        SelectedFile = file;
+        ErrorMessage = null;
+        try
+        {
+            using var stream = file.OpenReadStream(
+                maxAllowedSize: 524288000);
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            UploadedBytes = ms.ToArray();
+            if (PaymentService.IsFileTooLargeForFree(
+                file.Size))
+            {
+                CurrentState = PageState.LargeFile;
+                StateHasChanged();
+                return;
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage =
+                $"Could not read file: {ex.Message}";
+            SelectedFile = null;
+            UploadedBytes = null;
+        }
+        StateHasChanged();
+    }
+
+    private void HandleFileRemoved()
+    {
+        SelectedFile = null;
+        UploadedBytes = null;
+    }
+
+    private async Task ProcessFile()
+    {
+        if (UploadedBytes == null) return;
+        CurrentState = PageState.Processing;
+        StateHasChanged();
+        try
+        {
+            ResultBytes = await ApiService.FlattenPdfAsync(
+                UploadedBytes, SelectedFile!.Name);
+            CurrentState = ResultBytes != null
+                ? PageState.Complete : PageState.Error;
+            if (ResultBytes == null)
+                ErrorMessage = "Failed to flatten PDF.";
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Error: {ex.Message}";
+            CurrentState = PageState.Error;
+        }
+        StateHasChanged();
+    }
+
+    private async Task DownloadFile()
+    {
+        if (ResultBytes == null) return;
+        var fileName = Path.GetFileNameWithoutExtension(
+            SelectedFile?.Name ?? "document")
+            + "_flattened.pdf";
+        await JS.InvokeVoidAsync("downloadFile",
+            fileName,
+            Convert.ToBase64String(ResultBytes));
+    }
+
+    private void Reset()
+    {
+        CurrentState = PageState.Upload;
+        SelectedFile = null;
+        UploadedBytes = null;
+        ResultBytes = null;
+        ErrorMessage = null;
+    }
+}

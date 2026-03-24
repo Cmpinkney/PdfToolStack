@@ -1,0 +1,77 @@
+﻿@page "/ai-pdf-assist"
+
+<PageTitle>AI PDF Assistant Free Online — AI Document Processing</PageTitle>
+
+<HeadContent>
+    <meta name="description"
+          content="Use AI to process and analyze your PDF documents
+                   free online. No signup required." />
+    <meta name="keywords"
+          content="ai pdf assistant, ai document processing,
+                   pdf ai tool free" />
+    <link rel="canonical"
+          href="https://pdftoolstack.com/ai-pdf-assist" />
+</HeadContent>
+
+<div class="tool-page">
+    <div class="tool-container">
+        <h1>AI PDF Assistant</h1>
+        <p class="tool-subtitle">
+            Use artificial intelligence to process, analyze,
+            and extract insights from your PDF documents.
+        </p>
+        <div class="coming-soon-banner">
+            <span class="coming-soon-icon">🤖</span>
+            <div>
+                <h3>AI PDF Assistant Coming Soon</h3>
+                <p>
+                    We are integrating advanced AI to help
+                    you process documents, extract key
+                    information, and answer questions about
+                    your PDFs instantly.
+                </p>
+            </div>
+        </div>
+        <div class="notify-section">
+            <h3>Get notified when it launches</h3>
+            @if (NotifySubmitted)
+            {
+                <div class="contact-success">
+                    <span>✅</span>
+                    <p>
+                        We'll notify you when AI PDF
+                        Assistant launches!
+                    </p>
+                </div>
+            }
+            else
+            {
+                <div class="notify-form">
+                    <input type="email"
+                           class="field-input"
+                           style="max-width: 300px;"
+                           placeholder="your@email.com"
+                           @bind="NotifyEmail" />
+                    <button class="process-button"
+                            style="max-width: 160px;"
+                            @onclick="SubmitNotify">
+                        Notify Me
+                    </button>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private string NotifyEmail = string.Empty;
+    private bool NotifySubmitted = false;
+    private async Task SubmitNotify()
+    {
+        if (string.IsNullOrWhiteSpace(NotifyEmail) ||
+            !NotifyEmail.Contains('@')) return;
+        await Task.Delay(500);
+        NotifySubmitted = true;
+        StateHasChanged();
+    }
+}

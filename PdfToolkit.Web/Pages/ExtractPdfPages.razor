@@ -1,0 +1,155 @@
+﻿@page "/extract-pdf-pages"
+@inject ApiService ApiService
+@inject IJSRuntime JS
+@inject PaymentService PaymentService
+
+<PageTitle>Extract PDF Pages Free Online — Pick Pages from PDF</PageTitle>
+
+<HeadContent>
+    <meta name="description" content="Extract specific pages from your PDF free online. Pick only the pages you need. No signup required." />
+    <meta name="keywords" content="extract pdf pages, pick pages from pdf, pdf page extractor free" />
+    <link rel="canonical" href="https://pdftoolstack.com/extract-pdf-pages" />
+</HeadContent>
+
+<div class="tool-page">
+    <AdSlot Size="banner" />
+    <div class="tool-container">
+        <h1>Extract PDF Pages</h1>
+        <p class="tool-subtitle">Pick only the pages you need from your PDF. No signup required.</p>
+
+        @if (CurrentState == PageState.Upload)
+        {
+            <FileUpload OnFileSelected="HandleFileSelected" OnFileRemoved="HandleFileRemoved" />
+
+            @if (SelectedFile != null && TotalPages > 0)
+            {
+                <div class="page-selector">
+                    <h3>Select pages to extract</h3>
+                    <p class="page-selector-hint">Your PDF has @TotalPages pages. Click to select pages to keep.</p>
+                    <div class="page-grid">
+                        @for (int i = 1; i <= TotalPages; i++)
+                        {
+                            var pageNum = i;
+                            <button class="page-tile @(SelectedPages.Contains(pageNum) ? "page-tile-selected" : "")"
+                                    @onclick="() => TogglePage(pageNum)">
+                                @pageNum
+                            </button>
+                        }
+                    </div>
+                    @if (SelectedPages.Any())
+                    {
+                        <p class="selected-summary">@SelectedPages.Count page(s) selected: @string.Join(", ", SelectedPages.OrderBy(p => p))</p>
+                        <button class="process-button" @onclick="ProcessFile">
+                            Extract @SelectedPages.Count Page(s)
+                        </button>
+                    }
+                </div>
+            }
+        }
+
+        @if (CurrentState == PageState.LargeFile)
+        {
+            <LargeFileUpgrade FileSizeBytes="@(SelectedFile?.Size ?? 0)" FileName="@(SelectedFile?.Name ?? "")" ToolType="ExtractPdfPages" OnCancel="Reset" />
+        }
+
+        @if (CurrentState == PageState.Processing)
+        {
+            <div class="processing-container">
+                <div class="spinner"></div>
+                <p>Extracting pages from your PDF...</p>
+            </div>
+        }
+
+        @if (CurrentState == PageState.Complete && ResultBytes != null)
+        {
+            <AdSlot Size="rectangle" />
+            <div class="result-container">
+                <span class="result-icon">✅</span>
+                <h2>Pages Extracted!</h2>
+                <p style="color: var(--gray); margin-bottom: 1.5rem;">Successfully extracted @SelectedPages.Count page(s).</p>
+                <button class="download-button" @onclick="DownloadFile">Download PDF</button>
+                <button class="reset-button" @onclick="Reset">Extract More Pages</button>
+            </div>
+        }
+
+        @if (CurrentState == PageState.Error)
+        {
+            <div class="error-container">
+                <span class="error-icon">❌</span>
+                <p class="error-message">@ErrorMessage</p>
+                <button class="reset-button" @onclick="Reset">Try Again</button>
+            </div>
+        }
+    </div>
+
+    <div class="faq-section">
+        <h2>Frequently Asked Questions</h2>
+        <div class="faq-item">
+            <h3>Can I select multiple pages to extract?</h3>
+            <p>Yes — click as many pages as you need and they will all be included in the extracted PDF.</p>
+        </div>
+        <div class="faq-item">
+            <h3>Is this tool free?</h3>
+            <p>Yes — completely free up to 25MB with no signup required.</p>
+        </div>
+    </div>
+</div>
+
+@code {
+    private enum PageState { Upload, Processing, Complete, Error, LargeFile }
+    private PageState CurrentState = PageState.Upload;
+    private IBrowserFile? SelectedFile;
+    private byte[]? UploadedBytes;
+    private byte[]? ResultBytes;
+    private string? ErrorMessage;
+    private int TotalPages = 0;
+    private HashSet<int> SelectedPages = new();
+
+    [SupplyParameterFromQuery] private string? Paid { get; set; }
+    protected override void OnInitialized() { if (Paid == "true") CurrentState = PageState.Upload; }
+
+    private async Task HandleFileSelected(IBrowserFile file)
+    {
+        SelectedFile = file;
+        ErrorMessage = null;
+        SelectedPages.Clear();
+        TotalPages = 0;
+        try
+        {
+            using var stream = file.OpenReadStream(maxAllowedSize: 524288000);
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            UploadedBytes = ms.ToArray();
+            if (PaymentService.IsFileTooLargeForFree(file.Size)) { CurrentState = PageState.LargeFile; StateHasChanged(); return; }
+            TotalPages = await ApiService.GetPageCountAsync(UploadedBytes, file.Name);
+        }
+        catch (Exception ex) { ErrorMessage = $"Could not read file: {ex.Message}"; SelectedFile = null; UploadedBytes = null; }
+        StateHasChanged();
+    }
+
+    private void HandleFileRemoved() { SelectedFile = null; UploadedBytes = null; SelectedPages.Clear(); TotalPages = 0; }
+    private void TogglePage(int pageNum) { if (SelectedPages.Contains(pageNum)) SelectedPages.Remove(pageNum); else SelectedPages.Add(pageNum); StateHasChanged(); }
+
+    private async Task ProcessFile()
+    {
+        if (UploadedBytes == null || !SelectedPages.Any()) return;
+        CurrentState = PageState.Processing;
+        StateHasChanged();
+        try
+        {
+            ResultBytes = await ApiService.ExtractPagesAsync(UploadedBytes, SelectedFile!.Name, SelectedPages);
+            CurrentState = ResultBytes != null ? PageState.Complete : PageState.Error;
+            if (ResultBytes == null) ErrorMessage = "Failed to extract pages. Please try again.";
+        }
+        catch (Exception ex) { ErrorMessage = $"Error: {ex.Message}"; CurrentState = PageState.Error; }
+        StateHasChanged();
+    }
+
+    private async Task DownloadFile()
+    {
+        if (ResultBytes == null) return;
+        await JS.InvokeVoidAsync("downloadFile", Path.GetFileNameWithoutExtension(SelectedFile?.Name ?? "document") + "_extracted.pdf", Convert.ToBase64String(ResultBytes));
+    }
+
+    private void Reset() { CurrentState = PageState.Upload; SelectedFile = null; UploadedBytes = null; ResultBytes = null; ErrorMessage = null; TotalPages = 0; SelectedPages.Clear(); }
+}

@@ -1,0 +1,103 @@
+﻿@page "/pdf-to-jpg"
+@inject ApiService ApiService
+@inject IJSRuntime JS
+@inject PaymentService PaymentService
+
+<PageTitle>PDF to JPG Converter Free Online — Convert PDF Pages to Images</PageTitle>
+
+<HeadContent>
+    <meta name="description"
+          content="Convert PDF pages to JPG images free online.
+                   Extract images from PDF or save each page
+                   as a separate image. No signup required." />
+    <meta name="keywords"
+          content="pdf to jpg, convert pdf to image,
+                   pdf to png free online" />
+    <link rel="canonical"
+          href="https://pdftoolstack.com/pdf-to-jpg" />
+</HeadContent>
+
+<div class="tool-page">
+    <AdSlot Size="banner" />
+    <div class="tool-container">
+        <h1>PDF to JPG Converter</h1>
+        <p class="tool-subtitle">
+            Convert your PDF pages to JPG images for free.
+            No signup required. Files deleted within 1 hour.
+        </p>
+
+        <div class="coming-soon-banner">
+            <span class="coming-soon-icon">🖼️</span>
+            <div>
+                <h3>Full PDF to Image Conversion
+                    Coming Soon</h3>
+                <p>We are finalizing our PDF to image
+                   renderer for high quality exports.
+                   This feature will be available shortly.</p>
+                <p>In the meantime you can use our
+                   <a href="/pdf-reader">PDF Reader</a>
+                   to view your PDF pages in the browser.</p>
+            </div>
+        </div>
+
+        <div class="notify-section">
+            <h3>Get notified when it launches</h3>
+            @if (NotifySubmitted)
+            {
+                <div class="contact-success">
+                    <span>✅</span>
+                    <p>We'll notify you when PDF to JPG
+                       launches!</p>
+                </div>
+            }
+            else
+            {
+                <div class="notify-form">
+                    <input type="email"
+                           class="field-input"
+                           style="max-width: 300px;"
+                           placeholder="your@email.com"
+                           @bind="NotifyEmail" />
+                    <button class="process-button"
+                            style="max-width: 160px;"
+                            @onclick="SubmitNotify">
+                        Notify Me
+                    </button>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="faq-section">
+        <h2>Frequently Asked Questions</h2>
+        <div class="faq-item">
+            <h3>What image formats will be supported?</h3>
+            <p>We will support JPG, PNG, and WebP output
+               formats at multiple quality levels.</p>
+        </div>
+        <div class="faq-item">
+            <h3>Can I convert specific pages only?</h3>
+            <p>Yes — you will be able to select which
+               pages to convert to images.</p>
+        </div>
+        <div class="faq-item">
+            <h3>Will this be free?</h3>
+            <p>Yes — basic conversion will be free
+               with no signup required.</p>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string NotifyEmail = string.Empty;
+    private bool NotifySubmitted = false;
+
+    private async Task SubmitNotify()
+    {
+        if (string.IsNullOrWhiteSpace(NotifyEmail) ||
+            !NotifyEmail.Contains('@')) return;
+        await Task.Delay(500);
+        NotifySubmitted = true;
+        StateHasChanged();
+    }
+}

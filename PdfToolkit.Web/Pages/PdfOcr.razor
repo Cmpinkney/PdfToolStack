@@ -1,0 +1,74 @@
+﻿@page "/pdf-ocr"
+
+<PageTitle>PDF OCR Free Online — Make Scanned PDF Searchable</PageTitle>
+
+<HeadContent>
+    <meta name="description"
+          content="Make scanned PDFs searchable with OCR free online.
+                   Extract text from scanned documents.
+                   No signup required." />
+    <meta name="keywords"
+          content="pdf ocr, ocr pdf online free,
+                   make pdf searchable, scanned pdf to text" />
+    <link rel="canonical"
+          href="https://pdftoolstack.com/pdf-ocr" />
+</HeadContent>
+
+<div class="tool-page">
+    <div class="tool-container">
+        <h1>PDF OCR Online</h1>
+        <p class="tool-subtitle">
+            Make text in scanned PDFs searchable and
+            selectable with optical character recognition.
+        </p>
+        <div class="coming-soon-banner">
+            <span class="coming-soon-icon">🔍</span>
+            <div>
+                <h3>PDF OCR Coming Soon</h3>
+                <p>
+                    We are integrating Tesseract OCR to
+                    make scanned PDFs fully searchable.
+                    Supports 50+ languages.
+                </p>
+            </div>
+        </div>
+        <div class="notify-section">
+            <h3>Get notified when it launches</h3>
+            @if (NotifySubmitted)
+            {
+                <div class="contact-success">
+                    <span>✅</span>
+                    <p>We'll notify you when OCR launches!</p>
+                </div>
+            }
+            else
+            {
+                <div class="notify-form">
+                    <input type="email"
+                           class="field-input"
+                           style="max-width: 300px;"
+                           placeholder="your@email.com"
+                           @bind="NotifyEmail" />
+                    <button class="process-button"
+                            style="max-width: 160px;"
+                            @onclick="SubmitNotify">
+                        Notify Me
+                    </button>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private string NotifyEmail = string.Empty;
+    private bool NotifySubmitted = false;
+    private async Task SubmitNotify()
+    {
+        if (string.IsNullOrWhiteSpace(NotifyEmail) ||
+            !NotifyEmail.Contains('@')) return;
+        await Task.Delay(500);
+        NotifySubmitted = true;
+        StateHasChanged();
+    }
+}

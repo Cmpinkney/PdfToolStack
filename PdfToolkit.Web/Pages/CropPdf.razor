@@ -1,0 +1,99 @@
+﻿@page "/crop-pdf"
+@inject ApiService ApiService
+@inject IJSRuntime JS
+@inject PaymentService PaymentService
+
+<PageTitle>Crop PDF Free Online — Crop and Trim PDF Pages</PageTitle>
+
+<HeadContent>
+    <meta name="description"
+          content="Crop and trim your PDF pages free online.
+                   Remove margins and unwanted areas.
+                   No signup required." />
+    <meta name="keywords"
+          content="crop pdf, trim pdf, pdf cropper free online,
+                   remove margins from pdf" />
+    <link rel="canonical"
+          href="https://pdftoolstack.com/crop-pdf" />
+</HeadContent>
+
+<div class="tool-page">
+    <AdSlot Size="banner" />
+    <div class="tool-container">
+        <h1>Crop PDF Online</h1>
+        <p class="tool-subtitle">
+            Crop and trim your PDF pages to remove
+            unwanted areas for free.
+        </p>
+
+        <div class="coming-soon-banner">
+            <span class="coming-soon-icon">✂️</span>
+            <div>
+                <h3>PDF Cropping Coming Soon</h3>
+                <p>We are building an interactive crop
+                   tool that lets you visually select
+                   the area to keep on each page.</p>
+                <p>In the meantime try our
+                   <a href="/organize-pdf">Organize PDF</a>
+                   tool to rearrange or delete pages.</p>
+            </div>
+        </div>
+
+        <div class="notify-section">
+            <h3>Get notified when it launches</h3>
+            @if (NotifySubmitted)
+            {
+                <div class="contact-success">
+                    <span>✅</span>
+                    <p>We'll notify you when Crop PDF
+                       launches!</p>
+                </div>
+            }
+            else
+            {
+                <div class="notify-form">
+                    <input type="email"
+                           class="field-input"
+                           style="max-width: 300px;"
+                           placeholder="your@email.com"
+                           @bind="NotifyEmail" />
+                    <button class="process-button"
+                            style="max-width: 160px;"
+                            @onclick="SubmitNotify">
+                        Notify Me
+                    </button>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="faq-section">
+        <h2>Frequently Asked Questions</h2>
+        <div class="faq-item">
+            <h3>What is PDF cropping?</h3>
+            <p>Cropping a PDF removes the outer areas
+               of each page keeping only the content
+               within your selected region.</p>
+        </div>
+        <div class="faq-item">
+            <h3>Can I crop individual pages differently?</h3>
+            <p>Yes — the upcoming tool will let you
+               set different crop regions for
+               different pages.</p>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string NotifyEmail = string.Empty;
+    private bool NotifySubmitted = false;
+
+    private async Task SubmitNotify()
+    {
+        if (string.IsNullOrWhiteSpace(NotifyEmail) ||
+            !NotifyEmail.Contains('@')) return;
+        await Task.Delay(500);
+        NotifySubmitted = true;
+        StateHasChanged();
+    }
+}

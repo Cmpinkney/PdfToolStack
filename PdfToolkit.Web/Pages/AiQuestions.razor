@@ -1,0 +1,81 @@
+﻿@page "/ai-questions"
+
+<PageTitle>AI Questions Generator Free Online — Create Tests from PDF</PageTitle>
+
+<HeadContent>
+    <meta name="description"
+          content="Generate quiz questions from your PDF free online.
+                   Create multiple choice, true/false, and open-ended
+                   tests with AI. No signup required." />
+    <meta name="keywords"
+          content="ai questions generator, pdf quiz generator,
+                   create test from pdf free" />
+    <link rel="canonical"
+          href="https://pdftoolstack.com/ai-questions" />
+</HeadContent>
+
+<div class="tool-page">
+    <div class="tool-container">
+        <h1>AI Questions Generator</h1>
+        <p class="tool-subtitle">
+            Upload a PDF and let AI generate quiz questions
+            automatically. Perfect for teachers and students.
+        </p>
+        <div class="coming-soon-banner">
+            <span class="coming-soon-icon">📝</span>
+            <div>
+                <h3>AI Questions Generator Coming Soon</h3>
+                <p>
+                    Our AI will read your PDF and generate
+                    multiple-choice, true/false, and
+                    open-ended questions automatically.
+                </p>
+                <p>
+                    Export your questions as a printable
+                    PDF quiz or interactive test.
+                </p>
+            </div>
+        </div>
+        <div class="notify-section">
+            <h3>Get notified when it launches</h3>
+            @if (NotifySubmitted)
+            {
+                <div class="contact-success">
+                    <span>✅</span>
+                    <p>
+                        We'll notify you when AI Questions
+                        Generator launches!
+                    </p>
+                </div>
+            }
+            else
+            {
+                <div class="notify-form">
+                    <input type="email"
+                           class="field-input"
+                           style="max-width: 300px;"
+                           placeholder="your@email.com"
+                           @bind="NotifyEmail" />
+                    <button class="process-button"
+                            style="max-width: 160px;"
+                            @onclick="SubmitNotify">
+                        Notify Me
+                    </button>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private string NotifyEmail = string.Empty;
+    private bool NotifySubmitted = false;
+    private async Task SubmitNotify()
+    {
+        if (string.IsNullOrWhiteSpace(NotifyEmail) ||
+            !NotifyEmail.Contains('@')) return;
+        await Task.Delay(500);
+        NotifySubmitted = true;
+        StateHasChanged();
+    }
+}

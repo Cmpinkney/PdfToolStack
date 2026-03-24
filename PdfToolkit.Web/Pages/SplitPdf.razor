@@ -1,0 +1,146 @@
+﻿@page "/split-pdf"
+@inject ApiService ApiService
+@inject IJSRuntime JS
+@inject PaymentService PaymentService
+
+<PageTitle>Split PDF Free Online — Extract Pages from PDF</PageTitle>
+
+<HeadContent>
+    <meta name="description" content="Split PDF files free online. Extract a range of pages from your PDF. No signup required." />
+    <meta name="keywords" content="split pdf, split pdf pages free, pdf splitter online" />
+    <link rel="canonical" href="https://pdftoolstack.com/split-pdf" />
+</HeadContent>
+
+<div class="tool-page">
+    <AdSlot Size="banner" />
+    <div class="tool-container">
+        <h1>Split PDF Online</h1>
+        <p class="tool-subtitle">Extract a range of pages from your PDF for free. No signup required.</p>
+
+        @if (CurrentState == PageState.Upload)
+        {
+            <FileUpload OnFileSelected="HandleFileSelected" OnFileRemoved="HandleFileRemoved" />
+
+            @if (SelectedFile != null && TotalPages > 0)
+            {
+                <div class="split-options">
+                    <h3>Select Page Range</h3>
+                    <p class="page-selector-hint">Your PDF has @TotalPages pages.</p>
+                    <div class="split-range">
+                        <div class="form-group">
+                            <label>From Page</label>
+                            <input type="number" class="field-input" min="1" max="@TotalPages" @bind="FromPage" />
+                        </div>
+                        <span class="split-to">to</span>
+                        <div class="form-group">
+                            <label>To Page</label>
+                            <input type="number" class="field-input" min="1" max="@TotalPages" @bind="ToPage" />
+                        </div>
+                    </div>
+                    <button class="process-button" @onclick="ProcessFile">Extract Pages @FromPage–@ToPage</button>
+                </div>
+            }
+        }
+
+        @if (CurrentState == PageState.LargeFile)
+        {
+            <LargeFileUpgrade FileSizeBytes="@(SelectedFile?.Size ?? 0)" FileName="@(SelectedFile?.Name ?? "")" ToolType="SplitPdf" OnCancel="Reset" />
+        }
+
+        @if (CurrentState == PageState.Processing)
+        {
+            <div class="processing-container"><div class="spinner"></div><p>Splitting your PDF...</p></div>
+        }
+
+        @if (CurrentState == PageState.Complete && ResultBytes != null)
+        {
+            <AdSlot Size="rectangle" />
+            <div class="result-container">
+                <span class="result-icon">✅</span>
+                <h2>PDF Split!</h2>
+                <p style="color: var(--gray); margin-bottom: 1.5rem;">Pages @FromPage to @ToPage extracted successfully.</p>
+                <button class="download-button" @onclick="DownloadFile">Download PDF</button>
+                <button class="reset-button" @onclick="Reset">Split Another PDF</button>
+            </div>
+        }
+
+        @if (CurrentState == PageState.Error)
+        {
+            <div class="error-container">
+                <span class="error-icon">❌</span>
+                <p class="error-message">@ErrorMessage</p>
+                <button class="reset-button" @onclick="Reset">Try Again</button>
+            </div>
+        }
+    </div>
+
+    <div class="faq-section">
+        <h2>Frequently Asked Questions</h2>
+        <div class="faq-item">
+            <h3>Can I extract just one page?</h3>
+            <p>Yes — set both From Page and To Page to the same number to extract a single page.</p>
+        </div>
+        <div class="faq-item">
+            <h3>Is this tool free?</h3>
+            <p>Yes — completely free up to 25MB with no signup required.</p>
+        </div>
+    </div>
+</div>
+
+@code {
+    private enum PageState { Upload, Processing, Complete, Error, LargeFile }
+    private PageState CurrentState = PageState.Upload;
+    private IBrowserFile? SelectedFile;
+    private byte[]? UploadedBytes;
+    private byte[]? ResultBytes;
+    private string? ErrorMessage;
+    private int TotalPages = 0;
+    private int FromPage = 1;
+    private int ToPage = 1;
+
+    [SupplyParameterFromQuery] private string? Paid { get; set; }
+    protected override void OnInitialized() { if (Paid == "true") CurrentState = PageState.Upload; }
+
+    private async Task HandleFileSelected(IBrowserFile file)
+    {
+        SelectedFile = file;
+        ErrorMessage = null;
+        try
+        {
+            using var stream = file.OpenReadStream(maxAllowedSize: 524288000);
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            UploadedBytes = ms.ToArray();
+            if (PaymentService.IsFileTooLargeForFree(file.Size)) { CurrentState = PageState.LargeFile; StateHasChanged(); return; }
+            TotalPages = await ApiService.GetPageCountAsync(UploadedBytes, file.Name);
+            ToPage = TotalPages;
+        }
+        catch (Exception ex) { ErrorMessage = $"Could not read file: {ex.Message}"; SelectedFile = null; UploadedBytes = null; }
+        StateHasChanged();
+    }
+
+    private void HandleFileRemoved() { SelectedFile = null; UploadedBytes = null; TotalPages = 0; }
+
+    private async Task ProcessFile()
+    {
+        if (UploadedBytes == null) return;
+        CurrentState = PageState.Processing;
+        StateHasChanged();
+        try
+        {
+            ResultBytes = await ApiService.SplitPdfAsync(UploadedBytes, SelectedFile!.Name, FromPage, ToPage);
+            CurrentState = ResultBytes != null ? PageState.Complete : PageState.Error;
+            if (ResultBytes == null) ErrorMessage = "Split failed. Please try again.";
+        }
+        catch (Exception ex) { ErrorMessage = $"Error: {ex.Message}"; CurrentState = PageState.Error; }
+        StateHasChanged();
+    }
+
+    private async Task DownloadFile()
+    {
+        if (ResultBytes == null) return;
+        await JS.InvokeVoidAsync("downloadFile", $"pages_{FromPage}_{ToPage}.pdf", Convert.ToBase64String(ResultBytes));
+    }
+
+    private void Reset() { CurrentState = PageState.Upload; SelectedFile = null; UploadedBytes = null; ResultBytes = null; ErrorMessage = null; TotalPages = 0; FromPage = 1; ToPage = 1; }
+}

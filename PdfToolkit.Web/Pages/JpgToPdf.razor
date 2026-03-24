@@ -1,0 +1,294 @@
+﻿@page "/jpg-to-pdf"
+@inject ApiService ApiService
+@inject IJSRuntime JS
+@inject PaymentService PaymentService
+
+<PageTitle>JPG to PDF Converter Free Online — Images to PDF</PageTitle>
+
+<HeadContent>
+    <meta name="description"
+          content="Convert JPG, PNG, BMP, GIF and TIFF images to PDF
+                   free online. No signup required." />
+    <meta name="keywords"
+          content="jpg to pdf, image to pdf, png to pdf,
+                   convert images to pdf free" />
+    <link rel="canonical"
+          href="https://pdftoolstack.com/jpg-to-pdf" />
+</HeadContent>
+
+<div class="tool-page">
+    <AdSlot Size="banner" />
+    <div class="tool-container">
+        <h1>JPG to PDF Converter</h1>
+        <p class="tool-subtitle">
+            Convert JPG, PNG, BMP, GIF, and TIFF images
+            to PDF for free. Add multiple images at once.
+            No signup required.
+        </p>
+
+        @if (CurrentState == PageState.Upload)
+        {
+            <div class="merge-upload-area">
+                @for (int i = 0;
+                    i < UploadedFiles.Count; i++)
+                {
+                    var idx = i;
+                    <div class="merge-file-item">
+                        <span class="merge-file-number">
+                            @(idx + 1)
+                        </span>
+                        <span class="merge-file-name">
+                            @UploadedFiles[idx].Name
+                        </span>
+                        <span class="merge-file-size">
+                            @FormatSize(
+                                UploadedFileBytes[idx].Length)
+                        </span>
+                        <button class="remove-button"
+                                @onclick="() => 
+                                    RemoveFile(idx)">
+                            ✕
+                        </button>
+                    </div>
+                }
+
+                @if (UploadedFiles.Count < 20)
+                {
+                    <div class="upload-container">
+                        <span class="upload-icon">🖼️</span>
+                        <p>
+                            @(UploadedFiles.Count == 0
+                                ? "Upload your images"
+                                : "Add another image")
+                        </p>
+                        <label class="upload-button">
+                            Browse Images
+                            <InputFile
+                                OnChange="HandleFileSelected"
+                                accept=".jpg,.jpeg,.png,.bmp,.gif,.tiff,.tif,.webp"
+                                style="display:none" />
+                        </label>
+                        <p class="upload-hint">
+                            Supports JPG, PNG, BMP, GIF,
+                            TIFF — up to 20 images
+                        </p>
+                    </div>
+                }
+            </div>
+
+            @if (!string.IsNullOrEmpty(ErrorMessage))
+            {
+                <p class="error-message">@ErrorMessage</p>
+            }
+
+            @if (UploadedFiles.Count >= 1)
+            {
+                <button class="process-button"
+                        @onclick="ProcessFiles">
+                    Convert @UploadedFiles.Count
+                    Image(s) to PDF
+                </button>
+            }
+        }
+
+        @if (CurrentState == PageState.LargeFile)
+        {
+            <LargeFileUpgrade
+                FileSizeBytes="@_largeFileSize"
+                FileName="@_largeFileName"
+                ToolType="JpgToPdf"
+                OnCancel="Reset" />
+        }
+
+        @if (CurrentState == PageState.Processing)
+        {
+            <div class="processing-container">
+                <div class="spinner"></div>
+                <p>Converting images to PDF...</p>
+            </div>
+        }
+
+        @if (CurrentState == PageState.Complete
+             && ResultBytes != null)
+        {
+            <AdSlot Size="rectangle" />
+            <div class="result-container">
+                <span class="result-icon">✅</span>
+                <h2>Conversion Complete!</h2>
+                <p style="color: var(--gray);
+                           margin-bottom: 1.5rem;">
+                    @UploadedFiles.Count image(s) have
+                    been converted to PDF successfully.
+                </p>
+                <button class="download-button"
+                        @onclick="DownloadFile">
+                    Download PDF
+                </button>
+                <button class="reset-button"
+                        @onclick="Reset">
+                    Convert More Images
+                </button>
+            </div>
+        }
+
+        @if (CurrentState == PageState.Error)
+        {
+            <div class="error-container">
+                <span class="error-icon">❌</span>
+                <p class="error-message">@ErrorMessage</p>
+                <button class="reset-button"
+                        @onclick="Reset">
+                    Try Again
+                </button>
+            </div>
+        }
+    </div>
+
+    <div class="faq-section">
+        <h2>Frequently Asked Questions</h2>
+        <div class="faq-item">
+            <h3>What image formats are supported?</h3>
+            <p>We support JPG, PNG, BMP, GIF, TIFF,
+               and WebP image formats.</p>
+        </div>
+        <div class="faq-item">
+            <h3>How many images can I convert at once?</h3>
+            <p>You can convert up to 20 images at once.
+               Each image becomes one page in the PDF.</p>
+        </div>
+        <div class="faq-item">
+            <h3>Will image quality be preserved?</h3>
+            <p>Yes — images are embedded at full quality
+               in the PDF without compression.</p>
+        </div>
+        <div class="faq-item">
+            <h3>Is this tool free?</h3>
+            <p>Yes — completely free with no signup
+               required.</p>
+        </div>
+    </div>
+</div>
+
+@code {
+    private enum PageState
+    {
+        Upload, Processing, Complete, Error, LargeFile
+    }
+
+    private PageState CurrentState = PageState.Upload;
+    private List<IBrowserFile> UploadedFiles = new();
+    private List<byte[]> UploadedFileBytes = new();
+    private byte[]? ResultBytes;
+    private string? ErrorMessage;
+    private long _largeFileSize = 0;
+    private string _largeFileName = string.Empty;
+
+    [SupplyParameterFromQuery]
+    private string? Paid { get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (Paid == "true")
+            CurrentState = PageState.Upload;
+    }
+
+    private async Task HandleFileSelected(
+        InputFileChangeEventArgs e)
+    {
+        ErrorMessage = null;
+        var file = e.File;
+
+        if (PaymentService.IsFileTooLargeForFree(
+            file.Size))
+        {
+            _largeFileSize = file.Size;
+            _largeFileName = file.Name;
+            CurrentState = PageState.LargeFile;
+            StateHasChanged();
+            return;
+        }
+
+        try
+        {
+            using var stream = file.OpenReadStream(
+                maxAllowedSize: 52428800);
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            UploadedFiles.Add(file);
+            UploadedFileBytes.Add(ms.ToArray());
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage =
+                $"Could not read {file.Name}: " +
+                $"{ex.Message}";
+        }
+
+        StateHasChanged();
+    }
+
+    private void RemoveFile(int index)
+    {
+        UploadedFiles.RemoveAt(index);
+        UploadedFileBytes.RemoveAt(index);
+        StateHasChanged();
+    }
+
+    private async Task ProcessFiles()
+    {
+        if (!UploadedFileBytes.Any()) return;
+
+        CurrentState = PageState.Processing;
+        StateHasChanged();
+
+        try
+        {
+            var fileNames = UploadedFiles
+                .Select(f => f.Name).ToList();
+
+            ResultBytes = await ApiService.JpgToPdfAsync(
+                UploadedFileBytes, fileNames);
+
+            CurrentState = ResultBytes != null
+                ? PageState.Complete : PageState.Error;
+
+            if (ResultBytes == null)
+                ErrorMessage =
+                    "Conversion failed. Please try again.";
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Error: {ex.Message}";
+            CurrentState = PageState.Error;
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task DownloadFile()
+    {
+        if (ResultBytes == null) return;
+        await JS.InvokeVoidAsync("downloadFile",
+            "images.pdf",
+            Convert.ToBase64String(ResultBytes));
+    }
+
+    private void Reset()
+    {
+        CurrentState = PageState.Upload;
+        UploadedFiles.Clear();
+        UploadedFileBytes.Clear();
+        ResultBytes = null;
+        ErrorMessage = null;
+        _largeFileSize = 0;
+        _largeFileName = string.Empty;
+    }
+
+    private string FormatSize(long bytes)
+    {
+        if (bytes < 1024) return $"{bytes} B";
+        if (bytes < 1024 * 1024)
+            return $"{bytes / 1024} KB";
+        return $"{bytes / (1024 * 1024)} MB";
+    }
+}

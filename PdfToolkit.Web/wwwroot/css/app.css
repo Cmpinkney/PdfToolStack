@@ -1617,3 +1617,76 @@ body {
     justify-content: center;
     flex-wrap: wrap;
 }
+
+/* ── Tool Options Panel ───────────────────────────────────── */
+.tool-options-panel {
+    background: var(--primary-light);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.option-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+    .option-group label {
+        font-weight: 600;
+        color: var(--text);
+        font-size: 0.95rem;
+    }
+
+.option-hint {
+    color: var(--gray);
+    font-size: 0.8rem;
+    margin: 0;
+}
+
+.checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--text);
+    cursor: pointer;
+}
+
+/* ── Converter Hub ────────────────────────────────────────── */
+.converter-hub {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 1.5rem 2rem;
+}
+
+    .converter-hub h2 {
+        font-size: 1.4rem;
+        font-weight: 800;
+        color: var(--text);
+        margin-bottom: 1rem;
+    }
+
+/* ── Coming Soon Badge ────────────────────────────────────── */
+.coming-soon-badge {
+    display: inline-block;
+    background: var(--accent);
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+    margin-top: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}

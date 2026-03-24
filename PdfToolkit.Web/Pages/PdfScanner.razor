@@ -1,0 +1,83 @@
+﻿@page "/pdf-scanner"
+
+<PageTitle>PDF Scanner Free Online — Scan Documents to PDF</PageTitle>
+
+<HeadContent>
+    <meta name="description"
+          content="Scan documents and create PDFs free online.
+                   Use your mobile camera to create PDF scans.
+                   No signup required." />
+    <meta name="keywords"
+          content="pdf scanner, scan to pdf free,
+                   mobile pdf scanner, document scanner online" />
+    <link rel="canonical"
+          href="https://pdftoolstack.com/pdf-scanner" />
+</HeadContent>
+
+<div class="tool-page">
+    <div class="tool-container">
+        <h1>PDF Scanner</h1>
+        <p class="tool-subtitle">
+            Create professional PDF scans from your
+            mobile device camera.
+        </p>
+        <div class="coming-soon-banner">
+            <span class="coming-soon-icon">📱</span>
+            <div>
+                <h3>PDF Scanner Coming Soon</h3>
+                <p>
+                    We are building a mobile-optimized
+                    scanner that uses your camera to
+                    capture documents and convert them
+                    to clean, professional PDFs.
+                </p>
+                <p>
+                    Features will include auto edge
+                    detection, perspective correction,
+                    and multi-page scanning.
+                </p>
+            </div>
+        </div>
+        <div class="notify-section">
+            <h3>Get notified when it launches</h3>
+            @if (NotifySubmitted)
+            {
+                <div class="contact-success">
+                    <span>✅</span>
+                    <p>
+                        We'll notify you when PDF Scanner
+                        launches!
+                    </p>
+                </div>
+            }
+            else
+            {
+                <div class="notify-form">
+                    <input type="email"
+                           class="field-input"
+                           style="max-width: 300px;"
+                           placeholder="your@email.com"
+                           @bind="NotifyEmail" />
+                    <button class="process-button"
+                            style="max-width: 160px;"
+                            @onclick="SubmitNotify">
+                        Notify Me
+                    </button>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private string NotifyEmail = string.Empty;
+    private bool NotifySubmitted = false;
+    private async Task SubmitNotify()
+    {
+        if (string.IsNullOrWhiteSpace(NotifyEmail) ||
+            !NotifyEmail.Contains('@')) return;
+        await Task.Delay(500);
+        NotifySubmitted = true;
+        StateHasChanged();
+    }
+}

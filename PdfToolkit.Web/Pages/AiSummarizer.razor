@@ -1,0 +1,82 @@
+﻿@page "/ai-summarizer"
+
+<PageTitle>AI PDF Summarizer Free Online — Summarize PDF Instantly</PageTitle>
+
+<HeadContent>
+    <meta name="description"
+          content="Summarize your PDF documents free online with AI.
+                   Get instant summaries of long documents.
+                   No signup required." />
+    <meta name="keywords"
+          content="ai pdf summarizer, summarize pdf online free,
+                   pdf summary tool, ai document summary" />
+    <link rel="canonical"
+          href="https://pdftoolstack.com/ai-summarizer" />
+</HeadContent>
+
+<div class="tool-page">
+    <div class="tool-container">
+        <h1>AI PDF Summarizer</h1>
+        <p class="tool-subtitle">
+            Get an instant AI-powered summary of any PDF
+            document in seconds.
+        </p>
+        <div class="coming-soon-banner">
+            <span class="coming-soon-icon">✨</span>
+            <div>
+                <h3>AI PDF Summarizer Coming Soon</h3>
+                <p>
+                    Upload any PDF and our AI will generate
+                    a concise summary highlighting the key
+                    points, main arguments, and important
+                    conclusions.
+                </p>
+                <p>
+                    Perfect for academic papers, business
+                    reports, and lengthy legal documents.
+                </p>
+            </div>
+        </div>
+        <div class="notify-section">
+            <h3>Get notified when it launches</h3>
+            @if (NotifySubmitted)
+            {
+                <div class="contact-success">
+                    <span>✅</span>
+                    <p>
+                        We'll notify you when AI Summarizer
+                        launches!
+                    </p>
+                </div>
+            }
+            else
+            {
+                <div class="notify-form">
+                    <input type="email"
+                           class="field-input"
+                           style="max-width: 300px;"
+                           placeholder="your@email.com"
+                           @bind="NotifyEmail" />
+                    <button class="process-button"
+                            style="max-width: 160px;"
+                            @onclick="SubmitNotify">
+                        Notify Me
+                    </button>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private string NotifyEmail = string.Empty;
+    private bool NotifySubmitted = false;
+    private async Task SubmitNotify()
+    {
+        if (string.IsNullOrWhiteSpace(NotifyEmail) ||
+            !NotifyEmail.Contains('@')) return;
+        await Task.Delay(500);
+        NotifySubmitted = true;
+        StateHasChanged();
+    }
+}

@@ -1,0 +1,82 @@
+﻿@page "/chat-with-pdf"
+
+<PageTitle>Chat with PDF Free Online — Ask Your PDF Questions</PageTitle>
+
+<HeadContent>
+    <meta name="description"
+          content="Chat with your PDF and ask it anything free online.
+                   AI powered PDF Q&A. No signup required." />
+    <meta name="keywords"
+          content="chat with pdf, ask pdf questions,
+                   pdf chatbot free, ai pdf reader" />
+    <link rel="canonical"
+          href="https://pdftoolstack.com/chat-with-pdf" />
+</HeadContent>
+
+<div class="tool-page">
+    <div class="tool-container">
+        <h1>Chat with PDF</h1>
+        <p class="tool-subtitle">
+            Upload your PDF and ask it anything.
+            Our AI will answer questions based on
+            your document content.
+        </p>
+        <div class="coming-soon-banner">
+            <span class="coming-soon-icon">💬</span>
+            <div>
+                <h3>Chat with PDF Coming Soon</h3>
+                <p>
+                    We are building an AI-powered chat
+                    interface that lets you ask questions
+                    about your PDF and get instant
+                    accurate answers.
+                </p>
+                <p>
+                    Perfect for research papers, legal
+                    documents, manuals, and reports.
+                </p>
+            </div>
+        </div>
+        <div class="notify-section">
+            <h3>Get notified when it launches</h3>
+            @if (NotifySubmitted)
+            {
+                <div class="contact-success">
+                    <span>✅</span>
+                    <p>
+                        We'll notify you when Chat with PDF
+                        launches!
+                    </p>
+                </div>
+            }
+            else
+            {
+                <div class="notify-form">
+                    <input type="email"
+                           class="field-input"
+                           style="max-width: 300px;"
+                           placeholder="your@email.com"
+                           @bind="NotifyEmail" />
+                    <button class="process-button"
+                            style="max-width: 160px;"
+                            @onclick="SubmitNotify">
+                        Notify Me
+                    </button>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private string NotifyEmail = string.Empty;
+    private bool NotifySubmitted = false;
+    private async Task SubmitNotify()
+    {
+        if (string.IsNullOrWhiteSpace(NotifyEmail) ||
+            !NotifyEmail.Contains('@')) return;
+        await Task.Delay(500);
+        NotifySubmitted = true;
+        StateHasChanged();
+    }
+}

@@ -1,0 +1,278 @@
+﻿@page "/protect-pdf"
+@inject ApiService ApiService
+@inject IJSRuntime JS
+@inject PaymentService PaymentService
+
+<PageTitle>Protect PDF Free Online — Add Password to PDF</PageTitle>
+
+<HeadContent>
+    <meta name="description"
+          content="Add password protection to your PDF free online.
+                   Encrypt your PDF with AES-128. No signup required." />
+    <meta name="keywords"
+          content="protect pdf, add password to pdf,
+                   pdf password protection free" />
+    <link rel="canonical"
+          href="https://pdftoolstack.com/protect-pdf" />
+</HeadContent>
+
+<div class="tool-page">
+    <AdSlot Size="banner" />
+    <div class="tool-container">
+        <h1>Protect PDF with Password</h1>
+        <p class="tool-subtitle">
+            Add password protection and encryption to your PDF
+            for free. No signup required.
+        </p>
+
+        @if (CurrentState == PageState.Upload)
+        {
+            <FileUpload OnFileSelected="HandleFileSelected"
+                        OnFileRemoved="HandleFileRemoved" />
+
+            @if (SelectedFile != null)
+            {
+                <div class="tool-options-panel">
+                    <div class="option-group">
+                        <label>Open Password</label>
+                        <input type="password"
+                               class="field-input"
+                               placeholder="Password to open PDF..."
+                               @bind="UserPassword" />
+                        <p class="option-hint">
+                            Required to open the document
+                        </p>
+                    </div>
+                    <div class="option-group">
+                        <label>Owner Password</label>
+                        <input type="password"
+                               class="field-input"
+                               placeholder="Owner password..."
+                               @bind="OwnerPassword" />
+                        <p class="option-hint">
+                            Required to change permissions
+                        </p>
+                    </div>
+                    <div class="option-group">
+                        <label>Permissions</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox"
+                                       @bind="AllowPrinting" />
+                                Allow printing
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox"
+                                       @bind="AllowCopying" />
+                                Allow copying text
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrEmpty(ErrorMessage))
+                {
+                    <p class="error-message">@ErrorMessage</p>
+                }
+
+                <button class="process-button"
+                        @onclick="ProcessFile">
+                    Protect PDF
+                </button>
+            }
+        }
+
+        @if (CurrentState == PageState.LargeFile)
+        {
+            <LargeFileUpgrade
+                FileSizeBytes="@(SelectedFile?.Size ?? 0)"
+                FileName="@(SelectedFile?.Name ?? "")"
+                ToolType="ProtectPdf"
+                OnCancel="Reset" />
+        }
+
+        @if (CurrentState == PageState.Processing)
+        {
+            <div class="processing-container">
+                <div class="spinner"></div>
+                <p>Encrypting your PDF...</p>
+            </div>
+        }
+
+        @if (CurrentState == PageState.Complete
+             && ResultBytes != null)
+        {
+            <AdSlot Size="rectangle" />
+            <div class="result-container">
+                <span class="result-icon">✅</span>
+                <h2>PDF Protected!</h2>
+                <p style="color: var(--gray);
+                           margin-bottom: 1.5rem;">
+                    Your PDF has been encrypted with
+                    AES-128 password protection.
+                </p>
+                <button class="download-button"
+                        @onclick="DownloadFile">
+                    Download Protected PDF
+                </button>
+                <button class="reset-button"
+                        @onclick="Reset">
+                    Protect Another PDF
+                </button>
+            </div>
+        }
+
+        @if (CurrentState == PageState.Error)
+        {
+            <div class="error-container">
+                <span class="error-icon">❌</span>
+                <p class="error-message">@ErrorMessage</p>
+                <button class="reset-button"
+                        @onclick="Reset">
+                    Try Again
+                </button>
+            </div>
+        }
+    </div>
+
+    <div class="faq-section">
+        <h2>Frequently Asked Questions</h2>
+        <div class="faq-item">
+            <h3>What encryption is used?</h3>
+            <p>We use AES-128 encryption which is the
+               industry standard for PDF protection.</p>
+        </div>
+        <div class="faq-item">
+            <h3>What is the difference between open and
+                owner password?</h3>
+            <p>The open password is required to view the
+               document. The owner password is required
+               to change permissions or remove protection.</p>
+        </div>
+        <div class="faq-item">
+            <h3>Is this tool free?</h3>
+            <p>Yes — completely free up to 25MB with no
+               signup required.</p>
+        </div>
+    </div>
+</div>
+
+@code {
+    private enum PageState
+    {
+        Upload, Processing, Complete, Error, LargeFile
+    }
+
+    private PageState CurrentState = PageState.Upload;
+    private IBrowserFile? SelectedFile;
+    private byte[]? UploadedBytes;
+    private byte[]? ResultBytes;
+    private string? ErrorMessage;
+    private string UserPassword = string.Empty;
+    private string OwnerPassword = string.Empty;
+    private bool AllowPrinting = true;
+    private bool AllowCopying = false;
+
+    [SupplyParameterFromQuery]
+    private string? Paid { get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (Paid == "true")
+            CurrentState = PageState.Upload;
+    }
+
+    private async Task HandleFileSelected(IBrowserFile file)
+    {
+        SelectedFile = file;
+        ErrorMessage = null;
+        try
+        {
+            using var stream = file.OpenReadStream(
+                maxAllowedSize: 524288000);
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            UploadedBytes = ms.ToArray();
+            if (PaymentService.IsFileTooLargeForFree(
+                file.Size))
+            {
+                CurrentState = PageState.LargeFile;
+                StateHasChanged();
+                return;
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage =
+                $"Could not read file: {ex.Message}";
+            SelectedFile = null;
+            UploadedBytes = null;
+        }
+        StateHasChanged();
+    }
+
+    private void HandleFileRemoved()
+    {
+        SelectedFile = null;
+        UploadedBytes = null;
+    }
+
+    private async Task ProcessFile()
+    {
+        if (UploadedBytes == null) return;
+
+        if (string.IsNullOrEmpty(UserPassword))
+        {
+            ErrorMessage =
+                "Please enter an open password.";
+            return;
+        }
+
+        if (string.IsNullOrEmpty(OwnerPassword))
+            OwnerPassword = UserPassword;
+
+        CurrentState = PageState.Processing;
+        StateHasChanged();
+        try
+        {
+            ResultBytes = await ApiService.ProtectPdfAsync(
+                UploadedBytes, SelectedFile!.Name,
+                UserPassword, OwnerPassword,
+                AllowPrinting, AllowCopying);
+            CurrentState = ResultBytes != null
+                ? PageState.Complete : PageState.Error;
+            if (ResultBytes == null)
+                ErrorMessage = "Failed to protect PDF.";
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Error: {ex.Message}";
+            CurrentState = PageState.Error;
+        }
+        StateHasChanged();
+    }
+
+    private async Task DownloadFile()
+    {
+        if (ResultBytes == null) return;
+        var fileName = Path.GetFileNameWithoutExtension(
+            SelectedFile?.Name ?? "document")
+            + "_protected.pdf";
+        await JS.InvokeVoidAsync("downloadFile",
+            fileName,
+            Convert.ToBase64String(ResultBytes));
+    }
+
+    private void Reset()
+    {
+        CurrentState = PageState.Upload;
+        SelectedFile = null;
+        UploadedBytes = null;
+        ResultBytes = null;
+        ErrorMessage = null;
+        UserPassword = string.Empty;
+        OwnerPassword = string.Empty;
+        AllowPrinting = true;
+        AllowCopying = false;
+    }
+}
