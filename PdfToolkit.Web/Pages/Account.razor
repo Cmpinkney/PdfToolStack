@@ -1,0 +1,70 @@
+﻿@page "/account"
+@attribute [Authorize]
+@using Microsoft.AspNetCore.Components.Authorization
+
+<PageTitle>My Account — PDFToolstack</PageTitle>
+
+<div class="legal-page">
+    <div class="legal-container">
+        <div class="legal-header">
+            <h1>My Account</h1>
+        </div>
+
+        <AuthorizeView>
+            <Authorized>
+                <div class="account-section">
+                    <h2>Profile</h2>
+                    <div class="account-info">
+                        <div class="account-row">
+                            <span class="account-label">
+                                Name
+                            </span>
+                            <span class="account-value">
+                                @context.User.Identity?.Name
+                            </span>
+                        </div>
+                        <div class="account-row">
+                            <span class="account-label">
+                                Email
+                            </span>
+                            <span class="account-value">
+                                @context.User.FindFirst(
+                                    "email")?.Value
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="account-section">
+                    <h2>Subscription</h2>
+                    <div class="subscription-card free">
+                        <h3>Free Plan</h3>
+                        <p>Up to 25MB per file</p>
+                        <p>5 files per day</p>
+                        <button class="process-button"
+                                style="max-width: 200px;
+                                       margin-top: 1rem;">
+                            Upgrade to Pro
+                        </button>
+                    </div>
+                </div>
+
+                <div class="account-section">
+                    <h2>Recent Activity</h2>
+                    <p style="color: var(--gray);">
+                        Your recent PDF processing history
+                        will appear here.
+                    </p>
+                </div>
+
+                <div class="account-section">
+                    <h2>Receipts</h2>
+                    <p style="color: var(--gray);">
+                        Your payment receipts and invoices
+                        will appear here.
+                    </p>
+                </div>
+            </Authorized>
+        </AuthorizeView>
+    </div>
+</div>

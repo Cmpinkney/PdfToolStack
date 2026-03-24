@@ -1,0 +1,16 @@
+﻿@page "/authentication/logout"
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+
+<RemoteAuthenticatorView Action="@Action">
+    <LogOut>
+        <div class="processing-container">
+            <div class="spinner"></div>
+            <p>Signing you out...</p>
+        </div>
+    </LogOut>
+</RemoteAuthenticatorView>
+
+@code {
+    [Parameter, SupplyParameterFromQuery]
+    public string? Action { get; set; }
+}

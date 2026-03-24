@@ -1,1 +1,290 @@
 ﻿@page "/watermark-pdf"
+@inject ApiService ApiService
+@inject IJSRuntime JS
+@inject PaymentService PaymentService
+
+<PageTitle>Watermark PDF Free Online — Add Watermark to PDF</PageTitle>
+
+<HeadContent>
+    <meta name="description"
+          content="Add a watermark to your PDF free online.
+                   Custom text watermarks. No signup required." />
+    <meta name="keywords"
+          content="watermark pdf, add watermark to pdf free,
+                   pdf watermark online" />
+    <link rel="canonical"
+          href="https://pdftoolstack.com/watermark-pdf" />
+</HeadContent>
+
+<div class="tool-page">
+    <AdSlot Size="banner" />
+    <div class="tool-container">
+        <h1>Watermark PDF Online</h1>
+        <p class="tool-subtitle">
+            Add a custom text watermark to your PDF for free.
+            No signup required. Files deleted within 1 hour.
+        </p>
+
+        @if (CurrentState == PageState.Upload)
+        {
+            <FileUpload OnFileSelected="HandleFileSelected"
+                        OnFileRemoved="HandleFileRemoved" />
+
+            @if (SelectedFile != null)
+            {
+                <div class="tool-options-panel">
+                    <div class="option-group">
+                        <label>Watermark Text</label>
+                        <input type="text"
+                               class="field-input"
+                               placeholder="e.g. CONFIDENTIAL, DRAFT..."
+                               @bind="WatermarkText" />
+                    </div>
+                    <div class="option-group">
+                        <label>
+                            Opacity — @(Math.Round(
+                                Opacity * 100))%
+                        </label>
+                        <input type="range"
+                               min="0.1" max="0.9"
+                               step="0.1"
+                               @bind="Opacity"
+                               style="width: 100%;" />
+                    </div>
+                    <div class="option-group">
+                        <label>Font Size</label>
+                        <select class="field-input"
+                                @bind="FontSize">
+                            <option value="24">Small</option>
+                            <option value="48">
+                                Medium
+                            </option>
+                            <option value="72">Large</option>
+                        </select>
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrEmpty(ErrorMessage))
+                {
+                    <p class="error-message">
+                        @ErrorMessage
+                    </p>
+                }
+
+                <button class="process-button"
+                        @onclick="ProcessFile">
+                    Add Watermark
+                </button>
+            }
+        }
+
+        @if (CurrentState == PageState.LargeFile)
+        {
+            <LargeFileUpgrade
+                FileSizeBytes="@(SelectedFile?.Size ?? 0)"
+                FileName="@(SelectedFile?.Name ?? "")"
+                ToolType="WatermarkPdf"
+                OnCancel="Reset" />
+        }
+
+        @if (CurrentState == PageState.Processing)
+        {
+            <div class="processing-container">
+                <div class="spinner"></div>
+                <p>Adding watermark to your PDF...</p>
+            </div>
+        }
+
+        @if (CurrentState == PageState.Complete
+             && ResultBytes != null)
+        {
+            <AdSlot Size="rectangle" />
+            <div class="result-container">
+                <span class="result-icon">✅</span>
+                <h2>Watermark Added!</h2>
+                <p style="color: var(--gray);
+                           margin-bottom: 1.5rem;">
+                    Your watermark has been applied
+                    to all pages of the PDF.
+                </p>
+                <button class="download-button"
+                        @onclick="DownloadFile">
+                    Download Watermarked PDF
+                </button>
+                <button class="reset-button"
+                        @onclick="Reset">
+                    Watermark Another PDF
+                </button>
+            </div>
+        }
+
+        @if (CurrentState == PageState.Error)
+        {
+            <div class="error-container">
+                <span class="error-icon">❌</span>
+                <p class="error-message">@ErrorMessage</p>
+                <button class="reset-button"
+                        @onclick="Reset">
+                    Try Again
+                </button>
+            </div>
+        }
+    </div>
+
+    <div class="faq-section">
+        <h2>Frequently Asked Questions</h2>
+        <div class="faq-item">
+            <h3>Can I customize the watermark text?</h3>
+            <p>Yes — enter any text you want such as
+               CONFIDENTIAL, DRAFT, DO NOT COPY,
+               or your company name.</p>
+        </div>
+        <div class="faq-item">
+            <h3>Is the watermark permanent?</h3>
+            <p>Yes — the watermark is permanently
+               embedded into the PDF and cannot be
+               easily removed.</p>
+        </div>
+        <div class="faq-item">
+            <h3>Will the watermark appear on all pages?</h3>
+            <p>Yes — the watermark is applied to
+               every page of the PDF.</p>
+        </div>
+        <div class="faq-item">
+            <h3>Is this tool free?</h3>
+            <p>Yes — completely free up to 25MB with
+               no signup required.</p>
+        </div>
+    </div>
+</div>
+
+@code {
+    private enum PageState
+    {
+        Upload, Processing, Complete, Error, LargeFile
+    }
+
+    private PageState CurrentState = PageState.Upload;
+    private IBrowserFile? SelectedFile;
+    private byte[]? UploadedBytes;
+    private byte[]? ResultBytes;
+    private string? ErrorMessage;
+    private string WatermarkText = "CONFIDENTIAL";
+    private float Opacity = 0.3f;
+    private float FontSize = 48f;
+
+    [SupplyParameterFromQuery]
+    private string? Paid { get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (Paid == "true")
+            CurrentState = PageState.Upload;
+    }
+
+    private async Task HandleFileSelected(IBrowserFile file)
+    {
+        SelectedFile = file;
+        ErrorMessage = null;
+        try
+        {
+            using var stream = file.OpenReadStream(
+                maxAllowedSize: 524288000);
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            UploadedBytes = ms.ToArray();
+            if (PaymentService.IsFileTooLargeForFree(
+                file.Size))
+            {
+                CurrentState = PageState.LargeFile;
+                StateHasChanged();
+                return;
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage =
+                $"Could not read file: {ex.Message}";
+            SelectedFile = null;
+            UploadedBytes = null;
+        }
+        StateHasChanged();
+    }
+
+    private void HandleFileRemoved()
+    {
+        SelectedFile = null;
+        UploadedBytes = null;
+    }
+
+    private async Task ProcessFile()
+    {
+        if (UploadedBytes == null) return;
+
+        if (string.IsNullOrWhiteSpace(WatermarkText))
+        {
+            ErrorMessage =
+                "Please enter watermark text.";
+            return;
+        }
+
+        CurrentState = PageState.Processing;
+        StateHasChanged();
+
+        try
+        {
+            ResultBytes =
+                await ApiService.WatermarkPdfAsync(
+                    UploadedBytes,
+                    SelectedFile!.Name,
+                    WatermarkText,
+                    Opacity,
+                    FontSize);
+
+            CurrentState = ResultBytes != null
+                ? PageState.Complete : PageState.Error;
+
+            if (ResultBytes == null)
+                ErrorMessage =
+                    "Failed to add watermark. " +
+                    "Please try again.";
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Error: {ex.Message}";
+            CurrentState = PageState.Error;
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task DownloadFile()
+    {
+        if (ResultBytes == null) return;
+        var fileName = Path.GetFileNameWithoutExtension(
+            SelectedFile?.Name ?? "document")
+            + "_watermarked.pdf";
+        await JS.InvokeVoidAsync("downloadFile",
+            fileName,
+            Convert.ToBase64String(ResultBytes));
+    }
+
+    private void Reset()
+    {
+        CurrentState = PageState.Upload;
+        SelectedFile = null;
+        UploadedBytes = null;
+        ResultBytes = null;
+        ErrorMessage = null;
+        WatermarkText = "CONFIDENTIAL";
+        Opacity = 0.3f;
+        FontSize = 48f;
+    }
+}
+```
+
+---
+
+## Rebuild and Test
+```
+Build → Rebuild Solution
