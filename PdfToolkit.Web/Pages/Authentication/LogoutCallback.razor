@@ -1,9 +1,0 @@
-﻿@page "/authentication/logout-callback"
-@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
-
-<RemoteAuthenticatorView Action="@Action" />
-
-@code {
-    [Parameter, SupplyParameterFromQuery]
-    public string? Action { get; set; }
-}

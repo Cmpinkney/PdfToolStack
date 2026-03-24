@@ -1,0 +1,57 @@
+﻿@page "/authentication/{Action}"
+
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@using Microsoft.AspNetCore.Components
+
+<RemoteAuthenticatorView Action="@Action">
+    <LoggingIn>
+        <div class="processing-container">
+            <div class="spinner"></div>
+            <p>Signing you in...</p>
+        </div>
+    </LoggingIn>
+
+    <CompletingLoggingIn>
+        <div class="processing-container">
+            <div class="spinner"></div>
+            <p>Completing sign in...</p>
+        </div>
+    </CompletingLoggingIn>
+
+    <LogOut>
+        <div class="processing-container">
+            <div class="spinner"></div>
+            <p>Signing you out...</p>
+        </div>
+    </LogOut>
+
+    <CompletingLogOut>
+        <div class="processing-container">
+            <div class="spinner"></div>
+            <p>Completing sign out...</p>
+        </div>
+    </CompletingLogOut>
+
+    <LogOutSucceeded>
+        <div class="processing-container">
+            <p>You have been signed out successfully.</p>
+        </div>
+    </LogOutSucceeded>
+
+    <LogInFailed>
+        <div class="processing-container">
+            <p>Sorry, sign in failed.</p>
+        </div>
+    </LogInFailed>
+
+    <LogOutFailed>
+        <div class="processing-container">
+            <p>Sorry, sign out failed.</p>
+        </div>
+    </LogOutFailed>
+</RemoteAuthenticatorView>
+
+@code {
+    [Parameter]
+    public string? Action { get; set; }
+}

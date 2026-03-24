@@ -2,24 +2,9 @@
     <Router AppAssembly="@typeof(App).Assembly">
         <Found Context="routeData">
             <AuthorizeRouteView RouteData="@routeData"
-                DefaultLayout="@typeof(Layout.MainLayout)">
-                <NotAuthorized>
-                    @if (context.User.Identity?.IsAuthenticated
-                        != true)
-                    {
-                        <RedirectToLogin />
-                    }
-                    else
-                    {
-                        <p>
-                            You are not authorized to
-                            access this resource.
-                        </p>
-                    }
-                </NotAuthorized>
-            </AuthorizeRouteView>
+                                DefaultLayout="@typeof(Layout.MainLayout)" />
             <FocusOnNavigate RouteData="@routeData"
-                Selector="h1" />
+                             Selector="h1" />
         </Found>
         <NotFound>
             <PageTitle>Not found</PageTitle>

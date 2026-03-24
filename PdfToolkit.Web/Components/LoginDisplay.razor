@@ -19,19 +19,31 @@
     </Authorized>
     <NotAuthorized>
         <div class="auth-buttons">
-            <a href="authentication/login"
-               class="login-btn">
+            <button class="login-btn"
+                    @onclick="BeginLogin">
                 Sign In
-            </a>
-            <a href="authentication/login?screen_hint=signup"
-               class="signup-btn">
+            </button>
+            <button class="signup-btn"
+                    @onclick="BeginSignUp">
                 Sign Up Free
-            </a>
+            </button>
         </div>
     </NotAuthorized>
 </AuthorizeView>
 
 @code {
+    private void BeginLogin()
+    {
+        Navigation.NavigateTo(
+            "authentication/login");
+    }
+
+    private void BeginSignUp()
+    {
+        Navigation.NavigateTo(
+            "authentication/login?screen_hint=signup");
+    }
+
     private void BeginLogout()
     {
         Navigation.NavigateToLogout(
