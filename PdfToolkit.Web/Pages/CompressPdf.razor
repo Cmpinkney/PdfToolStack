@@ -2,6 +2,8 @@
 @inject ApiService ApiService
 @inject IJSRuntime JS
 @inject PaymentService PaymentService
+@inject FileValidationService Validator
+@inject ToastService Toast
 
 <PageTitle>Compress PDF Online Free — Reduce PDF Size Instantly</PageTitle>
 
@@ -187,25 +189,54 @@
 
     private async Task HandleFileSelected(IBrowserFile file)
     {
-        SelectedFile = file;
+        SelectedFile = null;
+        UploadedBytes = null;
         ErrorMessage = null;
-        CurrentState = PageState.Upload;
+
+        // Validate file type and size
+        var validation = Validator.ValidatePdfFile(file);
+        if (!validation.IsValid)
+        {
+            Toast.ShowError(validation.Message!);
+            return;
+        }
+
+        if (validation.IsWarning)
+            Toast.ShowWarning(validation.Message!);
 
         try
         {
             using var stream = file.OpenReadStream(
                 maxAllowedSize: 524288000);
-            using var memoryStream = new MemoryStream();
-            await stream.CopyToAsync(memoryStream);
-            UploadedBytes = memoryStream.ToArray();
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            UploadedBytes = ms.ToArray();
+
+            // Validate PDF bytes
+            var bytesValidation = Validator
+                .ValidatePdfBytes(UploadedBytes);
+            if (!bytesValidation.IsValid)
+            {
+                Toast.ShowError(bytesValidation.Message!);
+                UploadedBytes = null;
+                return;
+            }
+
+            if (bytesValidation.IsWarning)
+                Toast.ShowWarning(bytesValidation.Message!);
+
+            SelectedFile = file;
 
             if (PaymentService.IsFileTooLargeForFree(file.Size))
                 CurrentState = PageState.LargeFile;
+            else
+                Toast.ShowSuccess(
+                    $"File ready — {Validator.FormatSize(file.Size)}");
         }
         catch (Exception ex)
         {
-            ErrorMessage = $"Could not read file: {ex.Message}";
-            SelectedFile = null;
+            Toast.ShowError(
+                $"Could not read file: {ex.Message}");
             UploadedBytes = null;
         }
 
@@ -221,13 +252,17 @@
 
     private async Task ProcessFile()
     {
-        if (SelectedFile == null || UploadedBytes == null) return;
+        if (SelectedFile == null || UploadedBytes == null)
+            return;
 
         CurrentState = PageState.Processing;
         StateHasChanged();
 
         try
         {
+            using var cts = new CancellationTokenSource(
+                TimeSpan.FromSeconds(120));
+
             Response = await ApiService.ProcessPdfAsync(
                 UploadedBytes,
                 SelectedFile.Name,
@@ -237,22 +272,43 @@
             {
                 ProcessedBytes = UploadedBytes;
                 CurrentState = PageState.Complete;
+                Toast.ShowSuccess("PDF compressed successfully!");
             }
             else
             {
-                ErrorMessage = Response?.ErrorMessage
+                var msg = Response?.ErrorMessage
                     ?? "Compression failed. Please try again.";
+                ErrorMessage = msg;
+                Toast.ShowError(msg);
                 CurrentState = PageState.Error;
             }
         }
+        catch (TaskCanceledException)
+        {
+            ErrorMessage =
+                "Processing timed out after 2 minutes. " +
+                "Try a smaller file or split your PDF first.";
+            Toast.ShowError(ErrorMessage);
+            CurrentState = PageState.Error;
+        }
+        catch (HttpRequestException)
+        {
+            ErrorMessage =
+                "Network error — please check your connection " +
+                "and try again.";
+            Toast.ShowError(ErrorMessage);
+            CurrentState = PageState.Error;
+        }
         catch (Exception ex)
         {
-            ErrorMessage = $"Error: {ex.Message}";
+            ErrorMessage = $"Unexpected error: {ex.Message}";
+            Toast.ShowError(ErrorMessage);
             CurrentState = PageState.Error;
         }
 
         StateHasChanged();
     }
+
 
     private async Task DownloadFile()
     {

@@ -26,5 +26,7 @@ builder.Services.AddOidcAuthentication(options =>
 });
 
 builder.Services.AddScoped<PaymentService>();
+builder.Services.AddScoped<FileValidationService>();
+builder.Services.AddScoped<ToastService>();
 
 await builder.Build().RunAsync();

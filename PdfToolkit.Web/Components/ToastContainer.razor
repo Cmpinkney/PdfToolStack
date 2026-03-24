@@ -1,0 +1,79 @@
+﻿@inject ToastService ToastService
+@implements IDisposable
+
+<div class="toast-container">
+    @foreach (var toast in _toasts)
+    {
+        <div class="toast toast-@toast.Type.ToString().ToLower()
+                        @(toast.IsLeaving ? " toast-leaving" : "")"
+             @key="toast.Id">
+            <span class="toast-icon">
+                @GetIcon(toast.Type)
+            </span>
+            <span class="toast-message">@toast.Message</span>
+            <button class="toast-close"
+                    @onclick="() => RemoveToast(toast.Id)">
+                ✕
+            </button>
+        </div>
+    }
+</div>
+
+@code {
+    private List<ToastItem> _toasts = new();
+
+    protected override void OnInitialized()
+    {
+        ToastService.OnToast += HandleToast;
+    }
+
+    private async void HandleToast(ToastMessage message)
+    {
+        var item = new ToastItem(message);
+        _toasts.Add(item);
+        await InvokeAsync(StateHasChanged);
+
+        await Task.Delay(4000);
+        item.IsLeaving = true;
+        await InvokeAsync(StateHasChanged);
+
+        await Task.Delay(300);
+        _toasts.Remove(item);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void RemoveToast(string id)
+    {
+        _toasts.RemoveAll(t => t.Id == id);
+        StateHasChanged();
+    }
+
+    private string GetIcon(ToastType type) => type switch
+    {
+        ToastType.Success => "✅",
+        ToastType.Error => "❌",
+        ToastType.Warning => "⚠️",
+        ToastType.Info => "ℹ️",
+        _ => "ℹ️"
+    };
+
+    public void Dispose()
+    {
+        ToastService.OnToast -= HandleToast;
+    }
+
+    private class ToastItem
+    {
+        public string Id { get; }
+        public string Message { get; }
+        public ToastType Type { get; }
+        public bool IsLeaving { get; set; }
+
+        public ToastItem(ToastMessage message)
+        {
+            Id = message.Id;
+            Message = message.Message;
+            Type = message.Type;
+        }
+    }
+}
