@@ -2,6 +2,8 @@
 @inject ApiService ApiService
 @inject IJSRuntime JS
 @inject PaymentService PaymentService
+@inject FileValidationService Validator
+@inject ToastService Toast
 
 <PageTitle>Organize PDF Free Online — Rearrange and Rotate Pages</PageTitle>
 
@@ -187,9 +189,19 @@
 
     private async Task HandleFileSelected(IBrowserFile file)
     {
-        SelectedFile = file;
-        ErrorMessage = null;
+        SelectedFile = null;
+        UploadedBytes = null;
         Pages.Clear();
+        ErrorMessage = null;
+
+        var validation = Validator.ValidatePdfFile(file);
+        if (!validation.IsValid)
+        {
+            Toast.ShowError(validation.Message!);
+            return;
+        }
+        if (validation.IsWarning)
+            Toast.ShowWarning(validation.Message!);
 
         try
         {
@@ -199,6 +211,16 @@
             await stream.CopyToAsync(ms);
             UploadedBytes = ms.ToArray();
 
+            var bytesVal = Validator.ValidatePdfBytes(UploadedBytes);
+            if (!bytesVal.IsValid)
+            {
+                Toast.ShowError(bytesVal.Message!);
+                UploadedBytes = null;
+                return;
+            }
+            if (bytesVal.IsWarning)
+                Toast.ShowWarning(bytesVal.Message!);
+
             if (PaymentService.IsFileTooLargeForFree(file.Size))
             {
                 CurrentState = PageState.LargeFile;
@@ -206,20 +228,26 @@
                 return;
             }
 
-            var pageCount = await ApiService
-                .GetPageCountAsync(UploadedBytes, file.Name);
+            var pageCount = await ApiService.GetPageCountAsync(
+                UploadedBytes, file.Name);
+
+            var pageVal = Validator.ValidatePageCount(pageCount);
+            if (pageVal.IsWarning)
+                Toast.ShowWarning(pageVal.Message!);
 
             Pages = Enumerable.Range(1, pageCount)
                 .Select(p => new PageModel { OriginalPage = p })
                 .ToList();
+
+            SelectedFile = file;
+            Toast.ShowSuccess(
+                $"PDF loaded — {pageCount} pages");
         }
         catch (Exception ex)
         {
-            ErrorMessage = $"Could not read file: {ex.Message}";
-            SelectedFile = null;
+            Toast.ShowError($"Could not read file: {ex.Message}");
             UploadedBytes = null;
         }
-
         StateHasChanged();
     }
 

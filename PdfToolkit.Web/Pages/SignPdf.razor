@@ -3,6 +3,8 @@
 @inject IJSRuntime JS
 @inject PaymentService PaymentService
 @implements IDisposable
+@inject FileValidationService Validator
+@inject ToastService Toast
 
 <PageTitle>Sign PDF Free Online — Add Electronic Signature to PDF</PageTitle>
 
@@ -209,8 +211,18 @@
 
     private async Task HandleFileSelected(IBrowserFile file)
     {
-        SelectedFile = file;
+        SelectedFile = null;
+        UploadedBytes = null;
         ErrorMessage = null;
+
+        var validation = Validator.ValidatePdfFile(file);
+        if (!validation.IsValid)
+        {
+            Toast.ShowError(validation.Message!);
+            return;
+        }
+        if (validation.IsWarning)
+            Toast.ShowWarning(validation.Message!);
 
         try
         {
@@ -220,26 +232,35 @@
             await stream.CopyToAsync(ms);
             UploadedBytes = ms.ToArray();
 
-            if (PaymentService.IsFileTooLargeForFree(
-                file.Size))
+            var bytesVal = Validator.ValidatePdfBytes(UploadedBytes);
+            if (!bytesVal.IsValid)
+            {
+                Toast.ShowError(bytesVal.Message!);
+                UploadedBytes = null;
+                return;
+            }
+            if (bytesVal.IsWarning)
+                Toast.ShowWarning(bytesVal.Message!);
+
+            if (PaymentService.IsFileTooLargeForFree(file.Size))
             {
                 CurrentState = PageState.LargeFile;
                 StateHasChanged();
                 return;
             }
 
-            TotalPages = await ApiService
-                .GetPageCountAsync(
-                    UploadedBytes, file.Name);
+            TotalPages = await ApiService.GetPageCountAsync(
+                UploadedBytes, file.Name);
+
+            SelectedFile = file;
+            Toast.ShowSuccess(
+                $"File ready — {Validator.FormatSize(file.Size)}");
         }
         catch (Exception ex)
         {
-            ErrorMessage =
-                $"Could not read file: {ex.Message}";
-            SelectedFile = null;
+            Toast.ShowError($"Could not read file: {ex.Message}");
             UploadedBytes = null;
         }
-
         StateHasChanged();
     }
 

@@ -2,6 +2,8 @@
 @inject ApiService ApiService
 @inject IJSRuntime JS
 @inject PaymentService PaymentService
+@inject FileValidationService Validator
+@inject ToastService Toast
 
 <PageTitle>PPT to PDF Converter Free Online — PowerPoint to PDF</PageTitle>
 
@@ -153,10 +155,19 @@
     }
 
     private async Task HandleFileSelected(
-        InputFileChangeEventArgs e)
+    InputFileChangeEventArgs e)
     {
-        SelectedFile = e.File;
+        SelectedFile = null;
+        UploadedBytes = null;
         ErrorMessage = null;
+
+        var validation = Validator.ValidatePptFile(e.File);
+        if (!validation.IsValid)
+        {
+            Toast.ShowError(validation.Message!);
+            return;
+        }
+
         try
         {
             using var stream = e.File.OpenReadStream(
@@ -164,19 +175,17 @@
             using var ms = new MemoryStream();
             await stream.CopyToAsync(ms);
             UploadedBytes = ms.ToArray();
-            if (PaymentService.IsFileTooLargeForFree(
-                e.File.Size))
-            {
+            SelectedFile = e.File;
+
+            if (PaymentService.IsFileTooLargeForFree(e.File.Size))
                 CurrentState = PageState.LargeFile;
-                StateHasChanged();
-                return;
-            }
+            else
+                Toast.ShowSuccess(
+                    $"File ready — {Validator.FormatSize(e.File.Size)}");
         }
         catch (Exception ex)
         {
-            ErrorMessage =
-                $"Could not read file: {ex.Message}";
-            SelectedFile = null;
+            Toast.ShowError($"Could not read file: {ex.Message}");
             UploadedBytes = null;
         }
         StateHasChanged();

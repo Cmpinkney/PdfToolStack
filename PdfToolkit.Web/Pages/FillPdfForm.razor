@@ -2,6 +2,8 @@
 @inject ApiService ApiService
 @inject IJSRuntime JS
 @inject PaymentService PaymentService
+@inject FileValidationService Validator
+@inject ToastService Toast
 
 <PageTitle>Fill PDF Form Online Free — Fill Out PDF Forms Instantly</PageTitle>
 
@@ -250,8 +252,18 @@
 
     private async Task HandleFileSelected(IBrowserFile file)
     {
-        SelectedFile = file;
+        SelectedFile = null;
+        UploadedBytes = null;
         ErrorMessage = null;
+
+        var validation = Validator.ValidatePdfFile(file);
+        if (!validation.IsValid)
+        {
+            Toast.ShowError(validation.Message!);
+            return;
+        }
+        if (validation.IsWarning)
+            Toast.ShowWarning(validation.Message!);
 
         try
         {
@@ -261,20 +273,32 @@
             await stream.CopyToAsync(ms);
             UploadedBytes = ms.ToArray();
 
+            var bytesVal = Validator.ValidatePdfBytes(UploadedBytes);
+            if (!bytesVal.IsValid)
+            {
+                Toast.ShowError(bytesVal.Message!);
+                UploadedBytes = null;
+                return;
+            }
+            if (bytesVal.IsWarning)
+                Toast.ShowWarning(bytesVal.Message!);
+
+            SelectedFile = file;
             if (PaymentService.IsFileTooLargeForFree(file.Size))
             {
                 CurrentState = PageState.LargeFile;
                 StateHasChanged();
                 return;
             }
+
+            Toast.ShowSuccess(
+                $"File ready — {Validator.FormatSize(file.Size)}");
         }
         catch (Exception ex)
         {
-            ErrorMessage = $"Could not read file: {ex.Message}";
-            SelectedFile = null;
+            Toast.ShowError($"Could not read file: {ex.Message}");
             UploadedBytes = null;
         }
-
         StateHasChanged();
     }
 

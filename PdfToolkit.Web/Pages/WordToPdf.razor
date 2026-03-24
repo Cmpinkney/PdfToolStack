@@ -2,6 +2,8 @@
 @inject ApiService ApiService
 @inject IJSRuntime JS
 @inject PaymentService PaymentService
+@inject FileValidationService Validator
+@inject ToastService Toast
 
 <PageTitle>Word to PDF Converter Free Online — Convert DOCX to PDF</PageTitle>
 
@@ -169,10 +171,18 @@
     }
 
     private async Task HandleFileSelected(
-        InputFileChangeEventArgs e)
+    InputFileChangeEventArgs e)
     {
-        SelectedFile = e.File;
+        SelectedFile = null;
+        UploadedBytes = null;
         ErrorMessage = null;
+
+        var validation = Validator.ValidateWordFile(e.File);
+        if (!validation.IsValid)
+        {
+            Toast.ShowError(validation.Message!);
+            return;
+        }
 
         try
         {
@@ -181,54 +191,61 @@
             using var ms = new MemoryStream();
             await stream.CopyToAsync(ms);
             UploadedBytes = ms.ToArray();
+            SelectedFile = e.File;
 
-            if (PaymentService.IsFileTooLargeForFree(
-                e.File.Size))
-            {
+            if (PaymentService.IsFileTooLargeForFree(e.File.Size))
                 CurrentState = PageState.LargeFile;
-                StateHasChanged();
-                return;
-            }
+            else
+                Toast.ShowSuccess(
+                    $"File ready — {Validator.FormatSize(e.File.Size)}");
         }
         catch (Exception ex)
         {
-            ErrorMessage =
-                $"Could not read file: {ex.Message}";
-            SelectedFile = null;
+            Toast.ShowError($"Could not read file: {ex.Message}");
             UploadedBytes = null;
         }
-
         StateHasChanged();
     }
 
     private async Task ProcessFile()
     {
-        if (UploadedBytes == null ||
-            SelectedFile == null) return;
-
+        if (UploadedBytes == null || SelectedFile == null) return;
         CurrentState = PageState.Processing;
         StateHasChanged();
-
         try
         {
             ResultBytes = await ApiService.WordToPdfAsync(
                 UploadedBytes, SelectedFile.Name);
-
             if (ResultBytes != null)
+            {
                 CurrentState = PageState.Complete;
+                Toast.ShowSuccess("Word converted to PDF!");
+            }
             else
             {
-                ErrorMessage =
-                    "Conversion failed. Please try again.";
+                ErrorMessage = "Conversion failed. Please try again.";
+                Toast.ShowError(ErrorMessage);
                 CurrentState = PageState.Error;
             }
+        }
+        catch (TaskCanceledException)
+        {
+            ErrorMessage = "Processing timed out. Try a smaller file.";
+            Toast.ShowError(ErrorMessage);
+            CurrentState = PageState.Error;
+        }
+        catch (HttpRequestException)
+        {
+            ErrorMessage = "Network error — please try again.";
+            Toast.ShowError(ErrorMessage);
+            CurrentState = PageState.Error;
         }
         catch (Exception ex)
         {
             ErrorMessage = $"Error: {ex.Message}";
+            Toast.ShowError(ErrorMessage);
             CurrentState = PageState.Error;
         }
-
         StateHasChanged();
     }
 

@@ -1,0 +1,64 @@
+﻿@inject CookieConsentService CookieConsent
+
+@if (ShowBanner)
+{
+    <div class="cookie-banner">
+        <div class="cookie-banner-content">
+            <div class="cookie-banner-left">
+                <span class="cookie-icon">🍪</span>
+                <div>
+                    <p class="cookie-title">
+                        We use cookies
+                    </p>
+                    <p class="cookie-desc">
+                        We use cookies to remember your
+                        preferences and improve your experience.
+                        We never sell your data.
+                        <a href="/cookie-policy">
+                            Learn more
+                        </a>
+                    </p>
+                </div>
+            </div>
+            <div class="cookie-banner-actions">
+                <button class="cookie-decline-btn"
+                        @onclick="Decline">
+                    Decline
+                </button>
+                <button class="cookie-accept-btn"
+                        @onclick="Accept">
+                    Accept All
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool ShowBanner = false;
+
+    protected override async Task OnAfterRenderAsync(
+        bool firstRender)
+    {
+        if (firstRender)
+        {
+            ShowBanner = !await CookieConsent
+                .HasConsentAsync();
+            StateHasChanged();
+        }
+    }
+
+    private async Task Accept()
+    {
+        await CookieConsent.AcceptAsync();
+        ShowBanner = false;
+        StateHasChanged();
+    }
+
+    private async Task Decline()
+    {
+        await CookieConsent.DeclineAsync();
+        ShowBanner = false;
+        StateHasChanged();
+    }
+}

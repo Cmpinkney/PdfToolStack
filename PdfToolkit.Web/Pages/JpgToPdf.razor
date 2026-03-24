@@ -2,6 +2,8 @@
 @inject ApiService ApiService
 @inject IJSRuntime JS
 @inject PaymentService PaymentService
+@inject FileValidationService Validator
+@inject ToastService Toast
 
 <PageTitle>JPG to PDF Converter Free Online — Images to PDF</PageTitle>
 
@@ -193,13 +195,19 @@
     }
 
     private async Task HandleFileSelected(
-        InputFileChangeEventArgs e)
+    InputFileChangeEventArgs e)
     {
         ErrorMessage = null;
         var file = e.File;
 
-        if (PaymentService.IsFileTooLargeForFree(
-            file.Size))
+        var validation = Validator.ValidateImageFile(file);
+        if (!validation.IsValid)
+        {
+            Toast.ShowError(validation.Message!);
+            return;
+        }
+
+        if (PaymentService.IsFileTooLargeForFree(file.Size))
         {
             _largeFileSize = file.Size;
             _largeFileName = file.Name;
@@ -216,16 +224,16 @@
             await stream.CopyToAsync(ms);
             UploadedFiles.Add(file);
             UploadedFileBytes.Add(ms.ToArray());
+            Toast.ShowSuccess($"Added {file.Name}");
         }
         catch (Exception ex)
         {
-            ErrorMessage =
-                $"Could not read {file.Name}: " +
-                $"{ex.Message}";
+            Toast.ShowError(
+                $"Could not read {file.Name}: {ex.Message}");
         }
-
         StateHasChanged();
     }
+
 
     private void RemoveFile(int index)
     {
