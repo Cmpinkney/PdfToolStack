@@ -1,48 +1,28 @@
 ﻿@inject IJSRuntime JS
 
-<div class="theme-switcher">
-    <button class="theme-btn @(CurrentTheme == "ocean" ? "active" : "")"
-            title="Ocean"
-            @onclick='() => SetTheme("ocean")'>
-        🌊
-    </button>
-    <button class="theme-btn @(CurrentTheme == "dark" ? "active" : "")"
-            title="Dark"
-            @onclick='() => SetTheme("dark")'>
-        🌙
-    </button>
-    <button class="theme-btn @(CurrentTheme == "forest" ? "active" : "")"
-            title="Forest"
-            @onclick='() => SetTheme("forest")'>
-        🌿
-    </button>
-    <button class="theme-btn @(CurrentTheme == "sunset" ? "active" : "")"
-            title="Sunset"
-            @onclick='() => SetTheme("sunset")'>
-        🌅
-    </button>
+<div class="theme-toggle" @onclick="Toggle" title="@(IsDark ? "Switch to light mode" : "Switch to dark mode")">
+    <span class="theme-toggle-icon">@(IsDark ? "☀️" : "🌙")</span>
+    <span class="theme-toggle-label">@(IsDark ? "Light" : "Dark")</span>
 </div>
 
 @code {
-    private string CurrentTheme = "ocean";
+    private bool IsDark = false;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            CurrentTheme = await JS.InvokeAsync<string>(
-                "getTheme") ?? "ocean";
+            var theme = await JS.InvokeAsync<string>("getTheme");
+            IsDark = theme == "dark";
             StateHasChanged();
         }
     }
 
-    private async Task SetTheme(string theme)
+    private async Task Toggle()
     {
-        CurrentTheme = theme;
-        await JS.InvokeVoidAsync("setTheme", theme);
+        IsDark = !IsDark;
+        await JS.InvokeVoidAsync("setTheme",
+            IsDark ? "dark" : "light");
         StateHasChanged();
     }
-}
-@code {
-
 }

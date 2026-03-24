@@ -1,202 +1,350 @@
 ﻿@page "/"
+@inject IJSRuntime JS
 
 <PageTitle>PDFToolstack — Free PDF Tools Online</PageTitle>
 
 <HeadContent>
     <meta name="description"
-          content="Free online PDF tools. Compress, convert, merge,
-                   edit, sign, and more. No signup required." />
+          content="35+ free online PDF tools. Compress, convert,
+                   merge, edit, sign, and more. No signup required.
+                   Files deleted within 1 hour." />
     <meta name="keywords"
-          content="free pdf tools, pdf editor online, compress pdf,
-                   merge pdf, convert pdf" />
+          content="free pdf tools, pdf editor online,
+                   compress pdf, merge pdf, convert pdf" />
     <link rel="canonical" href="https://pdftoolstack.com" />
 </HeadContent>
 
 <div class="home-page">
-    <div class="hero">
-        <h1>Free PDF Tools Online</h1>
-        <p class="hero-subtitle">
-            Everything you need to work with PDFs —
-            completely free, no signup required,
-            files deleted within 1 hour.
+
+    <!-- Hero -->
+    <div class="hero-section">
+        <h1>Free PDF Tools <span>Online</span></h1>
+        <p>
+            35+ tools to compress, convert, edit, sign and
+            secure your PDFs — completely free, no signup
+            required.
         </p>
+        <div class="hero-search">
+            <span class="hero-search-icon">🔍</span>
+            <input type="text"
+                   placeholder="Search tools — compress, sign, convert..."
+                   @bind="HeroSearch"
+                   @bind:event="oninput" />
+        </div>
     </div>
 
-    <div class="tools-grid">
+    <div class="tools-section">
 
-        <a href="/compress-pdf" class="tool-card">
-            <span class="tool-icon">🗜️</span>
-            <h3>Compress PDF</h3>
-            <p>Reduce PDF file size without losing quality</p>
-        </a>
+        @if (!string.IsNullOrWhiteSpace(HeroSearch))
+        {
+            <div class="tools-category">
+                <div class="tools-category-title">
+                    Search results
+                </div>
+                <div class="tools-grid">
+                    @foreach (var tool in SearchResults)
+                    {
+                        <a href="@tool.Url" class="tool-card">
+                            <span class="tool-card-icon">
+                                @tool.Icon
+                            </span>
+                            <h3>@tool.Name</h3>
+                            <p>@tool.Description</p>
+                        </a>
+                    }
+                    @if (!SearchResults.Any())
+                    {
+                        <p style="color:var(--text-muted);
+                                          font-size:0.9rem;
+                                          grid-column:1/-1;">
+                            No tools found for "@HeroSearch"
+                        </p>
+                    }
+                </div>
+            </div>
+        }
+        else
+        {
+            <!-- Compress & Convert -->
+            <div class="tools-category">
+                <div class="tools-category-title">
+                    Compress &amp; Convert
+                </div>
+                <div class="tools-grid">
+                    <a href="/compress-pdf" class="tool-card">
+                        <span class="tool-card-icon">🗜️</span>
+                        <h3>Compress PDF</h3>
+                        <p>Reduce file size</p>
+                    </a>
+                    <a href="/pdf-to-word" class="tool-card">
+                        <span class="tool-card-icon">📝</span>
+                        <h3>PDF to Word</h3>
+                        <p>Convert to DOCX</p>
+                    </a>
+                    <a href="/word-to-pdf" class="tool-card">
+                        <span class="tool-card-icon">📄</span>
+                        <h3>Word to PDF</h3>
+                        <p>DOCX to PDF</p>
+                    </a>
+                    <a href="/ppt-to-pdf" class="tool-card">
+                        <span class="tool-card-icon">📊</span>
+                        <h3>PPT to PDF</h3>
+                        <p>Presentation to PDF</p>
+                    </a>
+                    <a href="/excel-to-pdf" class="tool-card">
+                        <span class="tool-card-icon">📈</span>
+                        <h3>Excel to PDF</h3>
+                        <p>Spreadsheet to PDF</p>
+                    </a>
+                    <a href="/jpg-to-pdf" class="tool-card">
+                        <span class="tool-card-icon">🖼️</span>
+                        <h3>JPG to PDF</h3>
+                        <p>Images to PDF</p>
+                    </a>
+                    <a href="/pdf-to-jpg" class="tool-card">
+                        <span class="tool-card-icon">🖼️</span>
+                        <h3>PDF to JPG</h3>
+                        <p>Pages to images</p>
+                        <span class="tool-card-badge">Soon</span>
+                    </a>
+                    <a href="/pdf-to-excel" class="tool-card">
+                        <span class="tool-card-icon">📈</span>
+                        <h3>PDF to Excel</h3>
+                        <p>Tables to XLSX</p>
+                        <span class="tool-card-badge">Soon</span>
+                    </a>
+                    <a href="/converter" class="tool-card">
+                        <span class="tool-card-icon">🔄</span>
+                        <h3>All Converters</h3>
+                        <p>View all options</p>
+                    </a>
+                </div>
+            </div>
 
-        <a href="/pdf-to-word" class="tool-card">
-            <span class="tool-icon">📝</span>
-            <h3>PDF to Word</h3>
-            <p>Convert PDF to editable Word document</p>
-        </a>
+            <!-- Edit & Annotate -->
+            <div class="tools-category">
+                <div class="tools-category-title">
+                    Edit &amp; Annotate
+                </div>
+                <div class="tools-grid">
+                    <a href="/edit-pdf" class="tool-card">
+                        <span class="tool-card-icon">🖊️</span>
+                        <h3>Edit PDF</h3>
+                        <p>Add text and shapes</p>
+                    </a>
+                    <a href="/pdf-annotator" class="tool-card">
+                        <span class="tool-card-icon">🖍️</span>
+                        <h3>PDF Annotator</h3>
+                        <p>Highlight and markup</p>
+                    </a>
+                    <a href="/sign-pdf" class="tool-card">
+                        <span class="tool-card-icon">✒️</span>
+                        <h3>Sign PDF</h3>
+                        <p>Electronic signature</p>
+                    </a>
+                    <a href="/fill-pdf-form" class="tool-card">
+                        <span class="tool-card-icon">✍️</span>
+                        <h3>Fill PDF Form</h3>
+                        <p>Complete form fields</p>
+                    </a>
+                    <a href="/watermark-pdf" class="tool-card">
+                        <span class="tool-card-icon">💧</span>
+                        <h3>Watermark PDF</h3>
+                        <p>Add watermark text</p>
+                    </a>
+                    <a href="/number-pages" class="tool-card">
+                        <span class="tool-card-icon">🔢</span>
+                        <h3>Number Pages</h3>
+                        <p>Add page numbers</p>
+                    </a>
+                    <a href="/redact-pdf" class="tool-card">
+                        <span class="tool-card-icon">🔒</span>
+                        <h3>Redact PDF</h3>
+                        <p>Remove sensitive info</p>
+                    </a>
+                    <a href="/crop-pdf" class="tool-card">
+                        <span class="tool-card-icon">✂️</span>
+                        <h3>Crop PDF</h3>
+                        <p>Trim page areas</p>
+                        <span class="tool-card-badge">Soon</span>
+                    </a>
+                </div>
+            </div>
 
-        <a href="/word-to-pdf" class="tool-card">
-            <span class="tool-icon">📄</span>
-            <h3>Word to PDF</h3>
-            <p>Convert Word documents to PDF files</p>
-        </a>
+            <!-- Organize -->
+            <div class="tools-category">
+                <div class="tools-category-title">Organize</div>
+                <div class="tools-grid">
+                    <a href="/merge-pdf" class="tool-card">
+                        <span class="tool-card-icon">🔗</span>
+                        <h3>Merge PDF</h3>
+                        <p>Combine PDFs</p>
+                    </a>
+                    <a href="/split-pdf" class="tool-card">
+                        <span class="tool-card-icon">✂️</span>
+                        <h3>Split PDF</h3>
+                        <p>Separate pages</p>
+                    </a>
+                    <a href="/organize-pdf" class="tool-card">
+                        <span class="tool-card-icon">📋</span>
+                        <h3>Organize PDF</h3>
+                        <p>Reorder pages</p>
+                    </a>
+                    <a href="/delete-pdf-pages" class="tool-card">
+                        <span class="tool-card-icon">🗑️</span>
+                        <h3>Delete Pages</h3>
+                        <p>Remove pages</p>
+                    </a>
+                    <a href="/extract-pdf-pages" class="tool-card">
+                        <span class="tool-card-icon">📌</span>
+                        <h3>Extract Pages</h3>
+                        <p>Pick specific pages</p>
+                    </a>
+                    <a href="/rotate-pdf" class="tool-card">
+                        <span class="tool-card-icon">🔄</span>
+                        <h3>Rotate PDF</h3>
+                        <p>Fix page orientation</p>
+                    </a>
+                    <a href="/flatten-pdf" class="tool-card">
+                        <span class="tool-card-icon">📄</span>
+                        <h3>Flatten PDF</h3>
+                        <p>Make uneditable</p>
+                    </a>
+                </div>
+            </div>
 
-        <a href="/merge-pdf" class="tool-card">
-            <span class="tool-icon">🔗</span>
-            <h3>Merge PDF</h3>
-            <p>Combine multiple PDFs into one document</p>
-        </a>
+            <!-- Security -->
+            <div class="tools-category">
+                <div class="tools-category-title">Security</div>
+                <div class="tools-grid">
+                    <a href="/protect-pdf" class="tool-card">
+                        <span class="tool-card-icon">🔐</span>
+                        <h3>Protect PDF</h3>
+                        <p>Add password</p>
+                    </a>
+                    <a href="/unlock-pdf" class="tool-card">
+                        <span class="tool-card-icon">🔓</span>
+                        <h3>Unlock PDF</h3>
+                        <p>Remove password</p>
+                    </a>
+                </div>
+            </div>
 
-        <a href="/fill-pdf-form" class="tool-card">
-            <span class="tool-icon">✍️</span>
-            <h3>Fill PDF Form</h3>
-            <p>Fill out PDF forms online instantly</p>
-        </a>
+            <!-- View & Read -->
+            <div class="tools-category">
+                <div class="tools-category-title">
+                    View &amp; Read
+                </div>
+                <div class="tools-grid">
+                    <a href="/pdf-reader" class="tool-card">
+                        <span class="tool-card-icon">📖</span>
+                        <h3>PDF Reader</h3>
+                        <p>View in browser</p>
+                    </a>
+                    <a href="/translate-pdf" class="tool-card">
+                        <span class="tool-card-icon">🌍</span>
+                        <h3>Translate PDF</h3>
+                        <p>Translate content</p>
+                    </a>
+                    <a href="/pdf-ocr" class="tool-card">
+                        <span class="tool-card-icon">🔍</span>
+                        <h3>PDF OCR</h3>
+                        <p>Make scans searchable</p>
+                        <span class="tool-card-badge">Soon</span>
+                    </a>
+                    <a href="/pdf-scanner" class="tool-card">
+                        <span class="tool-card-icon">📱</span>
+                        <h3>PDF Scanner</h3>
+                        <p>Scan to PDF</p>
+                        <span class="tool-card-badge">Soon</span>
+                    </a>
+                </div>
+            </div>
 
-        <a href="/redact-pdf" class="tool-card">
-            <span class="tool-icon">🔒</span>
-            <h3>Redact PDF</h3>
-            <p>Remove sensitive information permanently</p>
-        </a>
-
-        <a href="/delete-pdf-pages" class="tool-card">
-            <span class="tool-icon">🗑️</span>
-            <h3>Delete PDF Pages</h3>
-            <p>Remove one or multiple pages from your PDF</p>
-        </a>
-
-        <a href="/organize-pdf" class="tool-card">
-            <span class="tool-icon">📋</span>
-            <h3>Organize PDF</h3>
-            <p>Rearrange, rotate and delete PDF pages</p>
-        </a>
-
-        <a href="/sign-pdf" class="tool-card">
-            <span class="tool-icon">✒️</span>
-            <h3>Sign PDF</h3>
-            <p>Add your electronic signature to a PDF</p>
-        </a>
-
-        <a href="/edit-pdf" class="tool-card">
-            <span class="tool-icon">🖊️</span>
-            <h3>Edit PDF</h3>
-            <p>Add text, shapes and drawings to your PDF</p>
-        </a>
-
-        <a href="/pdf-annotator" class="tool-card">
-            <span class="tool-icon">🖍️</span>
-            <h3>PDF Annotator</h3>
-            <p>Highlight, underline and mark up your PDF</p>
-        </a>
-
-        <a href="/pdf-reader" class="tool-card">
-            <span class="tool-icon">📖</span>
-            <h3>PDF Reader</h3>
-            <p>View and share PDFs directly in your browser</p>
-        </a>
-
-        <a href="/translate-pdf" class="tool-card">
-            <span class="tool-icon">🌍</span>
-            <h3>Translate PDF</h3>
-            <p>Translate your PDF content to another language</p>
-        </a>
-
-        <a href="/number-pages" class="tool-card">
-            <span class="tool-icon">🔢</span>
-            <h3>Number Pages</h3>
-            <p>Insert page numbers into your PDF</p>
-        </a>
-
-        <a href="/watermark-pdf" class="tool-card">
-            <span class="tool-icon">💧</span>
-            <h3>Watermark PDF</h3>
-            <p>Add a watermark to your PDF</p>
-        </a>
-
-        <a href="/flatten-pdf" class="tool-card">
-            <span class="tool-icon">📄</span>
-            <h3>Flatten PDF</h3>
-            <p>Make your PDF permanently uneditable</p>
-        </a>
-
-        <a href="/unlock-pdf" class="tool-card">
-            <span class="tool-icon">🔓</span>
-            <h3>Unlock PDF</h3>
-            <p>Remove password protection from PDF</p>
-        </a>
-
-        <a href="/protect-pdf" class="tool-card">
-            <span class="tool-icon">🔐</span>
-            <h3>Protect PDF</h3>
-            <p>Add password encryption to your PDF</p>
-        </a>
-
-        <a href="/ppt-to-pdf" class="tool-card">
-            <span class="tool-icon">📽️</span>
-            <h3>PPT to PDF</h3>
-            <p>Convert PowerPoint presentations to PDF</p>
-        </a>
-
-        <a href="/excel-to-pdf" class="tool-card">
-            <span class="tool-icon">📈</span>
-            <h3>Excel to PDF</h3>
-            <p>Convert Excel spreadsheets to PDF</p>
-        </a>
-
-        <a href="/pdf-to-jpg" class="tool-card">
-            <span class="tool-icon">🖼️</span>
-            <h3>PDF to JPG</h3>
-            <p>Convert PDF pages to images</p>
-        </a>
-
-        <a href="/crop-pdf" class="tool-card">
-            <span class="tool-icon">✂️</span>
-            <h3>Crop PDF</h3>
-            <p>Crop and trim your PDF pages</p>
-        </a>
-
-        <a href="/converter" class="tool-card">
-            <span class="tool-icon">🔄</span>
-            <h3>All Converters</h3>
-            <p>Convert to and from PDF in one place</p>
-        </a>
-
-        <a href="/pdf-ocr" class="tool-card">
-            <span class="tool-icon">🔍</span>
-            <h3>PDF OCR</h3>
-            <p>Make scanned PDFs searchable</p>
-        </a>
-
-        <a href="/ai-pdf-assist" class="tool-card">
-            <span class="tool-icon">🤖</span>
-            <h3>AI PDF Assist</h3>
-            <p>AI-powered document processing</p>
-        </a>
-
-        <a href="/chat-with-pdf" class="tool-card">
-            <span class="tool-icon">💬</span>
-            <h3>Chat with PDF</h3>
-            <p>Ask your PDF anything with AI</p>
-        </a>
-
-        <a href="/ai-summarizer" class="tool-card">
-            <span class="tool-icon">✨</span>
-            <h3>AI Summarizer</h3>
-            <p>Summarize PDF documents with AI</p>
-        </a>
-
-        <a href="/ai-questions" class="tool-card">
-            <span class="tool-icon">📝</span>
-            <h3>AI Questions</h3>
-            <p>Generate quiz questions from PDF</p>
-        </a>
-
-        <a href="/pdf-scanner" class="tool-card">
-            <span class="tool-icon">📱</span>
-            <h3>PDF Scanner</h3>
-            <p>Scan documents to PDF with your phone</p>
-        </a>
+            <!-- AI Tools -->
+            <div class="tools-category">
+                <div class="tools-category-title">AI Tools</div>
+                <div class="tools-grid">
+                    <a href="/ai-pdf-assist" class="tool-card">
+                        <span class="tool-card-icon">🤖</span>
+                        <h3>AI PDF Assist</h3>
+                        <p>AI document processing</p>
+                        <span class="tool-card-badge ai">AI</span>
+                    </a>
+                    <a href="/chat-with-pdf" class="tool-card">
+                        <span class="tool-card-icon">💬</span>
+                        <h3>Chat with PDF</h3>
+                        <p>Ask your PDF anything</p>
+                        <span class="tool-card-badge ai">AI</span>
+                    </a>
+                    <a href="/ai-summarizer" class="tool-card">
+                        <span class="tool-card-icon">✨</span>
+                        <h3>AI Summarizer</h3>
+                        <p>Summarize documents</p>
+                        <span class="tool-card-badge ai">AI</span>
+                    </a>
+                    <a href="/ai-questions" class="tool-card">
+                        <span class="tool-card-icon">📝</span>
+                        <h3>AI Questions</h3>
+                        <p>Generate quiz questions</p>
+                        <span class="tool-card-badge ai">AI</span>
+                    </a>
+                </div>
+            </div>
+        }
 
     </div>
 </div>
+
+@code {
+    private string HeroSearch = string.Empty;
+
+    private record ToolInfo(string Name, string Description,
+        string Url, string Icon);
+
+    private List<ToolInfo> AllTools = new()
+    {
+        new("Compress PDF", "Reduce file size", "/compress-pdf", "🗜️"),
+        new("PDF to Word", "Convert to DOCX", "/pdf-to-word", "📝"),
+        new("Word to PDF", "DOCX to PDF", "/word-to-pdf", "📄"),
+        new("Merge PDF", "Combine PDFs", "/merge-pdf", "🔗"),
+        new("Split PDF", "Separate pages", "/split-pdf", "✂️"),
+        new("Rotate PDF", "Fix page orientation", "/rotate-pdf", "🔄"),
+        new("Edit PDF", "Add text and shapes", "/edit-pdf", "🖊️"),
+        new("Sign PDF", "Electronic signature", "/sign-pdf", "✒️"),
+        new("Redact PDF", "Remove sensitive info", "/redact-pdf", "🔒"),
+        new("PDF Annotator", "Highlight and markup", "/pdf-annotator", "🖍️"),
+        new("Watermark PDF", "Add watermark text", "/watermark-pdf", "💧"),
+        new("Fill PDF Form", "Complete form fields", "/fill-pdf-form", "✍️"),
+        new("Organize PDF", "Reorder pages", "/organize-pdf", "📋"),
+        new("Delete Pages", "Remove pages", "/delete-pdf-pages", "🗑️"),
+        new("Extract Pages", "Pick specific pages", "/extract-pdf-pages", "📌"),
+        new("Number Pages", "Add page numbers", "/number-pages", "🔢"),
+        new("Flatten PDF", "Make uneditable", "/flatten-pdf", "📄"),
+        new("Protect PDF", "Add password", "/protect-pdf", "🔐"),
+        new("Unlock PDF", "Remove password", "/unlock-pdf", "🔓"),
+        new("JPG to PDF", "Images to PDF", "/jpg-to-pdf", "🖼️"),
+        new("PPT to PDF", "Presentation to PDF", "/ppt-to-pdf", "📊"),
+        new("Excel to PDF", "Spreadsheet to PDF", "/excel-to-pdf", "📈"),
+        new("PDF Reader", "View in browser", "/pdf-reader", "📖"),
+        new("Translate PDF", "Translate content", "/translate-pdf", "🌍"),
+        new("AI PDF Assist", "AI document processing", "/ai-pdf-assist", "🤖"),
+        new("Chat with PDF", "Ask your PDF anything", "/chat-with-pdf", "💬"),
+        new("AI Summarizer", "Summarize documents", "/ai-summarizer", "✨"),
+        new("AI Questions", "Generate quiz questions", "/ai-questions", "📝"),
+        new("PDF OCR", "Make scans searchable", "/pdf-ocr", "🔍"),
+        new("PDF Scanner", "Scan to PDF", "/pdf-scanner", "📱"),
+        new("Crop PDF", "Trim page areas", "/crop-pdf", "✂️"),
+        new("PDF to JPG", "Pages to images", "/pdf-to-jpg", "🖼️"),
+        new("PDF to Excel", "Tables to XLSX", "/pdf-to-excel", "📈"),
+    };
+
+    private IEnumerable<ToolInfo> SearchResults =>
+        string.IsNullOrWhiteSpace(HeroSearch)
+            ? Enumerable.Empty<ToolInfo>()
+            : AllTools.Where(t =>
+                t.Name.Contains(HeroSearch,
+                    StringComparison.OrdinalIgnoreCase) ||
+                t.Description.Contains(HeroSearch,
+                    StringComparison.OrdinalIgnoreCase));
+}

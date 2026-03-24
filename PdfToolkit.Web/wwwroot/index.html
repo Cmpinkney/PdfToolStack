@@ -4,47 +4,61 @@
     <meta charset="utf-8" />
     <meta name="viewport"
           content="width=device-width, initial-scale=1.0" />
-    <title>PDFToolkit</title>
+    <title>PDFToolstack</title>
     <base href="/" />
     <link rel="stylesheet" href="css/app.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="_content/Microsoft.AspNetCore.Components.WebAssembly.Authentication/AuthenticationService.js"></script>
 </head>
 <body>
     <script>
-        // Apply theme immediately to prevent flash
         (function () {
-            const theme = localStorage.getItem('pdftoolkit-theme') || 'ocean';
-            if (theme !== 'ocean') {
-                document.documentElement.setAttribute('data-theme', theme);
+            const theme = localStorage.getItem('pdftoolkit-theme') || 'light';
+            if (theme === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
             }
         })();
 
         window.setTheme = (theme) => {
-            if (theme === 'ocean') {
-                document.documentElement.removeAttribute('data-theme');
+            if (theme === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
             } else {
-                document.documentElement.setAttribute('data-theme', theme);
+                document.documentElement.removeAttribute('data-theme');
             }
             localStorage.setItem('pdftoolkit-theme', theme);
         };
 
         window.getTheme = () => {
-            return localStorage.getItem('pdftoolkit-theme') || 'ocean';
+            return localStorage.getItem('pdftoolkit-theme') || 'light';
         };
+
+        window.addEventListener('scroll', () => {
+            const navbar = document.getElementById('mainNavbar');
+            if (navbar) {
+                if (window.scrollY > 10) {
+                    navbar.classList.add('scrolled');
+                } else {
+                    navbar.classList.remove('scrolled');
+                }
+            }
+        });
     </script>
+
     <div id="app">
         <div style="text-align:center;padding:4rem;">
             <p>Loading...</p>
         </div>
     </div>
+
     <div id="blazor-error-ui" style="display:none">
         An error has occurred.
         <a href="" class="reload">Reload</a>
     </div>
+
     <script src="_framework/blazor.webassembly.js"></script>
+
     <script>
         window.downloadFile = (fileName, base64Data) => {
             const extension = fileName.split('.').pop().toLowerCase();
@@ -52,8 +66,7 @@
                 'pdf': 'application/pdf',
                 'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
             };
-            const mimeType = mimeTypes[extension]
-                || 'application/octet-stream';
+            const mimeType = mimeTypes[extension] || 'application/octet-stream';
             const link = document.createElement('a');
             link.href = `data:${mimeType};base64,` + base64Data;
             link.download = fileName;
@@ -62,7 +75,9 @@
             document.body.removeChild(link);
         };
     </script>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
     <script>
         let dotNetHelper = null;
         let isDrawing = false;
@@ -88,8 +103,7 @@
                 for (let i = 0; i < binaryData.length; i++)
                     bytes[i] = binaryData.charCodeAt(i);
 
-                pdfDoc = await pdfjsLib.getDocument(
-                    { data: bytes }).promise;
+                pdfDoc = await pdfjsLib.getDocument({ data: bytes }).promise;
                 const page = await pdfDoc.getPage(pageNum);
                 const viewport = page.getViewport({ scale: 1.5 });
 
@@ -99,10 +113,7 @@
                 redactCanvas.height = viewport.height;
 
                 const ctx = pdfCanvas.getContext('2d');
-                await page.render({
-                    canvasContext: ctx,
-                    viewport
-                }).promise;
+                await page.render({ canvasContext: ctx, viewport }).promise;
 
                 currentRegions = [];
                 clearRedactCanvas();
@@ -140,22 +151,18 @@
                 const y = (e.clientY - rect.top) * scaleY;
 
                 const ctx = newCanvas.getContext('2d');
-                ctx.clearRect(0, 0,
-                    newCanvas.width, newCanvas.height);
+                ctx.clearRect(0, 0, newCanvas.width, newCanvas.height);
 
                 currentRegions.forEach(r => {
                     ctx.fillStyle = 'rgba(0,0,0,0.85)';
-                    ctx.fillRect(r.x1, r.y1,
-                        r.x2 - r.x1, r.y2 - r.y1);
+                    ctx.fillRect(r.x1, r.y1, r.x2 - r.x1, r.y2 - r.y1);
                 });
 
                 ctx.fillStyle = 'rgba(0,0,0,0.5)';
-                ctx.fillRect(startX, startY,
-                    x - startX, y - startY);
+                ctx.fillRect(startX, startY, x - startX, y - startY);
                 ctx.strokeStyle = '#2563EB';
                 ctx.lineWidth = 2;
-                ctx.strokeRect(startX, startY,
-                    x - startX, y - startY);
+                ctx.strokeRect(startX, startY, x - startX, y - startY);
             });
 
             newCanvas.addEventListener('mouseup', (e) => {
@@ -177,8 +184,7 @@
                     currentRegions.push({ x1, y1, x2, y2 });
                     if (dotNetHelper) {
                         dotNetHelper.invokeMethodAsync(
-                            'AddRegion',
-                            x1, y1, x2, y2);
+                            'AddRegion', x1, y1, x2, y2);
                     }
                 }
 
@@ -192,8 +198,7 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             currentRegions.forEach(r => {
                 ctx.fillStyle = 'rgba(0,0,0,0.85)';
-                ctx.fillRect(r.x1, r.y1,
-                    r.x2 - r.x1, r.y2 - r.y1);
+                ctx.fillRect(r.x1, r.y1, r.x2 - r.x1, r.y2 - r.y1);
             });
         }
 
@@ -201,8 +206,7 @@
 
         window.redrawRegions = (regions) => {
             currentRegions = regions.map(r => ({
-                x1: r.x1, y1: r.y1,
-                x2: r.x2, y2: r.y2
+                x1: r.x1, y1: r.y1, x2: r.x2, y2: r.y2
             }));
             const canvas = document.getElementById('redactCanvas');
             if (canvas) redrawAllRegions(canvas);
@@ -216,7 +220,6 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
         };
 
-        // PDF Reader
         window.getPdfPageCount = async (base64Data) => {
             const bytes = Uint8Array.from(
                 atob(base64Data), c => c.charCodeAt(0));
@@ -227,24 +230,20 @@
 
         window.renderPdfReaderPage = async (
             base64Data, pageNum, scale) => {
-            const canvas = document.getElementById(
-                'pdfReaderCanvas');
+            const canvas = document.getElementById('pdfReaderCanvas');
             if (!canvas) return;
             const bytes = Uint8Array.from(
                 atob(base64Data), c => c.charCodeAt(0));
             const pdf = await pdfjsLib.getDocument(
                 { data: bytes }).promise;
             const page = await pdf.getPage(pageNum);
-            const viewport = page.getViewport(
-                { scale: scale || 1.0 });
+            const viewport = page.getViewport({ scale: scale || 1.0 });
             canvas.width = viewport.width;
             canvas.height = viewport.height;
             const ctx = canvas.getContext('2d');
-            await page.render(
-                { canvasContext: ctx, viewport }).promise;
+            await page.render({ canvasContext: ctx, viewport }).promise;
         };
 
-        // Signature Pad
         let signatureDotNet = null;
         let isSignDrawing = false;
 
@@ -254,8 +253,7 @@
         };
 
         function setupSignaturePad() {
-            const canvas = document.getElementById(
-                'signatureCanvas');
+            const canvas = document.getElementById('signatureCanvas');
             if (!canvas) return;
             const ctx = canvas.getContext('2d');
             ctx.strokeStyle = '#000000';
@@ -266,14 +264,12 @@
                 isSignDrawing = true;
                 const r = canvas.getBoundingClientRect();
                 ctx.beginPath();
-                ctx.moveTo(e.clientX - r.left,
-                    e.clientY - r.top);
+                ctx.moveTo(e.clientX - r.left, e.clientY - r.top);
             });
             canvas.addEventListener('mousemove', (e) => {
                 if (!isSignDrawing) return;
                 const r = canvas.getBoundingClientRect();
-                ctx.lineTo(e.clientX - r.left,
-                    e.clientY - r.top);
+                ctx.lineTo(e.clientX - r.left, e.clientY - r.top);
                 ctx.stroke();
             });
             canvas.addEventListener('mouseup', () => {
@@ -285,21 +281,18 @@
         }
 
         window.clearSignaturePad = () => {
-            const canvas = document.getElementById(
-                'signatureCanvas');
+            const canvas = document.getElementById('signatureCanvas');
             if (!canvas) return;
             const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
         };
 
         window.getSignatureImage = () => {
-            const canvas = document.getElementById(
-                'signatureCanvas');
+            const canvas = document.getElementById('signatureCanvas');
             if (!canvas) return null;
             return canvas.toDataURL('image/png');
         };
 
-        // Edit Canvas
         let editDotNet = null;
         let isEditDrawing = false;
         let editStartX = 0, editStartY = 0;
@@ -346,7 +339,6 @@
             });
         }
 
-        // Annotate Canvas
         let annotateDotNet = null;
         let isAnnotateDrawing = false;
         let annotateStartX = 0, annotateStartY = 0;
@@ -358,8 +350,7 @@
         };
 
         function setupAnnotateCanvas() {
-            const canvas = document.getElementById(
-                'annotateCanvas');
+            const canvas = document.getElementById('annotateCanvas');
             const pdfCanvas = document.getElementById('pdfCanvas');
             if (!canvas || !pdfCanvas) {
                 setTimeout(setupAnnotateCanvas, 300);
@@ -409,3 +400,4 @@
     </script>
 </body>
 </html>
+
