@@ -20,10 +20,9 @@ namespace PdfToolkit.Application.Services
         }
 
         public async Task<ProcessResponse> ProcessAsync(
-            ProcessRequest request,
-            CancellationToken cancellationToken = default)
+    ProcessRequest request,
+    CancellationToken cancellationToken = default)
         {
-            // Step 1 — Create and save the job
             var job = new PdfJob
             {
                 Id = request.JobId,
@@ -37,24 +36,21 @@ namespace PdfToolkit.Application.Services
 
             try
             {
-                // Step 2 — Get the right strategy
                 var strategy = _factory.GetStrategy(request.ToolType);
-
-                // Step 3 — Execute processing
                 var result = await strategy.ExecuteAsync(
                     request, cancellationToken);
 
-                // Step 4 — Update job status
+                // Clear input bytes from memory immediately after processing
+                request.FileBytes = Array.Empty<byte>();
+
                 job.Status = result.IsSuccess
                     ? JobStatus.Complete
                     : JobStatus.Failed;
-
                 job.CompletedAt = DateTime.UtcNow;
                 job.ErrorMessage = result.ErrorMessage;
 
                 await _jobRepository.UpdateAsync(job);
 
-                // Step 5 — Return response
                 return new ProcessResponse
                 {
                     JobId = job.Id,
@@ -76,7 +72,9 @@ namespace PdfToolkit.Application.Services
                 {
                     JobId = job.Id,
                     IsSuccess = false,
-                    ErrorMessage = $"Error: {ex.Message} | Inner: {ex.InnerException?.Message} | Type: {ex.GetType().Name}"
+                    ErrorMessage = $"Error: {ex.Message} | " +
+                                  $"Inner: {ex.InnerException?.Message} | " +
+                                  $"Type: {ex.GetType().Name}"
                 };
             }
         }
