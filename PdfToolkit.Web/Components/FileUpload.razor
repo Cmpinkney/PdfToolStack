@@ -6,58 +6,71 @@
      @ondragleave="HandleDragLeave"
      @ondrop="HandleDrop"
      @ondrop:preventDefault="true">
-
     @if (SelectedFile == null)
     {
-        <div class="upload-prompt">
-            <span class="upload-icon">📄</span>
-            <p>Drag and drop your PDF here</p>
-            <p>or</p>
-            <label class="upload-button">
-                Browse File
-                <InputFile OnChange="HandleFileSelected"
-                           accept=".pdf"
-                           style="display:none" />
-            </label>
-            <p class="upload-hint">Maximum file size: 50MB</p>
-        </div>
+        <span class="upload-icon">📄</span>
+        <p style="color:var(--text-secondary);
+                      margin-bottom:0.75rem;">
+            Drag and drop your file here or
+        </p>
+        <label class="upload-button">
+            Browse File
+            <InputFile OnChange="HandleFileSelected"
+                       accept="@Accept"
+                       style="display:none" />
+        </label>
+        <p class="upload-hint">@HintText</p>
     }
     else
     {
-        <div class="file-selected">
-            <span class="file-icon">✅</span>
-            <p class="file-name">@SelectedFile.Name</p>
-            <p class="file-size">@FormatFileSize(SelectedFile.Size)</p>
-            <button class="remove-button"
-                    @onclick="RemoveFile">
-                Remove
-            </button>
-        </div>
+        <span style="font-size:2rem;">✅</span>
+        <p style="font-size:0.95rem;
+                      font-weight:600;
+                      color:var(--text);
+                      margin:0.5rem 0 0.25rem;">
+            @SelectedFile.Name
+        </p>
+        <p style="font-size:0.85rem;
+                      color:var(--text-muted);
+                      margin-bottom:0.75rem;">
+            @FormatFileSize(SelectedFile.Size)
+        </p>
+        <button class="reset-button"
+                style="max-width:120px;"
+                @onclick="RemoveFile">
+            Remove
+        </button>
     }
 </div>
 
 @code {
-    [Parameter] public EventCallback<IBrowserFile> OnFileSelected { get; set; }
-    [Parameter] public EventCallback OnFileRemoved { get; set; }
+    [Parameter]
+    public EventCallback<IBrowserFile>
+        OnFileSelected
+    { get; set; }
+    [Parameter]
+    public EventCallback
+        OnFileRemoved
+    { get; set; }
+    [Parameter]
+    public string Accept { get; set; }
+        = ".pdf";
+    [Parameter]
+    public string HintText { get; set; }
+        = "Maximum file size: 25MB free · 500MB paid";
 
     private IBrowserFile? SelectedFile;
     private bool IsDragging = false;
 
-    private async Task HandleFileSelected(InputFileChangeEventArgs e)
+    private async Task HandleFileSelected(
+        InputFileChangeEventArgs e)
     {
         SelectedFile = e.File;
         await OnFileSelected.InvokeAsync(SelectedFile);
     }
 
-    private void HandleDragOver()
-    {
-        IsDragging = true;
-    }
-
-    private void HandleDragLeave()
-    {
-        IsDragging = false;
-    }
+    private void HandleDragOver() => IsDragging = true;
+    private void HandleDragLeave() => IsDragging = false;
 
     private async Task HandleDrop(DragEventArgs e)
     {
@@ -73,7 +86,8 @@
     private string FormatFileSize(long bytes)
     {
         if (bytes < 1024) return $"{bytes} B";
-        if (bytes < 1024 * 1024) return $"{bytes / 1024} KB";
+        if (bytes < 1024 * 1024)
+            return $"{bytes / 1024} KB";
         return $"{bytes / (1024 * 1024)} MB";
     }
 }

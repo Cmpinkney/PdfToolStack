@@ -11,6 +11,7 @@ using PdfToolkit.Infrastructure.Data;
 using PdfToolkit.Infrastructure.Processors;
 using PdfToolkit.Infrastructure.Repositories;
 using PdfToolkit.Infrastructure.Storage;
+using PdfToolkit.Infrastructure.Services;
 
 // ── Serilog Bootstrap Logger ──────────────────────────────────────────────
 Log.Logger = new LoggerConfiguration()
@@ -79,6 +80,7 @@ try
     builder.Services.AddScoped<SignPdfProcessor>();
     builder.Services.AddScoped<EditPdfProcessor>();
     builder.Services.AddScoped<AnnotatePdfProcessor>();
+    builder.Services.AddScoped<SubscriptionService>();
 
     // ── Strategies ────────────────────────────────────────────────────────
     builder.Services.AddScoped<IProcessingStrategy>(sp =>

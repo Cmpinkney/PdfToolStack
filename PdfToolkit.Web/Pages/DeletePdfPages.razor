@@ -2,6 +2,8 @@
 @inject ApiService ApiService
 @inject IJSRuntime JS
 @inject PaymentService PaymentService
+@inject FileValidationService Validator
+@inject ToastService Toast
 
 <PageTitle>Delete PDF Pages Free Online — Remove Pages from PDF</PageTitle>
 
@@ -19,7 +21,6 @@
 
 <div class="tool-page">
     <AdSlot Size="banner" />
-
     <div class="tool-container">
         <h1>Delete PDF Pages</h1>
         <p class="tool-subtitle">
@@ -40,42 +41,31 @@
                         Your PDF has @TotalPages pages.
                         Click pages to mark for deletion.
                     </p>
-
                     <div class="page-grid">
                         @for (int i = 1; i <= TotalPages; i++)
                         {
                             var pageNum = i;
-                            var isSelected = SelectedPages
-                            .Contains(pageNum);
-                            <button class="page-tile @(isSelected
-                                                                    ? "page-tile-selected" : "")"
-                        @onclick="() =>
-                                                                TogglePage(pageNum)">
-                    @pageNum
-                    @if (isSelected)
+                            <button class="page-tile @(SelectedPages.Contains(pageNum) ? "page-tile-selected" : "")"
+                                    @onclick="() => TogglePage(pageNum)">
+                                @pageNum
+                                @if (SelectedPages.Contains(pageNum))
                                 {
-                                    <span class="page-delete-x">
-                                        ✕
-                                    </span>
+                                    <span class="page-delete-x">✕</span>
                                 }
                             </button>
                         }
                     </div>
-
                     @if (SelectedPages.Any())
                     {
                         <p class="selected-summary">
-                            @SelectedPages.Count page(s)
-                            selected for deletion:
-                            @string.Join(", ",
-                            SelectedPages.OrderBy(p => p))
-            </p>
-
-            <button class="process-button"
-                    @onclick="ProcessFile">
-                Delete @SelectedPages.Count Page(s)
-            </button>
-                        }
+                            @SelectedPages.Count page(s) selected:
+                            @string.Join(", ", SelectedPages.OrderBy(p => p))
+                        </p>
+                        <button class="process-button"
+                                @onclick="ProcessFile">
+                            Delete @SelectedPages.Count Page(s)
+                        </button>
+                    }
                 </div>
             }
             else if (SelectedFile != null && TotalPages == 0)
@@ -89,10 +79,11 @@
 
         @if (CurrentState == PageState.LargeFile)
         {
-            <LargeFileUpgrade FileSizeBytes="@(SelectedFile?.Size ?? 0)"
-                              FileName="@(SelectedFile?.Name ?? "")"
-                              ToolType="DeletePdfPages"
-                              OnCancel="Reset" />
+            <LargeFileUpgrade
+                FileSizeBytes="@(SelectedFile?.Size ?? 0)"
+                FileName="@(SelectedFile?.Name ?? "")"
+                ToolType="DeletePdfPages"
+                OnCancel="Reset" />
         }
 
         @if (CurrentState == PageState.Processing)
@@ -104,17 +95,16 @@
         }
 
         @if (CurrentState == PageState.Complete
-                && ResultBytes != null)
+             && ResultBytes != null)
         {
             <AdSlot Size="rectangle" />
             <div class="result-container">
                 <span class="result-icon">✅</span>
                 <h2>Pages Deleted!</h2>
-                <p style="color: var(--gray);
-                               margin-bottom: 1.5rem;">
-                    Successfully removed
-                    @DeletedPageCount page(s)
-                    from your PDF.
+                <p style="color:var(--text-secondary);
+                           margin-bottom:1.5rem;">
+                    Successfully removed @DeletedPageCount
+                    page(s) from your PDF.
                 </p>
                 <button class="download-button"
                         @onclick="DownloadFile">
@@ -143,33 +133,13 @@
         <h2>Frequently Asked Questions</h2>
         <div class="faq-item">
             <h3>Can I delete multiple pages at once?</h3>
-            <p>
-                Yes — select as many pages as you want to
-                remove and they will all be deleted in
-                one click.
-            </p>
-        </div>
-        <div class="faq-item">
-            <h3>Will the remaining pages be renumbered?</h3>
-            <p>
-                Yes — the remaining pages will be
-                automatically renumbered after deletion.
-            </p>
+            <p>Yes — select as many pages as you want
+               to remove and delete them in one click.</p>
         </div>
         <div class="faq-item">
             <h3>Is this tool free?</h3>
-            <p>
-                Yes — completely free up to 25MB with no
-                signup required.
-            </p>
-        </div>
-        <div class="faq-item">
-            <h3>Is my PDF stored on your servers?</h3>
-            <p>
-                Your file is automatically deleted within
-                1 hour. We never store your documents
-                permanently.
-            </p>
+            <p>Yes — completely free up to 25MB with
+               no signup required.</p>
         </div>
     </div>
 </div>
@@ -200,10 +170,20 @@
 
     private async Task HandleFileSelected(IBrowserFile file)
     {
-        SelectedFile = file;
-        ErrorMessage = null;
+        SelectedFile = null;
+        UploadedBytes = null;
         SelectedPages.Clear();
         TotalPages = 0;
+        ErrorMessage = null;
+
+        var validation = Validator.ValidatePdfFile(file);
+        if (!validation.IsValid)
+        {
+            Toast.ShowError(validation.Message!);
+            return;
+        }
+        if (validation.IsWarning)
+            Toast.ShowWarning(validation.Message!);
 
         try
         {
@@ -213,6 +193,17 @@
             await stream.CopyToAsync(ms);
             UploadedBytes = ms.ToArray();
 
+            var bytesVal = Validator
+                .ValidatePdfBytes(UploadedBytes);
+            if (!bytesVal.IsValid)
+            {
+                Toast.ShowError(bytesVal.Message!);
+                UploadedBytes = null;
+                return;
+            }
+            if (bytesVal.IsWarning)
+                Toast.ShowWarning(bytesVal.Message!);
+
             if (PaymentService.IsFileTooLargeForFree(
                 file.Size))
             {
@@ -221,18 +212,24 @@
                 return;
             }
 
-            TotalPages = await ApiService
-                .GetPageCountAsync(
-                    UploadedBytes, file.Name);
+            SelectedFile = file;
+            TotalPages = await ApiService.GetPageCountAsync(
+                UploadedBytes, file.Name);
+
+            var pageVal = Validator
+                .ValidatePageCount(TotalPages);
+            if (pageVal.IsWarning)
+                Toast.ShowWarning(pageVal.Message!);
+
+            Toast.ShowSuccess(
+                $"PDF loaded — {TotalPages} pages");
         }
         catch (Exception ex)
         {
-            ErrorMessage =
-                $"Could not read file: {ex.Message}";
-            SelectedFile = null;
+            Toast.ShowError(
+                $"Could not read file: {ex.Message}");
             UploadedBytes = null;
         }
-
         StateHasChanged();
     }
 
@@ -270,20 +267,32 @@
                 SelectedPages);
 
             if (ResultBytes != null)
+            {
                 CurrentState = PageState.Complete;
+                Toast.ShowSuccess(
+                    $"Deleted {DeletedPageCount} page(s)!");
+            }
             else
             {
                 ErrorMessage =
-                    "Failed to delete pages. Please try again.";
+                    "Failed to delete pages. Try again.";
+                Toast.ShowError(ErrorMessage);
                 CurrentState = PageState.Error;
             }
+        }
+        catch (TaskCanceledException)
+        {
+            ErrorMessage =
+                "Processing timed out. Try a smaller file.";
+            Toast.ShowError(ErrorMessage);
+            CurrentState = PageState.Error;
         }
         catch (Exception ex)
         {
             ErrorMessage = $"Error: {ex.Message}";
+            Toast.ShowError(ErrorMessage);
             CurrentState = PageState.Error;
         }
-
         StateHasChanged();
     }
 

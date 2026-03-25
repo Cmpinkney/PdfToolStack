@@ -1,0 +1,53 @@
+﻿@page "/subscription/success"
+@inject NavigationManager Navigation
+@inject PdfToolkit.Web.Services.SubscriptionService SubService
+
+<PageTitle>Welcome to Pro — PDFToolstack</PageTitle>
+
+<div class="tool-page">
+    <div class="tool-container" style="text-align:center;
+         padding: 3rem;">
+        <div style="font-size:4rem;
+                    margin-bottom:1rem;">
+            🎉
+        </div>
+        <h1>Welcome to PDFToolstack Pro!</h1>
+        <p class="tool-subtitle">
+            Your subscription is now active.
+            Enjoy unlimited files, no ads,
+            and all AI tools.
+        </p>
+        <div class="stats" style="margin: 2rem 0;">
+            <div class="stat">
+                <span class="stat-label">File Size</span>
+                <span class="stat-value">Unlimited</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Ads</span>
+                <span class="stat-value">None</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">AI Tools</span>
+                <span class="stat-value">Unlocked</span>
+            </div>
+        </div>
+        <a href="/" class="process-button"
+           style="text-decoration:none;
+                  display:inline-flex;"
+           @onclick="ClearCache">
+            Start Using Pro Tools
+        </a>
+    </div>
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        SubService.ClearCache();
+    }
+
+    private void ClearCache()
+    {
+        SubService.ClearCache();
+    }
+}

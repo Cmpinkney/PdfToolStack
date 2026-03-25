@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using PdfToolkit.Web;
 using PdfToolkit.Web.Services;
+using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
@@ -29,5 +30,6 @@ builder.Services.AddScoped<PaymentService>();
 builder.Services.AddScoped<FileValidationService>();
 builder.Services.AddScoped<ToastService>();
 builder.Services.AddScoped<CookieConsentService>();
+builder.Services.AddScoped<SubscriptionService> ();
 
 await builder.Build().RunAsync();

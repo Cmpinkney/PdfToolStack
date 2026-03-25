@@ -1,8 +1,8 @@
 ﻿<CascadingAuthenticationState>
     <Router AppAssembly="@typeof(App).Assembly">
         <Found Context="routeData">
-            <AuthorizeRouteView RouteData="@routeData"
-                                DefaultLayout="@typeof(Layout.MainLayout)" />
+            <RouteView RouteData="@routeData"
+                DefaultLayout="@typeof(Layout.MainLayout)" />
             <FocusOnNavigate RouteData="@routeData"
                              Selector="h1" />
         </Found>
@@ -13,14 +13,13 @@
                     <div class="error-page-content">
                         <div class="error-code">404</div>
                         <h1>Page Not Found</h1>
-                        <p>
-                            The page you are looking for
-                            doesn't exist or has been moved.
-                        </p>
+                        <p>The page you are looking for
+                           doesn't exist or has been moved.</p>
                         <div class="error-actions">
-                            <a href="/" class="process-button"
+                            <a href="/"
+                               class="process-button"
                                style="text-decoration:none;
-                              display:inline-flex;">
+                                      display:inline-flex;">
                                 Go to Home
                             </a>
                         </div>

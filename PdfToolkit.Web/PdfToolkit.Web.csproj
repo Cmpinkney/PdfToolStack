@@ -11,6 +11,7 @@
 		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Authentication" Version="9.0.11" />
 		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="9.0.11" PrivateAssets="all" />
 		<PackageReference Include="Microsoft.Extensions.Http" Version="9.0.0" />
+		<PackageReference Include="Stripe.net" Version="50.4.1" />
 	</ItemGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\PdfToolkit.Application\PdfToolkit.Application.csproj" />

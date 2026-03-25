@@ -11,6 +11,8 @@ namespace PdfToolkit.Infrastructure.Data
         }
 
         public DbSet<PdfJob> PdfJobs => Set<PdfJob>();
+        public DbSet<UserSubscription> UserSubscriptions => Set<UserSubscription>();
+        public DbSet<DownloadHistory> DownloadHistory => Set<DownloadHistory>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

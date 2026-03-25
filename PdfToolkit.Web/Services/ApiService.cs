@@ -1,6 +1,7 @@
-﻿using PdfToolkit.Domain.Enums;
-using PdfToolkit.Application.DTOs;
+﻿using PdfToolkit.Application.DTOs;
+using PdfToolkit.Domain.Enums;
 using System.Net.Http.Json;
+using static System.Net.WebRequestMethods;
 
 namespace PdfToolkit.Web.Services
 {
@@ -17,6 +18,25 @@ namespace PdfToolkit.Web.Services
             _logger = logger;
         }
 
+        public async Task<T?> GetAsync<T>(string endpoint)
+        {
+            var response = await _httpClient.GetAsync(endpoint);
+            if (response.IsSuccessStatusCode)
+                return await response.Content
+                    .ReadFromJsonAsync<T>();
+            return default;
+        }
+
+        public async Task<TResponse?> PostAsync<TRequest,
+            TResponse>(string endpoint, TRequest data)
+        {
+            var response = await _httpClient.PostAsJsonAsync(
+                endpoint, data);
+            if (response.IsSuccessStatusCode)
+                return await response.Content
+                    .ReadFromJsonAsync<TResponse>();
+            return default;
+        }
         public async Task<ProcessResponse?> ProcessPdfAsync(
             byte[] fileBytes,
             string fileName,
