@@ -3,7 +3,8 @@
 		<TargetFramework>net9.0</TargetFramework>
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
-	</PropertyGroup>
+	  <UserSecretsId>7747b9ef-9860-48f1-8694-1dd1dd1e3313</UserSecretsId>
+  </PropertyGroup>
 
 	<ItemGroup>
 		<PackageReference Include="Auth0.AspNetCore.Authentication" Version="1.6.1" />

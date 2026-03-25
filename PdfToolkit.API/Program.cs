@@ -1,8 +1,8 @@
 ﻿using Azure.Storage.Blobs;
 using Microsoft.EntityFrameworkCore;
-using Serilog;
 using PdfToolkit.API.Configuration;
 using PdfToolkit.API.Middleware;
+using PdfToolkit.API.Services;
 using PdfToolkit.Application.Factories;
 using PdfToolkit.Application.Services;
 using PdfToolkit.Application.Strategies;
@@ -10,8 +10,9 @@ using PdfToolkit.Domain.Interfaces;
 using PdfToolkit.Infrastructure.Data;
 using PdfToolkit.Infrastructure.Processors;
 using PdfToolkit.Infrastructure.Repositories;
-using PdfToolkit.Infrastructure.Storage;
 using PdfToolkit.Infrastructure.Services;
+using PdfToolkit.Infrastructure.Storage;
+using Serilog;
 
 // ── Serilog Bootstrap Logger ──────────────────────────────────────────────
 Log.Logger = new LoggerConfiguration()
@@ -168,9 +169,10 @@ try
         options.AddPolicy("BlazorPolicy", policy =>
         {
             policy.WithOrigins(
+                    "https://pdftoolstack.com",
+                    "https://www.pdftoolstack.com",
                     "https://localhost:7025",
-                    "http://localhost:7025",
-                    "https://yoursite.com")
+                    "http://localhost:7025")
                 .AllowAnyMethod()
                 .AllowAnyHeader();
         });
@@ -180,6 +182,9 @@ try
     builder.Services.AddControllers();
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddSwaggerGen();
+
+    // ── Background Services ───────────────────────────────────────────────
+    builder.Services.AddHostedService<JobCleanupService>();
 
     var app = builder.Build();
 
@@ -193,6 +198,23 @@ try
         app.UseSwagger();
         app.UseSwaggerUI();
     }
+
+    // ── Security Headers ──────────────────────────────────────────────────
+    app.Use(async (context, next) =>
+    {
+        context.Response.Headers.Append(
+            "X-Content-Type-Options", "nosniff");
+        context.Response.Headers.Append(
+            "X-Frame-Options", "DENY");
+        context.Response.Headers.Append(
+            "Referrer-Policy", "strict-origin-when-cross-origin");
+        context.Response.Headers.Append(
+            "X-XSS-Protection", "1; mode=block");
+        context.Response.Headers.Append(
+            "Permissions-Policy",
+            "camera=(), microphone=(), geolocation=()");
+        await next();
+    });
 
     app.UseHttpsRedirection();
     app.UseCors("BlazorPolicy");
