@@ -5,15 +5,23 @@ using PdfToolkit.Domain.Enums;
 
 namespace PdfToolkit.Infrastructure.Processors
 {
-    public class ExtractPagesProcessor : IPdfProcessor
+    public class ExtractPagesProcessor : IExtractPagesProcessor
     {
         public ToolType ToolType => ToolType.ExtractPages;
 
+        // Standard IPdfProcessor passthrough
         public Task<byte[]> ProcessAsync(
             byte[] inputBytes,
             CancellationToken cancellationToken = default)
             => Task.FromResult(inputBytes);
 
+        // Explicit interface implementation — called by strategy
+        Task<byte[]> IExtractPagesProcessor.ProcessAsync(
+            byte[] inputBytes,
+            IEnumerable<int> pageNumbers)
+            => ProcessAsync(inputBytes, pageNumbers, default);
+
+        // Full implementation with cancellation support
         public Task<byte[]> ProcessAsync(
             byte[] inputBytes,
             IEnumerable<int> pagesToExtract,

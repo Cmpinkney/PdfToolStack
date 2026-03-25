@@ -74,13 +74,24 @@ try
     builder.Services.AddScoped<PdfMerger>();
     builder.Services.AddScoped<PdfToWordConverter>();
     builder.Services.AddScoped<PdfFormFiller>();
-    builder.Services.AddScoped<DeletePagesProcessor>();
     builder.Services.AddScoped<WordToPdfProcessor>();
     builder.Services.AddScoped<OrganizePdfProcessor>();
     builder.Services.AddScoped<SignPdfProcessor>();
     builder.Services.AddScoped<EditPdfProcessor>();
     builder.Services.AddScoped<AnnotatePdfProcessor>();
     builder.Services.AddScoped<SubscriptionService>();
+    builder.Services.AddScoped<FlattenPdfProcessor>();
+    builder.Services.AddScoped<RotatePdfProcessor>();
+    builder.Services.AddScoped<WatermarkPdfProcessor>();
+    builder.Services.AddScoped<SplitPdfProcessor>();
+    builder.Services.AddScoped<NumberPagesPdfProcessor>();
+    builder.Services.AddScoped<UnlockPdfProcessor>();
+    builder.Services.AddScoped<ProtectPdfProcessor>();
+    builder.Services.AddScoped<JpgToPdfProcessor>();
+    builder.Services.AddScoped<PptToPdfProcessor>();
+    builder.Services.AddScoped<ExcelToPdfProcessor>();
+    builder.Services.AddScoped<IDeletePagesProcessor, DeletePagesProcessor>();
+    builder.Services.AddScoped<IExtractPagesProcessor, ExtractPagesProcessor>();
 
     // ── Strategies ────────────────────────────────────────────────────────
     builder.Services.AddScoped<IProcessingStrategy>(sp =>
@@ -103,11 +114,50 @@ try
     new FillFormStrategy(
         sp.GetRequiredService<PdfFormFiller>()));
 
+    builder.Services.AddScoped<IProcessingStrategy>(sp =>
+    new FlattenStrategy(sp.GetRequiredService<FlattenPdfProcessor>()));
+
+    builder.Services.AddScoped<IProcessingStrategy>(sp =>
+        new RotateStrategy(sp.GetRequiredService<RotatePdfProcessor>()));
+
+    builder.Services.AddScoped<IProcessingStrategy>(sp =>
+        new WatermarkStrategy(sp.GetRequiredService<WatermarkPdfProcessor>()));
+
+    builder.Services.AddScoped<IProcessingStrategy>(sp =>
+        new SplitStrategy(sp.GetRequiredService<SplitPdfProcessor>()));
+
+    builder.Services.AddScoped<IProcessingStrategy>(sp =>
+        new NumberPagesStrategy(sp.GetRequiredService<NumberPagesPdfProcessor>()));
+
+    builder.Services.AddScoped<IProcessingStrategy>(sp =>
+        new UnlockStrategy(sp.GetRequiredService<UnlockPdfProcessor>()));
+
+    builder.Services.AddScoped<IProcessingStrategy>(sp =>
+        new ProtectStrategy(sp.GetRequiredService<ProtectPdfProcessor>()));
+
+    builder.Services.AddScoped<IProcessingStrategy>(sp =>
+        new WordToPdfStrategy(sp.GetRequiredService<WordToPdfProcessor>()));
+
+    builder.Services.AddScoped<IProcessingStrategy>(sp =>
+        new PptToPdfStrategy(sp.GetRequiredService<PptToPdfProcessor>()));
+
+    builder.Services.AddScoped<IProcessingStrategy>(sp =>
+        new ExcelToPdfStrategy(sp.GetRequiredService<ExcelToPdfProcessor>()));
+
+    builder.Services.AddScoped<IProcessingStrategy>(sp =>
+    new ExtractPagesStrategy(
+        sp.GetRequiredService<IExtractPagesProcessor>()));
+
+    builder.Services.AddScoped<IProcessingStrategy>(sp =>
+    new DeletePagesStrategy(
+        sp.GetRequiredService<IDeletePagesProcessor>()));
+
 
     // ── Factory ───────────────────────────────────────────────────────────
     builder.Services.AddScoped<PdfProcessorFactory>(sp =>
     new PdfProcessorFactory(
-        sp.GetServices<IProcessingStrategy>()));
+        sp.GetServices<IProcessingStrategy>(),
+        sp.GetRequiredService<ILogger<PdfProcessorFactory>>()));
 
     // ── Application Services ──────────────────────────────────────────────
     builder.Services.AddScoped<IPdfService, PdfService>();

@@ -61,7 +61,8 @@ namespace PdfToolkit.Application.Services
                     IsSuccess = result.IsSuccess,
                     ErrorMessage = result.ErrorMessage,
                     OriginalSizeBytes = result.OriginalSizeBytes,
-                    OutputSizeBytes = result.OutputSizeBytes
+                    OutputSizeBytes = result.OutputSizeBytes,
+                    OutputBytes = result.OutputBytes
                 };
             }
             catch (Exception ex)

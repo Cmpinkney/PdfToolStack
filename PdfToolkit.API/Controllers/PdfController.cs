@@ -9,6 +9,7 @@ using PdfToolkit.Domain.Enums;
 using PdfToolkit.Infrastructure.Processors;
 using DomainFormField = PdfToolkit.Domain.Entities.PdfFormField;
 using DomainRedactionRegion = PdfToolkit.Domain.Entities.RedactionRegion;
+using System.IO.Compression;
 
 namespace PdfToolkit.API.Controllers
 {
@@ -405,66 +406,359 @@ namespace PdfToolkit.API.Controllers
         [RequestSizeLimit(524288000)]
         public async Task<IActionResult> DeletePages(
             IFormFile file,
-            [FromForm] string pageNumbers)
+            [FromForm] string pageNumbers,
+            CancellationToken cancellationToken)
         {
             if (file == null || file.Length == 0)
-                return BadRequest("No file provided.");
+                return BadRequest(new { error = "No file provided." });
 
-            try
+            if (!TryParsePageNumbers(pageNumbers, out var pages, out var parseError))
+                return BadRequest(new { error = parseError });
+
+            var request = await BuildRequestAsync(
+                file, ToolType.DeletePages, cancellationToken);
+            request.PageNumbers = pages;
+
+            var response = await _pdfService.ProcessAsync(request, cancellationToken);
+            return response.IsSuccess
+                ? File(response.OutputBytes!, "application/pdf", "deleted_pages.pdf")
+                : UnprocessableEntity(new { error = response.ErrorMessage });
+        }
+
+        // POST api/pdf/extract-pages
+        [HttpPost("extract-pages")]
+        [RequestSizeLimit(524288000)]
+        public async Task<IActionResult> ExtractPages(
+            IFormFile file,
+            [FromForm] string pageNumbers,
+            CancellationToken cancellationToken)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest(new { error = "No file provided." });
+
+            if (!TryParsePageNumbers(pageNumbers, out var pages, out var parseError))
+                return BadRequest(new { error = parseError });
+
+            var request = await BuildRequestAsync(
+                file, ToolType.ExtractPages, cancellationToken);
+            request.PageNumbers = pages;
+
+            var response = await _pdfService.ProcessAsync(request, cancellationToken);
+            return response.IsSuccess
+                ? File(response.OutputBytes!, "application/pdf", "extracted_pages.pdf")
+                : UnprocessableEntity(new { error = response.ErrorMessage });
+        }
+
+        // POST api/pdf/rotate
+        [HttpPost("rotate")]
+        [RequestSizeLimit(524288000)]
+        public async Task<IActionResult> RotatePdf(
+            IFormFile file,
+            [FromForm] int rotation = 90,
+            [FromForm] string? pageNumbers = null,
+            CancellationToken cancellationToken = default)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest(new { error = "No file provided." });
+
+            List<int>? pages = null;
+            if (pageNumbers != null)
             {
-                using var ms = new MemoryStream();
-                await file.CopyToAsync(ms);
-                var bytes = ms.ToArray();
-
-                var pages = pageNumbers
-                    .Split(',', StringSplitOptions
-                        .RemoveEmptyEntries)
-                    .Select(p => int.Parse(p.Trim()))
-                    .ToList();
-
-                var processor = new DeletePagesProcessor();
-                var result = await processor.ProcessAsync(
-                    bytes, pages);
-
-                return File(result, "application/pdf",
-                    "deleted_pages.pdf");
+                if (!TryParsePageNumbers(pageNumbers, out pages, out var parseError))
+                    return BadRequest(new { error = parseError });
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Delete pages error");
-                return StatusCode(500, ex.Message);
-            }
+
+            var request = await BuildRequestAsync(
+                file, ToolType.RotatePdf, cancellationToken);
+            request.PageNumbers = pages;
+            request.Rotation = rotation;
+
+            var response = await _pdfService.ProcessAsync(request, cancellationToken);
+            return response.IsSuccess
+                ? File(response.OutputBytes!, "application/pdf", "rotated.pdf")
+                : UnprocessableEntity(new { error = response.ErrorMessage });
         }
 
         // POST api/pdf/word-to-pdf
         [HttpPost("word-to-pdf")]
         [RequestSizeLimit(524288000)]
-        public async Task<IActionResult> WordToPdf(IFormFile file)
+        public async Task<IActionResult> WordToPdf(
+            IFormFile file,
+            CancellationToken cancellationToken)
         {
             if (file == null || file.Length == 0)
-                return BadRequest("No file provided.");
+                return BadRequest(new { error = "No file provided." });
+
+            var request = await BuildRequestAsync(
+                file, ToolType.WordToPdf, cancellationToken);
+
+            var response = await _pdfService.ProcessAsync(request, cancellationToken);
+            var outName = Path.GetFileNameWithoutExtension(file.FileName) + ".pdf";
+            return response.IsSuccess
+                ? File(response.OutputBytes!, "application/pdf", outName)
+                : UnprocessableEntity(new { error = response.ErrorMessage });
+        }
+
+        // POST api/pdf/ppt-to-pdf
+        [HttpPost("ppt-to-pdf")]
+        [RequestSizeLimit(524288000)]
+        public async Task<IActionResult> PptToPdf(
+            IFormFile file,
+            CancellationToken cancellationToken)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest(new { error = "No file provided." });
+
+            var request = await BuildRequestAsync(
+                file, ToolType.PptToPdf, cancellationToken);
+
+            var response = await _pdfService.ProcessAsync(request, cancellationToken);
+            var outName = Path.GetFileNameWithoutExtension(file.FileName) + ".pdf";
+            return response.IsSuccess
+                ? File(response.OutputBytes!, "application/pdf", outName)
+                : UnprocessableEntity(new { error = response.ErrorMessage });
+        }
+
+        // POST api/pdf/excel-to-pdf
+        [HttpPost("excel-to-pdf")]
+        [RequestSizeLimit(524288000)]
+        public async Task<IActionResult> ExcelToPdf(
+            IFormFile file,
+            CancellationToken cancellationToken)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest(new { error = "No file provided." });
+
+            var request = await BuildRequestAsync(
+                file, ToolType.ExcelToPdf, cancellationToken);
+
+            var response = await _pdfService.ProcessAsync(request, cancellationToken);
+            var outName = Path.GetFileNameWithoutExtension(file.FileName) + ".pdf";
+            return response.IsSuccess
+                ? File(response.OutputBytes!, "application/pdf", outName)
+                : UnprocessableEntity(new { error = response.ErrorMessage });
+        }
+
+        // POST api/pdf/flatten
+        [HttpPost("flatten")]
+        [RequestSizeLimit(524288000)]
+        public async Task<IActionResult> FlattenPdf(
+            IFormFile file,
+            CancellationToken cancellationToken)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest(new { error = "No file provided." });
+
+            var request = await BuildRequestAsync(
+                file, ToolType.FlattenPdf, cancellationToken);
+
+            var response = await _pdfService.ProcessAsync(request, cancellationToken);
+            return response.IsSuccess
+                ? File(response.OutputBytes!, "application/pdf", "flattened.pdf")
+                : UnprocessableEntity(new { error = response.ErrorMessage });
+        }
+
+        // POST api/pdf/watermark
+        [HttpPost("watermark")]
+        [RequestSizeLimit(524288000)]
+        public async Task<IActionResult> WatermarkPdf(
+            IFormFile file,
+            [FromForm] string watermarkText = "CONFIDENTIAL",
+            [FromForm] float opacity = 0.3f,
+            [FromForm] float fontSize = 48f,
+            CancellationToken cancellationToken = default)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest(new { error = "No file provided." });
+
+            var request = await BuildRequestAsync(
+                file, ToolType.WatermarkPdf, cancellationToken);
+            request.WatermarkText = watermarkText;
+            request.WatermarkOpacity = opacity;
+            request.WatermarkFontSize = fontSize;
+
+            var response = await _pdfService.ProcessAsync(request, cancellationToken);
+            return response.IsSuccess
+                ? File(response.OutputBytes!, "application/pdf", "watermarked.pdf")
+                : UnprocessableEntity(new { error = response.ErrorMessage });
+        }
+
+        // POST api/pdf/number-pages
+        [HttpPost("number-pages")]
+        [RequestSizeLimit(524288000)]
+        public async Task<IActionResult> NumberPages(
+            IFormFile file,
+            [FromForm] string position = "bottom-center",
+            [FromForm] int startNumber = 1,
+            CancellationToken cancellationToken = default)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest(new { error = "No file provided." });
+
+            var request = await BuildRequestAsync(
+                file, ToolType.NumberPages, cancellationToken);
+            request.PageNumberPosition = position;
+            request.PageNumberStart = startNumber;
+
+            var response = await _pdfService.ProcessAsync(request, cancellationToken);
+            return response.IsSuccess
+                ? File(response.OutputBytes!, "application/pdf", "numbered.pdf")
+                : UnprocessableEntity(new { error = response.ErrorMessage });
+        }
+
+        // POST api/pdf/unlock
+        [HttpPost("unlock")]
+        [RequestSizeLimit(524288000)]
+        public async Task<IActionResult> UnlockPdf(
+            IFormFile file,
+            [FromForm] string? password = null,
+            CancellationToken cancellationToken = default)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest(new { error = "No file provided." });
+
+            var request = await BuildRequestAsync(
+                file, ToolType.UnlockPdf, cancellationToken);
+            request.Password = password;
+
+            var response = await _pdfService.ProcessAsync(request, cancellationToken);
+            return response.IsSuccess
+                ? File(response.OutputBytes!, "application/pdf", "unlocked.pdf")
+                : UnprocessableEntity(new { error = response.ErrorMessage });
+        }
+
+        // POST api/pdf/protect
+        [HttpPost("protect")]
+        [RequestSizeLimit(524288000)]
+        public async Task<IActionResult> ProtectPdf(
+            IFormFile file,
+            [FromForm] string userPassword = "",
+            [FromForm] string ownerPassword = "",
+            [FromForm] bool allowPrinting = true,
+            [FromForm] bool allowCopying = false,
+            CancellationToken cancellationToken = default)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest(new { error = "No file provided." });
+
+            var request = await BuildRequestAsync(
+                file, ToolType.ProtectPdf, cancellationToken);
+            request.UserPassword = userPassword;
+            request.OwnerPassword = ownerPassword;
+            request.AllowPrinting = allowPrinting;
+            request.AllowCopying = allowCopying;
+
+            var response = await _pdfService.ProcessAsync(request, cancellationToken);
+            return response.IsSuccess
+                ? File(response.OutputBytes!, "application/pdf", "protected.pdf")
+                : UnprocessableEntity(new { error = response.ErrorMessage });
+        }
+
+        // POST api/pdf/split
+        [HttpPost("split")]
+        [RequestSizeLimit(524288000)]
+        public async Task<IActionResult> SplitPdf(
+            IFormFile file,
+            [FromForm] int? fromPage = null,
+            [FromForm] int? toPage = null,
+            CancellationToken cancellationToken = default)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest(new { error = "No file provided." });
 
             try
             {
                 using var ms = new MemoryStream();
-                await file.CopyToAsync(ms);
+                await file.CopyToAsync(ms, cancellationToken);
                 var bytes = ms.ToArray();
+                var processor = new SplitPdfProcessor();
 
-                var processor = new WordToPdfProcessor();
-                var result = await processor.ProcessAsync(bytes);
+                // Range split — return a single PDF
+                if (fromPage.HasValue && toPage.HasValue)
+                {
+                    if (fromPage < 1 || toPage < fromPage)
+                        return BadRequest(new
+                        {
+                            error = "Invalid page range."
+                        });
 
-                return File(result, "application/pdf",
-                    Path.GetFileNameWithoutExtension(
-                        file.FileName) + ".pdf");
+                    var result = await processor.SplitRangeAsync(
+                        bytes, fromPage.Value, toPage.Value,
+                        cancellationToken);
+
+                    return File(result, "application/pdf",
+                        $"pages_{fromPage}_{toPage}.pdf");
+                }
+
+                // Split all pages — return a zip
+                var pages = await processor.SplitAsync(
+                    bytes, cancellationToken);
+
+                using var zipStream = new MemoryStream();
+                using (var archive = new System.IO.Compression
+                    .ZipArchive(zipStream,
+                        System.IO.Compression.ZipArchiveMode.Create,
+                        leaveOpen: true))
+                {
+                    for (int i = 0; i < pages.Count; i++)
+                    {
+                        var entry = archive.CreateEntry(
+                            $"page_{i + 1}.pdf",
+                            System.IO.Compression.CompressionLevel.Fastest);
+                        using var entryStream = entry.Open();
+                        await entryStream.WriteAsync(
+                            pages[i], cancellationToken);
+                    }
+                }
+
+                zipStream.Position = 0;
+                var baseName = Path.GetFileNameWithoutExtension(file.FileName);
+                return File(zipStream.ToArray(),
+                    "application/zip",
+                    $"{baseName}_pages.zip");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Word to PDF error");
-                return StatusCode(500, ex.Message);
+                _logger.LogError(ex, "Split PDF error");
+                return StatusCode(500, new { error = ex.Message });
             }
         }
 
+        // POST api/pdf/jpg-to-pdf
+        [HttpPost("jpg-to-pdf")]
+        [RequestSizeLimit(524288000)]
+        public async Task<IActionResult> JpgToPdf(
+            List<IFormFile> files,
+            CancellationToken cancellationToken)
+        {
+            if (files == null || !files.Any())
+                return BadRequest(new { error = "No files provided." });
+
+            var imageBytes = new List<byte[]>();
+            foreach (var file in files)
+            {
+                using var ms = new MemoryStream();
+                await file.CopyToAsync(ms, cancellationToken);
+                imageBytes.Add(ms.ToArray());
+            }
+
+            var request = new ProcessRequest
+            {
+                ToolType = ToolType.JpgToPdf,
+                FileBytes = imageBytes[0],
+                FileName = files[0].FileName,
+                FileSizeBytes = files[0].Length,
+                AdditionalFiles = imageBytes.Skip(1).ToList()
+            };
+
+            var response = await _pdfService.ProcessAsync(request, cancellationToken);
+            return response.IsSuccess
+                ? File(response.OutputBytes!, "application/pdf", "images.pdf")
+                : UnprocessableEntity(new { error = response.ErrorMessage });
+        }
+
         // POST api/pdf/organize
+        // TODO: extend ProcessRequest with OperationsJson to route through service
         [HttpPost("organize")]
         [RequestSizeLimit(524288000)]
         public async Task<IActionResult> OrganizePdf(
@@ -472,34 +766,27 @@ namespace PdfToolkit.API.Controllers
             [FromForm] string operationsJson)
         {
             if (file == null || file.Length == 0)
-                return BadRequest("No file provided.");
-
+                return BadRequest(new { error = "No file provided." });
             try
             {
                 using var ms = new MemoryStream();
                 await file.CopyToAsync(ms);
-                var bytes = ms.ToArray();
-
                 var operations = System.Text.Json.JsonSerializer
-                    .Deserialize<List<PageOperation>>(
-                        operationsJson)
+                    .Deserialize<List<PageOperation>>(operationsJson)
                     ?? new List<PageOperation>();
-
                 var processor = new OrganizePdfProcessor();
-                var result = await processor.ProcessAsync(
-                    bytes, operations);
-
-                return File(result, "application/pdf",
-                    "organized.pdf");
+                var result = await processor.ProcessAsync(ms.ToArray(), operations);
+                return File(result, "application/pdf", "organized.pdf");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Organize PDF error");
-                return StatusCode(500, ex.Message);
+                return StatusCode(500, new { error = ex.Message });
             }
         }
 
         // POST api/pdf/sign
+        // TODO: extend ProcessRequest with SignatureBytes + position to route through service
         [HttpPost("sign")]
         [RequestSizeLimit(524288000)]
         public async Task<IActionResult> SignPdf(
@@ -512,34 +799,28 @@ namespace PdfToolkit.API.Controllers
             [FromForm] int pageNumber = 1)
         {
             if (file == null || signature == null)
-                return BadRequest("File and signature required.");
-
+                return BadRequest(new { error = "File and signature required." });
             try
             {
                 using var fileMs = new MemoryStream();
                 await file.CopyToAsync(fileMs);
-                var fileBytes = fileMs.ToArray();
-
                 using var sigMs = new MemoryStream();
                 await signature.CopyToAsync(sigMs);
-                var sigBytes = sigMs.ToArray();
-
                 var processor = new SignPdfProcessor();
                 var result = await processor.ProcessAsync(
-                    fileBytes, sigBytes,
+                    fileMs.ToArray(), sigMs.ToArray(),
                     x, y, width, height, pageNumber);
-
-                return File(result, "application/pdf",
-                    "signed.pdf");
+                return File(result, "application/pdf", "signed.pdf");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Sign PDF error");
-                return StatusCode(500, ex.Message);
+                return StatusCode(500, new { error = ex.Message });
             }
         }
 
         // POST api/pdf/edit
+        // TODO: extend ProcessRequest with AnnotationsJson to route through service
         [HttpPost("edit")]
         [RequestSizeLimit(524288000)]
         public async Task<IActionResult> EditPdf(
@@ -547,51 +828,42 @@ namespace PdfToolkit.API.Controllers
             [FromForm] string annotationsJson)
         {
             if (file == null || file.Length == 0)
-                return BadRequest("No file provided.");
-
+                return BadRequest(new { error = "No file provided." });
             try
             {
                 using var ms = new MemoryStream();
                 await file.CopyToAsync(ms);
-                var bytes = ms.ToArray();
-
                 var annotations = System.Text.Json.JsonSerializer
-                    .Deserialize<List<PdfAnnotationDto>>(
-                        annotationsJson)
+                    .Deserialize<List<PdfAnnotationDto>>(annotationsJson)
                     ?? new List<PdfAnnotationDto>();
-
-                var iTextAnnotations = annotations.Select(a =>
-                    new PdfAnnotation
-                    {
-                        Type = a.Type,
-                        PageNumber = a.PageNumber,
-                        X = a.X,
-                        Y = a.Y,
-                        X2 = a.X2,
-                        Y2 = a.Y2,
-                        Width = a.Width,
-                        Height = a.Height,
-                        Text = a.Text,
-                        FontSize = a.FontSize,
-                        LineWidth = a.LineWidth,
-                        Color = ParseColor(a.Color)
-                    }).ToList();
-
+                var iTextAnnotations = annotations.Select(a => new PdfAnnotation
+                {
+                    Type = a.Type,
+                    PageNumber = a.PageNumber,
+                    X = a.X,
+                    Y = a.Y,
+                    X2 = a.X2,
+                    Y2 = a.Y2,
+                    Width = a.Width,
+                    Height = a.Height,
+                    Text = a.Text,
+                    FontSize = a.FontSize,
+                    LineWidth = a.LineWidth,
+                    Color = ParseColor(a.Color)
+                }).ToList();
                 var processor = new EditPdfProcessor();
-                var result = await processor.ProcessAsync(
-                    bytes, iTextAnnotations);
-
-                return File(result, "application/pdf",
-                    "edited.pdf");
+                var result = await processor.ProcessAsync(ms.ToArray(), iTextAnnotations);
+                return File(result, "application/pdf", "edited.pdf");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Edit PDF error");
-                return StatusCode(500, ex.Message);
+                return StatusCode(500, new { error = ex.Message });
             }
         }
 
         // POST api/pdf/annotate
+        // TODO: extend ProcessRequest with HighlightsJson to route through service
         [HttpPost("annotate")]
         [RequestSizeLimit(524288000)]
         public async Task<IActionResult> AnnotatePdf(
@@ -599,374 +871,80 @@ namespace PdfToolkit.API.Controllers
             [FromForm] string highlightsJson)
         {
             if (file == null || file.Length == 0)
-                return BadRequest("No file provided.");
-
+                return BadRequest(new { error = "No file provided." });
             try
             {
                 using var ms = new MemoryStream();
                 await file.CopyToAsync(ms);
-                var bytes = ms.ToArray();
-
                 var highlights = System.Text.Json.JsonSerializer
-                    .Deserialize<List<PdfHighlightDto>>(
-                        highlightsJson)
+                    .Deserialize<List<PdfHighlightDto>>(highlightsJson)
                     ?? new List<PdfHighlightDto>();
-
-                var iTextHighlights = highlights.Select(h =>
-                    new PdfHighlight
-                    {
-                        Type = h.Type,
-                        PageNumber = h.PageNumber,
-                        X = h.X,
-                        Y = h.Y,
-                        Width = h.Width,
-                        Height = h.Height,
-                        LineWidth = h.LineWidth,
-                        StrokeColor = ParseColor(h.Color),
-                        Points = h.Points?.Select(p =>
-                            new Infrastructure.Processors.PointF
-                            {
-                                X = p.X,
-                                Y = p.Y
-                            }).ToList() ?? new()
-                    }).ToList();
-
+                var iTextHighlights = highlights.Select(h => new PdfHighlight
+                {
+                    Type = h.Type,
+                    PageNumber = h.PageNumber,
+                    X = h.X,
+                    Y = h.Y,
+                    Width = h.Width,
+                    Height = h.Height,
+                    LineWidth = h.LineWidth,
+                    StrokeColor = ParseColor(h.Color),
+                    Points = h.Points?.Select(p =>
+                        new Infrastructure.Processors.PointF { X = p.X, Y = p.Y })
+                        .ToList() ?? new()
+                }).ToList();
                 var processor = new AnnotatePdfProcessor();
-                var result = await processor.ProcessAsync(
-                    bytes, iTextHighlights);
-
-                return File(result, "application/pdf",
-                    "annotated.pdf");
+                var result = await processor.ProcessAsync(ms.ToArray(), iTextHighlights);
+                return File(result, "application/pdf", "annotated.pdf");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Annotate PDF error");
-                return StatusCode(500, ex.Message);
+                return StatusCode(500, new { error = ex.Message });
             }
         }
 
-        // POST api/pdf/extract-pages
-        [HttpPost("extract-pages")]
-        [RequestSizeLimit(524288000)]
-        public async Task<IActionResult> ExtractPages(
+        // ── Helpers ───────────────────────────────────────────────────────────
+
+        private static async Task<ProcessRequest> BuildRequestAsync(
             IFormFile file,
-            [FromForm] string pageNumbers)
+            ToolType toolType,
+            CancellationToken cancellationToken)
         {
-            if (file == null || file.Length == 0)
-                return BadRequest("No file provided.");
-            try
+            using var ms = new MemoryStream();
+            await file.CopyToAsync(ms, cancellationToken);
+            return new ProcessRequest
             {
-                using var ms = new MemoryStream();
-                await file.CopyToAsync(ms);
-                var pages = pageNumbers
-                    .Split(',',
-                        StringSplitOptions.RemoveEmptyEntries)
-                    .Select(p => int.Parse(p.Trim()))
-                    .ToList();
-                var processor = new ExtractPagesProcessor();
-                var result = await processor.ProcessAsync(
-                    ms.ToArray(), pages);
-                return File(result, "application/pdf",
-                    "extracted_pages.pdf");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Extract pages error");
-                return StatusCode(500, ex.Message);
-            }
+                ToolType = toolType,
+                FileBytes = ms.ToArray(),
+                FileName = file.FileName,
+                FileSizeBytes = file.Length
+            };
         }
 
-        // POST api/pdf/rotate
-        [HttpPost("rotate")]
-        [RequestSizeLimit(524288000)]
-        public async Task<IActionResult> RotatePdf(
-            IFormFile file,
-            [FromForm] int rotation = 90,
-            [FromForm] string? pageNumbers = null)
+        private static bool TryParsePageNumbers(
+            string input,
+            out List<int> pages,
+            out string error)
         {
-            if (file == null || file.Length == 0)
-                return BadRequest("No file provided.");
-            try
+            pages = new List<int>();
+            error = string.Empty;
+            foreach (var part in input.Split(',',
+                StringSplitOptions.RemoveEmptyEntries))
             {
-                using var ms = new MemoryStream();
-                await file.CopyToAsync(ms);
-                var pages = pageNumbers != null
-                    ? pageNumbers.Split(',',
-                        StringSplitOptions.RemoveEmptyEntries)
-                        .Select(p => int.Parse(p.Trim()))
-                        .ToList()
-                    : (IEnumerable<int>?)null;
-                var processor = new RotatePdfProcessor();
-                var result = await processor.ProcessAsync(
-                    ms.ToArray(), rotation, pages);
-                return File(result, "application/pdf",
-                    "rotated.pdf");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Rotate PDF error");
-                return StatusCode(500, ex.Message);
-            }
-        }
-
-        // POST api/pdf/split
-        [HttpPost("split")]
-        [RequestSizeLimit(524288000)]
-        public async Task<IActionResult> SplitPdf(
-            IFormFile file,
-            [FromForm] int? fromPage = null,
-            [FromForm] int? toPage = null)
-        {
-            if (file == null || file.Length == 0)
-                return BadRequest("No file provided.");
-            try
-            {
-                using var ms = new MemoryStream();
-                await file.CopyToAsync(ms);
-                var processor = new SplitPdfProcessor();
-
-                if (fromPage.HasValue && toPage.HasValue)
+                if (!int.TryParse(part.Trim(), out var page) || page < 1)
                 {
-                    var result = await processor.SplitRangeAsync(
-                        ms.ToArray(),
-                        fromPage.Value, toPage.Value);
-                    return File(result, "application/pdf",
-                        $"pages_{fromPage}_{toPage}.pdf");
+                    error = $"Invalid page number: '{part.Trim()}'";
+                    return false;
                 }
-                else
-                {
-                    var pages = await processor.SplitAsync(
-                        ms.ToArray());
-                    // Return first page as example
-                    // Full zip implementation for later
-                    return File(pages[0], "application/pdf",
-                        "page_1.pdf");
-                }
+                pages.Add(page);
             }
-            catch (Exception ex)
+            if (!pages.Any())
             {
-                _logger.LogError(ex, "Split PDF error");
-                return StatusCode(500, ex.Message);
+                error = "No page numbers provided.";
+                return false;
             }
-        }
-
-        // POST api/pdf/watermark
-        [HttpPost("watermark")]
-        [RequestSizeLimit(524288000)]
-        public async Task<IActionResult> WatermarkPdf(
-            IFormFile file,
-            [FromForm] string watermarkText = "CONFIDENTIAL",
-            [FromForm] float opacity = 0.3f,
-            [FromForm] float fontSize = 48f)
-        {
-            if (file == null || file.Length == 0)
-                return BadRequest("No file provided.");
-            try
-            {
-                using var ms = new MemoryStream();
-                await file.CopyToAsync(ms);
-                var processor = new WatermarkPdfProcessor();
-                var result = await processor.ProcessAsync(
-                    ms.ToArray(), watermarkText,
-                    opacity, fontSize);
-                return File(result, "application/pdf",
-                    "watermarked.pdf");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Watermark error");
-                return StatusCode(500, ex.Message);
-            }
-        }
-
-        // POST api/pdf/number-pages
-        [HttpPost("number-pages")]
-        [RequestSizeLimit(524288000)]
-        public async Task<IActionResult> NumberPages(
-            IFormFile file,
-            [FromForm] string position = "bottom-center",
-            [FromForm] int startNumber = 1)
-        {
-            if (file == null || file.Length == 0)
-                return BadRequest("No file provided.");
-            try
-            {
-                using var ms = new MemoryStream();
-                await file.CopyToAsync(ms);
-                var processor = new NumberPagesPdfProcessor();
-                var result = await processor.ProcessAsync(
-                    ms.ToArray(), position, startNumber);
-                return File(result, "application/pdf",
-                    "numbered.pdf");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Number pages error");
-                return StatusCode(500, ex.Message);
-            }
-        }
-
-        // POST api/pdf/flatten
-        [HttpPost("flatten")]
-        [RequestSizeLimit(524288000)]
-        public async Task<IActionResult> FlattenPdf(
-            IFormFile file)
-        {
-            if (file == null || file.Length == 0)
-                return BadRequest("No file provided.");
-            try
-            {
-                using var ms = new MemoryStream();
-                await file.CopyToAsync(ms);
-                var processor = new FlattenPdfProcessor();
-                var result = await processor.ProcessAsync(
-                    ms.ToArray());
-                return File(result, "application/pdf",
-                    "flattened.pdf");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Flatten error");
-                return StatusCode(500, ex.Message);
-            }
-        }
-
-        // POST api/pdf/jpg-to-pdf
-        [HttpPost("jpg-to-pdf")]
-        [RequestSizeLimit(524288000)]
-        public async Task<IActionResult> JpgToPdf(
-            List<IFormFile> files)
-        {
-            if (files == null || !files.Any())
-                return BadRequest("No files provided.");
-            try
-            {
-                var imageBytes = new List<byte[]>();
-                foreach (var file in files)
-                {
-                    using var ms = new MemoryStream();
-                    await file.CopyToAsync(ms);
-                    imageBytes.Add(ms.ToArray());
-                }
-                var processor = new JpgToPdfProcessor();
-                var result = await processor.ProcessAsync(
-                    imageBytes);
-                return File(result, "application/pdf",
-                    "images.pdf");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "JPG to PDF error");
-                return StatusCode(500, ex.Message);
-            }
-        }
-
-        // POST api/pdf/unlock
-        [HttpPost("unlock")]
-        [RequestSizeLimit(524288000)]
-        public async Task<IActionResult> UnlockPdf(
-            IFormFile file,
-            [FromForm] string? password = null)
-        {
-            if (file == null || file.Length == 0)
-                return BadRequest("No file provided.");
-            try
-            {
-                using var ms = new MemoryStream();
-                await file.CopyToAsync(ms);
-                var processor = new UnlockPdfProcessor();
-                var result = await processor.ProcessAsync(
-                    ms.ToArray(), password);
-                return File(result, "application/pdf",
-                    "unlocked.pdf");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Unlock error");
-                return StatusCode(500, ex.Message);
-            }
-        }
-
-        // POST api/pdf/protect
-        [HttpPost("protect")]
-        [RequestSizeLimit(524288000)]
-        public async Task<IActionResult> ProtectPdf(
-            IFormFile file,
-            [FromForm] string userPassword = "",
-            [FromForm] string ownerPassword = "",
-            [FromForm] bool allowPrinting = true,
-            [FromForm] bool allowCopying = false)
-        {
-            if (file == null || file.Length == 0)
-                return BadRequest("No file provided.");
-            try
-            {
-                using var ms = new MemoryStream();
-                await file.CopyToAsync(ms);
-                var processor = new ProtectPdfProcessor();
-                var result = await processor.ProcessAsync(
-                    ms.ToArray(), userPassword,
-                    ownerPassword, allowPrinting, allowCopying);
-                return File(result, "application/pdf",
-                    "protected.pdf");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Protect error");
-                return StatusCode(500, ex.Message);
-            }
-        }
-
-        // POST api/pdf/ppt-to-pdf
-        [HttpPost("ppt-to-pdf")]
-        [RequestSizeLimit(524288000)]
-        public async Task<IActionResult> PptToPdf(
-            IFormFile file)
-        {
-            if (file == null || file.Length == 0)
-                return BadRequest("No file provided.");
-            try
-            {
-                using var ms = new MemoryStream();
-                await file.CopyToAsync(ms);
-                var processor = new PptToPdfProcessor();
-                var result = await processor.ProcessAsync(
-                    ms.ToArray());
-                return File(result, "application/pdf",
-                    Path.GetFileNameWithoutExtension(
-                        file.FileName) + ".pdf");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "PPT to PDF error");
-                return StatusCode(500, ex.Message);
-            }
-        }
-
-        // POST api/pdf/excel-to-pdf
-        [HttpPost("excel-to-pdf")]
-        [RequestSizeLimit(524288000)]
-        public async Task<IActionResult> ExcelToPdf(
-            IFormFile file)
-        {
-            if (file == null || file.Length == 0)
-                return BadRequest("No file provided.");
-            try
-            {
-                using var ms = new MemoryStream();
-                await file.CopyToAsync(ms);
-                var processor = new ExcelToPdfProcessor();
-                var result = await processor.ProcessAsync(
-                    ms.ToArray());
-                return File(result, "application/pdf",
-                    Path.GetFileNameWithoutExtension(
-                        file.FileName) + ".pdf");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Excel to PDF error");
-                return StatusCode(500, ex.Message);
-            }
+            return true;
         }
 
         private static BaseColor ParseColor(string? hex)
@@ -978,42 +956,6 @@ namespace PdfToolkit.API.Controllers
             var g = Convert.ToInt32(hex[2..4], 16);
             var b = Convert.ToInt32(hex[4..6], 16);
             return new BaseColor(r, g, b);
-        }
-
-        // DTOs for JSON deserialization
-        public class PdfAnnotationDto
-        {
-            public string Type { get; set; } = "text";
-            public int PageNumber { get; set; } = 1;
-            public float X { get; set; }
-            public float Y { get; set; }
-            public float X2 { get; set; }
-            public float Y2 { get; set; }
-            public float Width { get; set; }
-            public float Height { get; set; }
-            public string? Text { get; set; }
-            public float FontSize { get; set; } = 12f;
-            public float LineWidth { get; set; } = 1f;
-            public string? Color { get; set; }
-        }
-
-        public class PdfHighlightDto
-        {
-            public string Type { get; set; } = "highlight";
-            public int PageNumber { get; set; } = 1;
-            public float X { get; set; }
-            public float Y { get; set; }
-            public float Width { get; set; }
-            public float Height { get; set; }
-            public float LineWidth { get; set; } = 2f;
-            public string? Color { get; set; }
-            public List<PointDto>? Points { get; set; }
-        }
-
-        public class PointDto
-        {
-            public float X { get; set; }
-            public float Y { get; set; }
         }
     }
 }

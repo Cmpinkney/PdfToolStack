@@ -6,17 +6,23 @@ using PdfToolkit.Domain.Entities;
 
 namespace PdfToolkit.Infrastructure.Processors
 {
-    public class DeletePagesProcessor : IPdfProcessor
+    public class DeletePagesProcessor : IDeletePagesProcessor
     {
         public ToolType ToolType => ToolType.DeletePages;
 
+        // Standard IPdfProcessor passthrough
         public Task<byte[]> ProcessAsync(
-    byte[] inputBytes,
-    CancellationToken cancellationToken = default)
-        {
-            return Task.FromResult(inputBytes);
-        }
+            byte[] inputBytes,
+            CancellationToken cancellationToken = default)
+            => Task.FromResult(inputBytes);
 
+        // Explicit interface implementation — called by strategy
+        Task<byte[]> IDeletePagesProcessor.ProcessAsync(
+            byte[] inputBytes,
+            IEnumerable<int> pageNumbers)
+            => ProcessAsync(inputBytes, pageNumbers, default);
+
+        // Full implementation with cancellation support
         public Task<byte[]> ProcessAsync(
             byte[] inputBytes,
             IEnumerable<int> pagesToDelete,

@@ -8,6 +8,7 @@
         public string? ErrorMessage { get; set; }
         public long OriginalSizeBytes { get; set; }
         public long OutputSizeBytes { get; set; }
+        public byte[]? OutputBytes { get; set; }  // ← new
         public double CompressionRatio
         {
             get
