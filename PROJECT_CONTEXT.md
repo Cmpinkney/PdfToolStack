@@ -1,4 +1,4 @@
-# PdfToolkit — Project Context
+# PdfToolStack — Project Context
 
 ---
 
@@ -6,7 +6,7 @@
 
 A free PDF tools website built on **ASP.NET Core + Blazor WebAssembly**, targeting the same market as SmallPDF and ILovePDF. Differentiators: AI-first features (Chat with PDF, Summarizer, Questions Generator) and privacy-focused positioning.
 
-- **Repo:** https://github.com/Cmpinkney/PdfToolkit
+- **Repo:** https://github.com/Cmpinkney/PdfToolStack
 - **Stack:** .NET 9, ASP.NET Core, Blazor WASM, Entity Framework Core, SQL Server, Azure Blob Storage, Stripe, Serilog, iTextSharp
 
 ---
@@ -14,12 +14,12 @@ A free PDF tools website built on **ASP.NET Core + Blazor WebAssembly**, targeti
 ## Solution Structure
 
 ```
-PdfToolkit.sln
-├── PDFToolkit.Domain          # Entities, enums, interfaces — no dependencies
-├── PDFToolkit.Application     # Services, strategies, DTOs, factory — depends on Domain
-├── PdfToolkit.Infrastructure  # EF Core, processors, blob storage — depends on Domain
-├── PdfToolkit.API             # ASP.NET Core Web API — depends on all layers
-└── PdfToolkit.Web             # Blazor WASM frontend — calls API via HttpClient
+PdfToolStack.sln
+├── PdfToolStack.Domain          # Entities, enums, interfaces — no dependencies
+├── PdfToolStack.Application     # Services, strategies, DTOs, factory — depends on Domain
+├── PdfToolStack.Infrastructure  # EF Core, processors, blob storage — depends on Domain
+├── PdfToolStack.API             # ASP.NET Core Web API — depends on all layers
+└── PdfToolStack.Web             # Blazor WASM frontend — calls API via HttpClient
 ```
 
 ---
@@ -61,7 +61,7 @@ Blazor (ApiService)
 
 ## Registered Strategies (Program.cs)
 
-All registered as `IProcessingStrategy` via factory lambdas in `PdfToolkit.API/Program.cs`.
+All registered as `IProcessingStrategy` via factory lambdas in `PdfToolStack.API/Program.cs`.
 
 | Strategy | ToolType |
 |---|---|
@@ -141,7 +141,7 @@ These three have complex multi-param signatures not yet modelled in `ProcessRequ
 
 ## DTOs Location
 
-All DTOs live in `PDFToolkit.Application/DTOs/`:
+All DTOs live in `PdfToolStack.Application/DTOs/`:
 - `ProcessRequest.cs`
 - `ProcessResponse.cs`
 - `JobStatusResponse.cs`
@@ -164,7 +164,7 @@ All DTOs live in `PDFToolkit.Application/DTOs/`:
 
 ---
 
-## Blazor Frontend (PdfToolkit.Web)
+## Blazor Frontend (PdfToolStack.Web)
 
 - Blazor WASM, calls API via `ApiService`
 - Auth via `LoginDisplay` / `RedirectToLogin`

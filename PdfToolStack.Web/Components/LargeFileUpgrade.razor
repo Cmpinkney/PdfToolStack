@@ -1,0 +1,83 @@
+﻿@inject PaymentService PaymentService
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+@using PdfToolStack.Web.Services
+
+<div class="upgrade-banner">
+    <div class="upgrade-icon">📦</div>
+    <div class="upgrade-content">
+        <h3>Large File Detected</h3>
+        <p>
+            Your file is <strong>@PaymentService.FormatFileSize(FileSizeBytes)</strong>.
+            Free processing is limited to
+            <strong>
+                @PaymentService.FormatFileSize(
+                PaymentService.FreeTierMaxBytes)
+            </strong>.
+        </p>
+        <p class="upgrade-price">
+            Process this file for just
+            <strong class="price-highlight">$0.99</strong>
+        </p>
+        <div class="upgrade-features">
+            <span>✅ Files up to 500MB</span>
+            <span>✅ No subscription</span>
+            <span>✅ One-time payment</span>
+            <span>✅ Secure checkout</span>
+        </div>
+    </div>
+    <div class="upgrade-actions">
+        <button class="process-button upgrade-btn"
+                @onclick="HandleUpgrade"
+                disabled="@IsLoading">
+            @(IsLoading ? "Redirecting..." : "Pay $0.99 & Process")
+        </button>
+        <button class="reset-button"
+                @onclick="OnCancel">
+            Use a Smaller File
+        </button>
+    </div>
+</div>
+
+@code {
+    [Parameter] public long FileSizeBytes { get; set; }
+    [Parameter]
+    public string FileName { get; set; }
+        = string.Empty;
+    [Parameter]
+    public string ToolType { get; set; }
+        = string.Empty;
+    [Parameter] public EventCallback OnCancel { get; set; }
+
+    private bool IsLoading = false;
+    private string JobId = Guid.NewGuid().ToString();
+
+    private async Task HandleUpgrade()
+    {
+        IsLoading = true;
+        StateHasChanged();
+
+        var currentUrl = Navigation.Uri;
+        var successUrl = Navigation.ToAbsoluteUri(
+            $"/payment-success?jobId={JobId}&toolType={ToolType}")
+            .ToString();
+        var cancelUrl = currentUrl;
+
+        var checkoutUrl = await PaymentService
+            .CreateCheckoutSessionAsync(
+                JobId,
+                ToolType,
+                successUrl,
+                cancelUrl);
+
+        if (!string.IsNullOrEmpty(checkoutUrl))
+        {
+            Navigation.NavigateTo(checkoutUrl, forceLoad: true);
+        }
+        else
+        {
+            IsLoading = false;
+            StateHasChanged();
+        }
+    }
+}

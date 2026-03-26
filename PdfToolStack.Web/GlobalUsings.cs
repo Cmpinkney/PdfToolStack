@@ -1,0 +1,11 @@
+﻿global using Microsoft.AspNetCore.Authorization;
+global using PdfToolStack.Web.Services;
+global using PdfToolStack.Web.Components;
+global using PdfToolStack.Domain.Enums;
+global using PdfToolStack.Domain.Entities;
+global using PdfToolStack.Application.DTOs;
+global using Microsoft.AspNetCore.Components.Forms;
+global using Microsoft.AspNetCore.Components.Web;
+global using Microsoft.AspNetCore.Components.Authorization;
+global using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
+global using Microsoft.JSInterop;

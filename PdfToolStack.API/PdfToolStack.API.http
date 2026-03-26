@@ -1,0 +1,6 @@
+@PdfToolStack.API_HostAddress = http://localhost:5208
+
+GET {{PdfToolStack.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

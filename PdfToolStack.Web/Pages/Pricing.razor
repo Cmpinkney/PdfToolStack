@@ -1,0 +1,187 @@
+﻿@page "/pricing"
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider Auth
+@inject PdfToolStack.Web.Services.SubscriptionService SubService
+@using Microsoft.AspNetCore.Components.Authorization
+
+<PageTitle>Pricing — PDFToolstack</PageTitle>
+
+<div class="pricing-page">
+    <div class="pricing-hero">
+        <h1>Simple, honest pricing</h1>
+        <p>Start free. Upgrade when you need more.</p>
+    </div>
+
+    <div class="pricing-grid">
+
+        <!-- Free -->
+        <div class="pricing-card">
+            <div class="pricing-plan-name">Free</div>
+            <div class="pricing-price">
+                $0
+                <span>/forever</span>
+            </div>
+            <div class="pricing-desc">
+                Perfect for occasional use
+            </div>
+            <ul class="pricing-features">
+                <li>✅ All 35+ PDF tools</li>
+                <li>✅ Up to 25MB per file</li>
+                <li>✅ Files deleted in 1 hour</li>
+                <li>✅ No signup required</li>
+                <li>❌ No download history</li>
+                <li>❌ Ads shown</li>
+                <li>❌ No AI tools</li>
+            </ul>
+            <a href="/" class="pricing-btn-free">
+                Get Started Free
+            </a>
+        </div>
+
+        <!-- Pro Monthly -->
+        <div class="pricing-card pricing-card-featured">
+            <div class="pricing-popular-badge">
+                Most Popular
+            </div>
+            <div class="pricing-plan-name">Pro Monthly</div>
+            <div class="pricing-price">
+                $9.99
+                <span>/month</span>
+            </div>
+            <div class="pricing-desc">
+                For regular PDF users
+            </div>
+            <ul class="pricing-features">
+                <li>✅ Everything in Free</li>
+                <li>✅ Unlimited file size</li>
+                <li>✅ No ads</li>
+                <li>✅ Priority processing</li>
+                <li>✅ Download history</li>
+                <li>✅ PDF OCR access</li>
+                <li>✅ AI tools access</li>
+            </ul>
+            <button class="pricing-btn-pro"
+                    @onclick="() => Subscribe(false)">
+                @(IsLoading ? "Loading..." :
+                                "Start Pro Monthly")
+            </button>
+        </div>
+
+        <!-- Pro Yearly -->
+        <div class="pricing-card">
+            <div class="pricing-save-badge">
+                Save 34%
+            </div>
+            <div class="pricing-plan-name">Pro Yearly</div>
+            <div class="pricing-price">
+                $79
+                <span>/year</span>
+            </div>
+            <div class="pricing-desc">
+                $6.58/mo — best value
+            </div>
+            <ul class="pricing-features">
+                <li>✅ Everything in Pro</li>
+                <li>✅ Unlimited file size</li>
+                <li>✅ No ads</li>
+                <li>✅ Priority processing</li>
+                <li>✅ Download history</li>
+                <li>✅ PDF OCR access</li>
+                <li>✅ AI tools access</li>
+            </ul>
+            <button class="pricing-btn-yearly"
+                    @onclick="() => Subscribe(true)">
+                @(IsLoading ? "Loading..." :
+                                "Start Pro Yearly")
+            </button>
+        </div>
+
+    </div>
+
+    <div class="pricing-faq">
+        <h2>Frequently Asked Questions</h2>
+        <div class="faq-item">
+            <h3>Can I cancel anytime?</h3>
+            <p>
+                Yes — cancel anytime from your account
+                page. You keep Pro access until the end
+                of your billing period.
+            </p>
+        </div>
+        <div class="faq-item">
+            <h3>What payment methods do you accept?</h3>
+            <p>
+                All major credit and debit cards via
+                Stripe. Your payment info is never
+                stored on our servers.
+            </p>
+        </div>
+        <div class="faq-item">
+            <h3>What happens to my files?</h3>
+            <p>
+                All files are deleted within 1 hour
+                regardless of plan. Pro users get
+                download history links, not stored
+                files.
+            </p>
+        </div>
+        <div class="faq-item">
+            <h3>
+                Can I switch between monthly
+                and yearly?
+            </h3>
+            <p>
+                Yes — upgrade or downgrade anytime
+                from your account portal.
+            </p>
+        </div>
+    </div>
+</div>
+
+@code {
+    private bool IsLoading = false;
+    private string UserId = string.Empty;
+    private string UserEmail = string.Empty;
+
+    protected override async Task
+        OnInitializedAsync()
+    {
+        var authState = await Auth
+            .GetAuthenticationStateAsync();
+        var user = authState.User;
+        UserId = user.FindFirst("sub")?.Value
+            ?? string.Empty;
+        UserEmail = user.FindFirst("email")?.Value
+            ?? string.Empty;
+    }
+
+    private async Task Subscribe(bool yearly)
+    {
+        if (string.IsNullOrEmpty(UserId))
+        {
+            Navigation.NavigateTo(
+                "authentication/login");
+            return;
+        }
+
+        IsLoading = true;
+        StateHasChanged();
+
+        var priceId = yearly
+            ? "price_1TEgOSFJEzXwielrmPRg2DU8"
+            : "price_1TEgIyFJEzXwielrQsLCKXrN";
+
+        var baseUrl = Navigation.BaseUri
+            .TrimEnd('/');
+
+        var url = await SubService
+            .CreateCheckoutSessionAsync(
+                priceId, UserId,
+                UserEmail, baseUrl);
+
+        if (!string.IsNullOrEmpty(url))
+            Navigation.NavigateTo(url, true);
+
+        IsLoading = false;
+    }
+}

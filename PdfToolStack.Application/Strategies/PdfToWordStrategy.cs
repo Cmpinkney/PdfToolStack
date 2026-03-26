@@ -1,0 +1,59 @@
+﻿using PdfToolStack.Domain.Entities;
+using PdfToolStack.Domain.Enums;
+using PdfToolStack.Domain.Interfaces;
+using PdfToolStack.Application.DTOs;
+
+namespace PdfToolStack.Application.Strategies
+{
+    public class PdfToWordStrategy : IProcessingStrategy
+    {
+        public ToolType ToolType => ToolType.PdfToWord;
+
+        private readonly IPdfProcessor _processor;
+
+        public PdfToWordStrategy(IPdfProcessor processor)
+        {
+            _processor = processor;
+        }
+
+        public async Task<ProcessingResult> ExecuteAsync(
+            ProcessRequest request,
+            CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                if (request.FileBytes == null
+                    || request.FileBytes.Length == 0)
+                    return ProcessingResult.Failure(
+                        "File is empty or invalid.");
+
+                if (!IsPdf(request.FileBytes))
+                    return ProcessingResult.Failure(
+                        "File is not a valid PDF.");
+
+                var outputBytes = await _processor.ProcessAsync(
+                    request.FileBytes, cancellationToken);
+
+                var result = await _processor.ProcessAsync(
+                    request.FileBytes, cancellationToken);
+                return ProcessingResult.Success(
+                    outputBytes,
+                    request.FileSizeBytes);
+            }
+            catch (Exception ex)
+            {
+                return ProcessingResult.Failure(
+                    $"Conversion failed: {ex.Message}");
+            }
+        }
+
+        private static bool IsPdf(byte[] bytes)
+        {
+            return bytes.Length >= 4 &&
+                   bytes[0] == 0x25 &&
+                   bytes[1] == 0x50 &&
+                   bytes[2] == 0x44 &&
+                   bytes[3] == 0x46;
+        }
+    }
+}
