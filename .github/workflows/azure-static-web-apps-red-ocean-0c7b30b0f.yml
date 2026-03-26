@@ -26,13 +26,13 @@ jobs:
           dotnet-version: '9.0.x'
 
       - name: Restore dependencies
-        run: dotnet restore PdfToolkit.sln
+        run: dotnet restore PdfToolkit/PdfToolkit.sln
 
       - name: Build solution
-        run: dotnet build PdfToolkit.sln --configuration Release --no-restore
+        run: dotnet build PdfToolkit/PdfToolkit.sln --configuration Release --no-restore
 
       - name: Publish Blazor app
-        run: dotnet publish PdfToolkit.Web/PdfToolkit.Web.csproj --configuration Release --output publish_output
+        run: dotnet publish PdfToolkit/PdfToolkit.Web/PdfToolkit.Web.csproj --configuration Release --output publish_output
 
       - name: Deploy to Azure Static Web Apps
         uses: Azure/static-web-apps-deploy@v1
