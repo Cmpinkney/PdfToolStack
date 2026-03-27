@@ -1,208 +1,197 @@
-# PdfToolStack — Project Context
+# PdfToolStack – Project Context
+
+## 🧠 Overview
+PdfToolStack is a SaaS web application that provides PDF tools (compress, merge, convert, edit, AI tools) with a focus on solving real user problems rather than offering generic utilities.
+
+The goal is to monetize through:
+- Pay-per-use (microtransactions)
+- Subscription (premium tier)
+- Ads (secondary)
 
 ---
 
-## What This Is
+## 🎯 Product Strategy
 
-A free PDF tools website built on **ASP.NET Core + Blazor WebAssembly**, targeting the same market as SmallPDF and ILovePDF. Differentiators: AI-first features (Chat with PDF, Summarizer, Questions Generator) and privacy-focused positioning.
+This project follows a **problem-first approach**, not a tool-first approach.
 
-- **Repo:** https://github.com/Cmpinkney/PdfToolStack
-- **Stack:** .NET 9, ASP.NET Core, Blazor WASM, Entity Framework Core, SQL Server, Azure Blob Storage, Stripe, Serilog, iTextSharp
+Instead of:
+- "Compress PDF"
 
----
+We position tools as:
+- "Fix PDF too large for email"
+- "Convert PDF to editable Word"
+- "Merge PDFs for submission"
 
-## Solution Structure
-
-```
-PdfToolStack.sln
-├── PdfToolStack.Domain          # Entities, enums, interfaces — no dependencies
-├── PdfToolStack.Application     # Services, strategies, DTOs, factory — depends on Domain
-├── PdfToolStack.Infrastructure  # EF Core, processors, blob storage — depends on Domain
-├── PdfToolStack.API             # ASP.NET Core Web API — depends on all layers
-└── PdfToolStack.Web             # Blazor WASM frontend — calls API via HttpClient
-```
+Each tool is mapped to:
+- A real-world problem
+- A high-intent search query
+- A conversion opportunity
 
 ---
 
-## Architecture
+## 💰 Monetization Model
 
-Clean Architecture with Strategy + Factory pattern for PDF operations.
+### Free Tier
+- Up to 10MB file size
+- Basic processing
+- Ads enabled
 
-### Request flow (every tool)
-```
-Blazor (ApiService) 
-  → PdfController 
-  → BuildRequestAsync() helper 
-  → IPdfService.ProcessAsync() 
-  → PdfProcessorFactory.GetStrategy(toolType) 
-  → IProcessingStrategy.ExecuteAsync() 
-  → IPdfProcessor.ProcessAsync() 
-  → ProcessingResult 
-  → ProcessResponse (with OutputBytes)
-  → File() response
-```
+### Pay-Per-Use
+- $0.99 → up to 50MB
+- $1.99 → up to 200MB
+- $2.99 → up to 500MB
 
-### Key types
-
-| Type | Location | Purpose |
-|---|---|---|
-| `ToolType` | Domain/Enums | Enum for all 32 tool types |
-| `PdfJob` | Domain/Entities | DB entity — tracks every job |
-| `ProcessRequest` | Application/DTOs | Input to service layer |
-| `ProcessResponse` | Application/DTOs | Output from service layer — includes `OutputBytes` |
-| `ProcessingResult` | Domain/Entities | Output from processor — `Success()` / `Failure()` factory methods |
-| `IPdfProcessor` | Domain/Interfaces | Base processor interface — `ProcessAsync(byte[], CancellationToken)` |
-| `IProcessingStrategy` | Application/Strategies | Strategy interface — `ToolType` + `ExecuteAsync(ProcessRequest)` |
-| `PdfProcessorFactory` | Application/Factories | Resolves strategy by `ToolType` from DI-registered `IEnumerable<IProcessingStrategy>` |
-| `PdfService` | Application/Services | Orchestrates job creation → strategy execution → job update |
-| `AppDbContext` | Infrastructure/Data | EF Core context — `PdfJobs`, `UserSubscriptions`, `DownloadHistory` |
+### Subscription ($9.99/month)
+- Unlimited file size
+- Faster processing
+- No ads
+- Access to AI tools
+- Batch processing
 
 ---
 
-## Registered Strategies (Program.cs)
+## ⚙️ Core Workflow
 
-All registered as `IProcessingStrategy` via factory lambdas in `PdfToolStack.API/Program.cs`.
+All tools follow this flow:
 
-| Strategy | ToolType |
-|---|---|
-| `CompressStrategy` | CompressPdf |
-| `RedactStrategy` | RedactPdf |
-| `MergeStrategy` | MergePdf |
-| `PdfToWordStrategy` | PdfToWord |
-| `FillFormStrategy` | FillPdfForm |
-| `FlattenStrategy` | FlattenPdf |
-| `RotateStrategy` | RotatePdf |
-| `WatermarkStrategy` | WatermarkPdf |
-| `SplitStrategy` | SplitPdf |
-| `NumberPagesStrategy` | NumberPages |
-| `UnlockStrategy` | UnlockPdf |
-| `ProtectStrategy` | ProtectPdf |
-| `WordToPdfStrategy` | WordToPdf |
-| `PptToPdfStrategy` | PptToPdf |
-| `ExcelToPdfStrategy` | ExcelToPdf |
-| `ExtractPagesStrategy` | ExtractPages |
-| `DeletePagesStrategy` | DeletePages |
-
-### Special interfaces (Domain/Interfaces)
-- `IDeletePagesProcessor` — extends `IPdfProcessor` with `ProcessAsync(byte[], IEnumerable<int>)`
-- `IExtractPagesProcessor` — extends `IPdfProcessor` with `ProcessAsync(byte[], IEnumerable<int>)`
+1. User uploads file
+2. System detects issue (file size, scanned doc, etc.)
+3. Show options:
+   - Paid (fast, optimized)
+   - Free (manual or limited)
+4. Process file
+5. Deliver result
+6. Upsell (subscription or upgrade)
 
 ---
 
-## ProcessRequest Extended Properties
+## 🧠 Smart Detection System
 
-Beyond the base `FileBytes / FileName / FileSizeBytes / ToolType`, these extra fields carry tool-specific params:
+The system analyzes uploaded files to detect issues:
 
-```csharp
-List<int>?   PageNumbers          // delete-pages, extract-pages
-int          Rotation             // rotate (default 90)
-string       WatermarkText        // watermark (default "CONFIDENTIAL")
-float        WatermarkOpacity     // watermark (default 0.3)
-float        WatermarkFontSize    // watermark (default 48)
-string       PageNumberPosition   // number-pages (default "bottom-center")
-int          PageNumberStart      // number-pages (default 1)
-string?      Password             // unlock
-string       UserPassword         // protect
-string       OwnerPassword        // protect
-bool         AllowPrinting        // protect
-bool         AllowCopying         // protect
-int?         SplitFromPage        // split range
-int?         SplitToPage          // split range
-```
+Examples:
+- File too large for email
+- Scanned PDF (needs OCR)
+- Multi-document merge scenario
+
+This is used to:
+- Personalize UX
+- Increase conversion
+- Suggest correct tool automatically
 
 ---
 
-## Controller Helpers (PdfController)
+## 🧰 Core Tools (Current)
 
-Two private helpers eliminate boilerplate:
+### Compress & Convert
+- Fix PDF too large for email (Compress)
+- Convert PDF to editable Word
+- Extract tables to Excel
+- Convert images to PDF
 
-```csharp
-// Reads file into ProcessRequest
-BuildRequestAsync(IFormFile, ToolType, CancellationToken)
+### Edit & Annotate
+- Edit PDF content
+- Add annotations
+- Fill & sign forms
 
-// Parses "1,2,3" → List<int> with validation
-TryParsePageNumbers(string, out List<int>, out string error)
-```
+### Organize
+- Merge PDFs
+- Split PDFs
+- Extract pages
+- Remove pages
+- Rotate pages
+- Add page numbers
 
----
+### Security
+- Add password protection
+- Remove password
+- Redact sensitive data
 
-## Endpoints Still Using Direct Processor Instantiation (TODOs)
-
-These three have complex multi-param signatures not yet modelled in `ProcessRequest`:
-
-| Endpoint | Reason | TODO |
-|---|---|---|
-| `POST /api/pdf/organize` | Takes `List<PageOperation>` | Add `OperationsJson` to `ProcessRequest` |
-| `POST /api/pdf/sign` | Takes second `IFormFile` (signature image) + position floats | Add `SignatureBytes` + position to `ProcessRequest` |
-| `POST /api/pdf/edit` | Takes `List<PdfAnnotation>` | Add `AnnotationsJson` to `ProcessRequest` |
-| `POST /api/pdf/annotate` | Takes `List<PdfHighlight>` | Add `HighlightsJson` to `ProcessRequest` |
-
----
-
-## DTOs Location
-
-All DTOs live in `PdfToolStack.Application/DTOs/`:
-- `ProcessRequest.cs`
-- `ProcessResponse.cs`
-- `JobStatusResponse.cs`
-- `DetectFieldsResponse.cs`
-- `SubscriptionDtos.cs`
-- `AnnotationDtos.cs` — `PdfAnnotationDto`, `PdfHighlightDto`, `PointDto`
+### AI Tools
+- Summarize PDF
+- Ask questions about PDF
+- Extract key insights
 
 ---
 
-## Infrastructure
+## 🚧 Planned Features
 
-| Service | Implementation |
-|---|---|
-| File storage | Azure Blob Storage (`AzureBlobStorageService`) |
-| Database | SQL Server via EF Core (`AppDbContext`) |
-| Payments | Stripe (`PaymentController`, `SubscriptionController`) |
-| Logging | Serilog (structured, console + config) |
-| Rate limiting | Custom `RateLimitingMiddleware` |
-| Error handling | Custom `ErrorHandlingMiddleware` (first in pipeline) |
+High priority:
+- PDF Compare (highlight differences)
+- PDF Repair (fix corrupted files)
+- Email PDF Optimizer (auto-size for Gmail/Outlook)
 
----
-
-## Blazor Frontend (PdfToolStack.Web)
-
-- Blazor WASM, calls API via `ApiService`
-- Auth via `LoginDisplay` / `RedirectToLogin`
-- Components: `FileUpload`, `ToastContainer`, `ThemeSwitcher`, `AdSlot`, `LargeFileUpgrade`
-- Pages: one `.razor` per tool + Account, Pricing, About, Contact, Privacy, Terms
+Medium priority:
+- Batch processing
+- Cloud integrations (Google Drive, Dropbox)
+- PDF Analyzer (file insights)
 
 ---
 
-## Known Issues / Next Up
+## 🧱 Tech Stack
 
-- [ ] `SplitPdf` all-pages returns a `.zip` — Blazor frontend needs to handle zip download
-- [ ] Rotate strategy ignores `Rotation` and `PageNumbers` from `ProcessRequest` — strategy calls standard `ProcessAsync` which defaults to 90°. Wire up a `IRotatePdfProcessor` interface (same pattern as delete/extract)
-- [ ] CORS origin `"https://yoursite.com"` is a placeholder — replace with real domain before deploy
-- [ ] `AdSlot.razor` exists but ad placements not configured — gate behind feature flag before launch
-- [ ] Organize / Sign / Edit / Annotate endpoints still use `new XxxProcessor()` directly (see TODOs above)
-- [ ] No auth on API endpoints — all processing is anonymous for now
+### Frontend
+- Blazor WebAssembly
 
----
+### Backend
+- ASP.NET Core API
 
-## Deployment Target
+### Storage
+- Azure Blob Storage
 
-- API: Azure App Service
-- Web: Azure Static Web Apps (or same App Service)
-- DB: Azure SQL
-- Storage: Azure Blob Storage
-- CI/CD: Azure DevOps (already in use)
+### Payments
+- Stripe
 
 ---
 
-## Session Log
+## 📁 Project Structure
 
-| Date | What was done |
-|---|---|
-| 2026-03-25 | Initial architecture review — identified Strategy pattern inconsistency |
-| 2026-03-25 | Replaced `Console.WriteLine` in `PdfProcessorFactory` with `ILogger` |
-| 2026-03-25 | Created 12 missing strategy classes, registered all in `Program.cs` |
-| 2026-03-25 | Added `OutputBytes` to `ProcessResponse`, wired through `PdfService` |
-| 2026-03-25 | Refactored controller — added `BuildRequestAsync` + `TryParsePageNumbers` helpers |
-| 2026-03-25 | Moved `PdfAnnotationDto`, `PdfHighlightDto`, `PointDto` to `Application/DTOs` |
-| 2026-03-25 | Fixed Split endpoint — returns zip for all-pages, single PDF for range |
-| 2026-03-25 | Added `IDeletePagesProcessor` + `IExtractPagesProcessor` interfaces, wired `PageNumbers` through strategies |
+- PdfToolStack.Web → frontend UI
+- PdfToolStack.API → backend API
+- PdfToolStack.Application → business logic
+- PdfToolStack.Domain → core models
+- PdfToolStack.Infrastructure → data + services
+
+---
+
+## 🚨 Important Decisions (DO NOT CHANGE)
+
+- Problem-first UX is required
+- Free tier must always exist
+- Paid option must always be shown alongside free option
+- No hard paywalls without alternative path
+
+---
+
+## 🎯 SEO Strategy
+
+Each tool has multiple entry points:
+
+Examples:
+- /compress-for-email
+- /compress-under-1mb
+- /merge-for-submission
+
+Each maps to:
+- A specific user problem
+- A blog article
+- A conversion funnel
+
+---
+
+## 🧠 Key Philosophy
+
+We are NOT building:
+> a PDF tool website
+
+We ARE building:
+> a problem-solving platform that converts users into paying customers
+
+---
+
+## 🧪 Future AI Context
+
+If working with AI:
+- Prioritize conversion over features
+- Optimize UX flows before adding tools
+- Suggest improvements in monetization and positioning
