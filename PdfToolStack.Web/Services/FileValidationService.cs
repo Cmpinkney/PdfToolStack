@@ -5,7 +5,7 @@ namespace PdfToolStack.Web.Services
     public class FileValidationService
     {
         // File size limits
-        public const long MaxFreeTierBytes = 26214400;    // 25MB
+        public const long MaxFreeTierBytes = 10485760;    // 10MB
         public const long MaxPaidTierBytes = 524288000;   // 500MB
         public const int MaxPageCount = 500;
 
@@ -81,7 +81,7 @@ namespace PdfToolStack.Web.Services
             if (file.Size > MaxFreeTierBytes)
                 return ValidationResult.Fail(
                     $"Image is too large. " +
-                    $"Maximum size is 25MB per image.");
+                    $"Maximum size is 10MB per image.");
 
             return ValidationResult.Ok();
         }
@@ -219,18 +219,24 @@ namespace PdfToolStack.Web.Services
         public bool IsWarning { get; private set; }
         public string? Message { get; private set; }
 
+        private ValidationResult(bool isValid,
+            bool isWarning = false,
+            string? message = null)
+        {
+            IsValid = isValid;
+            IsWarning = isWarning;
+            Message = message;
+        }
+
         public static ValidationResult Ok() =>
-            new() { IsValid = true };
+            new(true);
 
-        public static ValidationResult Fail(string message) =>
-            new() { IsValid = false, Message = message };
+        public static ValidationResult Warn(
+            string message) =>
+            new(true, true, message);
 
-        public static ValidationResult Warn(string message) =>
-            new()
-            {
-                IsValid = true,
-                IsWarning = true,
-                Message = message
-            };
+        public static ValidationResult Fail(
+            string message) =>
+            new(false, false, message);
     }
 }

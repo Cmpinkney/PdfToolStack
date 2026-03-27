@@ -10,7 +10,7 @@
     {
         <span class="upload-icon">📄</span>
         <p style="color:var(--text-secondary);
-                      margin-bottom:0.75rem;">
+                          margin-bottom:0.75rem;">
             Drag and drop your file here or
         </p>
         <label class="upload-button">
@@ -25,14 +25,14 @@
     {
         <span style="font-size:2rem;">✅</span>
         <p style="font-size:0.95rem;
-                      font-weight:600;
-                      color:var(--text);
-                      margin:0.5rem 0 0.25rem;">
+                          font-weight:600;
+                          color:var(--text);
+                          margin:0.5rem 0 0.25rem;">
             @SelectedFile.Name
         </p>
         <p style="font-size:0.85rem;
-                      color:var(--text-muted);
-                      margin-bottom:0.75rem;">
+                          color:var(--text-muted);
+                          margin-bottom:0.75rem;">
             @FormatFileSize(SelectedFile.Size)
         </p>
         <button class="reset-button"
@@ -48,16 +48,19 @@
     public EventCallback<IBrowserFile>
         OnFileSelected
     { get; set; }
+
     [Parameter]
     public EventCallback
         OnFileRemoved
     { get; set; }
+
     [Parameter]
     public string Accept { get; set; }
         = ".pdf";
+
     [Parameter]
     public string HintText { get; set; }
-        = "Maximum file size: 25MB free · 500MB paid";
+        = "Maximum file size: 10MB free · 500MB paid";
 
     private IBrowserFile? SelectedFile;
     private bool IsDragging = false;
@@ -72,9 +75,10 @@
     private void HandleDragOver() => IsDragging = true;
     private void HandleDragLeave() => IsDragging = false;
 
-    private async Task HandleDrop(DragEventArgs e)
+    private Task HandleDrop(DragEventArgs e)
     {
         IsDragging = false;
+        return Task.CompletedTask;
     }
 
     private async Task RemoveFile()
@@ -83,11 +87,11 @@
         await OnFileRemoved.InvokeAsync();
     }
 
-    private string FormatFileSize(long bytes)
+    private static string FormatFileSize(long bytes)
     {
         if (bytes < 1024) return $"{bytes} B";
         if (bytes < 1024 * 1024)
-            return $"{bytes / 1024} KB";
-        return $"{bytes / (1024 * 1024)} MB";
+            return $"{Math.Round((double)bytes / 1024, 1)} KB";
+        return $"{Math.Round((double)bytes / (1024 * 1024), 1)} MB";
     }
 }

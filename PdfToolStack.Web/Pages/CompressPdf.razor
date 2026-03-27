@@ -1,9 +1,12 @@
 ﻿@page "/compress-pdf"
+@page "/fix-pdf-too-large-for-email"
+
 @inject ApiService ApiService
 @inject IJSRuntime JS
 @inject PaymentService PaymentService
 @inject FileValidationService Validator
 @inject ToastService Toast
+@inject NavigationManager Navigation
 
 <PageTitle>Compress PDF Online Free — Reduce PDF Size Instantly</PageTitle>
 
@@ -23,22 +26,22 @@
     <AdSlot Size="banner" />
 
     <div class="tool-container">
-        <h1>Compress PDF Online</h1>
+        <h1>@PageHeading</h1>
         <p class="tool-subtitle">
-            Reduce your PDF file size for free.
-            No signup required. Files deleted within 1 hour.
+            @PageSubtitle
         </p>
 
         @if (CurrentState == PageState.Upload)
         {
             <FileUpload OnFileSelected="HandleFileSelected"
-                        OnFileRemoved="HandleFileRemoved" />
+                        OnFileRemoved="HandleFileRemoved"
+                        HintText="@UploadHintText" />
 
             @if (SelectedFile != null)
             {
                 <button class="process-button"
                         @onclick="ProcessFile">
-                    Compress PDF
+                    @ProcessButtonText
                 </button>
             }
         }
@@ -48,7 +51,11 @@
             <LargeFileUpgrade FileSizeBytes="@(SelectedFile?.Size ?? 0)"
                               FileName="@(SelectedFile?.Name ?? "")"
                               ToolType="CompressPdf"
-                              OnCancel="Reset" />
+                              Title="PDF Too Large for Free Processing"
+                              Message="This PDF may be too large for email or standard uploads. "
+                              PrimaryButtonText="Fix instantly for $0.99"
+                              SecondaryButtonText="Compress for free instead"
+                              OnCancel="ResetToFreeMode" />
         }
 
         @if (CurrentState == PageState.Processing)
@@ -118,9 +125,9 @@
         <div class="faq-item">
             <h3>Is this PDF compressor free?</h3>
             <p>
-                Yes — completely free with no signup required.
-                Just upload your PDF and download the
-                compressed version.
+                Yes — free processing is available for files up to 10MB.
+                For larger files up to 500MB you can use our one-time
+                pay-per-file option.
             </p>
         </div>
 
@@ -145,7 +152,7 @@
         <div class="faq-item">
             <h3>What is the maximum file size?</h3>
             <p>
-                Free processing supports files up to 25MB.
+                Free processing supports files up to 10MB.
                 For larger files up to 500MB you can use
                 our pay-per-file option for just $0.99.
             </p>
@@ -167,6 +174,26 @@
     {
         Upload, Processing, Complete, Error, LargeFile
     }
+
+    private bool IsEmailMode =>
+        Navigation.Uri.Contains("/fix-pdf-too-large-for-email",
+            StringComparison.OrdinalIgnoreCase);
+
+    private string PageHeading =>
+        IsEmailMode ? "Fix PDF Too Large for Email" : "Compress PDF Online";
+
+    private string PageSubtitle =>
+        IsEmailMode
+            ? "Reduce your PDF so it fits Gmail and Outlook limits in seconds. No signup required. Files deleted within 1 hour."
+            : "Reduce your PDF file size for free. No signup required. Files deleted within 1 hour.";
+
+    private string ProcessButtonText =>
+        IsEmailMode ? "Fix My PDF" : "Compress PDF";
+
+    private string UploadHintText =>
+        IsEmailMode
+            ? "Best for Gmail/Outlook attachments · 10MB free · 500MB paid"
+            : "Maximum file size: 10MB free · 500MB paid";
 
     private PageState CurrentState = PageState.Upload;
     private IBrowserFile? SelectedFile;
@@ -193,7 +220,6 @@
         UploadedBytes = null;
         ErrorMessage = null;
 
-        // Validate file type and size
         var validation = Validator.ValidatePdfFile(file);
         if (!validation.IsValid)
         {
@@ -212,7 +238,6 @@
             await stream.CopyToAsync(ms);
             UploadedBytes = ms.ToArray();
 
-            // Validate PDF bytes
             var bytesValidation = Validator
                 .ValidatePdfBytes(UploadedBytes);
             if (!bytesValidation.IsValid)
@@ -228,10 +253,28 @@
             SelectedFile = file;
 
             if (PaymentService.IsFileTooLargeForFree(file.Size))
+            {
                 CurrentState = PageState.LargeFile;
+
+                if (IsEmailMode)
+                {
+                    Toast.ShowWarning(
+                        $"Your PDF is {Validator.FormatSize(file.Size)} and may be too large for email. You can fix it instantly or use free compression.");
+                }
+            }
             else
-                Toast.ShowSuccess(
-                    $"File ready — {Validator.FormatSize(file.Size)}");
+            {
+                if (IsEmailMode)
+                {
+                    Toast.ShowSuccess(
+                        $"Your PDF is {Validator.FormatSize(file.Size)} and fits within the free tier.");
+                }
+                else
+                {
+                    Toast.ShowSuccess(
+                        $"File ready — {Validator.FormatSize(file.Size)}");
+                }
+            }
         }
         catch (Exception ex)
         {
@@ -309,7 +352,6 @@
         StateHasChanged();
     }
 
-
     private async Task DownloadFile()
     {
         if (ProcessedBytes == null) return;
@@ -322,6 +364,13 @@
             "downloadFile",
             fileName,
             Convert.ToBase64String(ProcessedBytes));
+    }
+
+    private Task ResetToFreeMode()
+    {
+        CurrentState = PageState.Upload;
+        ErrorMessage = null;
+        return Task.CompletedTask;
     }
 
     private void Reset()

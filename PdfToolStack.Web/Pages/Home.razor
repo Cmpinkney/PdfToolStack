@@ -24,12 +24,47 @@
             secure your PDFs — completely free, no signup
             required.
         </p>
+
         <div class="hero-search">
             <span class="hero-search-icon">🔍</span>
             <input type="text"
                    placeholder="Search tools — compress, sign, convert..."
                    @bind="HeroSearch"
                    @bind:event="oninput" />
+        </div>
+
+        <div class="popular-fixes-section">
+            <div class="popular-fixes-header">
+                <span class="popular-fixes-label">Popular fixes</span>
+            </div>
+
+            <div class="popular-fixes-grid">
+                <a href="/compress-pdf"
+                   class="tool-card featured-fix">
+                    <span class="featured-fix-badge">Most Used</span>
+                    <span class="tool-card-icon">📧</span>
+                    <h3>Fix PDF Too Large for Email</h3>
+                    <p>Make your PDF email-ready in seconds</p>
+                </a>
+
+                <a href="/pdf-to-word" class="tool-card">
+                    <span class="tool-card-icon">📝</span>
+                    <h3>Convert PDF to Editable Word</h3>
+                    <p>Turn PDFs into fully editable DOCX files</p>
+                </a>
+
+                <a href="/merge-pdf" class="tool-card">
+                    <span class="tool-card-icon">🧾</span>
+                    <h3>Combine PDFs for Submission</h3>
+                    <p>Merge multiple files into one clean document</p>
+                </a>
+
+                <a href="/redact-pdf" class="tool-card">
+                    <span class="tool-card-icon">🔒</span>
+                    <h3>Remove Sensitive Information</h3>
+                    <p>Permanently redact private data</p>
+                </a>
+            </div>
         </div>
     </div>
 
@@ -55,8 +90,8 @@
                     @if (!SearchResults.Any())
                     {
                         <p style="color:var(--text-muted);
-                                          font-size:0.9rem;
-                                          grid-column:1/-1;">
+                                                  font-size:0.9rem;
+                                                  grid-column:1/-1;">
                             No tools found for "@HeroSearch"
                         </p>
                     }
