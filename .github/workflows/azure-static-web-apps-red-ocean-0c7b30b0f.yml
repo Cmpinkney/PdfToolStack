@@ -9,7 +9,6 @@ on:
     types: [opened, synchronize, reopened, closed]
     branches:
       - master
-      - staging
 
 jobs:
   build_and_deploy_job:
@@ -48,6 +47,7 @@ jobs:
           app_location: "publish_output/wwwroot"
           output_location: ""
           skip_app_build: true
+          deployment_environment: ${{ github.ref_name == 'master' && 'production' || 'staging' }}
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
