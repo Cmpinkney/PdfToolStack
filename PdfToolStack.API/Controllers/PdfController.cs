@@ -1,15 +1,15 @@
-﻿using iTextSharp.text;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using PdfToolStack.API.Configuration;
+using PdfToolStack.API.Services;
 using PdfToolStack.Application.DTOs;
 using PdfToolStack.Application.Services;
 using PdfToolStack.Domain.Entities;
 using PdfToolStack.Domain.Enums;
 using PdfToolStack.Infrastructure.Processors;
-using DomainFormField = PdfToolStack.Domain.Entities.PdfFormField;
-using DomainRedactionRegion = PdfToolStack.Domain.Entities.RedactionRegion;
+using PdfToolStack.Infrastructure.Services;
 using System.IO.Compression;
+using DomainRedactionRegion = PdfToolStack.Domain.Entities.RedactionRegion;
 
 namespace PdfToolStack.API.Controllers
 {
@@ -20,75 +20,48 @@ namespace PdfToolStack.API.Controllers
         private readonly IPdfService _pdfService;
         private readonly ProcessingOptions _options;
         private readonly ILogger<PdfController> _logger;
+        private readonly IFileValidationService _fileValidationService;
+        private readonly SubscriptionService? _subscriptionService;
 
         public PdfController(
             IPdfService pdfService,
             IOptions<ProcessingOptions> options,
-            ILogger<PdfController> logger)
+            ILogger<PdfController> logger,
+            IFileValidationService fileValidationService,
+            SubscriptionService subscriptionService = null)
         {
             _pdfService = pdfService;
             _options = options.Value;
             _logger = logger;
+            _fileValidationService = fileValidationService;
+            _subscriptionService = subscriptionService;
         }
 
         // POST api/pdf/process
         [HttpPost("process")]
         [RequestSizeLimit(52428800)] // 50MB
         public async Task<IActionResult> Process(
-        IFormFile file,
-        [FromQuery] string toolType,
-        CancellationToken cancellationToken)
+            IFormFile file,
+            [FromQuery] string toolType,
+            CancellationToken cancellationToken)
         {
-            _logger.LogInformation(
-                "Process endpoint hit — ToolType: {ToolType}", toolType);
+            _logger.LogInformation("Process endpoint hit. ToolType: {ToolType}", toolType);
 
-            // Parse toolType — handles both "1" and "CompressPdf"
-            if (!Enum.TryParse<ToolType>(toolType, ignoreCase: true,
-                out var parsedToolType))
+            if (!Enum.TryParse<ToolType>(toolType, ignoreCase: true, out var parsedToolType))
             {
                 _logger.LogWarning("Invalid tool type: {ToolType}", toolType);
                 return BadRequest(new { error = $"Invalid tool type: {toolType}" });
             }
 
-            _logger.LogInformation(
-                "Parsed ToolType: {ParsedToolType}", parsedToolType);
+            var validationResult = await ValidateRequiredPdfAsync(file, cancellationToken);
+            if (validationResult != null)
+                return validationResult;
 
-            // Validate file exists
-            if (file == null || file.Length == 0)
-            {
-                _logger.LogWarning("No file provided");
-                return BadRequest(new { error = "No file provided." });
-            }
+            _logger.LogInformation("File received: {FileName}, Size: {Size}", file!.FileName, file.Length);
 
-            _logger.LogInformation(
-                "File received: {FileName}, Size: {Size}",
-                file.FileName, file.Length);
-
-            // Validate file size
-            if (file.Length > _options.MaxFileSizeBytes)
-                return BadRequest(new
-                {
-                    error = $"File exceeds maximum size of " +
-                            $"{_options.MaxFileSizeBytes / 1024 / 1024}MB."
-                });
-
-            // Validate file is a PDF
-            var buffer = new byte[4];
-            await file.OpenReadStream().ReadAsync(
-                buffer, 0, 4, cancellationToken);
-
-            _logger.LogInformation(
-                "PDF magic bytes: {B0} {B1} {B2} {B3}",
-                buffer[0], buffer[1], buffer[2], buffer[3]);
-
-            if (!IsPdf(buffer))
-                return BadRequest(new { error = "File must be a valid PDF." });
-
-            // Read file into memory
             using var memoryStream = new MemoryStream();
             await file.CopyToAsync(memoryStream, cancellationToken);
 
-            // Build request
             var request = new ProcessRequest
             {
                 ToolType = parsedToolType,
@@ -97,17 +70,14 @@ namespace PdfToolStack.API.Controllers
                 FileSizeBytes = file.Length
             };
 
-            _logger.LogInformation(
-                "Calling PdfService.ProcessAsync for job {JobId}",
-                request.JobId);
+            _logger.LogInformation("Calling PdfService.ProcessAsync for job {JobId}", request.JobId);
 
             try
             {
-                var response = await _pdfService.ProcessAsync(
-                    request, cancellationToken);
+                var response = await _pdfService.ProcessAsync(request, cancellationToken);
 
                 _logger.LogInformation(
-                    "PdfService returned — IsSuccess: {IsSuccess}, Error: {Error}",
+                    "PdfService returned. IsSuccess: {IsSuccess}, Error: {Error}",
                     response.IsSuccess,
                     response.ErrorMessage ?? "none");
 
@@ -118,10 +88,7 @@ namespace PdfToolStack.API.Controllers
                         response.JobId,
                         response.ErrorMessage);
 
-                    return UnprocessableEntity(new
-                    {
-                        error = response.ErrorMessage
-                    });
+                    return UnprocessableEntity(new { error = response.ErrorMessage });
                 }
 
                 _logger.LogInformation(
@@ -129,12 +96,22 @@ namespace PdfToolStack.API.Controllers
                     response.JobId,
                     response.CompressionRatio);
 
+                    if (response.IsSuccess && _subscriptionService != null)
+                    {
+                        var userId = User.FindFirst("sub")?.Value;
+                        if (!string.IsNullOrEmpty(userId))
+                        {
+                            _ = _subscriptionService.TrackDownloadAsync(
+                                userId, file.FileName, toolType, file.Length);
+                        }
+                    }
+                
+
                 return Ok(response);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex,
-                    "Exception in Process endpoint: {Message}", ex.Message);
+                _logger.LogError(ex, "Exception in Process endpoint: {Message}", ex.Message);
 
                 return StatusCode(500, new
                 {
@@ -144,6 +121,102 @@ namespace PdfToolStack.API.Controllers
             }
         }
 
+        // POST api/pdf/batch
+        [HttpPost("batch")]
+        [RequestSizeLimit(524288000)] // 500MB total
+        public async Task<IActionResult> Batch(
+            List<IFormFile> files,
+            [FromQuery] string toolType,
+            CancellationToken cancellationToken)
+        {
+            _logger.LogInformation(
+                "Batch endpoint hit. ToolType: {ToolType}, FileCount: {Count}",
+                toolType, files?.Count ?? 0);
+
+            if (files == null || files.Count == 0)
+                return BadRequest(new { error = "No files provided." });
+
+            if (files.Count > 20)
+                return BadRequest(new { error = "Maximum 20 files per batch." });
+
+            if (!Enum.TryParse<ToolType>(toolType, ignoreCase: true, out var parsedToolType))
+                return BadRequest(new { error = $"Invalid tool type: {toolType}" });
+
+            var results = new List<(string FileName, byte[] Bytes, string? Error)>();
+
+            foreach (var file in files)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                var validation = await ValidateRequiredPdfAsync(file, cancellationToken);
+                if (validation != null)
+                {
+                    results.Add((file.FileName, Array.Empty<byte>(),
+                        $"Skipped: validation failed"));
+                    continue;
+                }
+
+                using var ms = new MemoryStream();
+                await file.CopyToAsync(ms, cancellationToken);
+
+                var request = new ProcessRequest
+                {
+                    ToolType = parsedToolType,
+                    FileBytes = ms.ToArray(),
+                    FileName = file.FileName,
+                    FileSizeBytes = file.Length
+                };
+
+                try
+                {
+                    var response = await _pdfService.ProcessAsync(
+                        request, cancellationToken);
+
+                    results.Add(response.IsSuccess
+                        ? (file.FileName, response.OutputBytes!, null)
+                        : (file.FileName, Array.Empty<byte>(),
+                            response.ErrorMessage));
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Batch item failed: {FileName}", file.FileName);
+                    results.Add((file.FileName, Array.Empty<byte>(), ex.Message));
+                }
+            }
+
+            // Build ZIP
+            using var zipStream = new MemoryStream();
+            using (var archive = new ZipArchive(
+                zipStream, ZipArchiveMode.Create, leaveOpen: true))
+            {
+                foreach (var (fileName, bytes, error) in results)
+                {
+                    if (bytes.Length == 0) continue;
+
+                    var outName = $"processed_{Path.GetFileNameWithoutExtension(fileName)}.pdf";
+                    var entry = archive.CreateEntry(outName, CompressionLevel.Fastest);
+                    using var entryStream = entry.Open();
+                    await entryStream.WriteAsync(bytes, cancellationToken);
+                }
+
+                // Add a summary log if any files failed
+                var failed = results.Where(r => r.Error != null).ToList();
+                if (failed.Any())
+                {
+                    var logEntry = archive.CreateEntry("batch_errors.txt");
+                    using var logStream = logEntry.Open();
+                    using var writer = new StreamWriter(logStream);
+                    foreach (var (fileName, _, error) in failed)
+                        await writer.WriteLineAsync($"{fileName}: {error}");
+                }
+            }
+
+            zipStream.Position = 0;
+            var toolLabel = parsedToolType.ToString().ToLower();
+            return File(zipStream.ToArray(), "application/zip",
+                $"pdftoolstack_batch_{toolLabel}.zip");
+        }
+
         // POST api/pdf/merge
         [HttpPost("merge")]
         [RequestSizeLimit(209715200)] // 200MB total
@@ -151,48 +224,31 @@ namespace PdfToolStack.API.Controllers
             List<IFormFile> files,
             CancellationToken cancellationToken)
         {
-            _logger.LogInformation(
-                "Merge endpoint hit — {Count} files", files.Count);
+            _logger.LogInformation("Merge endpoint hit. Count: {Count}", files?.Count ?? 0);
 
             if (files == null || files.Count < 2)
-                return BadRequest(new
-                {
-                    error = "Please upload at least 2 PDF files."
-                });
+            {
+                return BadRequest(new { error = "Please upload at least 2 PDF files." });
+            }
 
             if (files.Count > 10)
-                return BadRequest(new
-                {
-                    error = "Maximum 10 files can be merged at once."
-                });
+            {
+                return BadRequest(new { error = "Maximum 10 files can be merged at once." });
+            }
 
-            // Validate and read all files
             var fileBytesList = new List<byte[]>();
 
             foreach (var file in files)
             {
-                if (file.Length > _options.MaxFileSizeBytes)
-                    return BadRequest(new
-                    {
-                        error = $"{file.FileName} exceeds 50MB limit."
-                    });
-
-                var buffer = new byte[4];
-                await file.OpenReadStream()
-                    .ReadAsync(buffer, 0, 4, cancellationToken);
-
-                if (!IsPdf(buffer))
-                    return BadRequest(new
-                    {
-                        error = $"{file.FileName} is not a valid PDF."
-                    });
+                var validationResult = await ValidateRequiredPdfAsync(file, cancellationToken);
+                if (validationResult != null)
+                    return validationResult;
 
                 using var ms = new MemoryStream();
-                await file.CopyToAsync(ms, cancellationToken);
+                await file!.CopyToAsync(ms, cancellationToken);
                 fileBytesList.Add(ms.ToArray());
             }
 
-            // Build request with all files
             var request = new ProcessRequest
             {
                 ToolType = ToolType.MergePdf,
@@ -200,32 +256,20 @@ namespace PdfToolStack.API.Controllers
                 FileName = files[0].FileName,
                 FileSizeBytes = files[0].Length,
                 AdditionalFiles = fileBytesList.Skip(1).ToList(),
-                AdditionalFileNames = files.Skip(1)
-                    .Select(f => f.FileName).ToList()
+                AdditionalFileNames = files.Skip(1).Select(f => f.FileName).ToList()
             };
 
             try
             {
-                // Use MergeStrategy directly with additional files
-                var merger = new PdfToolStack.Infrastructure
-                    .Processors.PdfMerger(request.AdditionalFiles);
-
-                var outputBytes = await merger.ProcessAsync(
-                    request.FileBytes, cancellationToken);
-
-                var result = ProcessingResult.Success(
-                    outputBytes, request.FileSizeBytes);
+                var merger = new PdfMerger(request.AdditionalFiles);
+                var outputBytes = await merger.ProcessAsync(request.FileBytes, cancellationToken);
 
                 return File(outputBytes, "application/pdf", "merged.pdf");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex,
-                    "Merge failed: {Message}", ex.Message);
-                return StatusCode(500, new
-                {
-                    error = ex.Message
-                });
+                _logger.LogError(ex, "Merge failed: {Message}", ex.Message);
+                return StatusCode(500, new { error = ex.Message });
             }
         }
 
@@ -236,21 +280,12 @@ namespace PdfToolStack.API.Controllers
             IFormFile file,
             CancellationToken cancellationToken)
         {
-            if (file == null || file.Length == 0)
-                return BadRequest(new { error = "No file provided." });
-
-            var buffer = new byte[4];
-            await file.OpenReadStream()
-                .ReadAsync(buffer, 0, 4, cancellationToken);
-
-            if (!IsPdf(buffer))
-                return BadRequest(new
-                {
-                    error = "File must be a valid PDF."
-                });
+            var validationResult = await ValidateRequiredPdfAsync(file, cancellationToken);
+            if (validationResult != null)
+                return validationResult;
 
             using var ms = new MemoryStream();
-            await file.CopyToAsync(ms, cancellationToken);
+            await file!.CopyToAsync(ms, cancellationToken);
 
             var filler = new PdfFormFiller();
             var fields = filler.DetectFields(ms.ToArray());
@@ -270,33 +305,21 @@ namespace PdfToolStack.API.Controllers
             [FromForm] string fieldsJson,
             CancellationToken cancellationToken)
         {
-            if (file == null || file.Length == 0)
-                return BadRequest(new { error = "No file provided." });
+            var validationResult = await ValidateRequiredPdfAsync(file, cancellationToken);
+            if (validationResult != null)
+                return validationResult;
 
-            var buffer = new byte[4];
-            await file.OpenReadStream()
-                .ReadAsync(buffer, 0, 4, cancellationToken);
-
-            if (!IsPdf(buffer))
-                return BadRequest(new
-                {
-                    error = "File must be a valid PDF."
-                });
-
-            // Parse field values from JSON
             var fieldValues = System.Text.Json.JsonSerializer
                 .Deserialize<Dictionary<string, string>>(fieldsJson)
                 ?? new Dictionary<string, string>();
 
             using var ms = new MemoryStream();
-            await file.CopyToAsync(ms, cancellationToken);
+            await file!.CopyToAsync(ms, cancellationToken);
 
             var filler = new PdfFormFiller(fieldValues);
-            var outputBytes = await filler.ProcessAsync(
-                ms.ToArray(), cancellationToken);
+            var outputBytes = await filler.ProcessAsync(ms.ToArray(), cancellationToken);
 
-            return File(outputBytes, "application/pdf",
-                "filled_form.pdf");
+            return File(outputBytes, "application/pdf", "filled_form.pdf");
         }
 
         // POST api/pdf/redact
@@ -309,44 +332,31 @@ namespace PdfToolStack.API.Controllers
         {
             _logger.LogInformation("Redact endpoint hit");
 
-            if (file == null || file.Length == 0)
-                return BadRequest(new { error = "No file provided." });
+            var validationResult = await ValidateRequiredPdfAsync(file, cancellationToken);
+            if (validationResult != null)
+                return validationResult;
 
-            var buffer = new byte[4];
-            await file.OpenReadStream()
-                .ReadAsync(buffer, 0, 4, cancellationToken);
-
-            if (!IsPdf(buffer))
-                return BadRequest(new
-                {
-                    error = "File must be a valid PDF."
-                });
-
-            // Parse redaction regions
             var domainRegions = System.Text.Json.JsonSerializer
                 .Deserialize<List<DomainRedactionRegion>>(regionsJson)
                 ?? new List<DomainRedactionRegion>();
 
             using var ms = new MemoryStream();
-            await file.CopyToAsync(ms, cancellationToken);
+            await file!.CopyToAsync(ms, cancellationToken);
 
-            // Convert domain regions to processor regions
             var processorRegions = domainRegions.Select(r =>
-            new PdfToolStack.Infrastructure.Processors.RedactionRegion
-            {
-                X1 = r.X1,
-                Y1 = r.Y1,
-                X2 = r.X2,
-                Y2 = r.Y2,
-                PageNumber = r.PageNumber
-            });
+                new PdfToolStack.Infrastructure.Processors.RedactionRegion
+                {
+                    X1 = r.X1,
+                    Y1 = r.Y1,
+                    X2 = r.X2,
+                    Y2 = r.Y2,
+                    PageNumber = r.PageNumber
+                });
 
             var redactor = new PdfRedactor(processorRegions);
-            var outputBytes = await redactor.ProcessAsync(
-                ms.ToArray(), cancellationToken);
+            var outputBytes = await redactor.ProcessAsync(ms.ToArray(), cancellationToken);
 
-            return File(outputBytes, "application/pdf",
-                "redacted.pdf");
+            return File(outputBytes, "application/pdf", "redacted.pdf");
         }
 
         // POST api/pdf/page-count
@@ -356,11 +366,12 @@ namespace PdfToolStack.API.Controllers
             IFormFile file,
             CancellationToken cancellationToken)
         {
-            if (file == null || file.Length == 0)
-                return BadRequest(new { error = "No file provided." });
+            var validationResult = await ValidateRequiredPdfAsync(file, cancellationToken);
+            if (validationResult != null)
+                return validationResult;
 
             using var ms = new MemoryStream();
-            await file.CopyToAsync(ms, cancellationToken);
+            await file!.CopyToAsync(ms, cancellationToken);
 
             var reader = new iTextSharp.text.pdf.PdfReader(ms.ToArray());
             var pageCount = reader.NumberOfPages;
@@ -375,9 +386,7 @@ namespace PdfToolStack.API.Controllers
             Guid jobId,
             CancellationToken cancellationToken)
         {
-            var status = await _pdfService.GetJobStatusAsync(
-                jobId, cancellationToken);
-
+            var status = await _pdfService.GetJobStatusAsync(jobId, cancellationToken);
             return Ok(status);
         }
 
@@ -392,15 +401,6 @@ namespace PdfToolStack.API.Controllers
             });
         }
 
-        private static bool IsPdf(byte[] bytes)
-        {
-            return bytes.Length >= 4 &&
-                   bytes[0] == 0x25 &&
-                   bytes[1] == 0x50 &&
-                   bytes[2] == 0x44 &&
-                   bytes[3] == 0x46;
-        }
-
         // POST api/pdf/delete-pages
         [HttpPost("delete-pages")]
         [RequestSizeLimit(524288000)]
@@ -409,14 +409,14 @@ namespace PdfToolStack.API.Controllers
             [FromForm] string pageNumbers,
             CancellationToken cancellationToken)
         {
-            if (file == null || file.Length == 0)
-                return BadRequest(new { error = "No file provided." });
+            var validationResult = await ValidateRequiredPdfAsync(file, cancellationToken);
+            if (validationResult != null)
+                return validationResult;
 
             if (!TryParsePageNumbers(pageNumbers, out var pages, out var parseError))
                 return BadRequest(new { error = parseError });
 
-            var request = await BuildRequestAsync(
-                file, ToolType.DeletePages, cancellationToken);
+            var request = await BuildPdfRequestAsync(file!, ToolType.DeletePages, cancellationToken);
             request.PageNumbers = pages;
 
             var response = await _pdfService.ProcessAsync(request, cancellationToken);
@@ -433,14 +433,14 @@ namespace PdfToolStack.API.Controllers
             [FromForm] string pageNumbers,
             CancellationToken cancellationToken)
         {
-            if (file == null || file.Length == 0)
-                return BadRequest(new { error = "No file provided." });
+            var validationResult = await ValidateRequiredPdfAsync(file, cancellationToken);
+            if (validationResult != null)
+                return validationResult;
 
             if (!TryParsePageNumbers(pageNumbers, out var pages, out var parseError))
                 return BadRequest(new { error = parseError });
 
-            var request = await BuildRequestAsync(
-                file, ToolType.ExtractPages, cancellationToken);
+            var request = await BuildPdfRequestAsync(file!, ToolType.ExtractPages, cancellationToken);
             request.PageNumbers = pages;
 
             var response = await _pdfService.ProcessAsync(request, cancellationToken);
@@ -458,18 +458,18 @@ namespace PdfToolStack.API.Controllers
             [FromForm] string? pageNumbers = null,
             CancellationToken cancellationToken = default)
         {
-            if (file == null || file.Length == 0)
-                return BadRequest(new { error = "No file provided." });
+            var validationResult = await ValidateRequiredPdfAsync(file, cancellationToken);
+            if (validationResult != null)
+                return validationResult;
 
             List<int>? pages = null;
-            if (pageNumbers != null)
+            if (!string.IsNullOrWhiteSpace(pageNumbers))
             {
                 if (!TryParsePageNumbers(pageNumbers, out pages, out var parseError))
                     return BadRequest(new { error = parseError });
             }
 
-            var request = await BuildRequestAsync(
-                file, ToolType.RotatePdf, cancellationToken);
+            var request = await BuildPdfRequestAsync(file!, ToolType.RotatePdf, cancellationToken);
             request.PageNumbers = pages;
             request.Rotation = rotation;
 
@@ -486,14 +486,15 @@ namespace PdfToolStack.API.Controllers
             IFormFile file,
             CancellationToken cancellationToken)
         {
-            if (file == null || file.Length == 0)
-                return BadRequest(new { error = "No file provided." });
+            var validationResult = await ValidateRequiredFileAsync(file, cancellationToken);
+            if (validationResult != null)
+                return validationResult;
 
-            var request = await BuildRequestAsync(
-                file, ToolType.WordToPdf, cancellationToken);
+            var request = await BuildRequestAsync(file!, ToolType.WordToPdf, cancellationToken);
 
             var response = await _pdfService.ProcessAsync(request, cancellationToken);
             var outName = Path.GetFileNameWithoutExtension(file.FileName) + ".pdf";
+
             return response.IsSuccess
                 ? File(response.OutputBytes!, "application/pdf", outName)
                 : UnprocessableEntity(new { error = response.ErrorMessage });
@@ -506,14 +507,15 @@ namespace PdfToolStack.API.Controllers
             IFormFile file,
             CancellationToken cancellationToken)
         {
-            if (file == null || file.Length == 0)
-                return BadRequest(new { error = "No file provided." });
+            var validationResult = await ValidateRequiredFileAsync(file, cancellationToken);
+            if (validationResult != null)
+                return validationResult;
 
-            var request = await BuildRequestAsync(
-                file, ToolType.PptToPdf, cancellationToken);
+            var request = await BuildRequestAsync(file!, ToolType.PptToPdf, cancellationToken);
 
             var response = await _pdfService.ProcessAsync(request, cancellationToken);
             var outName = Path.GetFileNameWithoutExtension(file.FileName) + ".pdf";
+
             return response.IsSuccess
                 ? File(response.OutputBytes!, "application/pdf", outName)
                 : UnprocessableEntity(new { error = response.ErrorMessage });
@@ -526,14 +528,15 @@ namespace PdfToolStack.API.Controllers
             IFormFile file,
             CancellationToken cancellationToken)
         {
-            if (file == null || file.Length == 0)
-                return BadRequest(new { error = "No file provided." });
+            var validationResult = await ValidateRequiredFileAsync(file, cancellationToken);
+            if (validationResult != null)
+                return validationResult;
 
-            var request = await BuildRequestAsync(
-                file, ToolType.ExcelToPdf, cancellationToken);
+            var request = await BuildRequestAsync(file!, ToolType.ExcelToPdf, cancellationToken);
 
             var response = await _pdfService.ProcessAsync(request, cancellationToken);
             var outName = Path.GetFileNameWithoutExtension(file.FileName) + ".pdf";
+
             return response.IsSuccess
                 ? File(response.OutputBytes!, "application/pdf", outName)
                 : UnprocessableEntity(new { error = response.ErrorMessage });
@@ -546,11 +549,11 @@ namespace PdfToolStack.API.Controllers
             IFormFile file,
             CancellationToken cancellationToken)
         {
-            if (file == null || file.Length == 0)
-                return BadRequest(new { error = "No file provided." });
+            var validationResult = await ValidateRequiredPdfAsync(file, cancellationToken);
+            if (validationResult != null)
+                return validationResult;
 
-            var request = await BuildRequestAsync(
-                file, ToolType.FlattenPdf, cancellationToken);
+            var request = await BuildPdfRequestAsync(file!, ToolType.FlattenPdf, cancellationToken);
 
             var response = await _pdfService.ProcessAsync(request, cancellationToken);
             return response.IsSuccess
@@ -568,11 +571,11 @@ namespace PdfToolStack.API.Controllers
             [FromForm] float fontSize = 48f,
             CancellationToken cancellationToken = default)
         {
-            if (file == null || file.Length == 0)
-                return BadRequest(new { error = "No file provided." });
+            var validationResult = await ValidateRequiredPdfAsync(file, cancellationToken);
+            if (validationResult != null)
+                return validationResult;
 
-            var request = await BuildRequestAsync(
-                file, ToolType.WatermarkPdf, cancellationToken);
+            var request = await BuildPdfRequestAsync(file!, ToolType.WatermarkPdf, cancellationToken);
             request.WatermarkText = watermarkText;
             request.WatermarkOpacity = opacity;
             request.WatermarkFontSize = fontSize;
@@ -592,11 +595,11 @@ namespace PdfToolStack.API.Controllers
             [FromForm] int startNumber = 1,
             CancellationToken cancellationToken = default)
         {
-            if (file == null || file.Length == 0)
-                return BadRequest(new { error = "No file provided." });
+            var validationResult = await ValidateRequiredPdfAsync(file, cancellationToken);
+            if (validationResult != null)
+                return validationResult;
 
-            var request = await BuildRequestAsync(
-                file, ToolType.NumberPages, cancellationToken);
+            var request = await BuildPdfRequestAsync(file!, ToolType.NumberPages, cancellationToken);
             request.PageNumberPosition = position;
             request.PageNumberStart = startNumber;
 
@@ -614,11 +617,11 @@ namespace PdfToolStack.API.Controllers
             [FromForm] string? password = null,
             CancellationToken cancellationToken = default)
         {
-            if (file == null || file.Length == 0)
-                return BadRequest(new { error = "No file provided." });
+            var validationResult = await ValidateRequiredPdfAsync(file, cancellationToken);
+            if (validationResult != null)
+                return validationResult;
 
-            var request = await BuildRequestAsync(
-                file, ToolType.UnlockPdf, cancellationToken);
+            var request = await BuildPdfRequestAsync(file!, ToolType.UnlockPdf, cancellationToken);
             request.Password = password;
 
             var response = await _pdfService.ProcessAsync(request, cancellationToken);
@@ -638,11 +641,11 @@ namespace PdfToolStack.API.Controllers
             [FromForm] bool allowCopying = false,
             CancellationToken cancellationToken = default)
         {
-            if (file == null || file.Length == 0)
-                return BadRequest(new { error = "No file provided." });
+            var validationResult = await ValidateRequiredPdfAsync(file, cancellationToken);
+            if (validationResult != null)
+                return validationResult;
 
-            var request = await BuildRequestAsync(
-                file, ToolType.ProtectPdf, cancellationToken);
+            var request = await BuildPdfRequestAsync(file!, ToolType.ProtectPdf, cancellationToken);
             request.UserPassword = userPassword;
             request.OwnerPassword = ownerPassword;
             request.AllowPrinting = allowPrinting;
@@ -663,59 +666,44 @@ namespace PdfToolStack.API.Controllers
             [FromForm] int? toPage = null,
             CancellationToken cancellationToken = default)
         {
-            if (file == null || file.Length == 0)
-                return BadRequest(new { error = "No file provided." });
+            var validationResult = await ValidateRequiredPdfAsync(file, cancellationToken);
+            if (validationResult != null)
+                return validationResult;
 
             try
             {
                 using var ms = new MemoryStream();
-                await file.CopyToAsync(ms, cancellationToken);
+                await file!.CopyToAsync(ms, cancellationToken);
                 var bytes = ms.ToArray();
                 var processor = new SplitPdfProcessor();
 
-                // Range split — return a single PDF
                 if (fromPage.HasValue && toPage.HasValue)
                 {
                     if (fromPage < 1 || toPage < fromPage)
-                        return BadRequest(new
-                        {
-                            error = "Invalid page range."
-                        });
+                        return BadRequest(new { error = "Invalid page range." });
 
                     var result = await processor.SplitRangeAsync(
-                        bytes, fromPage.Value, toPage.Value,
-                        cancellationToken);
+                        bytes, fromPage.Value, toPage.Value, cancellationToken);
 
-                    return File(result, "application/pdf",
-                        $"pages_{fromPage}_{toPage}.pdf");
+                    return File(result, "application/pdf", $"pages_{fromPage}_{toPage}.pdf");
                 }
 
-                // Split all pages — return a zip
-                var pages = await processor.SplitAsync(
-                    bytes, cancellationToken);
+                var pages = await processor.SplitAsync(bytes, cancellationToken);
 
                 using var zipStream = new MemoryStream();
-                using (var archive = new System.IO.Compression
-                    .ZipArchive(zipStream,
-                        System.IO.Compression.ZipArchiveMode.Create,
-                        leaveOpen: true))
+                using (var archive = new ZipArchive(zipStream, ZipArchiveMode.Create, leaveOpen: true))
                 {
                     for (int i = 0; i < pages.Count; i++)
                     {
-                        var entry = archive.CreateEntry(
-                            $"page_{i + 1}.pdf",
-                            System.IO.Compression.CompressionLevel.Fastest);
+                        var entry = archive.CreateEntry($"page_{i + 1}.pdf", CompressionLevel.Fastest);
                         using var entryStream = entry.Open();
-                        await entryStream.WriteAsync(
-                            pages[i], cancellationToken);
+                        await entryStream.WriteAsync(pages[i], cancellationToken);
                     }
                 }
 
                 zipStream.Position = 0;
                 var baseName = Path.GetFileNameWithoutExtension(file.FileName);
-                return File(zipStream.ToArray(),
-                    "application/zip",
-                    $"{baseName}_pages.zip");
+                return File(zipStream.ToArray(), "application/zip", $"{baseName}_pages.zip");
             }
             catch (Exception ex)
             {
@@ -735,10 +723,15 @@ namespace PdfToolStack.API.Controllers
                 return BadRequest(new { error = "No files provided." });
 
             var imageBytes = new List<byte[]>();
+
             foreach (var file in files)
             {
+                var validationResult = await ValidateRequiredFileAsync(file, cancellationToken);
+                if (validationResult != null)
+                    return validationResult;
+
                 using var ms = new MemoryStream();
-                await file.CopyToAsync(ms, cancellationToken);
+                await file!.CopyToAsync(ms, cancellationToken);
                 imageBytes.Add(ms.ToArray());
             }
 
@@ -758,35 +751,29 @@ namespace PdfToolStack.API.Controllers
         }
 
         // POST api/pdf/organize
-        // TODO: extend ProcessRequest with OperationsJson to route through service
         [HttpPost("organize")]
         [RequestSizeLimit(524288000)]
         public async Task<IActionResult> OrganizePdf(
             IFormFile file,
-            [FromForm] string operationsJson)
+            [FromForm] string operationsJson,
+            CancellationToken cancellationToken)
         {
-            if (file == null || file.Length == 0)
-                return BadRequest(new { error = "No file provided." });
-            try
-            {
-                using var ms = new MemoryStream();
-                await file.CopyToAsync(ms);
-                var operations = System.Text.Json.JsonSerializer
-                    .Deserialize<List<PageOperation>>(operationsJson)
-                    ?? new List<PageOperation>();
-                var processor = new OrganizePdfProcessor();
-                var result = await processor.ProcessAsync(ms.ToArray(), operations);
-                return File(result, "application/pdf", "organized.pdf");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Organize PDF error");
-                return StatusCode(500, new { error = ex.Message });
-            }
+            var validationResult = await ValidateRequiredPdfAsync(file, cancellationToken);
+            if (validationResult != null)
+                return validationResult;
+
+            var request = await BuildPdfRequestAsync(file!, ToolType.OrganizePdf, cancellationToken);
+            request.PageOperations = System.Text.Json.JsonSerializer
+                .Deserialize<List<PageOperationDto>>(operationsJson)
+                ?? new List<PageOperationDto>();
+
+            var response = await _pdfService.ProcessAsync(request, cancellationToken);
+            return response.IsSuccess
+                ? File(response.OutputBytes!, "application/pdf", "organized.pdf")
+                : UnprocessableEntity(new { error = response.ErrorMessage });
         }
 
         // POST api/pdf/sign
-        // TODO: extend ProcessRequest with SignatureBytes + position to route through service
         [HttpPost("sign")]
         [RequestSizeLimit(524288000)]
         public async Task<IActionResult> SignPdf(
@@ -796,115 +783,160 @@ namespace PdfToolStack.API.Controllers
             [FromForm] float y,
             [FromForm] float width,
             [FromForm] float height,
-            [FromForm] int pageNumber = 1)
+            [FromForm] int pageNumber = 1,
+            CancellationToken cancellationToken = default)
         {
-            if (file == null || signature == null)
-                return BadRequest(new { error = "File and signature required." });
-            try
-            {
-                using var fileMs = new MemoryStream();
-                await file.CopyToAsync(fileMs);
-                using var sigMs = new MemoryStream();
-                await signature.CopyToAsync(sigMs);
-                var processor = new SignPdfProcessor();
-                var result = await processor.ProcessAsync(
-                    fileMs.ToArray(), sigMs.ToArray(),
-                    x, y, width, height, pageNumber);
-                return File(result, "application/pdf", "signed.pdf");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Sign PDF error");
-                return StatusCode(500, new { error = ex.Message });
-            }
+            var pdfValidation = await ValidateRequiredPdfAsync(file, cancellationToken);
+            if (pdfValidation != null)
+                return pdfValidation;
+
+            var sigValidation = await ValidateRequiredFileAsync(signature, cancellationToken);
+            if (sigValidation != null)
+                return sigValidation;
+
+            var request = await BuildPdfRequestAsync(file!, ToolType.SignPdf, cancellationToken);
+
+            using var sigMs = new MemoryStream();
+            await signature!.CopyToAsync(sigMs, cancellationToken);
+            request.SignatureBytes = sigMs.ToArray();
+            request.SignatureX = x;
+            request.SignatureY = y;
+            request.SignatureWidth = width;
+            request.SignatureHeight = height;
+            request.SignaturePageNumber = pageNumber;
+
+            var response = await _pdfService.ProcessAsync(request, cancellationToken);
+            return response.IsSuccess
+                ? File(response.OutputBytes!, "application/pdf", "signed.pdf")
+                : UnprocessableEntity(new { error = response.ErrorMessage });
         }
 
         // POST api/pdf/edit
-        // TODO: extend ProcessRequest with AnnotationsJson to route through service
         [HttpPost("edit")]
         [RequestSizeLimit(524288000)]
         public async Task<IActionResult> EditPdf(
             IFormFile file,
-            [FromForm] string annotationsJson)
+            [FromForm] string annotationsJson,
+            CancellationToken cancellationToken)
         {
-            if (file == null || file.Length == 0)
-                return BadRequest(new { error = "No file provided." });
-            try
-            {
-                using var ms = new MemoryStream();
-                await file.CopyToAsync(ms);
-                var annotations = System.Text.Json.JsonSerializer
-                    .Deserialize<List<PdfAnnotationDto>>(annotationsJson)
-                    ?? new List<PdfAnnotationDto>();
-                var iTextAnnotations = annotations.Select(a => new PdfAnnotation
-                {
-                    Type = a.Type,
-                    PageNumber = a.PageNumber,
-                    X = a.X,
-                    Y = a.Y,
-                    X2 = a.X2,
-                    Y2 = a.Y2,
-                    Width = a.Width,
-                    Height = a.Height,
-                    Text = a.Text,
-                    FontSize = a.FontSize,
-                    LineWidth = a.LineWidth,
-                    Color = ParseColor(a.Color)
-                }).ToList();
-                var processor = new EditPdfProcessor();
-                var result = await processor.ProcessAsync(ms.ToArray(), iTextAnnotations);
-                return File(result, "application/pdf", "edited.pdf");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Edit PDF error");
-                return StatusCode(500, new { error = ex.Message });
-            }
+            var validationResult = await ValidateRequiredPdfAsync(file, cancellationToken);
+            if (validationResult != null)
+                return validationResult;
+
+            var request = await BuildPdfRequestAsync(file!, ToolType.EditPdf, cancellationToken);
+            request.Annotations = System.Text.Json.JsonSerializer
+                .Deserialize<List<PdfAnnotationDto>>(annotationsJson)
+                ?? new List<PdfAnnotationDto>();
+
+            var response = await _pdfService.ProcessAsync(request, cancellationToken);
+            return response.IsSuccess
+                ? File(response.OutputBytes!, "application/pdf", "edited.pdf")
+                : UnprocessableEntity(new { error = response.ErrorMessage });
         }
 
         // POST api/pdf/annotate
-        // TODO: extend ProcessRequest with HighlightsJson to route through service
         [HttpPost("annotate")]
         [RequestSizeLimit(524288000)]
         public async Task<IActionResult> AnnotatePdf(
             IFormFile file,
-            [FromForm] string highlightsJson)
+            [FromForm] string highlightsJson,
+            CancellationToken cancellationToken)
         {
-            if (file == null || file.Length == 0)
-                return BadRequest(new { error = "No file provided." });
+            var validationResult = await ValidateRequiredPdfAsync(file, cancellationToken);
+            if (validationResult != null)
+                return validationResult;
+
+            var request = await BuildPdfRequestAsync(file!, ToolType.AnnotatePdf, cancellationToken);
+            request.Highlights = System.Text.Json.JsonSerializer
+                .Deserialize<List<PdfHighlightDto>>(highlightsJson)
+                ?? new List<PdfHighlightDto>();
+
+            var response = await _pdfService.ProcessAsync(request, cancellationToken);
+            return response.IsSuccess
+                ? File(response.OutputBytes!, "application/pdf", "annotated.pdf")
+                : UnprocessableEntity(new { error = response.ErrorMessage });
+        }
+
+        // POST api/pdf/compare
+        [HttpPost("compare")]
+        [RequestSizeLimit(104857600)] // 100MB total (two files)
+        public async Task<IActionResult> ComparePdf(
+            IFormFile original,
+            IFormFile revised,
+            CancellationToken cancellationToken)
+        {
+            _logger.LogInformation("Compare endpoint hit");
+
+            var v1 = await ValidateRequiredPdfAsync(original, cancellationToken);
+            if (v1 != null) return v1;
+
+            var v2 = await ValidateRequiredPdfAsync(revised, cancellationToken);
+            if (v2 != null) return v2;
+
+            using var ms1 = new MemoryStream();
+            await original!.CopyToAsync(ms1, cancellationToken);
+
+            using var ms2 = new MemoryStream();
+            await revised!.CopyToAsync(ms2, cancellationToken);
+
             try
             {
-                using var ms = new MemoryStream();
-                await file.CopyToAsync(ms);
-                var highlights = System.Text.Json.JsonSerializer
-                    .Deserialize<List<PdfHighlightDto>>(highlightsJson)
-                    ?? new List<PdfHighlightDto>();
-                var iTextHighlights = highlights.Select(h => new PdfHighlight
-                {
-                    Type = h.Type,
-                    PageNumber = h.PageNumber,
-                    X = h.X,
-                    Y = h.Y,
-                    Width = h.Width,
-                    Height = h.Height,
-                    LineWidth = h.LineWidth,
-                    StrokeColor = ParseColor(h.Color),
-                    Points = h.Points?.Select(p =>
-                        new Infrastructure.Processors.PointF { X = p.X, Y = p.Y })
-                        .ToList() ?? new()
-                }).ToList();
-                var processor = new AnnotatePdfProcessor();
-                var result = await processor.ProcessAsync(ms.ToArray(), iTextHighlights);
-                return File(result, "application/pdf", "annotated.pdf");
+                var processor = new ComparePdfProcessor();
+                var result = await processor.CompareAsync(
+                    ms1.ToArray(), ms2.ToArray(), cancellationToken);
+
+                Response.Headers["X-Compare-Added"] =
+                    result.TotalAddedWords.ToString();
+                Response.Headers["X-Compare-Removed"] =
+                    result.TotalRemovedWords.ToString();
+                Response.Headers["X-Compare-Pages"] =
+                    result.TotalPagesCompared.ToString();
+
+                return File(result.ReportBytes,
+                    "application/pdf", "comparison_report.pdf");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Annotate PDF error");
+                _logger.LogError(ex, "Compare PDF error");
                 return StatusCode(500, new { error = ex.Message });
             }
         }
 
-        // ── Helpers ───────────────────────────────────────────────────────────
+        // Helpers
+
+        private async Task<IActionResult?> ValidateRequiredPdfAsync(
+            IFormFile? file,
+            CancellationToken cancellationToken)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest(new { error = "No file provided." });
+
+            var validation = await _fileValidationService.ValidatePdfAsync(file, cancellationToken);
+            if (!validation.IsValid)
+            {
+                _logger.LogWarning(
+                    "PDF validation failed for {FileName}: {Error}",
+                    file.FileName,
+                    validation.Error);
+
+                return BadRequest(new { error = validation.Error });
+            }
+
+            return null;
+        }
+
+        private async Task<IActionResult?> ValidateRequiredFileAsync(
+            IFormFile? file,
+            CancellationToken cancellationToken)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest(new { error = "No file provided." });
+
+            if (file.Length > _options.MaxFileSizeBytes)
+                return BadRequest(new { error = $"File exceeds maximum size of {_options.MaxFileSizeBytes / 1024 / 1024}MB." });
+
+            return null;
+        }
 
         private static async Task<ProcessRequest> BuildRequestAsync(
             IFormFile file,
@@ -913,6 +945,7 @@ namespace PdfToolStack.API.Controllers
         {
             using var ms = new MemoryStream();
             await file.CopyToAsync(ms, cancellationToken);
+
             return new ProcessRequest
             {
                 ToolType = toolType,
@@ -922,6 +955,14 @@ namespace PdfToolStack.API.Controllers
             };
         }
 
+        private static async Task<ProcessRequest> BuildPdfRequestAsync(
+            IFormFile file,
+            ToolType toolType,
+            CancellationToken cancellationToken)
+        {
+            return await BuildRequestAsync(file, toolType, cancellationToken);
+        }
+
         private static bool TryParsePageNumbers(
             string input,
             out List<int> pages,
@@ -929,33 +970,25 @@ namespace PdfToolStack.API.Controllers
         {
             pages = new List<int>();
             error = string.Empty;
-            foreach (var part in input.Split(',',
-                StringSplitOptions.RemoveEmptyEntries))
+
+            foreach (var part in input.Split(',', StringSplitOptions.RemoveEmptyEntries))
             {
                 if (!int.TryParse(part.Trim(), out var page) || page < 1)
                 {
                     error = $"Invalid page number: '{part.Trim()}'";
                     return false;
                 }
+
                 pages.Add(page);
             }
+
             if (!pages.Any())
             {
                 error = "No page numbers provided.";
                 return false;
             }
-            return true;
-        }
 
-        private static BaseColor ParseColor(string? hex)
-        {
-            if (string.IsNullOrEmpty(hex)) return new BaseColor(0, 0, 0);
-            hex = hex.TrimStart('#');
-            if (hex.Length < 6) return new BaseColor(0, 0, 0);
-            var r = Convert.ToInt32(hex[..2], 16);
-            var g = Convert.ToInt32(hex[2..4], 16);
-            var b = Convert.ToInt32(hex[4..6], 16);
-            return new BaseColor(r, g, b);
+            return true;
         }
     }
 }

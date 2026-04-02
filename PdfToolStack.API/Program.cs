@@ -34,40 +34,57 @@ try
 
     // ── Configuration Options ─────────────────────────────────────────────
     builder.Services.Configure<AzureStorageOptions>(
-        builder.Configuration.GetSection(
-            AzureStorageOptions.SectionName));
+        builder.Configuration.GetSection(AzureStorageOptions.SectionName));
 
     builder.Services.Configure<ProcessingOptions>(
-        builder.Configuration.GetSection(
-            ProcessingOptions.SectionName));
+        builder.Configuration.GetSection(ProcessingOptions.SectionName));
 
-    // ── Stripe ────────────────────────────────────────────────────────────────
     builder.Services.Configure<StripeOptions>(
         builder.Configuration.GetSection(StripeOptions.SectionName));
 
     builder.Services.Configure<FileLimit>(
         builder.Configuration.GetSection(FileLimit.SectionName));
 
+    // ── Config Values ─────────────────────────────────────────────────────
+    var defaultConnection = builder.Configuration.GetConnectionString("DefaultConnection");
+
+    var azureStorageConnectionString = builder.Configuration
+        .GetSection(AzureStorageOptions.SectionName)["ConnectionString"];
+
+    var hasDatabase = !string.IsNullOrWhiteSpace(defaultConnection);
+    var hasBlobStorage = !string.IsNullOrWhiteSpace(azureStorageConnectionString);
+
     // ── Database ──────────────────────────────────────────────────────────
-    builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(
-        builder.Configuration
-            .GetConnectionString("DefaultConnection"),
-        b => b.MigrationsAssembly("PdfToolStack.Infrastructure")));
+    if (hasDatabase)
+    {
+        builder.Services.AddDbContext<AppDbContext>(options =>
+            options.UseSqlServer(
+                defaultConnection,
+                b => b.MigrationsAssembly("PdfToolStack.Infrastructure")));
+    }
 
     // ── Azure Blob Storage ────────────────────────────────────────────────
-    builder.Services.AddSingleton(x =>
-        new BlobServiceClient(
-            builder.Configuration
-                .GetSection(AzureStorageOptions.SectionName)
-                ["ConnectionString"]));
+    if (hasBlobStorage)
+    {
+        builder.Services.AddSingleton(_ =>
+            new BlobServiceClient(azureStorageConnectionString));
+    }
 
     // ── Repositories ──────────────────────────────────────────────────────
-    builder.Services.AddScoped<IJobRepository, JobRepository>();
+    if (hasDatabase)
+    {
+        builder.Services.AddScoped<IJobRepository, JobRepository>();
+    }
+    else
+    {
+        builder.Services.AddScoped<IJobRepository, InMemoryJobRepository>();
+    }
 
     // ── Blob Storage Service ──────────────────────────────────────────────
-    builder.Services.AddScoped<IBlobStorageService,
-        AzureBlobStorageService>();
+    if (hasBlobStorage)
+    {
+        builder.Services.AddScoped<IBlobStorageService, AzureBlobStorageService>();
+    }
 
     // ── PDF Processors ────────────────────────────────────────────────────
     builder.Services.AddScoped<PdfCompressor>();
@@ -91,74 +108,131 @@ try
     builder.Services.AddScoped<JpgToPdfProcessor>();
     builder.Services.AddScoped<PptToPdfProcessor>();
     builder.Services.AddScoped<ExcelToPdfProcessor>();
+    builder.Services.AddScoped<PdfToJpgProcessor>();
+    builder.Services.AddScoped<PdfToExcelProcessor>();
     builder.Services.AddScoped<IDeletePagesProcessor, DeletePagesProcessor>();
     builder.Services.AddScoped<IExtractPagesProcessor, ExtractPagesProcessor>();
+    builder.Services.AddScoped<IFileValidationService, FileValidationService>();
 
     // ── Strategies ────────────────────────────────────────────────────────
     builder.Services.AddScoped<IProcessingStrategy>(sp =>
-    new CompressStrategy(
-        sp.GetRequiredService<PdfCompressor>()));
+        new CompressStrategy(
+            sp.GetRequiredService<PdfCompressor>()));
 
     builder.Services.AddScoped<IProcessingStrategy>(sp =>
-    new RedactStrategy(
-        sp.GetRequiredService<PdfRedactor>()));
+        new RedactStrategy(
+            sp.GetRequiredService<PdfRedactor>()));
 
     builder.Services.AddScoped<IProcessingStrategy>(sp =>
-    new MergeStrategy(
-        sp.GetRequiredService<PdfMerger>()));
+        new MergeStrategy(
+            sp.GetRequiredService<PdfMerger>()));
 
     builder.Services.AddScoped<IProcessingStrategy>(sp =>
-    new PdfToWordStrategy(
-        sp.GetRequiredService<PdfToWordConverter>()));
+        new PdfToWordStrategy(
+            sp.GetRequiredService<PdfToWordConverter>()));
 
     builder.Services.AddScoped<IProcessingStrategy>(sp =>
-    new FillFormStrategy(
-        sp.GetRequiredService<PdfFormFiller>()));
+        new FillFormStrategy(
+            sp.GetRequiredService<PdfFormFiller>()));
 
     builder.Services.AddScoped<IProcessingStrategy>(sp =>
-    new FlattenStrategy(sp.GetRequiredService<FlattenPdfProcessor>()));
+        new FlattenStrategy(
+            sp.GetRequiredService<FlattenPdfProcessor>()));
 
     builder.Services.AddScoped<IProcessingStrategy>(sp =>
-        new RotateStrategy(sp.GetRequiredService<RotatePdfProcessor>()));
+        new RotateStrategy(
+            sp.GetRequiredService<RotatePdfProcessor>()));
 
     builder.Services.AddScoped<IProcessingStrategy>(sp =>
-        new WatermarkStrategy(sp.GetRequiredService<WatermarkPdfProcessor>()));
+        new WatermarkStrategy(
+            sp.GetRequiredService<WatermarkPdfProcessor>()));
 
     builder.Services.AddScoped<IProcessingStrategy>(sp =>
-        new SplitStrategy(sp.GetRequiredService<SplitPdfProcessor>()));
+        new SplitStrategy(
+            sp.GetRequiredService<SplitPdfProcessor>()));
 
     builder.Services.AddScoped<IProcessingStrategy>(sp =>
-        new NumberPagesStrategy(sp.GetRequiredService<NumberPagesPdfProcessor>()));
+        new NumberPagesStrategy(
+            sp.GetRequiredService<NumberPagesPdfProcessor>()));
 
     builder.Services.AddScoped<IProcessingStrategy>(sp =>
-        new UnlockStrategy(sp.GetRequiredService<UnlockPdfProcessor>()));
+        new UnlockStrategy(
+            sp.GetRequiredService<UnlockPdfProcessor>()));
 
     builder.Services.AddScoped<IProcessingStrategy>(sp =>
-        new ProtectStrategy(sp.GetRequiredService<ProtectPdfProcessor>()));
+        new ProtectStrategy(
+            sp.GetRequiredService<ProtectPdfProcessor>()));
 
     builder.Services.AddScoped<IProcessingStrategy>(sp =>
-        new WordToPdfStrategy(sp.GetRequiredService<WordToPdfProcessor>()));
+        new WordToPdfStrategy(
+            sp.GetRequiredService<WordToPdfProcessor>()));
 
     builder.Services.AddScoped<IProcessingStrategy>(sp =>
-        new PptToPdfStrategy(sp.GetRequiredService<PptToPdfProcessor>()));
+        new PptToPdfStrategy(
+            sp.GetRequiredService<PptToPdfProcessor>()));
 
     builder.Services.AddScoped<IProcessingStrategy>(sp =>
-        new ExcelToPdfStrategy(sp.GetRequiredService<ExcelToPdfProcessor>()));
+        new ExcelToPdfStrategy(
+            sp.GetRequiredService<ExcelToPdfProcessor>()));
 
     builder.Services.AddScoped<IProcessingStrategy>(sp =>
-    new ExtractPagesStrategy(
-        sp.GetRequiredService<IExtractPagesProcessor>()));
+        new ExtractPagesStrategy(
+            sp.GetRequiredService<IExtractPagesProcessor>()));
 
     builder.Services.AddScoped<IProcessingStrategy>(sp =>
-    new DeletePagesStrategy(
-        sp.GetRequiredService<IDeletePagesProcessor>()));
+        new DeletePagesStrategy(
+            sp.GetRequiredService<IDeletePagesProcessor>()));
 
+    builder.Services.AddScoped<IProcessingStrategy>(sp =>
+    new PdfToolStack.Infrastructure.Strategies.OrganizeStrategy(
+        sp.GetRequiredService<OrganizePdfProcessor>()));
+
+    builder.Services.AddScoped<IProcessingStrategy>(sp =>
+        new PdfToolStack.Infrastructure.Strategies.SignStrategy(
+            sp.GetRequiredService<SignPdfProcessor>()));
+
+    builder.Services.AddScoped<IProcessingStrategy>(sp =>
+        new PdfToolStack.Infrastructure.Strategies.EditStrategy(
+            sp.GetRequiredService<EditPdfProcessor>()));
+
+    builder.Services.AddScoped<IProcessingStrategy>(sp =>
+        new PdfToolStack.Infrastructure.Strategies.AnnotateStrategy(
+            sp.GetRequiredService<AnnotatePdfProcessor>()));
+
+    builder.Services.AddScoped<IProcessingStrategy>(sp =>
+    new PdfToolStack.Infrastructure.Strategies.JpgToPdfStrategy(
+        sp.GetRequiredService<JpgToPdfProcessor>()));
+
+    builder.Services.AddScoped<IProcessingStrategy>(sp =>
+    new PdfToolStack.Infrastructure.Strategies.PdfToJpgStrategy(
+        sp.GetRequiredService<PdfToJpgProcessor>()));
+
+    builder.Services.AddScoped<IProcessingStrategy>(sp =>
+        new PdfToolStack.Infrastructure.Strategies.PdfToExcelStrategy(
+            sp.GetRequiredService<PdfToExcelProcessor>()));
+
+    // ── AI Service ────────────────────────────────────────────────────────────
+    builder.Services.AddHttpClient();
+    builder.Services.AddScoped<AiService>(sp =>
+    {
+        var config = sp.GetRequiredService<IConfiguration>();
+        var http = sp.GetRequiredService<IHttpClientFactory>()
+            .CreateClient();
+        var logger = sp.GetRequiredService<ILogger<AiService>>();
+        return new AiService(
+            http,
+            config["Anthropic:ApiKey"] ?? string.Empty,
+            config["Anthropic:Model"] ?? "claude-opus-4-6",
+            int.TryParse(config["Anthropic:MaxTokens"],
+                out var mt) ? mt : 2000,
+            logger);
+    });
 
     // ── Factory ───────────────────────────────────────────────────────────
     builder.Services.AddScoped<PdfProcessorFactory>(sp =>
-    new PdfProcessorFactory(
-        sp.GetServices<IProcessingStrategy>(),
-        sp.GetRequiredService<ILogger<PdfProcessorFactory>>()));
+        new PdfProcessorFactory(
+            sp.GetServices<IProcessingStrategy>(),
+            sp.GetRequiredService<ILogger<PdfProcessorFactory>>()));
 
     // ── Application Services ──────────────────────────────────────────────
     builder.Services.AddScoped<IPdfService, PdfService>();
@@ -168,13 +242,20 @@ try
     {
         options.AddPolicy("BlazorPolicy", policy =>
         {
-            policy.WithOrigins(
-                    "https://pdftoolstack.com",
-                    "https://www.pdftoolstack.com",
-                    "https://localhost:7025",
-                    "http://localhost:7025")
-                .AllowAnyMethod()
-                .AllowAnyHeader();
+            if (builder.Environment.IsDevelopment())
+            {
+                policy.AllowAnyOrigin()
+                      .AllowAnyMethod()
+                      .AllowAnyHeader();
+            }
+            else
+            {
+                policy.WithOrigins(
+                        "https://pdftoolstack.com",
+                        "https://www.pdftoolstack.com")
+                      .AllowAnyMethod()
+                      .AllowAnyHeader();
+            }
         });
     });
 
@@ -184,12 +265,14 @@ try
     builder.Services.AddSwaggerGen();
 
     // ── Background Services ───────────────────────────────────────────────
-    builder.Services.AddHostedService<JobCleanupService>();
+    if (hasDatabase && hasBlobStorage)
+    {
+        builder.Services.AddHostedService<JobCleanupService>();
+    }
 
     var app = builder.Build();
 
     // ── Middleware Pipeline ───────────────────────────────────────────────
-    // Order matters — error handling must be first
     app.UseMiddleware<ErrorHandlingMiddleware>();
     app.UseMiddleware<RateLimitingMiddleware>();
 
@@ -202,17 +285,11 @@ try
     // ── Security Headers ──────────────────────────────────────────────────
     app.Use(async (context, next) =>
     {
-        context.Response.Headers.Append(
-            "X-Content-Type-Options", "nosniff");
-        context.Response.Headers.Append(
-            "X-Frame-Options", "DENY");
-        context.Response.Headers.Append(
-            "Referrer-Policy", "strict-origin-when-cross-origin");
-        context.Response.Headers.Append(
-            "X-XSS-Protection", "1; mode=block");
-        context.Response.Headers.Append(
-            "Permissions-Policy",
-            "camera=(), microphone=(), geolocation=()");
+        context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+        context.Response.Headers.Append("X-Frame-Options", "DENY");
+        context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
+        context.Response.Headers.Append("X-XSS-Protection", "1; mode=block");
+        context.Response.Headers.Append("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
         await next();
     });
 
@@ -222,10 +299,11 @@ try
     app.MapControllers();
 
     // ── Auto-migrate database on startup ──────────────────────────────────
-    using (var scope = app.Services.CreateScope())
+    if (hasDatabase)
     {
-        var db = scope.ServiceProvider
-            .GetRequiredService<AppDbContext>();
+        using var scope = app.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
         try
         {
             await db.Database.MigrateAsync();

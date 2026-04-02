@@ -1,6 +1,10 @@
 ﻿@page "/pdf-to-excel"
+@inject ApiService ApiService
+@inject IJSRuntime JS
+@inject FileValidationService Validator
+@inject ToastService Toast
 
-<PageTitle>PDF to Excel Converter Free Online</PageTitle>
+<PageTitle>PDF to Excel Converter Free Online — Extract Tables from PDF</PageTitle>
 
 <HeadContent>
     <meta name="description"
@@ -15,60 +19,218 @@
 </HeadContent>
 
 <div class="tool-page">
+    <AdSlot Size="banner" />
     <div class="tool-container">
         <h1>PDF to Excel Converter</h1>
         <p class="tool-subtitle">
-            Extract tables from your PDF and convert to
-            Excel spreadsheet format.
+            Extract tables and data from your PDF and convert
+            to Excel spreadsheet format. No signup required.
+            Files deleted within 1 hour.
         </p>
-        <div class="coming-soon-banner">
-            <span class="coming-soon-icon">📊</span>
-            <div>
-                <h3>PDF to Excel Coming Soon</h3>
-                <p>
-                    We are building an intelligent table
-                    extractor that identifies and converts
-                    PDF tables to Excel format accurately.
-                </p>
+
+        @if (CurrentState == PageState.Upload)
+        {
+            <FileUpload OnFileSelected="HandleFileSelected"
+                        OnFileRemoved="HandleFileRemoved"
+                        HintText="Upload a PDF — tables and text will be extracted to Excel" />
+
+            @if (SelectedFile != null)
+            {
+                <button class="process-button" @onclick="ProcessFile">
+                    Convert to Excel
+                </button>
+            }
+        }
+
+        @if (CurrentState == PageState.Processing)
+        {
+            <div class="processing-container" role="status">
+                <div class="spinner"></div>
+                <p>Extracting data and building spreadsheet...</p>
             </div>
+        }
+
+        @if (CurrentState == PageState.Complete && OutputBytes != null)
+        {
+            <div class="result-container">
+                <span class="result-icon" aria-hidden="true">✅</span>
+                <h2>Conversion Complete!</h2>
+                <p style="color:var(--text-secondary); font-size:0.9rem; margin-bottom:1.25rem;">
+                    Your PDF data has been extracted to an Excel spreadsheet.
+                    Each page becomes a separate sheet.
+                </p>
+                <button class="download-button" @onclick="DownloadFile">
+                    Download Excel File
+                </button>
+                <button class="reset-button" @onclick="Reset">
+                    Convert Another PDF
+                </button>
+            </div>
+        }
+
+        @if (CurrentState == PageState.Error)
+        {
+            <div class="error-container" role="alert">
+                <span class="error-icon" aria-hidden="true">❌</span>
+                <p class="error-message">@ErrorMessage</p>
+                <button class="reset-button" @onclick="Reset">Try Again</button>
+            </div>
+        }
+    </div>
+
+    <div class="faq-section">
+        <h2>Frequently Asked Questions</h2>
+        <div class="faq-item">
+            <h3>How accurate is the conversion?</h3>
+            <p>
+                The converter extracts all text from your PDF and
+                attempts to detect column structure based on spacing.
+                Simple tables and structured data work best. Complex
+                multi-column layouts may need minor adjustments in Excel.
+            </p>
         </div>
-        <div class="notify-section">
-            <h3>Get notified when it launches</h3>
-            @if (NotifySubmitted)
-            {
-                <div class="contact-success">
-                    <span>✅</span>
-                    <p>We'll notify you when this launches!</p>
-                </div>
-            }
-            else
-            {
-                <div class="notify-form">
-                    <input type="email"
-                           class="field-input"
-                           style="max-width: 300px;"
-                           placeholder="your@email.com"
-                           @bind="NotifyEmail" />
-                    <button class="process-button"
-                            style="max-width: 160px;"
-                            @onclick="SubmitNotify">
-                        Notify Me
-                    </button>
-                </div>
-            }
+        <div class="faq-item">
+            <h3>What does the output look like?</h3>
+            <p>
+                Each PDF page becomes a separate sheet in the Excel
+                workbook. Text is organized into columns based on
+                its position in the original PDF.
+            </p>
+        </div>
+        <div class="faq-item">
+            <h3>Does it work with scanned PDFs?</h3>
+            <p>
+                Scanned PDFs (image-based) cannot be extracted directly.
+                For scanned documents, use our PDF OCR tool first to
+                make the text selectable, then convert to Excel.
+            </p>
+        </div>
+        <div class="faq-item">
+            <h3>Is my PDF stored on your servers?</h3>
+            <p>
+                Your file is automatically deleted within
+                1 hour of processing. We never store your
+                documents permanently.
+            </p>
+        </div>
+        <div class="faq-item">
+            <h3>What is the maximum file size?</h3>
+            <p>
+                Free processing supports files up to 25MB.
+                Larger files up to 500MB are available with
+                a Pro subscription.
+            </p>
         </div>
     </div>
 </div>
 
 @code {
-    private string NotifyEmail = string.Empty;
-    private bool NotifySubmitted = false;
-    private async Task SubmitNotify()
+    private enum PageState { Upload, Processing, Complete, Error }
+    private PageState CurrentState = PageState.Upload;
+    private IBrowserFile? SelectedFile;
+    private byte[]? UploadedBytes;
+    private byte[]? OutputBytes;
+    private string? ErrorMessage;
+
+    private async Task HandleFileSelected(IBrowserFile file)
     {
-        if (string.IsNullOrWhiteSpace(NotifyEmail) ||
-            !NotifyEmail.Contains('@')) return;
-        await Task.Delay(500);
-        NotifySubmitted = true;
+        SelectedFile = null;
+        UploadedBytes = null;
+
+        var validation = Validator.ValidatePdfFile(file);
+        if (!validation.IsValid)
+        {
+            Toast.ShowError(validation.Message!);
+            return;
+        }
+
+        try
+        {
+            using var stream = file.OpenReadStream(maxAllowedSize: 524288000);
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            UploadedBytes = ms.ToArray();
+
+            var bytesValidation = Validator.ValidatePdfBytes(UploadedBytes);
+            if (!bytesValidation.IsValid)
+            {
+                Toast.ShowError(bytesValidation.Message!);
+                UploadedBytes = null;
+                return;
+            }
+
+            SelectedFile = file;
+            Toast.ShowSuccess($"File ready — {Validator.FormatSize(file.Size)}");
+        }
+        catch (Exception ex)
+        {
+            Toast.ShowError($"Could not read file: {ex.Message}");
+            UploadedBytes = null;
+        }
+
         StateHasChanged();
+    }
+
+    private void HandleFileRemoved()
+    {
+        SelectedFile = null;
+        UploadedBytes = null;
+    }
+
+    private async Task ProcessFile()
+    {
+        if (SelectedFile == null || UploadedBytes == null) return;
+
+        CurrentState = PageState.Processing;
+        StateHasChanged();
+
+        try
+        {
+            var response = await ApiService.ProcessPdfAsync(
+                UploadedBytes,
+                SelectedFile.Name,
+                ToolType.PdfToExcel);
+
+            if (response?.IsSuccess == true && response.OutputBytes?.Length > 0)
+            {
+                OutputBytes = response.OutputBytes;
+                CurrentState = PageState.Complete;
+                Toast.ShowSuccess("Excel file ready to download!");
+            }
+            else
+            {
+                ErrorMessage = response?.ErrorMessage ?? "Conversion failed. Please try again.";
+                Toast.ShowError(ErrorMessage);
+                CurrentState = PageState.Error;
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Unexpected error: {ex.Message}";
+            Toast.ShowError(ErrorMessage);
+            CurrentState = PageState.Error;
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task DownloadFile()
+    {
+        if (OutputBytes == null) return;
+
+        var baseName = Path.GetFileNameWithoutExtension(SelectedFile?.Name ?? "output");
+        var fileName = $"{baseName}.xlsx";
+
+        await JS.InvokeVoidAsync("downloadFile", fileName,
+            Convert.ToBase64String(OutputBytes));
+    }
+
+    private void Reset()
+    {
+        CurrentState = PageState.Upload;
+        SelectedFile = null;
+        UploadedBytes = null;
+        OutputBytes = null;
+        ErrorMessage = null;
     }
 }

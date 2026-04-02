@@ -1,19 +1,19 @@
 ﻿@page "/merge-pdf"
+@page "/merge-pdfs-for-submission"
+@page "/combine-pdf-files"
+@inject NavigationManager Navigation
 @inject ApiService ApiService
 @inject IJSRuntime JS
 @inject PaymentService PaymentService
 
-<PageTitle>Merge PDF Files Free Online — Combine PDFs Instantly</PageTitle>
+<PageTitle>@(IsSubmissionMode ? "Merge PDFs for Submission — Combine Documents Online | PdfToolStack" : "Merge PDF Files Free Online — Combine PDFs Instantly")</PageTitle>
 
 <HeadContent>
     <meta name="description"
-          content="Merge multiple PDF files into one document free online.
-                   No signup required. Combine PDFs instantly." />
-    <meta name="keywords"
-          content="merge pdf, combine pdf, join pdf files free,
-                   merge pdf online" />
-    <link rel="canonical"
-          href="https://pdftoolstack.com/merge-pdf" />
+          content="@(IsSubmissionMode
+                        ? "Combine multiple PDFs into one file for submission. Perfect for applications, tax returns, and legal filings. Free, no signup."
+                        : "Merge multiple PDF files into one document free online. No signup required. Combine PDFs instantly.")" />
+    <link rel="canonical" href="https://pdftoolstack.com/merge-pdf" />
 </HeadContent>
 
 <div class="tool-page">
@@ -21,10 +21,11 @@
     <AdSlot Size="banner" />
 
     <div class="tool-container">
-        <h1>Merge PDF Files Online</h1>
+        <h1>@(IsSubmissionMode ? "Merge PDFs for Submission" : "Merge PDF Files Online")</h1>
         <p class="tool-subtitle">
-            Combine multiple PDF files into one document for free.
-            No signup required. Files deleted within 1 hour.
+            @(IsSubmissionMode
+                        ? "Combine all your documents into one PDF — ready for tax filing, job applications, court submissions, or client handoffs. Free, files deleted within 1 hour."
+                        : "Combine multiple PDF files into one document for free. No signup required. Files deleted within 1 hour.")
         </p>
 
         @if (CurrentState == PageState.Upload)
@@ -328,6 +329,12 @@
             "merged.pdf",
             Convert.ToBase64String(MergedBytes));
     }
+
+    private bool IsSubmissionMode =>
+        Navigation.Uri.Contains("/merge-pdfs-for-submission",
+            StringComparison.OrdinalIgnoreCase) ||
+        Navigation.Uri.Contains("/combine-pdf-files",
+            StringComparison.OrdinalIgnoreCase);
 
     private void Reset()
     {

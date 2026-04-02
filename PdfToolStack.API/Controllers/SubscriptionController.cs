@@ -1,4 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
+using PdfToolStack.API.Configuration;
 using PdfToolStack.Application.DTOs;
 using PdfToolStack.Infrastructure.Services;
 
@@ -8,33 +10,35 @@ namespace PdfToolStack.API.Controllers
     [Route("api/[controller]")]
     public class SubscriptionController : ControllerBase
     {
-        private readonly SubscriptionService _service;
+        private readonly SubscriptionService? _service;
+        private readonly StripeOptions _stripeOptions;
 
         public SubscriptionController(
-            SubscriptionService service)
+            IOptions<StripeOptions> stripeOptions,
+            SubscriptionService? service = null)
         {
             _service = service;
+            _stripeOptions = stripeOptions.Value;
         }
 
         [HttpGet("status/{userId}")]
-        public async Task<IActionResult> GetStatus(
-            string userId)
+        public async Task<IActionResult> GetStatus(string userId)
         {
-            var status =
-                await _service.GetStatusAsync(userId);
+            if (_service == null)
+                return StatusCode(503, new { error = "Database not configured." });
+            var status = await _service.GetStatusAsync(userId);
             return Ok(status);
         }
 
         [HttpPost("create-checkout")]
-        public async Task<IActionResult> CreateCheckout(
-            [FromBody] CreateCheckoutDto dto)
+        public async Task<IActionResult> CreateCheckout([FromBody] CreateCheckoutDto dto)
         {
+            if (_service == null)
+                return StatusCode(503, new { error = "Database not configured." });
             try
             {
-                var url = await _service
-                    .CreateCheckoutSessionAsync(dto);
-                return Ok(new CheckoutResponseDto
-                { Url = url });
+                var url = await _service.CreateCheckoutSessionAsync(dto);
+                return Ok(new CheckoutResponseDto { Url = url });
             }
             catch (Exception ex)
             {
@@ -43,15 +47,14 @@ namespace PdfToolStack.API.Controllers
         }
 
         [HttpPost("create-portal")]
-        public async Task<IActionResult> CreatePortal(
-            [FromBody] CreatePortalDto dto)
+        public async Task<IActionResult> CreatePortal([FromBody] CreatePortalDto dto)
         {
+            if (_service == null)
+                return StatusCode(503, new { error = "Database not configured." });
             try
             {
-                var url = await _service
-                    .CreatePortalSessionAsync(dto);
-                return Ok(new CheckoutResponseDto
-                { Url = url });
+                var url = await _service.CreatePortalSessionAsync(dto);
+                return Ok(new CheckoutResponseDto { Url = url });
             }
             catch (Exception ex)
             {
@@ -62,17 +65,13 @@ namespace PdfToolStack.API.Controllers
         [HttpPost("webhook")]
         public async Task<IActionResult> Webhook()
         {
-            var json = await new StreamReader(
-                HttpContext.Request.Body)
-                .ReadToEndAsync();
-
-            var signature = Request.Headers[
-                "Stripe-Signature"].ToString();
-
+            if (_service == null)
+                return StatusCode(503, new { error = "Database not configured." });
+            var json = await new StreamReader(HttpContext.Request.Body).ReadToEndAsync();
+            var signature = Request.Headers["Stripe-Signature"].ToString();
             try
             {
-                await _service.HandleWebhookAsync(
-                    json, signature);
+                await _service.HandleWebhookAsync(json, signature);
                 return Ok();
             }
             catch (Exception ex)
@@ -82,12 +81,32 @@ namespace PdfToolStack.API.Controllers
         }
 
         [HttpGet("history/{userId}")]
-        public async Task<IActionResult> GetHistory(
-            string userId)
+        public async Task<IActionResult> GetHistory(string userId)
         {
-            var history = await _service
-                .GetDownloadHistoryAsync(userId);
+            if (_service == null)
+                return StatusCode(503, new { error = "Database not configured." });
+            var history = await _service.GetDownloadHistoryAsync(userId);
             return Ok(history);
+        }
+
+        [HttpGet("plans")]
+        public IActionResult GetPlans()
+        {
+            return Ok(new
+            {
+                monthly = new
+                {
+                    priceId = _stripeOptions.ProMonthlyPriceIdV2,
+                    amount = 1900,
+                    label = "$19 / month"
+                },
+                yearly = new
+                {
+                    priceId = _stripeOptions.ProYearlyPriceIdV2,
+                    amount = 15000,
+                    label = "$150 / year"
+                }
+            });
         }
     }
 }

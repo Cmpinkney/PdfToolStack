@@ -64,12 +64,19 @@ namespace PdfToolStack.Web.Services
                         .ReadFromJsonAsync<ProcessResponse>(
                             cancellationToken: cancellationToken);
 
-                _logger.LogWarning(
-                    "API returned {StatusCode} for {ToolType}",
-                    response.StatusCode,
-                    toolType);
+                var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
 
-                return null;
+                _logger.LogWarning(
+                    "API returned {StatusCode} for {ToolType}. Body: {Body}",
+                    response.StatusCode,
+                    toolType,
+                    errorBody);
+
+                return new ProcessResponse
+                {
+                    IsSuccess = false,
+                    ErrorMessage = $"API error ({(int)response.StatusCode}): {errorBody}"
+                };
             }
             catch (Exception ex)
             {
@@ -645,6 +652,141 @@ namespace PdfToolStack.Web.Services
             return response.IsSuccessStatusCode
                 ? await response.Content.ReadAsByteArrayAsync()
                 : null;
+        }
+
+        public async Task<byte[]?> BatchProcessAsync(
+        List<(byte[] Bytes, string FileName)> files,
+        ToolType toolType,
+        CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                using var content = new MultipartFormDataContent();
+
+                foreach (var (bytes, fileName) in files)
+                {
+                    var fileContent = new ByteArrayContent(bytes);
+                    fileContent.Headers.ContentType =
+                        new System.Net.Http.Headers
+                            .MediaTypeHeaderValue("application/pdf");
+                    content.Add(fileContent, "files", fileName);
+                }
+
+                var response = await _httpClient.PostAsync(
+                    $"api/pdf/batch?toolType={toolType}",
+                    content,
+                    cancellationToken);
+
+                if (response.IsSuccessStatusCode)
+                    return await response.Content
+                        .ReadAsByteArrayAsync(cancellationToken);
+
+                var error = await response.Content
+                    .ReadAsStringAsync(cancellationToken);
+                _logger.LogWarning(
+                    "Batch API error {StatusCode}: {Body}",
+                    response.StatusCode, error);
+                return null;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error calling batch API");
+                return null;
+            }
+        }
+
+        public async Task<(byte[]? Report, int Added, int Removed, int Pages)>
+        ComparePdfsAsync(
+        byte[] originalBytes, string originalName,
+        byte[] revisedBytes, string revisedName,
+        CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                using var content = new MultipartFormDataContent();
+
+                var orig = new ByteArrayContent(originalBytes);
+                orig.Headers.ContentType =
+                    new System.Net.Http.Headers
+                        .MediaTypeHeaderValue("application/pdf");
+                content.Add(orig, "original", originalName);
+
+                var rev = new ByteArrayContent(revisedBytes);
+                rev.Headers.ContentType =
+                    new System.Net.Http.Headers
+                        .MediaTypeHeaderValue("application/pdf");
+                content.Add(rev, "revised", revisedName);
+
+                var response = await _httpClient.PostAsync(
+                    "api/pdf/compare", content, cancellationToken);
+
+                if (!response.IsSuccessStatusCode)
+                    return (null, 0, 0, 0);
+
+                var report = await response.Content
+                    .ReadAsByteArrayAsync(cancellationToken);
+
+                int.TryParse(response.Headers
+                    .GetValues("X-Compare-Added")
+                    .FirstOrDefault(), out var added);
+                int.TryParse(response.Headers
+                    .GetValues("X-Compare-Removed")
+                    .FirstOrDefault(), out var removed);
+                int.TryParse(response.Headers
+                    .GetValues("X-Compare-Pages")
+                    .FirstOrDefault(), out var pages);
+
+                return (report, added, removed, pages);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error calling compare API");
+                return (null, 0, 0, 0);
+            }
+        }
+
+        public async Task<T?> PostMultipartAsync<T>(
+    string endpoint,
+    MultipartFormDataContent content)
+        {
+            try
+            {
+                var response = await _httpClient.PostAsync(endpoint, content);
+                if (response.IsSuccessStatusCode)
+                    return await response.Content.ReadFromJsonAsync<T>();
+
+                var error = await response.Content.ReadAsStringAsync();
+                _logger.LogWarning("PostMultipart {Endpoint} failed: {Error}",
+                    endpoint, error);
+                return default;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "PostMultipart error: {Endpoint}", endpoint);
+                return default;
+            }
+        }
+
+        public async Task<byte[]?> PostMultipartBytesAsync(
+            string endpoint,
+            MultipartFormDataContent content)
+        {
+            try
+            {
+                var response = await _httpClient.PostAsync(endpoint, content);
+                if (response.IsSuccessStatusCode)
+                    return await response.Content.ReadAsByteArrayAsync();
+
+                var error = await response.Content.ReadAsStringAsync();
+                _logger.LogWarning("PostMultipartBytes {Endpoint} failed: {Error}",
+                    endpoint, error);
+                return null;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "PostMultipartBytes error: {Endpoint}", endpoint);
+                return null;
+            }
         }
     }
 }

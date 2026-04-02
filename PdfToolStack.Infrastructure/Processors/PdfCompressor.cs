@@ -17,24 +17,26 @@ namespace PdfToolStack.Infrastructure.Processors
                 using var inputStream = new MemoryStream(fileBytes);
                 using var outputStream = new MemoryStream();
 
-                var reader = new PdfReader(inputStream);
-                var stamper = new PdfStamper(reader, outputStream);
+                using var reader = new PdfReader(inputStream);
+                using var stamper = new PdfStamper(reader, outputStream);
 
-                // Compress content streams
                 stamper.SetFullCompression();
 
-                // Compress each page
                 for (int i = 1; i <= reader.NumberOfPages; i++)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
-                    reader.SetPageContent(i, reader.GetPageContent(i));
+                    var pageContent = reader.GetPageContent(i);
+                    reader.SetPageContent(i, pageContent);
                 }
 
                 stamper.Close();
-                reader.Close();
 
-                return outputStream.ToArray();
+                var outputBytes = outputStream.ToArray();
 
+                if (outputBytes.Length == 0)
+                    throw new InvalidOperationException("Compressed PDF output was empty.");
+
+                return outputBytes;
             }, cancellationToken);
         }
     }

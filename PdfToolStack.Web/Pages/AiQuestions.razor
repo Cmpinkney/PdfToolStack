@@ -1,81 +1,177 @@
 ﻿@page "/ai-questions"
+@inject ApiService ApiService
+@inject PdfToolStack.Web.Services.SubscriptionService SubService
+@inject AuthenticationStateProvider Auth
+@inject IJSRuntime JS
+@using Microsoft.AspNetCore.Components.Authorization
 
-<PageTitle>AI Questions Generator Free Online — Create Tests from PDF</PageTitle>
+<PageTitle>AI Questions Generator — Create Quiz from PDF | PdfToolStack</PageTitle>
 
 <HeadContent>
     <meta name="description"
-          content="Generate quiz questions from your PDF free online.
-                   Create multiple choice, true/false, and open-ended
-                   tests with AI. No signup required." />
-    <meta name="keywords"
-          content="ai questions generator, pdf quiz generator,
-                   create test from pdf free" />
-    <link rel="canonical"
-          href="https://pdftoolstack.com/ai-questions" />
+          content="Generate quiz questions from any PDF automatically with AI.
+                   Multiple choice, true/false, and open-ended questions.
+                   Perfect for teachers and students." />
+    <link rel="canonical" href="https://pdftoolstack.com/ai-questions" />
 </HeadContent>
 
 <div class="tool-page">
-    <div class="tool-container">
+    <div class="tool-hero">
         <h1>AI Questions Generator</h1>
-        <p class="tool-subtitle">
-            Upload a PDF and let AI generate quiz questions
-            automatically. Perfect for teachers and students.
-        </p>
-        <div class="coming-soon-banner">
-            <span class="coming-soon-icon">📝</span>
-            <div>
-                <h3>AI Questions Generator Coming Soon</h3>
-                <p>
-                    Our AI will read your PDF and generate
-                    multiple-choice, true/false, and
-                    open-ended questions automatically.
-                </p>
-                <p>
-                    Export your questions as a printable
-                    PDF quiz or interactive test.
-                </p>
+        <p>Upload any PDF and let AI generate quiz questions automatically. Export as a printable question sheet.</p>
+    </div>
+
+    <AuthorizeView>
+        <NotAuthorized>
+            <div class="upgrade-nudge">
+                <p>⭐ AI Questions Generator is a <strong>Pro feature</strong>.</p>
+                <a href="/pricing" class="process-button" style="display:inline-block; max-width:200px;">Upgrade to Pro — $19/mo</a>
             </div>
-        </div>
-        <div class="notify-section">
-            <h3>Get notified when it launches</h3>
-            @if (NotifySubmitted)
+        </NotAuthorized>
+        <Authorized>
+            @if (!_isPro)
             {
-                <div class="contact-success">
-                    <span>✅</span>
-                    <p>
-                        We'll notify you when AI Questions
-                        Generator launches!
-                    </p>
+                <div class="upgrade-nudge">
+                    <p>⭐ AI Questions Generator is a <strong>Pro feature</strong>.</p>
+                    <a href="/pricing" class="process-button" style="display:inline-block; max-width:200px;">Upgrade to Pro — $19/mo</a>
                 </div>
             }
             else
             {
-                <div class="notify-form">
-                    <input type="email"
-                           class="field-input"
-                           style="max-width: 300px;"
-                           placeholder="your@email.com"
-                           @bind="NotifyEmail" />
-                    <button class="process-button"
-                            style="max-width: 160px;"
-                            @onclick="SubmitNotify">
-                        Notify Me
-                    </button>
+                <div class="tool-card" style="margin-bottom:1.25rem;">
+                    <label class="upload-label">Upload PDF</label>
+                    <InputFile OnChange="OnFileSelected" accept=".pdf" class="file-input" />
+                    @if (_fileName != null)
+                    {
+                        <div class="compare-file-badge" style="margin-top:0.5rem;">📄 @_fileName</div>
+                    }
                 </div>
+
+                <div class="tool-card" style="margin-bottom:1.25rem;">
+                    <label class="upload-label">Number of questions</label>
+                    <div style="display:flex; align-items:center; gap:1rem; margin-top:0.5rem;">
+                        <input type="range" min="3" max="15" step="1"
+                               @bind="_questionCount"
+                               style="width:200px;" />
+                        <span style="font-weight:500; min-width:24px;">@_questionCount</span>
+                    </div>
+                </div>
+
+                <button class="process-button" style="max-width:220px; margin-bottom:1.5rem;"
+                        @onclick="RunGenerate"
+                        disabled="@(_processing || _fileBytes == null)">
+                    @(_processing ? "Generating..." : "Generate Questions")
+                </button>
+
+                @if (_questions.Any())
+                {
+                    <div class="tool-card ai-output-card">
+                        <div class="ai-output-label">📝 Generated Questions</div>
+                        <ol class="questions-list">
+                            @foreach (var q in _questions)
+                            {
+                                <li class="question-item">@q</li>
+                            }
+                        </ol>
+                        <button class="secondary-button"
+                                style="margin-top:1rem;"
+                                @onclick="CopyQuestions">
+                            @(_copied ? "✓ Copied!" : "Copy all questions")
+                        </button>
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(_error))
+                {
+                    <div class="error-message">@_error</div>
+                }
             }
-        </div>
-    </div>
+        </Authorized>
+    </AuthorizeView>
 </div>
 
 @code {
-    private string NotifyEmail = string.Empty;
-    private bool NotifySubmitted = false;
-    private async Task SubmitNotify()
+    private byte[]? _fileBytes;
+    private string? _fileName;
+    private bool _isPro;
+    private bool _processing;
+    private bool _copied;
+    private int _questionCount = 5;
+    private List<string> _questions = new();
+    private string _error = string.Empty;
+
+    protected override async Task OnInitializedAsync()
     {
-        if (string.IsNullOrWhiteSpace(NotifyEmail) ||
-            !NotifyEmail.Contains('@')) return;
-        await Task.Delay(500);
-        NotifySubmitted = true;
+        var authState = await Auth.GetAuthenticationStateAsync();
+        var user = authState.User;
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            var userId = user.FindFirst("sub")?.Value ?? string.Empty;
+            var status = await SubService.GetStatusAsync(userId);
+            _isPro = status.HasPro;
+        }
+    }
+
+    private async Task OnFileSelected(InputFileChangeEventArgs e)
+    {
+        using var ms = new MemoryStream();
+        await e.File.OpenReadStream(maxAllowedSize: 52_428_800).CopyToAsync(ms);
+        _fileBytes = ms.ToArray();
+        _fileName = e.File.Name;
+        _questions.Clear();
+        _error = string.Empty;
+    }
+
+    private async Task RunGenerate()
+    {
+        if (_fileBytes == null) return;
+        _processing = true;
+        _questions.Clear();
+        _error = string.Empty;
         StateHasChanged();
+
+        try
+        {
+            using var content = new MultipartFormDataContent();
+            var fc = new ByteArrayContent(_fileBytes);
+            fc.Headers.ContentType =
+                new System.Net.Http.Headers.MediaTypeHeaderValue("application/pdf");
+            content.Add(fc, "file", _fileName ?? "document.pdf");
+            content.Add(new StringContent(_questionCount.ToString()), "count");
+
+            var result = await ApiService.PostMultipartAsync<QuestionsResponse>(
+                "api/ai/questions", content);
+
+            if (result?.Questions != null && result.Questions.Any())
+                _questions = result.Questions;
+            else
+                _error = "Could not generate questions. Please try again.";
+        }
+        catch (Exception ex)
+        {
+            _error = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            _processing = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task CopyQuestions()
+    {
+        var text = string.Join("\n\n",
+            _questions.Select((q, i) => $"{i + 1}. {q}"));
+        await JS.InvokeVoidAsync("navigator.clipboard.writeText", text);
+        _copied = true;
+        StateHasChanged();
+        await Task.Delay(2000);
+        _copied = false;
+        StateHasChanged();
+    }
+
+    private class QuestionsResponse
+    {
+        public List<string> Questions { get; set; } = new();
     }
 }

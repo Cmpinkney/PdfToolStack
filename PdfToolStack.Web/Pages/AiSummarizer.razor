@@ -1,82 +1,141 @@
 ﻿@page "/ai-summarizer"
+@inject ApiService ApiService
+@inject PdfToolStack.Web.Services.SubscriptionService SubService
+@inject AuthenticationStateProvider Auth
+@using Microsoft.AspNetCore.Components.Authorization
 
-<PageTitle>AI PDF Summarizer Free Online — Summarize PDF Instantly</PageTitle>
+<PageTitle>AI PDF Summarizer — Summarize PDF Instantly | PdfToolStack</PageTitle>
 
 <HeadContent>
     <meta name="description"
-          content="Summarize your PDF documents free online with AI.
-                   Get instant summaries of long documents.
-                   No signup required." />
-    <meta name="keywords"
-          content="ai pdf summarizer, summarize pdf online free,
-                   pdf summary tool, ai document summary" />
-    <link rel="canonical"
-          href="https://pdftoolstack.com/ai-summarizer" />
+          content="Summarize any PDF instantly with AI. Get key points,
+                   main arguments, and conclusions in seconds.
+                   Perfect for reports, papers, and legal documents." />
+    <link rel="canonical" href="https://pdftoolstack.com/ai-summarizer" />
 </HeadContent>
 
 <div class="tool-page">
-    <div class="tool-container">
+    <div class="tool-hero">
         <h1>AI PDF Summarizer</h1>
-        <p class="tool-subtitle">
-            Get an instant AI-powered summary of any PDF
-            document in seconds.
-        </p>
-        <div class="coming-soon-banner">
-            <span class="coming-soon-icon">✨</span>
-            <div>
-                <h3>AI PDF Summarizer Coming Soon</h3>
-                <p>
-                    Upload any PDF and our AI will generate
-                    a concise summary highlighting the key
-                    points, main arguments, and important
-                    conclusions.
-                </p>
-                <p>
-                    Perfect for academic papers, business
-                    reports, and lengthy legal documents.
-                </p>
+        <p>Upload any PDF and get a concise AI summary in seconds. Key points, main arguments, and important conclusions — without reading the whole document.</p>
+    </div>
+
+    <AuthorizeView>
+        <NotAuthorized>
+            <div class="upgrade-nudge">
+                <p>⭐ AI Summarizer is a <strong>Pro feature</strong>.</p>
+                <a href="/pricing" class="process-button" style="display:inline-block; max-width:200px;">Upgrade to Pro — $19/mo</a>
             </div>
-        </div>
-        <div class="notify-section">
-            <h3>Get notified when it launches</h3>
-            @if (NotifySubmitted)
+        </NotAuthorized>
+        <Authorized>
+            @if (!_isPro)
             {
-                <div class="contact-success">
-                    <span>✅</span>
-                    <p>
-                        We'll notify you when AI Summarizer
-                        launches!
-                    </p>
+                <div class="upgrade-nudge">
+                    <p>⭐ AI Summarizer is a <strong>Pro feature</strong>.</p>
+                    <a href="/pricing" class="process-button" style="display:inline-block; max-width:200px;">Upgrade to Pro — $19/mo</a>
                 </div>
             }
             else
             {
-                <div class="notify-form">
-                    <input type="email"
-                           class="field-input"
-                           style="max-width: 300px;"
-                           placeholder="your@email.com"
-                           @bind="NotifyEmail" />
-                    <button class="process-button"
-                            style="max-width: 160px;"
-                            @onclick="SubmitNotify">
-                        Notify Me
-                    </button>
+                <div class="tool-card" style="margin-bottom:1.25rem;">
+                    <label class="upload-label">Upload PDF</label>
+                    <InputFile OnChange="OnFileSelected" accept=".pdf" class="file-input" />
+                    @if (_fileName != null)
+                    {
+                        <div class="compare-file-badge" style="margin-top:0.5rem;">📄 @_fileName</div>
+                    }
                 </div>
+
+                <button class="process-button" style="max-width:200px; margin-bottom:1.5rem;"
+                        @onclick="RunSummarize"
+                        disabled="@(_processing || _fileBytes == null)">
+                    @(_processing ? "Summarizing..." : "Summarize PDF")
+                </button>
+
+                @if (!string.IsNullOrEmpty(_summary))
+                {
+                    <div class="tool-card ai-output-card">
+                        <div class="ai-output-label">✨ AI Summary</div>
+                        <div class="ai-output-text">@_summary</div>
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(_error))
+                {
+                    <div class="error-message">@_error</div>
+                }
             }
-        </div>
-    </div>
+        </Authorized>
+    </AuthorizeView>
 </div>
 
 @code {
-    private string NotifyEmail = string.Empty;
-    private bool NotifySubmitted = false;
-    private async Task SubmitNotify()
+    private byte[]? _fileBytes;
+    private string? _fileName;
+    private bool _isPro;
+    private bool _processing;
+    private string _summary = string.Empty;
+    private string _error = string.Empty;
+
+    protected override async Task OnInitializedAsync()
     {
-        if (string.IsNullOrWhiteSpace(NotifyEmail) ||
-            !NotifyEmail.Contains('@')) return;
-        await Task.Delay(500);
-        NotifySubmitted = true;
+        var authState = await Auth.GetAuthenticationStateAsync();
+        var user = authState.User;
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            var userId = user.FindFirst("sub")?.Value ?? string.Empty;
+            var status = await SubService.GetStatusAsync(userId);
+            _isPro = status.HasPro;
+        }
+    }
+
+    private async Task OnFileSelected(InputFileChangeEventArgs e)
+    {
+        using var ms = new MemoryStream();
+        await e.File.OpenReadStream(maxAllowedSize: 52_428_800).CopyToAsync(ms);
+        _fileBytes = ms.ToArray();
+        _fileName = e.File.Name;
+        _summary = string.Empty;
+        _error = string.Empty;
+    }
+
+    private async Task RunSummarize()
+    {
+        if (_fileBytes == null) return;
+        _processing = true;
+        _summary = string.Empty;
+        _error = string.Empty;
         StateHasChanged();
+
+        try
+        {
+            using var content = new MultipartFormDataContent();
+            var fc = new ByteArrayContent(_fileBytes);
+            fc.Headers.ContentType =
+                new System.Net.Http.Headers.MediaTypeHeaderValue("application/pdf");
+            content.Add(fc, "file", _fileName ?? "document.pdf");
+
+            var result = await ApiService.PostMultipartAsync<SummarizeResponse>(
+                "api/ai/summarize", content);
+
+            if (result?.Summary != null)
+                _summary = result.Summary;
+            else
+                _error = "Summarization failed. Please try again.";
+        }
+        catch (Exception ex)
+        {
+            _error = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            _processing = false;
+            StateHasChanged();
+        }
+    }
+
+    private class SummarizeResponse
+    {
+        public string Summary { get; set; } = string.Empty;
     }
 }

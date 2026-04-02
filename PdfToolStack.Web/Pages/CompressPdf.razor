@@ -1,5 +1,6 @@
 ﻿@page "/compress-pdf"
 @page "/fix-pdf-too-large-for-email"
+@page "/compress-for-email"
 
 @inject ApiService ApiService
 @inject IJSRuntime JS
@@ -51,10 +52,10 @@
             <LargeFileUpgrade FileSizeBytes="@(SelectedFile?.Size ?? 0)"
                               FileName="@(SelectedFile?.Name ?? "")"
                               ToolType="CompressPdf"
-                              Title="PDF Too Large for Free Processing"
-                              Message="This PDF may be too large for email or standard uploads. "
+                              Title="This PDF is over the free limit"
+                              Message="This file is above the free processing limit."
                               PrimaryButtonText="Fix instantly for $0.99"
-                              SecondaryButtonText="Compress for free instead"
+                              SecondaryButtonText="Return to upload"
                               OnCancel="ResetToFreeMode" />
         }
 
@@ -176,24 +177,28 @@
     }
 
     private bool IsEmailMode =>
-        Navigation.Uri.Contains("/fix-pdf-too-large-for-email",
-            StringComparison.OrdinalIgnoreCase);
+    Navigation.Uri.Contains("/fix-pdf-too-large-for-email",
+        StringComparison.OrdinalIgnoreCase) ||
+    Navigation.Uri.Contains("/compress-for-email",
+        StringComparison.OrdinalIgnoreCase);
 
     private string PageHeading =>
         IsEmailMode ? "Fix PDF Too Large for Email" : "Compress PDF Online";
 
     private string PageSubtitle =>
-        IsEmailMode
-            ? "Reduce your PDF so it fits Gmail and Outlook limits in seconds. No signup required. Files deleted within 1 hour."
+    IsEmailMode
+        ? "Reduce your PDF so it fits Gmail and Outlook limits in seconds. No signup required. Files deleted within 1 hour."
+        : PaymentService.IsTestModeEnabled
+            ? "Reduce your PDF file size securely. Testing mode is enabled right now. No signup required. Files deleted within 1 hour."
             : "Reduce your PDF file size for free. No signup required. Files deleted within 1 hour.";
 
     private string ProcessButtonText =>
         IsEmailMode ? "Fix My PDF" : "Compress PDF";
 
     private string UploadHintText =>
-        IsEmailMode
-            ? "Best for Gmail/Outlook attachments · 10MB free · 500MB paid"
-            : "Maximum file size: 10MB free · 500MB paid";
+    IsEmailMode
+        ? $"Best for Gmail/Outlook attachments · {PaymentService.FormatFileSize(PaymentService.FreeTierMaxBytes)} free · 500MB paid"
+        : $"Maximum file size: {PaymentService.FormatFileSize(PaymentService.FreeTierMaxBytes)} free · 500MB paid";
 
     private PageState CurrentState = PageState.Upload;
     private IBrowserFile? SelectedFile;
@@ -313,7 +318,16 @@
 
             if (Response != null && Response.IsSuccess)
             {
-                ProcessedBytes = UploadedBytes;
+                ProcessedBytes = Response.OutputBytes;
+
+                if (ProcessedBytes == null || ProcessedBytes.Length == 0)
+                {
+                    ErrorMessage = "Compression completed, but no output file was returned.";
+                    Toast.ShowError(ErrorMessage);
+                    CurrentState = PageState.Error;
+                    return;
+                }
+
                 CurrentState = PageState.Complete;
                 Toast.ShowSuccess("PDF compressed successfully!");
             }

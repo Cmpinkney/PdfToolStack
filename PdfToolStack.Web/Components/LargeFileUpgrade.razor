@@ -4,35 +4,59 @@
 @using PdfToolStack.Web.Services
 
 <div class="upgrade-banner">
+    @if (PaymentService.IsTestModeEnabled)
+    {
+        <div class="test-mode-badge">Test Mode</div>
+    }
+
     <div class="upgrade-icon">📦</div>
+
     <div class="upgrade-content">
         <h3>@Title</h3>
+
         <p>
-            @Message
-            Your file is <strong>@PaymentService.FormatFileSize(FileSizeBytes)</strong>.
-            Free processing is limited to
-            <strong>
-                @PaymentService.FormatFileSize(
-                                PaymentService.FreeTierMaxBytes)
-            </strong>.
+            @if (PaymentService.IsTestModeEnabled)
+            {
+                <span>
+                    Your file is
+                    <strong>@PaymentService.FormatFileSize(FileSizeBytes)</strong>.
+                    The free limit is temporarily set to
+                    <strong>@PaymentService.FormatFileSize(PaymentService.FreeTierMaxBytes)</strong>
+                    for testing, so this file requires a one-time payment.
+                </span>
+            }
+            else
+            {
+                <span>
+                    @Message
+                    Your file is
+                    <strong>@PaymentService.FormatFileSize(FileSizeBytes)</strong>.
+                    Free processing is limited to
+                    <strong>@PaymentService.FormatFileSize(PaymentService.FreeTierMaxBytes)</strong>.
+                </span>
+            }
         </p>
+
         <p class="upgrade-price">
             Process this file for just
             <strong class="price-highlight">$0.99</strong>
         </p>
+
         <div class="upgrade-features">
             <span>✅ Files up to 500MB</span>
-            <span>✅ No subscription</span>
             <span>✅ One-time payment</span>
+            <span>✅ No subscription</span>
             <span>✅ Secure checkout</span>
         </div>
     </div>
+
     <div class="upgrade-actions">
         <button class="process-button upgrade-btn"
                 @onclick="HandleUpgrade"
                 disabled="@IsLoading">
             @(IsLoading ? "Redirecting..." : PrimaryButtonText)
         </button>
+
         <button class="reset-button"
                 @onclick="HandleSecondaryAction">
             @SecondaryButtonText
@@ -44,30 +68,24 @@
     [Parameter] public long FileSizeBytes { get; set; }
 
     [Parameter]
-    public string FileName { get; set; }
-        = string.Empty;
+    public string FileName { get; set; } = string.Empty;
 
     [Parameter]
-    public string ToolType { get; set; }
-        = string.Empty;
+    public string ToolType { get; set; } = string.Empty;
 
     [Parameter] public EventCallback OnCancel { get; set; }
 
     [Parameter]
-    public string Title { get; set; }
-        = "Large File Detected";
+    public string Title { get; set; } = "This file is over the free limit";
 
     [Parameter]
-    public string Message { get; set; }
-        = "Your file is too large for free processing. ";
+    public string Message { get; set; } = "This file is above the free processing limit.";
 
     [Parameter]
-    public string PrimaryButtonText { get; set; }
-        = "Pay $0.99 & Process";
+    public string PrimaryButtonText { get; set; } = "Fix instantly for $0.99";
 
     [Parameter]
-    public string SecondaryButtonText { get; set; }
-        = "Use free compression instead";
+    public string SecondaryButtonText { get; set; } = "Return to upload";
 
     private bool IsLoading = false;
     private string JobId = Guid.NewGuid().ToString();
@@ -79,16 +97,14 @@
 
         var currentUrl = Navigation.Uri;
         var successUrl = Navigation.ToAbsoluteUri(
-            $"/payment-success?jobId={JobId}&toolType={ToolType}")
-            .ToString();
+            $"/payment-success?jobId={JobId}&toolType={ToolType}").ToString();
         var cancelUrl = currentUrl;
 
-        var checkoutUrl = await PaymentService
-            .CreateCheckoutSessionAsync(
-                JobId,
-                ToolType,
-                successUrl,
-                cancelUrl);
+        var checkoutUrl = await PaymentService.CreateCheckoutSessionAsync(
+            JobId,
+            ToolType,
+            successUrl,
+            cancelUrl);
 
         if (!string.IsNullOrEmpty(checkoutUrl))
         {

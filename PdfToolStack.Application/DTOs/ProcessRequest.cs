@@ -12,7 +12,7 @@ namespace PdfToolStack.Application.DTOs
             = string.Empty;
         public long FileSizeBytes { get; set; }
 
-        // Additional files for merge operations
+        // Additional files for merge/sign operations
         public List<byte[]> AdditionalFiles { get; set; }
             = new List<byte[]>();
         public List<string> AdditionalFileNames { get; set; }
@@ -25,6 +25,7 @@ namespace PdfToolStack.Application.DTOs
         // Redaction regions
         public List<RedactionRegionDto> RedactionRegions { get; set; }
             = new List<RedactionRegionDto>();
+
         // Page numbers for extract/delete operations
         public List<int>? PageNumbers { get; set; }
 
@@ -50,9 +51,29 @@ namespace PdfToolStack.Application.DTOs
         // Split range
         public int? SplitFromPage { get; set; }
         public int? SplitToPage { get; set; }
+
+        // Organize — page reorder/delete/rotate operations
+        public List<PageOperationDto> PageOperations { get; set; }
+            = new List<PageOperationDto>();
+
+        // Sign — signature image bytes + placement
+        public byte[] SignatureBytes { get; set; }
+            = Array.Empty<byte>();
+        public float SignatureX { get; set; }
+        public float SignatureY { get; set; }
+        public float SignatureWidth { get; set; }
+        public float SignatureHeight { get; set; }
+        public int SignaturePageNumber { get; set; } = 1;
+
+        // Edit — text/shape annotations
+        public List<PdfAnnotationDto> Annotations { get; set; }
+            = new List<PdfAnnotationDto>();
+
+        // Annotate — highlights, drawings, freehand
+        public List<PdfHighlightDto> Highlights { get; set; }
+            = new List<PdfHighlightDto>();
     }
 
-    // DTO version — no dependency on Domain.Entities
     public class RedactionRegionDto
     {
         public float X1 { get; set; }
@@ -60,5 +81,16 @@ namespace PdfToolStack.Application.DTOs
         public float X2 { get; set; }
         public float Y2 { get; set; }
         public int PageNumber { get; set; } = 1;
+    }
+
+    // DTO mirror of Infrastructure.Processors.PageOperation
+    // Keeps Application layer free of Infrastructure dependency
+    public class PageOperationDto
+    {
+        public int Order { get; set; }
+        public string Type { get; set; } = string.Empty;
+        public int PageNumber { get; set; }
+        public int TargetIndex { get; set; }
+        public int RotationDegrees { get; set; }
     }
 }

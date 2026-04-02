@@ -7,11 +7,14 @@ namespace PdfToolStack.Web.Services
         private readonly HttpClient _httpClient;
         private readonly ILogger<PaymentService> _logger;
 
-        // Free tier limit — 25MB
-        public const long FreeTierMaxBytes = 1024; // 1KB for testing //26214400;
+        // Free tier limit for current testing UX
+        public const long FreeTierMaxBytes = 102400; // 100 KB
 
         // Paid tier limit — 500MB
         public const long PaidTierMaxBytes = 524288000;
+
+        // Optional: visible test mode flag for UI copy
+        public const bool IsTestModeEnabled = true;
 
         public PaymentService(
             HttpClient httpClient,

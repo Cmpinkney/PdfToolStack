@@ -1,0 +1,290 @@
+﻿@page "/batch"
+@inject ApiService ApiService
+@inject PdfToolStack.Web.Services.SubscriptionService SubService
+@inject AuthenticationStateProvider Auth
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+@using PdfToolStack.Application.DTOs
+@using PdfToolStack.Domain.Enums
+
+<PageTitle>Batch PDF Processing — PdfToolStack</PageTitle>
+
+<div class="tool-page">
+    <div class="tool-hero">
+        <h1>Batch Process PDFs</h1>
+        <p>Apply any tool to up to 20 PDFs at once. Download all results as a single ZIP file.</p>
+    </div>
+
+    <AuthorizeView>
+        <NotAuthorized>
+            <div class="upgrade-nudge">
+                <p>⭐ Batch processing is a <strong>Pro feature</strong>.</p>
+                <a href="/pricing" class="process-button" style="display:inline-block; max-width:200px;">
+                    Upgrade to Pro — $19/mo
+                </a>
+            </div>
+        </NotAuthorized>
+        <Authorized>
+            @if (!_isPro)
+            {
+                <div class="upgrade-nudge">
+                    <p>⭐ Batch processing is a <strong>Pro feature</strong>.</p>
+                    <a href="/pricing" class="process-button" style="display:inline-block; max-width:200px;">
+                        Upgrade to Pro — $19/mo
+                    </a>
+                </div>
+            }
+            else
+            {
+                <!-- Tool selector -->
+                <div class="tool-card" style="margin-bottom: 1.5rem;">
+                    <label class="upload-label">Select tool to apply</label>
+                    <select class="batch-select" @bind="_selectedTool">
+                        <optgroup label="Compress & Convert">
+                            <option value="@ToolType.CompressPdf">Compress PDF</option>
+                            <option value="@ToolType.PdfToWord">PDF to Word</option>
+                            <option value="@ToolType.PdfToJpg">PDF to JPG</option>
+                        </optgroup>
+                        <optgroup label="Edit">
+                            <option value="@ToolType.WatermarkPdf">Watermark PDF</option>
+                            <option value="@ToolType.NumberPages">Number Pages</option>
+                            <option value="@ToolType.FlattenPdf">Flatten PDF</option>
+                            <option value="@ToolType.RotatePdf">Rotate PDF</option>
+                        </optgroup>
+                        <optgroup label="Security">
+                            <option value="@ToolType.ProtectPdf">Protect PDF</option>
+                            <option value="@ToolType.UnlockPdf">Unlock PDF</option>
+                        </optgroup>
+                    </select>
+                </div>
+
+                <!-- File upload -->
+                <div class="tool-card" style="margin-bottom: 1.5rem;">
+                    <label class="upload-label">
+                        Upload PDFs (max 20 files)
+                    </label>
+                    <InputFile OnChange="OnFilesSelected"
+                               multiple
+                               accept=".pdf"
+                               class="file-input" />
+
+                    @if (_files.Any())
+                    {
+                        <div class="batch-file-list">
+                            @foreach (var f in _files)
+                            {
+                                <div class="batch-file-row">
+                                    <span class="batch-file-name">@TruncateName(f.Name)</span>
+                                    <span class="batch-file-size">@FormatSize(f.Size)</span>
+                                    <span class="batch-file-status @GetStatusClass(f.Name)">
+                                        @GetStatusLabel(f.Name)
+                                    </span>
+                                </div>
+                            }
+                        </div>
+
+                        <div style="margin-top: 1rem; display: flex; gap: 1rem; align-items: center;">
+                            <button class="process-button"
+                                    style="max-width: 220px;"
+                                    @onclick="RunBatch"
+                                    disabled="@(_processing || _files.Count == 0)">
+                                @if (_processing)
+                                {
+                                    <span>Processing @_processedCount / @_files.Count...</span>
+                                }
+                                else
+                                {
+                                    <span>Process @_files.Count file@(_files.Count == 1 ? "" : "s")</span>
+                                }
+                            </button>
+
+                            @if (!_processing)
+                            {
+                                <button class="secondary-button"
+                                        @onclick="ClearFiles">
+                                    Clear
+                                </button>
+                            }
+                        </div>
+                    }
+                </div>
+
+                <!-- Result -->
+                @if (_zipBytes != null)
+                {
+                    <div class="tool-card result-card">
+                        <div class="result-success">
+                            <h3>✅ Batch complete</h3>
+                            <p>
+                                @_successCount of @_files.Count files processed successfully.
+                                @if (_failCount > 0)
+                                {
+                                    <span> @_failCount failed — check batch_errors.txt in the ZIP.</span>
+                                }
+                            </p>
+                            <button class="download-button"
+                                    @onclick="DownloadZip"
+                                    style="max-width: 240px; margin-top: 0.75rem;">
+                                ⬇ Download ZIP
+                            </button>
+                        </div>
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(_error))
+                {
+                    <div class="error-message">@_error</div>
+                }
+            }
+        </Authorized>
+    </AuthorizeView>
+</div>
+
+@code {
+    private ToolType _selectedTool = ToolType.CompressPdf;
+    private List<IBrowserFile> _files = new();
+    private bool _isPro = false;
+    private bool _processing = false;
+    private int _processedCount = 0;
+    private int _successCount = 0;
+    private int _failCount = 0;
+    private byte[]? _zipBytes;
+    private string _error = string.Empty;
+
+    private Dictionary<string, string> _fileStatuses = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await Auth.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            var userId = user.FindFirst("sub")?.Value ?? string.Empty;
+            var status = await SubService.GetStatusAsync(userId);
+            _isPro = status.HasPro;
+        }
+    }
+
+    private void OnFilesSelected(InputFileChangeEventArgs e)
+    {
+        _files = e.GetMultipleFiles(20).ToList();
+        _fileStatuses.Clear();
+        _zipBytes = null;
+        _error = string.Empty;
+        _successCount = 0;
+        _failCount = 0;
+    }
+
+    private async Task RunBatch()
+    {
+        if (!_files.Any()) return;
+
+        _processing = true;
+        _processedCount = 0;
+        _zipBytes = null;
+        _error = string.Empty;
+        _fileStatuses.Clear();
+        StateHasChanged();
+
+        try
+        {
+            var fileData = new List<(byte[] Bytes, string FileName)>();
+
+            foreach (var file in _files)
+            {
+                _fileStatuses[file.Name] = "reading";
+                StateHasChanged();
+
+                using var ms = new MemoryStream();
+                await file.OpenReadStream(maxAllowedSize: 52_428_800)
+                    .CopyToAsync(ms);
+                fileData.Add((ms.ToArray(), file.Name));
+
+                _fileStatuses[file.Name] = "queued";
+                _processedCount++;
+                StateHasChanged();
+            }
+
+            _processedCount = 0;
+            foreach (var f in _files)
+                _fileStatuses[f.Name] = "processing";
+            StateHasChanged();
+
+            _zipBytes = await ApiService.BatchProcessAsync(
+                fileData, _selectedTool);
+
+            if (_zipBytes != null)
+            {
+                _successCount = _files.Count;
+                _failCount = 0;
+                foreach (var f in _files)
+                    _fileStatuses[f.Name] = "done";
+            }
+            else
+            {
+                _error = "Batch processing failed. Please try again.";
+                foreach (var f in _files)
+                    _fileStatuses[f.Name] = "error";
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            _processing = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task DownloadZip()
+    {
+        if (_zipBytes == null) return;
+        var toolLabel = _selectedTool.ToString().ToLower();
+        var fileName = $"pdftoolstack_batch_{toolLabel}.zip";
+        await JS.InvokeVoidAsync("downloadFile",
+            fileName, Convert.ToBase64String(_zipBytes));
+    }
+
+    private void ClearFiles()
+    {
+        _files.Clear();
+        _fileStatuses.Clear();
+        _zipBytes = null;
+        _error = string.Empty;
+        _processedCount = 0;
+        _successCount = 0;
+        _failCount = 0;
+    }
+
+    private string GetStatusLabel(string name) =>
+        _fileStatuses.TryGetValue(name, out var s) ? s switch
+        {
+            "reading" => "Reading...",
+            "queued" => "Queued",
+            "processing" => "Processing...",
+            "done" => "✓ Done",
+            "error" => "✗ Failed",
+            _ => "Waiting"
+        } : "Waiting";
+
+    private string GetStatusClass(string name) =>
+        _fileStatuses.TryGetValue(name, out var s) ? s switch
+        {
+            "done" => "status-done",
+            "error" => "status-error",
+            _ => "status-pending"
+        } : "status-pending";
+
+    private static string TruncateName(string name)
+        => name.Length > 30 ? name[..27] + "..." : name;
+
+    private static string FormatSize(long bytes)
+    {
+        if (bytes >= 1_048_576) return $"{bytes / 1_048_576.0:F1} MB";
+        if (bytes >= 1_024) return $"{bytes / 1_024.0:F0} KB";
+        return $"{bytes} B";
+    }
+}

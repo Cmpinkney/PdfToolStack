@@ -33,6 +33,7 @@
         AiPdfAssist = 29,
         ChatWithPdf = 30,
         AiSummarizer = 31,
-        AiQuestions = 32
+        AiQuestions = 32,
+        ComparePdf = 33
     }
 }

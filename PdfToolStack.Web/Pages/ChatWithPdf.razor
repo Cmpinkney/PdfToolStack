@@ -1,82 +1,195 @@
 ﻿@page "/chat-with-pdf"
+@inject ApiService ApiService
+@inject PdfToolStack.Web.Services.SubscriptionService SubService
+@inject AuthenticationStateProvider Auth
+@using Microsoft.AspNetCore.Components.Authorization
 
-<PageTitle>Chat with PDF Free Online — Ask Your PDF Questions</PageTitle>
+<PageTitle>Chat with PDF — Ask Your Document Questions | PdfToolStack</PageTitle>
 
 <HeadContent>
     <meta name="description"
-          content="Chat with your PDF and ask it anything free online.
-                   AI powered PDF Q&A. No signup required." />
-    <meta name="keywords"
-          content="chat with pdf, ask pdf questions,
-                   pdf chatbot free, ai pdf reader" />
-    <link rel="canonical"
-          href="https://pdftoolstack.com/chat-with-pdf" />
+          content="Upload a PDF and ask it anything. AI answers questions
+                   based on your document content. Perfect for contracts,
+                   manuals, and research papers." />
+    <link rel="canonical" href="https://pdftoolstack.com/chat-with-pdf" />
 </HeadContent>
 
 <div class="tool-page">
-    <div class="tool-container">
+    <div class="tool-hero">
         <h1>Chat with PDF</h1>
-        <p class="tool-subtitle">
-            Upload your PDF and ask it anything.
-            Our AI will answer questions based on
-            your document content.
-        </p>
-        <div class="coming-soon-banner">
-            <span class="coming-soon-icon">💬</span>
-            <div>
-                <h3>Chat with PDF Coming Soon</h3>
-                <p>
-                    We are building an AI-powered chat
-                    interface that lets you ask questions
-                    about your PDF and get instant
-                    accurate answers.
-                </p>
-                <p>
-                    Perfect for research papers, legal
-                    documents, manuals, and reports.
-                </p>
+        <p>Upload your PDF and ask it anything. Get instant answers based on your document — no reading required.</p>
+    </div>
+
+    <AuthorizeView>
+        <NotAuthorized>
+            <div class="upgrade-nudge">
+                <p>⭐ Chat with PDF is a <strong>Pro feature</strong>.</p>
+                <a href="/pricing" class="process-button" style="display:inline-block; max-width:200px;">Upgrade to Pro — $19/mo</a>
             </div>
-        </div>
-        <div class="notify-section">
-            <h3>Get notified when it launches</h3>
-            @if (NotifySubmitted)
+        </NotAuthorized>
+        <Authorized>
+            @if (!_isPro)
             {
-                <div class="contact-success">
-                    <span>✅</span>
-                    <p>
-                        We'll notify you when Chat with PDF
-                        launches!
-                    </p>
+                <div class="upgrade-nudge">
+                    <p>⭐ Chat with PDF is a <strong>Pro feature</strong>.</p>
+                    <a href="/pricing" class="process-button" style="display:inline-block; max-width:200px;">Upgrade to Pro — $19/mo</a>
                 </div>
             }
             else
             {
-                <div class="notify-form">
-                    <input type="email"
-                           class="field-input"
-                           style="max-width: 300px;"
-                           placeholder="your@email.com"
-                           @bind="NotifyEmail" />
-                    <button class="process-button"
-                            style="max-width: 160px;"
-                            @onclick="SubmitNotify">
-                        Notify Me
-                    </button>
-                </div>
+                <!-- Upload -->
+                @if (_fileBytes == null)
+                {
+                    <div class="tool-card" style="margin-bottom:1.25rem;">
+                        <label class="upload-label">Upload PDF to chat with</label>
+                        <InputFile OnChange="OnFileSelected" accept=".pdf" class="file-input" />
+                    </div>
+                }
+                else
+                {
+                    <div class="tool-card" style="margin-bottom:1.25rem; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.75rem;">
+                        <div class="compare-file-badge">📄 @_fileName</div>
+                        <button class="secondary-button" @onclick="ClearFile">Change file</button>
+                    </div>
+
+                    <!-- Chat history -->
+                    @if (_messages.Any())
+                    {
+                        <div class="chat-history">
+                            @foreach (var msg in _messages)
+                            {
+                                <div class="chat-bubble @(msg.IsUser ? "chat-user" : "chat-ai")">
+                                    @if (!msg.IsUser)
+                                    {
+                                        <span class="chat-ai-label">AI</span>
+                                    }
+                                    <div class="chat-bubble-text">@msg.Text</div>
+                                </div>
+                            }
+                            @if (_processing)
+                            {
+                                <div class="chat-bubble chat-ai">
+                                    <span class="chat-ai-label">AI</span>
+                                    <div class="chat-bubble-text chat-thinking">Thinking...</div>
+                                </div>
+                            }
+                        </div>
+                    }
+
+                    <!-- Input -->
+                    <div class="chat-input-row">
+                        <input class="chat-input"
+                               type="text"
+                               placeholder="Ask a question about your document..."
+                               @bind="_question"
+                               @bind:event="oninput"
+                               @onkeydown="OnKeyDown"
+                               disabled="@_processing" />
+                        <button class="process-button"
+                                style="max-width:100px; flex-shrink:0;"
+                                @onclick="AskQuestion"
+                                disabled="@(_processing || string.IsNullOrWhiteSpace(_question))">
+                            Ask
+                        </button>
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(_error))
+                {
+                    <div class="error-message" style="margin-top:1rem;">@_error</div>
+                }
             }
-        </div>
-    </div>
+        </Authorized>
+    </AuthorizeView>
 </div>
 
 @code {
-    private string NotifyEmail = string.Empty;
-    private bool NotifySubmitted = false;
-    private async Task SubmitNotify()
+    private byte[]? _fileBytes;
+    private string? _fileName;
+    private bool _isPro;
+    private bool _processing;
+    private string _question = string.Empty;
+    private string _error = string.Empty;
+    private List<ChatMessage> _messages = new();
+
+    protected override async Task OnInitializedAsync()
     {
-        if (string.IsNullOrWhiteSpace(NotifyEmail) ||
-            !NotifyEmail.Contains('@')) return;
-        await Task.Delay(500);
-        NotifySubmitted = true;
+        var authState = await Auth.GetAuthenticationStateAsync();
+        var user = authState.User;
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            var userId = user.FindFirst("sub")?.Value ?? string.Empty;
+            var status = await SubService.GetStatusAsync(userId);
+            _isPro = status.HasPro;
+        }
+    }
+
+    private async Task OnFileSelected(InputFileChangeEventArgs e)
+    {
+        using var ms = new MemoryStream();
+        await e.File.OpenReadStream(maxAllowedSize: 52_428_800).CopyToAsync(ms);
+        _fileBytes = ms.ToArray();
+        _fileName = e.File.Name;
+        _messages.Clear();
+        _error = string.Empty;
+    }
+
+    private void ClearFile()
+    {
+        _fileBytes = null;
+        _fileName = null;
+        _messages.Clear();
+        _question = string.Empty;
+    }
+
+    private async Task OnKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(_question) && !_processing)
+            await AskQuestion();
+    }
+
+    private async Task AskQuestion()
+    {
+        if (_fileBytes == null || string.IsNullOrWhiteSpace(_question)) return;
+
+        var q = _question.Trim();
+        _question = string.Empty;
+        _error = string.Empty;
+        _messages.Add(new ChatMessage(q, true));
+        _processing = true;
         StateHasChanged();
+
+        try
+        {
+            using var content = new MultipartFormDataContent();
+            var fc = new ByteArrayContent(_fileBytes);
+            fc.Headers.ContentType =
+                new System.Net.Http.Headers.MediaTypeHeaderValue("application/pdf");
+            content.Add(fc, "file", _fileName ?? "document.pdf");
+            content.Add(new StringContent(q), "question");
+
+            var result = await ApiService.PostMultipartAsync<ChatResponse>(
+                "api/ai/chat", content);
+
+            _messages.Add(new ChatMessage(
+                result?.Answer ?? "Sorry, I couldn't find an answer in this document.",
+                false));
+        }
+        catch (Exception ex)
+        {
+            _error = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            _processing = false;
+            StateHasChanged();
+        }
+    }
+
+    private record ChatMessage(string Text, bool IsUser);
+
+    private class ChatResponse
+    {
+        public string Answer { get; set; } = string.Empty;
     }
 }

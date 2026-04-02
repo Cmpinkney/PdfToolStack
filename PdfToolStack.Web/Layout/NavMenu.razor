@@ -5,15 +5,14 @@
     <a href="/" class="nav-brand">⚡ PDF<span>Toolstack</span></a>
 
     <div class="nav-links">
+        <a href="/ai-pdf-assist" class="nav-link nav-link-ai">✨ AI Tools</a>
         <a href="/compress-pdf" class="nav-link">Compress</a>
         <a href="/converter" class="nav-link">Convert</a>
         <a href="/merge-pdf" class="nav-link">Merge</a>
         <a href="/split-pdf" class="nav-link">Split</a>
         <a href="/edit-pdf" class="nav-link">Edit</a>
         <a href="/sign-pdf" class="nav-link">Sign</a>
-        <a href="/redact-pdf" class="nav-link">Redact</a>
-        <a href="/organize-pdf" class="nav-link">Organize</a>
-        <a href="/ai-pdf-assist" class="nav-link">AI Tools</a>
+        <a href="/batch" class="nav-link">Batch</a>
         <a href="/pricing" class="nav-link">Pricing</a>
     </div>
 
@@ -85,6 +84,7 @@
     <a href="/delete-pdf-pages" class="mobile-nav-link" @onclick="CloseMobileMenu">🗑️ Delete Pages</a>
     <a href="/extract-pdf-pages" class="mobile-nav-link" @onclick="CloseMobileMenu">📌 Extract Pages</a>
     <a href="/rotate-pdf" class="mobile-nav-link" @onclick="CloseMobileMenu">🔄 Rotate PDF</a>
+    <a href="/batch" class="mobile-nav-link" @onclick="CloseMobileMenu">📦 Batch Process</a>
 
     <div class="mobile-section-title">Security</div>
     <a href="/protect-pdf" class="mobile-nav-link" @onclick="CloseMobileMenu">🔐 Protect PDF</a>
@@ -95,6 +95,8 @@
     <a href="/ai-pdf-assist" class="mobile-nav-link" @onclick="CloseMobileMenu">🤖 AI PDF Assist</a>
     <a href="/chat-with-pdf" class="mobile-nav-link" @onclick="CloseMobileMenu">💬 Chat with PDF</a>
     <a href="/ai-summarizer" class="mobile-nav-link" @onclick="CloseMobileMenu">✨ AI Summarizer</a>
+    <a href="/compare-pdf" class="mobile-nav-link" @onclick="CloseMobileMenu">🔍 Compare PDF</a>
+    <a href="/extract-invoice-data" class="mobile-nav-link" @onclick="CloseMobileMenu">📊 Extract Invoice Data</a>
 </div>
 
 @code {
@@ -137,6 +139,14 @@
         new("AI Questions", "Generate quiz questions", "/ai-questions", "📝"),
         new("PDF OCR", "Make scans searchable", "/pdf-ocr", "🔍"),
         new("PDF Scanner", "Scan to PDF", "/pdf-scanner", "📱"),
+        new("Compare PDF", "Find differences between two PDFs", "/compare-pdf", "🔍"),
+        new("Extract Invoice Data", "AI extracts invoice data to Excel", "/extract-invoice-data", "📊"),
+        new("Compress for Email", "Fix PDF too large for email", "/compress-for-email", "🗜️"),
+        new("Sign Contract", "Sign contracts online free", "/sign-contract", "✒️"),
+        new("Merge for Submission", "Combine PDFs for filing", "/merge-pdfs-for-submission", "🔗"),
+        new("Compare Contracts", "Find differences between contracts", "/compare-contracts", "🔍"),
+        new("Extract Invoice Data", "AI extracts invoice data to Excel", "/extract-invoice-data", "📊"),
+        new("Convert PDF to Editable Word", "Make PDF editable", "/convert-pdf-to-editable-word", "📝"),
     };
 
     private IEnumerable<ToolInfo> FilteredTools =>

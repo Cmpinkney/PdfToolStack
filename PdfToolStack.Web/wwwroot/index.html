@@ -64,7 +64,8 @@
             const extension = fileName.split('.').pop().toLowerCase();
             const mimeTypes = {
                 'pdf': 'application/pdf',
-                'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'zip': 'application/zip'
             };
             const mimeType = mimeTypes[extension] || 'application/octet-stream';
             const link = document.createElement('a');

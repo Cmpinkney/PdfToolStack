@@ -2,9 +2,10 @@
 @inject NavigationManager Navigation
 @inject AuthenticationStateProvider Auth
 @inject PdfToolStack.Web.Services.SubscriptionService SubService
+@inject PdfToolStack.Web.Services.ApiService ApiService
 @using Microsoft.AspNetCore.Components.Authorization
 
-<PageTitle>Pricing — PDFToolstack</PageTitle>
+<PageTitle>Pricing — PdfToolStack</PageTitle>
 
 <div class="pricing-page">
     <div class="pricing-hero">
@@ -45,25 +46,26 @@
             </div>
             <div class="pricing-plan-name">Pro Monthly</div>
             <div class="pricing-price">
-                $9.99
+                $19
                 <span>/month</span>
             </div>
             <div class="pricing-desc">
-                For regular PDF users
+                For professionals who work with PDFs daily
             </div>
             <ul class="pricing-features">
                 <li>✅ Everything in Free</li>
                 <li>✅ Unlimited file size</li>
                 <li>✅ No ads</li>
                 <li>✅ Priority processing</li>
-                <li>✅ Download history</li>
+                <li>✅ Download history (30 days)</li>
+                <li>✅ Batch processing (up to 20 files)</li>
                 <li>✅ PDF OCR access</li>
-                <li>✅ AI tools access</li>
+                <li>✅ All AI tools</li>
             </ul>
             <button class="pricing-btn-pro"
-                    @onclick="() => Subscribe(false)">
-                @(IsLoading ? "Loading..." :
-                                "Start Pro Monthly")
+                    @onclick="() => Subscribe(false)"
+                    disabled="@(IsLoading || _monthlyPriceId == null)">
+                @(IsLoading ? "Loading..." : "Start Pro Monthly")
             </button>
         </div>
 
@@ -74,25 +76,26 @@
             </div>
             <div class="pricing-plan-name">Pro Yearly</div>
             <div class="pricing-price">
-                $79
+                $150
                 <span>/year</span>
             </div>
             <div class="pricing-desc">
-                $6.58/mo — best value
+                $12.50/mo — best value
             </div>
             <ul class="pricing-features">
-                <li>✅ Everything in Pro</li>
+                <li>✅ Everything in Pro Monthly</li>
                 <li>✅ Unlimited file size</li>
                 <li>✅ No ads</li>
                 <li>✅ Priority processing</li>
-                <li>✅ Download history</li>
+                <li>✅ Download history (30 days)</li>
+                <li>✅ Batch processing (up to 20 files)</li>
                 <li>✅ PDF OCR access</li>
-                <li>✅ AI tools access</li>
+                <li>✅ All AI tools</li>
             </ul>
             <button class="pricing-btn-yearly"
-                    @onclick="() => Subscribe(true)">
-                @(IsLoading ? "Loading..." :
-                                "Start Pro Yearly")
+                    @onclick="() => Subscribe(true)"
+                    disabled="@(IsLoading || _yearlyPriceId == null)">
+                @(IsLoading ? "Loading..." : "Start Pro Yearly")
             </button>
         </div>
 
@@ -121,18 +124,22 @@
             <p>
                 All files are deleted within 1 hour
                 regardless of plan. Pro users get
-                download history links, not stored
-                files.
+                download history links, not stored files.
             </p>
         </div>
         <div class="faq-item">
-            <h3>
-                Can I switch between monthly
-                and yearly?
-            </h3>
+            <h3>Can I switch between monthly and yearly?</h3>
             <p>
                 Yes — upgrade or downgrade anytime
                 from your account portal.
+            </p>
+        </div>
+        <div class="faq-item">
+            <h3>Are my documents private?</h3>
+            <p>
+                Yes. We never train on your documents
+                and never store them beyond 1 hour.
+                Your files are yours.
             </p>
         </div>
     </div>
@@ -142,46 +149,75 @@
     private bool IsLoading = false;
     private string UserId = string.Empty;
     private string UserEmail = string.Empty;
+    private string? _monthlyPriceId;
+    private string? _yearlyPriceId;
 
-    protected override async Task
-        OnInitializedAsync()
+    protected override async Task OnInitializedAsync()
     {
-        var authState = await Auth
-            .GetAuthenticationStateAsync();
+        var authState = await Auth.GetAuthenticationStateAsync();
         var user = authState.User;
-        UserId = user.FindFirst("sub")?.Value
-            ?? string.Empty;
-        UserEmail = user.FindFirst("email")?.Value
-            ?? string.Empty;
+        UserId = user.FindFirst("sub")?.Value ?? string.Empty;
+        UserEmail = user.FindFirst("email")?.Value ?? string.Empty;
+
+        await LoadPlansAsync();
+    }
+
+    private async Task LoadPlansAsync()
+    {
+        try
+        {
+            var plans = await ApiService
+                .GetAsync<PlansResponse>("api/subscription/plans");
+
+            if (plans != null)
+            {
+                _monthlyPriceId = plans.Monthly?.PriceId;
+                _yearlyPriceId = plans.Yearly?.PriceId;
+            }
+        }
+        catch
+        {
+            // Buttons stay disabled if plans fail to load
+        }
     }
 
     private async Task Subscribe(bool yearly)
     {
+        var priceId = yearly ? _yearlyPriceId : _monthlyPriceId;
+
+        if (string.IsNullOrEmpty(priceId))
+            return;
+
         if (string.IsNullOrEmpty(UserId))
         {
-            Navigation.NavigateTo(
-                "authentication/login");
+            Navigation.NavigateTo("authentication/login");
             return;
         }
 
         IsLoading = true;
         StateHasChanged();
 
-        var priceId = yearly
-            ? "price_1TEgOSFJEzXwielrmPRg2DU8"
-            : "price_1TEgIyFJEzXwielrQsLCKXrN";
-
-        var baseUrl = Navigation.BaseUri
-            .TrimEnd('/');
-
-        var url = await SubService
-            .CreateCheckoutSessionAsync(
-                priceId, UserId,
-                UserEmail, baseUrl);
+        var baseUrl = Navigation.BaseUri.TrimEnd('/');
+        var url = await SubService.CreateCheckoutSessionAsync(
+            priceId, UserId, UserEmail, baseUrl);
 
         if (!string.IsNullOrEmpty(url))
             Navigation.NavigateTo(url, true);
 
         IsLoading = false;
+    }
+
+    // Response shapes for the /api/subscription/plans endpoint
+    private class PlansResponse
+    {
+        public PlanInfo? Monthly { get; set; }
+        public PlanInfo? Yearly { get; set; }
+    }
+
+    private class PlanInfo
+    {
+        public string PriceId { get; set; } = string.Empty;
+        public int Amount { get; set; }
+        public string Label { get; set; } = string.Empty;
     }
 }

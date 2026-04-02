@@ -1,4 +1,7 @@
 ﻿@page "/sign-pdf"
+@page "/sign-contract"
+@page "/sign-pdf-document"
+@inject NavigationManager Navigation
 @inject ApiService ApiService
 @inject IJSRuntime JS
 @inject PaymentService PaymentService
@@ -6,7 +9,15 @@
 @inject FileValidationService Validator
 @inject ToastService Toast
 
-<PageTitle>Sign PDF Free Online — Add Electronic Signature to PDF</PageTitle>
+<PageTitle>@(IsContractMode ? "Sign Contract Online Free — Electronic Signature | PdfToolStack" : "Sign PDF Free Online — Add Electronic Signature to PDF")</PageTitle>
+
+<HeadContent>
+    <meta name="description"
+          content="@(IsContractMode
+                        ? "Sign contracts online free. Add your electronic signature to any contract PDF. Legally binding, no signup required."
+                        : "Sign PDF documents free online. Draw your electronic signature and place it on your PDF. No signup required.")" />
+    <link rel="canonical" href="https://pdftoolstack.com/sign-pdf" />
+</HeadContent>
 
 <HeadContent>
     <meta name="description"
@@ -24,10 +35,11 @@
     <AdSlot Size="banner" />
 
     <div class="tool-container">
-        <h1>Sign PDF Online</h1>
+        <h1>@(IsContractMode ? "Sign Contract Online" : "Sign PDF Online")</h1>
         <p class="tool-subtitle">
-            Draw your signature and place it on your PDF for free.
-            No signup required. Files deleted within 1 hour.
+            @(IsContractMode
+                        ? "Upload your contract and add a legally binding electronic signature in seconds. No account needed. Files deleted within 1 hour."
+                        : "Draw your signature and place it anywhere on your PDF. Free, private, and instant.")
         </p>
 
         @if (CurrentState == PageState.Upload)
@@ -336,6 +348,12 @@
             fileName,
             Convert.ToBase64String(ResultBytes));
     }
+
+    private bool IsContractMode =>
+    Navigation.Uri.Contains("/sign-contract",
+        StringComparison.OrdinalIgnoreCase) ||
+    Navigation.Uri.Contains("/sign-pdf-document",
+        StringComparison.OrdinalIgnoreCase);
 
     private void Reset()
     {

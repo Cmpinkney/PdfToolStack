@@ -1,9 +1,12 @@
 ﻿@inject IJSRuntime JS
 
-<div class="theme-toggle" @onclick="Toggle" title="@(IsDark ? "Switch to light mode" : "Switch to dark mode")">
-    <span class="theme-toggle-icon">@(IsDark ? "☀️" : "🌙")</span>
+<button class="theme-toggle"
+        @onclick="Toggle"
+        aria-label="@(IsDark ? "Switch to light mode" : "Switch to dark mode")"
+        aria-pressed="@(IsDark ? "true" : "false")">
+    <span class="theme-toggle-icon" aria-hidden="true">@(IsDark ? "☀️" : "🌙")</span>
     <span class="theme-toggle-label">@(IsDark ? "Light" : "Dark")</span>
-</div>
+</button>
 
 @code {
     private bool IsDark = false;
@@ -21,8 +24,7 @@
     private async Task Toggle()
     {
         IsDark = !IsDark;
-        await JS.InvokeVoidAsync("setTheme",
-            IsDark ? "dark" : "light");
+        await JS.InvokeVoidAsync("setTheme", IsDark ? "dark" : "light");
         StateHasChanged();
     }
 }

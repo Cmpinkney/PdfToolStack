@@ -2,6 +2,8 @@
 @inject ApiService ApiService
 @inject IJSRuntime JS
 @inject PaymentService PaymentService
+@inject FileValidationService Validator
+@inject ToastService Toast
 
 <PageTitle>PDF to JPG Converter Free Online — Convert PDF Pages to Images</PageTitle>
 
@@ -26,78 +28,218 @@
             No signup required. Files deleted within 1 hour.
         </p>
 
-        <div class="coming-soon-banner">
-            <span class="coming-soon-icon">🖼️</span>
-            <div>
-                <h3>Full PDF to Image Conversion
-                    Coming Soon</h3>
-                <p>We are finalizing our PDF to image
-                   renderer for high quality exports.
-                   This feature will be available shortly.</p>
-                <p>In the meantime you can use our
-                   <a href="/pdf-reader">PDF Reader</a>
-                   to view your PDF pages in the browser.</p>
-            </div>
-        </div>
+        @if (CurrentState == PageState.Upload)
+        {
+            <FileUpload OnFileSelected="HandleFileSelected"
+                        OnFileRemoved="HandleFileRemoved"
+                        HintText="Upload a PDF — each page becomes a JPG image" />
 
-        <div class="notify-section">
-            <h3>Get notified when it launches</h3>
-            @if (NotifySubmitted)
+            @if (SelectedFile != null)
             {
-                <div class="contact-success">
-                    <span>✅</span>
-                    <p>We'll notify you when PDF to JPG
-                       launches!</p>
-                </div>
+                <button class="process-button" @onclick="ProcessFile">
+                    Convert to JPG
+                </button>
             }
-            else
-            {
-                <div class="notify-form">
-                    <input type="email"
-                           class="field-input"
-                           style="max-width: 300px;"
-                           placeholder="your@email.com"
-                           @bind="NotifyEmail" />
-                    <button class="process-button"
-                            style="max-width: 160px;"
-                            @onclick="SubmitNotify">
-                        Notify Me
-                    </button>
-                </div>
-            }
-        </div>
+        }
+
+        @if (CurrentState == PageState.Processing)
+        {
+            <div class="processing-container" role="status">
+                <div class="spinner"></div>
+                <p>Converting PDF pages to JPG...</p>
+            </div>
+        }
+
+        @if (CurrentState == PageState.Complete && OutputBytes != null)
+        {
+            <div class="result-container">
+                <span class="result-icon" aria-hidden="true">✅</span>
+                <h2>Conversion Complete!</h2>
+                <p style="color:var(--text-secondary); font-size:0.9rem; margin-bottom:1.25rem;">
+                    @ResultMessage
+                </p>
+                <button class="download-button" @onclick="DownloadFile">
+                    @DownloadLabel
+                </button>
+                <button class="reset-button" @onclick="Reset">
+                    Convert Another PDF
+                </button>
+            </div>
+        }
+
+        @if (CurrentState == PageState.Error)
+        {
+            <div class="error-container" role="alert">
+                <span class="error-icon" aria-hidden="true">❌</span>
+                <p class="error-message">@ErrorMessage</p>
+                <button class="reset-button" @onclick="Reset">Try Again</button>
+            </div>
+        }
     </div>
 
     <div class="faq-section">
         <h2>Frequently Asked Questions</h2>
         <div class="faq-item">
-            <h3>What image formats will be supported?</h3>
-            <p>We will support JPG, PNG, and WebP output
-               formats at multiple quality levels.</p>
+            <h3>What image format is the output?</h3>
+            <p>
+                Single page PDFs download as a JPG file.
+                Multi-page PDFs download as a ZIP file containing
+                one JPG per page.
+            </p>
         </div>
         <div class="faq-item">
             <h3>Can I convert specific pages only?</h3>
-            <p>Yes — you will be able to select which
-               pages to convert to images.</p>
+            <p>
+                Currently all pages are converted. Page selection
+                is coming in a future update.
+            </p>
         </div>
         <div class="faq-item">
-            <h3>Will this be free?</h3>
-            <p>Yes — basic conversion will be free
-               with no signup required.</p>
+            <h3>Will this affect my PDF quality?</h3>
+            <p>
+                Pages are rendered at high resolution (1080px wide)
+                so the output images are clear and sharp.
+            </p>
+        </div>
+        <div class="faq-item">
+            <h3>Is my PDF stored on your servers?</h3>
+            <p>
+                Your file is automatically deleted within
+                1 hour of processing. We never store your
+                documents permanently.
+            </p>
         </div>
     </div>
 </div>
 
 @code {
-    private string NotifyEmail = string.Empty;
-    private bool NotifySubmitted = false;
+    private enum PageState { Upload, Processing, Complete, Error }
+    private PageState CurrentState = PageState.Upload;
+    private IBrowserFile? SelectedFile;
+    private byte[]? UploadedBytes;
+    private byte[]? OutputBytes;
+    private string? ErrorMessage;
+    private string ResultMessage = "";
+    private string DownloadLabel = "Download JPG";
 
-    private async Task SubmitNotify()
+    private async Task HandleFileSelected(IBrowserFile file)
     {
-        if (string.IsNullOrWhiteSpace(NotifyEmail) ||
-            !NotifyEmail.Contains('@')) return;
-        await Task.Delay(500);
-        NotifySubmitted = true;
+        SelectedFile = null;
+        UploadedBytes = null;
+
+        var validation = Validator.ValidatePdfFile(file);
+        if (!validation.IsValid)
+        {
+            Toast.ShowError(validation.Message!);
+            return;
+        }
+
+        try
+        {
+            using var stream = file.OpenReadStream(maxAllowedSize: 524288000);
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            UploadedBytes = ms.ToArray();
+
+            var bytesValidation = Validator.ValidatePdfBytes(UploadedBytes);
+            if (!bytesValidation.IsValid)
+            {
+                Toast.ShowError(bytesValidation.Message!);
+                UploadedBytes = null;
+                return;
+            }
+
+            SelectedFile = file;
+            Toast.ShowSuccess($"File ready — {Validator.FormatSize(file.Size)}");
+        }
+        catch (Exception ex)
+        {
+            Toast.ShowError($"Could not read file: {ex.Message}");
+            UploadedBytes = null;
+        }
+
         StateHasChanged();
+    }
+
+    private void HandleFileRemoved()
+    {
+        SelectedFile = null;
+        UploadedBytes = null;
+    }
+
+    private async Task ProcessFile()
+    {
+        if (SelectedFile == null || UploadedBytes == null) return;
+
+        CurrentState = PageState.Processing;
+        StateHasChanged();
+
+        try
+        {
+            var response = await ApiService.ProcessPdfAsync(
+                UploadedBytes,
+                SelectedFile.Name,
+                ToolType.PdfToJpg);
+
+            if (response?.IsSuccess == true && response.OutputBytes?.Length > 0)
+            {
+                OutputBytes = response.OutputBytes;
+
+                // ZIP magic bytes: PK (0x50 0x4B)
+                bool isZip = OutputBytes.Length > 1 &&
+                             OutputBytes[0] == 0x50 &&
+                             OutputBytes[1] == 0x4B;
+
+                ResultMessage = isZip
+                    ? "Each page has been saved as a JPG inside a ZIP file."
+                    : "Your PDF page has been converted to a JPG image.";
+
+                DownloadLabel = isZip
+                    ? "Download All Pages (ZIP)"
+                    : "Download JPG";
+
+                CurrentState = PageState.Complete;
+                Toast.ShowSuccess("Conversion complete!");
+            }
+            else
+            {
+                ErrorMessage = response?.ErrorMessage ?? "Conversion failed. Please try again.";
+                Toast.ShowError(ErrorMessage);
+                CurrentState = PageState.Error;
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Unexpected error: {ex.Message}";
+            Toast.ShowError(ErrorMessage);
+            CurrentState = PageState.Error;
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task DownloadFile()
+    {
+        if (OutputBytes == null) return;
+
+        bool isZip = OutputBytes.Length > 1 &&
+                     OutputBytes[0] == 0x50 &&
+                     OutputBytes[1] == 0x4B;
+
+        var baseName = Path.GetFileNameWithoutExtension(SelectedFile?.Name ?? "output");
+        var fileName = isZip ? $"{baseName}_pages.zip" : $"{baseName}_page1.jpg";
+
+        await JS.InvokeVoidAsync("downloadFile", fileName,
+            Convert.ToBase64String(OutputBytes));
+    }
+
+    private void Reset()
+    {
+        CurrentState = PageState.Upload;
+        SelectedFile = null;
+        UploadedBytes = null;
+        OutputBytes = null;
+        ErrorMessage = null;
+        ResultMessage = "";
     }
 }

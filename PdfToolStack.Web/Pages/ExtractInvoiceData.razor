@@ -1,0 +1,354 @@
+﻿@page "/extract-invoice-data"
+@page "/pdf-to-excel-extractor"
+@page "/extract-data-from-pdf"
+@inject ApiService ApiService
+@inject PdfToolStack.Web.Services.SubscriptionService SubService
+@inject AuthenticationStateProvider Auth
+@inject IJSRuntime JS
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Text.Json
+
+<PageTitle>Extract Data from PDF Invoice — PDF to Excel | PdfToolStack</PageTitle>
+
+<HeadContent>
+    <meta name="description"
+          content="Extract invoice data from PDF to Excel automatically.
+                   AI reads vendor, amounts, line items and exports to
+                   spreadsheet in seconds. No manual entry." />
+    <link rel="canonical"
+          href="https://pdftoolstack.com/extract-invoice-data" />
+</HeadContent>
+
+<div class="tool-page">
+    <div class="tool-hero">
+        <h1>Extract Invoice Data from PDF</h1>
+        <p>
+            Upload an invoice PDF. AI extracts vendor, amounts, dates,
+            and line items — then exports directly to Excel.
+            No manual entry.
+        </p>
+    </div>
+
+    <AuthorizeView>
+        <NotAuthorized>
+            <div class="upgrade-nudge">
+                <p>⭐ AI Data Extraction is a <strong>Pro feature</strong>.</p>
+                <a href="/pricing" class="process-button"
+                   style="display:inline-block; max-width:200px;">
+                    Upgrade to Pro — $19/mo
+                </a>
+            </div>
+        </NotAuthorized>
+        <Authorized>
+            @if (!_isPro)
+            {
+                <div class="upgrade-nudge">
+                    <p>⭐ AI Data Extraction is a <strong>Pro feature</strong>.</p>
+                    <a href="/pricing" class="process-button"
+                       style="display:inline-block; max-width: 200px;">
+                        Upgrade to Pro — $19/mo
+                    </a>
+                </div>
+            }
+            else
+            {
+                <!-- Document type selector -->
+                <div class="tool-card" style="margin-bottom: 1.25rem;">
+                    <label class="upload-label">Document type</label>
+                    <div class="extract-type-grid">
+                        <button class="extract-type-btn @(_type == "invoice" ? "active" : "")"
+                                @onclick='() => _type = "invoice"'>
+                            🧾 Invoice
+                        </button>
+                        <button class="extract-type-btn @(_type == "contract" ? "active" : "")"
+                                @onclick='() => _type = "contract"'>
+                            📋 Contract
+                        </button>
+                        <button class="extract-type-btn @(_type == "general" ? "active" : "")"
+                                @onclick='() => _type = "general"'>
+                            📄 General
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Upload -->
+                <div class="tool-card" style="margin-bottom: 1.25rem;">
+                    <label class="upload-label">Upload PDF</label>
+                    <InputFile OnChange="OnFileSelected"
+                               accept=".pdf"
+                               class="file-input" />
+                    @if (_fileName != null)
+                    {
+                        <div class="compare-file-badge" style="margin-top: 0.5rem;">
+                            📄 @_fileName
+                        </div>
+                    }
+                </div>
+
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem;">
+                    <button class="process-button"
+                            style="max-width: 200px;"
+                            @onclick="RunExtract"
+                            disabled="@(_processing || _fileBytes == null)">
+                        @(_processing ? "Extracting..." : "Extract Data")
+                    </button>
+
+                    @if (_excelReady)
+                    {
+                        <button class="download-button"
+                                style="max-width: 220px;"
+                                @onclick="DownloadExcel">
+                            ⬇ Download Excel
+                        </button>
+                    }
+                </div>
+
+                <!-- JSON preview -->
+                @if (_extractedJson != null)
+                {
+                    <div class="tool-card" style="margin-bottom: 1.25rem;">
+                        <h3 style="margin-bottom: 0.75rem;">
+                            Extracted fields
+                        </h3>
+                        <div class="extract-field-grid">
+                            @foreach (var field in _fields)
+                            {
+                                <div class="extract-field">
+                                    <span class="extract-field-label">
+                                        @field.Key
+                                    </span>
+                                    <span class="extract-field-value">
+                                        @field.Value
+                                    </span>
+                                </div>
+                            }
+                        </div>
+
+                        @if (_lineItems.Any())
+                        {
+                            <h4 style="margin: 1rem 0 0.5rem;">Line items</h4>
+                            <div class="history-table-wrap">
+                                <table class="history-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Description</th>
+                                            <th>Qty</th>
+                                            <th>Unit Price</th>
+                                            <th>Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var item in _lineItems)
+                                        {
+                                            <tr>
+                                                <td>@item.GetValueOrDefault("description")</td>
+                                                <td>@item.GetValueOrDefault("quantity")</td>
+                                                <td>@item.GetValueOrDefault("unitPrice")</td>
+                                                <td>@item.GetValueOrDefault("total")</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(_error))
+                {
+                    <div class="error-message">@_error</div>
+                }
+            }
+        </Authorized>
+    </AuthorizeView>
+</div>
+
+@code {
+    private byte[]? _fileBytes;
+    private string? _fileName;
+    private string _type = "invoice";
+    private bool _isPro = false;
+    private bool _processing = false;
+    private bool _excelReady = false;
+    private string? _extractedJson;
+    private string _error = string.Empty;
+    private List<KeyValuePair<string, string>> _fields = new();
+    private List<Dictionary<string, string>> _lineItems = new();
+    private byte[]? _excelBytes;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await Auth.GetAuthenticationStateAsync();
+        var user = authState.User;
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            var userId = user.FindFirst("sub")?.Value ?? string.Empty;
+            var status = await SubService.GetStatusAsync(userId);
+            _isPro = status.HasPro;
+        }
+    }
+
+    private async Task OnFileSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file == null) return;
+        using var ms = new MemoryStream();
+        await file.OpenReadStream(maxAllowedSize: 52_428_800).CopyToAsync(ms);
+        _fileBytes = ms.ToArray();
+        _fileName = file.Name;
+        _extractedJson = null;
+        _excelReady = false;
+        _fields.Clear();
+        _lineItems.Clear();
+        _error = string.Empty;
+    }
+
+    private async Task RunExtract()
+    {
+        if (_fileBytes == null) return;
+
+        _processing = true;
+        _error = string.Empty;
+        _extractedJson = null;
+        _fields.Clear();
+        _lineItems.Clear();
+        _excelReady = false;
+        StateHasChanged();
+
+        try
+        {
+            // Step 1: get JSON preview
+            using var previewContent = new MultipartFormDataContent();
+            var fc = new ByteArrayContent(_fileBytes);
+            fc.Headers.ContentType =
+                new System.Net.Http.Headers
+                    .MediaTypeHeaderValue("application/pdf");
+            previewContent.Add(fc, "file", _fileName ?? "document.pdf");
+
+            var previewResult = await ApiService.GetAsync<ExtractResponse>(
+                $"api/ai/extract?type={_type}");
+
+            // Re-post with file for preview
+            var (json, previewError) = await PostExtractAsync(
+                "api/ai/extract");
+
+            if (previewError != null)
+            {
+                _error = previewError;
+                return;
+            }
+
+            _extractedJson = json;
+            ParseFields(json!);
+
+            // Step 2: get Excel
+            var (excelBytes, excelError) = await PostExtractBytesAsync(
+                "api/ai/extract/excel");
+
+            if (excelBytes != null)
+            {
+                _excelBytes = excelBytes;
+                _excelReady = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            _processing = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task<(string? Json, string? Error)> PostExtractAsync(
+        string endpoint)
+    {
+        using var content = new MultipartFormDataContent();
+        var fc = new ByteArrayContent(_fileBytes!);
+        fc.Headers.ContentType =
+            new System.Net.Http.Headers
+                .MediaTypeHeaderValue("application/pdf");
+        content.Add(fc, "file", _fileName ?? "document.pdf");
+
+        var response = await ApiService.PostMultipartAsync<ExtractResponse>(
+            $"{endpoint}?type={_type}", content);
+
+        if (response == null)
+            return (null, "Extraction failed. Please try again.");
+
+        return (response.Json, null);
+    }
+
+    private async Task<(byte[]? Bytes, string? Error)> PostExtractBytesAsync(
+        string endpoint)
+    {
+        using var content = new MultipartFormDataContent();
+        var fc = new ByteArrayContent(_fileBytes!);
+        fc.Headers.ContentType =
+            new System.Net.Http.Headers
+                .MediaTypeHeaderValue("application/pdf");
+        content.Add(fc, "file", _fileName ?? "document.pdf");
+
+        var bytes = await ApiService.PostMultipartBytesAsync(
+            $"{endpoint}?type={_type}", content);
+
+        return (bytes, bytes == null ? "Excel export failed." : null);
+    }
+
+    private void ParseFields(string json)
+    {
+        try
+        {
+            var doc = JsonDocument.Parse(json);
+            var root = doc.RootElement;
+
+            var skip = new HashSet<string> { "lineItems" };
+
+            foreach (var prop in root.EnumerateObject())
+            {
+                if (skip.Contains(prop.Name)) continue;
+                if (prop.Value.ValueKind == JsonValueKind.Null) continue;
+                if (prop.Value.ValueKind == JsonValueKind.Array) continue;
+
+                _fields.Add(new KeyValuePair<string, string>(
+                    ToLabel(prop.Name),
+                    prop.Value.ToString()));
+            }
+
+            if (root.TryGetProperty("lineItems", out var items) &&
+                items.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in items.EnumerateArray())
+                {
+                    var dict = new Dictionary<string, string>();
+                    foreach (var p in item.EnumerateObject())
+                        if (p.Value.ValueKind != JsonValueKind.Null)
+                            dict[p.Name] = p.Value.ToString();
+                    _lineItems.Add(dict);
+                }
+            }
+        }
+        catch { /* show raw if parse fails */ }
+    }
+
+    private async Task DownloadExcel()
+    {
+        if (_excelBytes == null) return;
+        var name = $"extracted_{_type}_{DateTime.Now:yyyyMMdd}.xlsx";
+        await JS.InvokeVoidAsync("downloadFile",
+            name, Convert.ToBase64String(_excelBytes));
+    }
+
+    private static string ToLabel(string camelCase) =>
+        System.Text.RegularExpressions.Regex
+            .Replace(camelCase, "([A-Z])", " $1")
+            .Trim();
+
+    private class ExtractResponse
+    {
+        public string Json { get; set; } = string.Empty;
+        public string ExtractionType { get; set; } = string.Empty;
+    }
+}

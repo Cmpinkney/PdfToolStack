@@ -1,8 +1,12 @@
 ﻿@page "/account"
-
+@inject AuthenticationStateProvider Auth
+@inject PdfToolStack.Web.Services.SubscriptionService SubService
+@inject PdfToolStack.Web.Services.ApiService ApiService
+@inject NavigationManager Navigation
 @using Microsoft.AspNetCore.Components.Authorization
+@using PdfToolStack.Application.DTOs
 
-<PageTitle>My Account — PDFToolstack</PageTitle>
+<PageTitle>My Account — PdfToolStack</PageTitle>
 
 <div class="legal-page">
     <div class="legal-container">
@@ -12,59 +16,206 @@
 
         <AuthorizeView>
             <Authorized>
+
+                <!-- Profile -->
                 <div class="account-section">
                     <h2>Profile</h2>
                     <div class="account-info">
                         <div class="account-row">
-                            <span class="account-label">
-                                Name
-                            </span>
+                            <span class="account-label">Name</span>
                             <span class="account-value">
                                 @context.User.Identity?.Name
                             </span>
                         </div>
                         <div class="account-row">
-                            <span class="account-label">
-                                Email
-                            </span>
+                            <span class="account-label">Email</span>
                             <span class="account-value">
-                                @context.User.FindFirst(
-                                    "email")?.Value
+                                @context.User.FindFirst("email")?.Value
                             </span>
                         </div>
                     </div>
                 </div>
 
+                <!-- Subscription -->
                 <div class="account-section">
                     <h2>Subscription</h2>
-                    <div class="subscription-card free">
-                        <h3>Free Plan</h3>
-                        <p>Up to 25MB per file</p>
-                        <p>5 files per day</p>
-                        <button class="process-button"
-                                style="max-width: 200px;
-                                       margin-top: 1rem;">
-                            Upgrade to Pro
-                        </button>
-                    </div>
+
+                    @if (_subStatus == null)
+                    {
+                        <p style="color: var(--gray);">Loading...</p>
+                    }
+                    else if (_subStatus.HasPro)
+                    {
+                        <div class="subscription-card pro">
+                            <h3>Pro Plan</h3>
+                            <p>Unlimited file size · All AI tools · No ads</p>
+                            @if (_subStatus.CurrentPeriodEnd.HasValue)
+                            {
+                                <p style="font-size: 0.85rem; color: var(--gray);">
+                                    @(_subStatus.CancelAtPeriodEnd
+                                                                ? "Cancels"
+                                                                : "Renews") on
+                            @_subStatus.CurrentPeriodEnd.Value.ToString("MMMM d, yyyy")
+                        </p>
+                                                }
+                            <button class="process-button"
+                                    style="max-width: 200px; margin-top: 1rem;"
+                                    @onclick="ManageBilling">
+                                Manage Billing
+                            </button>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="subscription-card free">
+                            <h3>Free Plan</h3>
+                            <p>Up to 25MB per file · Standard tools only</p>
+                            <button class="process-button"
+                                    style="max-width: 200px; margin-top: 1rem;"
+                                    @onclick='() => Navigation.NavigateTo("/pricing")'>
+                                Upgrade to Pro — $19/mo
+                            </button>
+                        </div>
+                    }
                 </div>
 
+                <!-- Download History -->
                 <div class="account-section">
-                    <h2>Recent Activity</h2>
-                    <p style="color: var(--gray);">
-                        Your recent PDF processing history
-                        will appear here.
-                    </p>
+                    <h2>Recent Documents</h2>
+
+                    @if (_historyLoading)
+                    {
+                        <p style="color: var(--gray);">Loading history...</p>
+                    }
+                    else if (_history == null || !_history.Any())
+                    {
+                        <p style="color: var(--gray);">
+                            No documents processed yet. Your history will appear here once you start using the tools.
+                        </p>
+                    }
+                    else
+                    {
+                        <div class="history-table-wrap">
+                            <table class="history-table">
+                                <thead>
+                                    <tr>
+                                        <th>File</th>
+                                        <th>Tool</th>
+                                        <th>Size</th>
+                                        <th>Processed</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in _history)
+                                    {
+                                        <tr>
+                                            <td class="history-filename">
+                                                @TruncateFileName(item.FileName)
+                                            </td>
+                                            <td>
+                                                <span class="history-tool-badge">
+                                                    @FormatToolType(item.ToolType)
+                                                </span>
+                                            </td>
+                                            <td class="history-size">
+                                                @FormatFileSize(item.FileSizeBytes)
+                                            </td>
+                                            <td class="history-date">
+                                                @item.ProcessedAt.ToString("MMM d, yyyy · h:mm tt")
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+
+                        @if (!_subStatus!.HasPro)
+                        {
+                            <p class="history-pro-nudge">
+                                ⭐ Upgrade to Pro to keep 30 days of history and re-download processed files.
+                                <a href="/pricing">See plans</a>
+                            </p>
+                        }
+                    }
                 </div>
 
-                <div class="account-section">
-                    <h2>Receipts</h2>
-                    <p style="color: var(--gray);">
-                        Your payment receipts and invoices
-                        will appear here.
-                    </p>
-                </div>
             </Authorized>
+            <NotAuthorized>
+                <p>Please <a href="authentication/login">sign in</a> to view your account.</p>
+            </NotAuthorized>
         </AuthorizeView>
     </div>
 </div>
+
+@code {
+    private string _userId = string.Empty;
+    private string _baseUrl = string.Empty;
+    private SubscriptionStatusDto? _subStatus;
+    private List<DownloadHistoryDto>? _history;
+    private bool _historyLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await Auth.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (!user.Identity?.IsAuthenticated ?? true)
+            return;
+
+        _userId = user.FindFirst("sub")?.Value ?? string.Empty;
+        _baseUrl = Navigation.BaseUri.TrimEnd('/');
+
+        await Task.WhenAll(
+            LoadSubscriptionAsync(),
+            LoadHistoryAsync());
+    }
+
+    private async Task LoadSubscriptionAsync()
+    {
+        _subStatus = await SubService.GetStatusAsync(_userId);
+        StateHasChanged();
+    }
+
+    private async Task LoadHistoryAsync()
+    {
+        try
+        {
+            _history = await ApiService
+                .GetAsync<List<DownloadHistoryDto>>(
+                    $"api/subscription/history/{_userId}");
+        }
+        catch
+        {
+            _history = new List<DownloadHistoryDto>();
+        }
+        finally
+        {
+            _historyLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task ManageBilling()
+    {
+        var url = await SubService
+            .CreatePortalSessionAsync(_userId, _baseUrl);
+        if (!string.IsNullOrEmpty(url))
+            Navigation.NavigateTo(url, forceLoad: true);
+    }
+
+    private static string FormatFileSize(long bytes)
+    {
+        if (bytes >= 1_048_576)
+            return $"{bytes / 1_048_576.0:F1} MB";
+        if (bytes >= 1_024)
+            return $"{bytes / 1_024.0:F0} KB";
+        return $"{bytes} B";
+    }
+
+    private static string TruncateFileName(string name)
+        => name.Length > 36 ? name[..33] + "..." : name;
+
+    private static string FormatToolType(string toolType)
+        => System.Text.RegularExpressions.Regex
+            .Replace(toolType, "([A-Z])", " $1").Trim();
+}

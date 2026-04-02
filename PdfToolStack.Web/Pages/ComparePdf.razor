@@ -1,0 +1,249 @@
+﻿@page "/compare-pdf"
+@page "/compare-contracts"
+@page "/compare-pdf-documents"
+@inject ApiService ApiService
+@inject PdfToolStack.Web.Services.SubscriptionService SubService
+@inject AuthenticationStateProvider Auth
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
+@using Microsoft.AspNetCore.Components.Authorization
+
+<PageTitle>@(IsContractMode ? "Compare Contracts Online — Find PDF Differences | PdfToolStack" : "Compare PDF Files — Find Differences | PdfToolStack")</PageTitle>
+
+<HeadContent>
+    <meta name="description"
+          content="@(IsContractMode
+                        ? "Compare two versions of a contract and see exactly what changed. AI-highlighted diff report. Perfect for legal teams and freelancers."
+                        : "Upload two versions of a document and get a highlighted report showing exactly what changed.")" />
+    <link rel="canonical" href="https://pdftoolstack.com/compare-pdf" />
+</HeadContent>
+
+<div class="tool-page">
+    <div class="tool-hero">
+        <h1>@(IsContractMode ? "Compare Contracts Online" : "Compare PDF Files")</h1>
+        <p>
+            @(IsContractMode
+                        ? "Upload two versions of a contract and get a word-by-word diff report showing every addition and deletion. Essential for legal review."
+                        : "Upload two versions of a document and get a highlighted report showing exactly what changed.")
+        </p>
+    </div>
+
+    <AuthorizeView>
+        <NotAuthorized>
+            <div class="upgrade-nudge">
+                <p>⭐ PDF Compare is a <strong>Pro feature</strong>.</p>
+                <a href="/pricing" class="process-button"
+                   style="display:inline-block; max-width:200px;">
+                    Upgrade to Pro — $19/mo
+                </a>
+            </div>
+        </NotAuthorized>
+        <Authorized>
+            @if (!_isPro)
+            {
+                <div class="upgrade-nudge">
+                    <p>⭐ PDF Compare is a <strong>Pro feature</strong>.</p>
+                    <a href="/pricing" class="process-button"
+                       style="display:inline-block; max-width:200px;">
+                        Upgrade to Pro — $19/mo
+                    </a>
+                </div>
+            }
+            else
+            {
+                <div class="compare-grid">
+
+                    <!-- Original -->
+                    <div class="tool-card compare-drop">
+                        <div class="compare-drop-label">
+                            @(IsContractMode ? "Original contract" : "Original version")
+                        </div>
+                        <InputFile OnChange="e => OnFileSelected(e, true)"
+                                   accept=".pdf" class="file-input" />
+                        @if (_originalName != null)
+                        {
+                            <div class="compare-file-badge">
+                                📄 @_originalName
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Revised -->
+                    <div class="tool-card compare-drop">
+                        <div class="compare-drop-label">
+                            @(IsContractMode ? "Revised contract" : "Revised version")
+                        </div>
+                        <InputFile OnChange="e => OnFileSelected(e, false)"
+                                   accept=".pdf" class="file-input" />
+                        @if (_revisedName != null)
+                        {
+                            <div class="compare-file-badge">
+                                📄 @_revisedName
+                            </div>
+                        }
+                </div>
+
+            </div>
+
+            <div style="margin-top: 1.5rem;">
+                <button class="process-button"
+                        style="max-width: 220px;"
+                        @onclick="RunCompare"
+                        disabled="@(_processing || _originalBytes == null || _revisedBytes == null)">
+                    @(_processing
+                                        ? "Comparing..."
+                                        : IsContractMode ? "Compare Contracts" : "Compare Documents")
+                </button>
+            </div>
+
+            @if (_result != null)
+                {
+                    <div class="tool-card result-card" style="margin-top: 1.5rem;">
+                        <h3>✅ Comparison complete</h3>
+
+                        <div class="compare-stats">
+                            <div class="compare-stat">
+                                <span class="compare-stat-value added">
+                                    +@_result.Value.Added
+                                </span>
+                                <span class="compare-stat-label">words added</span>
+                            </div>
+                            <div class="compare-stat">
+                                <span class="compare-stat-value removed">
+                                    -@_result.Value.Removed
+                                </span>
+                                <span class="compare-stat-label">words removed</span>
+                            </div>
+                            <div class="compare-stat">
+                                <span class="compare-stat-value">
+                                    @_result.Value.Pages
+                                </span>
+                                <span class="compare-stat-label">pages compared</span>
+                            </div>
+                        </div>
+
+                        @if (_result.Value.Added == 0 && _result.Value.Removed == 0)
+                        {
+                            <p style="color: var(--success, #16a34a); font-weight: 500; margin-top: 0.75rem;">
+                                ✓ @(IsContractMode ? "Contracts are identical — no differences found." : "Documents are identical — no differences found.")
+                            </p>
+                        }
+
+                        <button class="download-button"
+                                @onclick="DownloadReport"
+                                style="max-width: 260px; margin-top: 1rem;">
+                            ⬇ Download Comparison Report
+                        </button>
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(_error))
+                {
+                    <div class="error-message" style="margin-top: 1rem;">
+                        @_error
+                    </div>
+                }
+            }
+        </Authorized>
+    </AuthorizeView>
+</div>
+
+@code {
+    private byte[]? _originalBytes;
+    private byte[]? _revisedBytes;
+    private string? _originalName;
+    private string? _revisedName;
+    private bool _isPro = false;
+    private bool _processing = false;
+    private string _error = string.Empty;
+    private byte[]? _reportBytes;
+    private (int Added, int Removed, int Pages)? _result;
+
+    private bool IsContractMode =>
+        Navigation.Uri.Contains("/compare-contracts",
+            StringComparison.OrdinalIgnoreCase) ||
+        Navigation.Uri.Contains("/compare-pdf-documents",
+            StringComparison.OrdinalIgnoreCase);
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await Auth.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            var userId = user.FindFirst("sub")?.Value ?? string.Empty;
+            var status = await SubService.GetStatusAsync(userId);
+            _isPro = status.HasPro;
+        }
+    }
+
+    private async Task OnFileSelected(InputFileChangeEventArgs e, bool isOriginal)
+    {
+        var file = e.File;
+        if (file == null) return;
+
+        using var ms = new MemoryStream();
+        await file.OpenReadStream(maxAllowedSize: 52_428_800).CopyToAsync(ms);
+
+        if (isOriginal)
+        {
+            _originalBytes = ms.ToArray();
+            _originalName = file.Name;
+        }
+        else
+        {
+            _revisedBytes = ms.ToArray();
+            _revisedName = file.Name;
+        }
+
+        _result = null;
+        _reportBytes = null;
+        _error = string.Empty;
+    }
+
+    private async Task RunCompare()
+    {
+        if (_originalBytes == null || _revisedBytes == null) return;
+
+        _processing = true;
+        _error = string.Empty;
+        _result = null;
+        StateHasChanged();
+
+        try
+        {
+            var (report, added, removed, pages) =
+                await ApiService.ComparePdfsAsync(
+                    _originalBytes, _originalName ?? "original.pdf",
+                    _revisedBytes, _revisedName ?? "revised.pdf");
+
+            if (report != null)
+            {
+                _reportBytes = report;
+                _result = (added, removed, pages);
+            }
+            else
+            {
+                _error = "Comparison failed. Please check both files are valid PDFs.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            _processing = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task DownloadReport()
+    {
+        if (_reportBytes == null) return;
+        await JS.InvokeVoidAsync("downloadFile",
+            "comparison_report.pdf",
+            Convert.ToBase64String(_reportBytes));
+    }
+}

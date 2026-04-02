@@ -1,21 +1,20 @@
 ﻿@page "/pdf-to-word"
+@page "/convert-pdf-to-editable-word"
+@inject NavigationManager Navigation
 @inject ApiService ApiService
 @inject IJSRuntime JS
 @inject PaymentService PaymentService
 @inject FileValidationService Validator
 @inject ToastService Toast
 
-<PageTitle>PDF to Word Converter Free Online — Convert PDF to DOCX</PageTitle>
+<PageTitle>@(IsEditMode ? "Convert PDF to Editable Word Document Free | PdfToolStack" : "PDF to Word Converter Free Online — Convert PDF to DOCX")</PageTitle>
 
 <HeadContent>
     <meta name="description"
-          content="Convert PDF to Word document free online.
-                   No signup required. Download your DOCX file instantly." />
-    <meta name="keywords"
-          content="pdf to word, convert pdf to word, pdf to docx,
-                   free pdf converter" />
-    <link rel="canonical"
-          href="https://pdftoolstack.com/pdf-to-word" />
+          content="@(IsEditMode
+                        ? "Convert your PDF to an editable Word document instantly. Edit text, tables, and formatting. Free, no signup, files deleted in 1 hour."
+                        : "Convert PDF to Word document free online. No signup required. Download your DOCX file instantly.")" />
+    <link rel="canonical" href="https://pdftoolstack.com/pdf-to-word" />
 </HeadContent>
 
 <div class="tool-page">
@@ -23,10 +22,11 @@
     <AdSlot Size="banner" />
 
     <div class="tool-container">
-        <h1>PDF to Word Converter</h1>
+        <h1>@(IsEditMode ? "Convert PDF to Editable Word" : "PDF to Word Converter")</h1>
         <p class="tool-subtitle">
-            Convert your PDF to an editable Word document for free.
-            No signup required. Files deleted within 1 hour.
+            @(IsEditMode
+                        ? "Turn any PDF into a fully editable Word document. Perfect for contracts, reports, and forms you need to update. Files deleted within 1 hour."
+                        : "Convert your PDF to a Word document free. No signup required. Download your DOCX instantly.")
         </p>
 
         @if (CurrentState == PageState.Upload)
@@ -293,6 +293,10 @@
             fileName,
             Convert.ToBase64String(ProcessedBytes));
     }
+
+    private bool IsEditMode =>
+    Navigation.Uri.Contains("/convert-pdf-to-editable-word",
+        StringComparison.OrdinalIgnoreCase);
 
     private void Reset()
     {

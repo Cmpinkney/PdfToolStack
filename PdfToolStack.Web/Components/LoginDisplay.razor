@@ -19,14 +19,12 @@
     </Authorized>
     <NotAuthorized>
         <div class="auth-buttons">
-            <button class="login-btn"
-                    @onclick="BeginLogin">
+            <a href="authentication/login" class="login-btn">
                 Sign In
-            </button>
-            <button class="signup-btn"
-                    @onclick="BeginSignUp">
-                Sign Up Free
-            </button>
+            </a>
+            <a href="authentication/login?screen_hint=signup" class="signup-btn">
+                Get started free
+            </a>
         </div>
     </NotAuthorized>
 </AuthorizeView>

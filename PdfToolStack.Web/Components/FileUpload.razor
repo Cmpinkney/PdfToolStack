@@ -1,6 +1,8 @@
 ﻿@inject IJSRuntime JS
 
 <div class="upload-container @(IsDragging ? "dragging" : "")"
+     role="region"
+     aria-label="File upload area"
      @ondragover="HandleDragOver"
      @ondragover:preventDefault="true"
      @ondragleave="HandleDragLeave"
@@ -8,35 +10,32 @@
      @ondrop:preventDefault="true">
     @if (SelectedFile == null)
     {
-        <span class="upload-icon">📄</span>
-        <p style="color:var(--text-secondary);
-                          margin-bottom:0.75rem;">
+        <span class="upload-icon" aria-hidden="true">📄</span>
+        <p style="color:var(--text-secondary); margin-bottom:0.75rem;">
             Drag and drop your file here or
         </p>
         <label class="upload-button">
             Browse File
             <InputFile OnChange="HandleFileSelected"
                        accept="@Accept"
+                       aria-label="Choose a file to upload"
                        style="display:none" />
         </label>
         <p class="upload-hint">@HintText</p>
     }
     else
     {
-        <span style="font-size:2rem;">✅</span>
-        <p style="font-size:0.95rem;
-                          font-weight:600;
-                          color:var(--text);
-                          margin:0.5rem 0 0.25rem;">
-            @SelectedFile.Name
+        <span aria-hidden="true" style="font-size:2rem;">✅</span>
+        <p style="font-size:0.95rem; font-weight:600; color:var(--text); margin:0.5rem 0 0.25rem;"
+           aria-live="polite">
+            @SelectedFile.Name selected
         </p>
-        <p style="font-size:0.85rem;
-                          color:var(--text-muted);
-                          margin-bottom:0.75rem;">
+        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.75rem;">
             @FormatFileSize(SelectedFile.Size)
         </p>
         <button class="reset-button"
                 style="max-width:120px;"
+                aria-label="Remove selected file"
                 @onclick="RemoveFile">
             Remove
         </button>
@@ -44,29 +43,15 @@
 </div>
 
 @code {
-    [Parameter]
-    public EventCallback<IBrowserFile>
-        OnFileSelected
-    { get; set; }
-
-    [Parameter]
-    public EventCallback
-        OnFileRemoved
-    { get; set; }
-
-    [Parameter]
-    public string Accept { get; set; }
-        = ".pdf";
-
-    [Parameter]
-    public string HintText { get; set; }
-        = "Maximum file size: 10MB free · 500MB paid";
+    [Parameter] public EventCallback<IBrowserFile> OnFileSelected { get; set; }
+    [Parameter] public EventCallback OnFileRemoved { get; set; }
+    [Parameter] public string Accept { get; set; } = ".pdf";
+    [Parameter] public string HintText { get; set; } = "Maximum file size: 10MB free · 500MB paid";
 
     private IBrowserFile? SelectedFile;
     private bool IsDragging = false;
 
-    private async Task HandleFileSelected(
-        InputFileChangeEventArgs e)
+    private async Task HandleFileSelected(InputFileChangeEventArgs e)
     {
         SelectedFile = e.File;
         await OnFileSelected.InvokeAsync(SelectedFile);
@@ -90,8 +75,7 @@
     private static string FormatFileSize(long bytes)
     {
         if (bytes < 1024) return $"{bytes} B";
-        if (bytes < 1024 * 1024)
-            return $"{Math.Round((double)bytes / 1024, 1)} KB";
+        if (bytes < 1024 * 1024) return $"{Math.Round((double)bytes / 1024, 1)} KB";
         return $"{Math.Round((double)bytes / (1024 * 1024), 1)} MB";
     }
 }
