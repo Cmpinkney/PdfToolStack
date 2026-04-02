@@ -4,8 +4,10 @@
     <meta charset="utf-8" />
     <meta name="viewport"
           content="width=device-width, initial-scale=1.0" />
-    <title>PDFToolstack</title>
+    <title>PdfToolStack — AI-Powered PDF Tools</title>
     <base href="/" />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.svg" />
     <link rel="stylesheet" href="css/app.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -65,6 +67,10 @@
             const mimeTypes = {
                 'pdf': 'application/pdf',
                 'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'jpg': 'image/jpeg',
+                'jpeg': 'image/jpeg',
+                'png': 'image/png',
                 'zip': 'application/zip'
             };
             const mimeType = mimeTypes[extension] || 'application/octet-stream';
@@ -161,7 +167,7 @@
 
                 ctx.fillStyle = 'rgba(0,0,0,0.5)';
                 ctx.fillRect(startX, startY, x - startX, y - startY);
-                ctx.strokeStyle = '#2563EB';
+                ctx.strokeStyle = '#2250F4';
                 ctx.lineWidth = 2;
                 ctx.strokeRect(startX, startY, x - startX, y - startY);
             });
@@ -401,4 +407,3 @@
     </script>
 </body>
 </html>
-

@@ -8,143 +8,188 @@
 
 <PageTitle>My Account — PdfToolStack</PageTitle>
 
-<div class="legal-page">
-    <div class="legal-container">
-        <div class="legal-header">
-            <h1>My Account</h1>
-        </div>
-
-        <AuthorizeView>
-            <Authorized>
-
-                <!-- Profile -->
-                <div class="account-section">
-                    <h2>Profile</h2>
-                    <div class="account-info">
-                        <div class="account-row">
-                            <span class="account-label">Name</span>
-                            <span class="account-value">
-                                @context.User.Identity?.Name
-                            </span>
-                        </div>
-                        <div class="account-row">
-                            <span class="account-label">Email</span>
-                            <span class="account-value">
-                                @context.User.FindFirst("email")?.Value
-                            </span>
-                        </div>
-                    </div>
+<div class="account-page">
+    <AuthorizeView>
+        <Authorized>
+            <!-- Header -->
+            <div class="account-header">
+                <div class="account-avatar">
+                    @(GetInitials(context.User.Identity?.Name))
                 </div>
+                <div>
+                    <h1>@context.User.Identity?.Name</h1>
+                    <p class="account-email">@context.User.FindFirst("email")?.Value</p>
+                </div>
+                @if (_subStatus?.HasPro == true)
+                {
+                    <div class="account-pro-badge">⭐ Pro</div>
+                }
+            </div>
 
-                <!-- Subscription -->
-                <div class="account-section">
-                    <h2>Subscription</h2>
+            <!-- Stats row -->
+            <div class="account-stats">
+                <div class="account-stat-card">
+                    <span class="account-stat-num">@(_history?.Count ?? 0)</span>
+                    <span class="account-stat-label">Documents processed</span>
+                </div>
+                <div class="account-stat-card">
+                    <span class="account-stat-num">@GetUniqueTools()</span>
+                    <span class="account-stat-label">Tools used</span>
+                </div>
+                <div class="account-stat-card">
+                    <span class="account-stat-num">@GetTotalSize()</span>
+                    <span class="account-stat-label">Total processed</span>
+                </div>
+                <div class="account-stat-card">
+                    <span class="account-stat-num">@(_subStatus?.HasPro == true ? "Pro" : "Free")</span>
+                    <span class="account-stat-label">Current plan</span>
+                </div>
+            </div>
+
+            <div class="account-grid">
+
+                <!-- Left: Subscription -->
+                <div class="account-panel">
+                    <div class="account-panel-header">
+                        <h2>Subscription</h2>
+                    </div>
 
                     @if (_subStatus == null)
                     {
-                        <p style="color: var(--gray);">Loading...</p>
+                        <p class="account-loading">Loading...</p>
                     }
                     else if (_subStatus.HasPro)
                     {
-                        <div class="subscription-card pro">
-                            <h3>Pro Plan</h3>
-                            <p>Unlimited file size · All AI tools · No ads</p>
-                            @if (_subStatus.CurrentPeriodEnd.HasValue)
-                            {
-                                <p style="font-size: 0.85rem; color: var(--gray);">
-                                    @(_subStatus.CancelAtPeriodEnd
-                                                                ? "Cancels"
-                                                                : "Renews") on
-                            @_subStatus.CurrentPeriodEnd.Value.ToString("MMMM d, yyyy")
-                        </p>
-                                                }
-                            <button class="process-button"
-                                    style="max-width: 200px; margin-top: 1rem;"
-                                    @onclick="ManageBilling">
-                                Manage Billing
-                            </button>
+                        <div class="sub-card sub-card-pro">
+                            <div class="sub-card-icon">⭐</div>
+                            <div class="sub-card-info">
+                                <h3>Pro Plan</h3>
+                                <p>Unlimited files · All AI tools · No ads</p>
+                                @if (_subStatus.CurrentPeriodEnd.HasValue)
+                                {
+                                    <p class="sub-card-date">
+                                        @(_subStatus.CancelAtPeriodEnd ? "Cancels" : "Renews")
+                                        on @_subStatus.CurrentPeriodEnd.Value.ToString("MMMM d, yyyy")
+                                    </p>
+                                }
+                            </div>
                         </div>
+                        <button class="reset-button" style="width:100%; margin-top:1rem;"
+                                @onclick="ManageBilling">
+                            Manage Billing
+                        </button>
                     }
                     else
                     {
-                        <div class="subscription-card free">
-                            <h3>Free Plan</h3>
-                            <p>Up to 25MB per file · Standard tools only</p>
-                            <button class="process-button"
-                                    style="max-width: 200px; margin-top: 1rem;"
-                                    @onclick='() => Navigation.NavigateTo("/pricing")'>
-                                Upgrade to Pro — $19/mo
-                            </button>
+                        <div class="sub-card sub-card-free">
+                            <div class="sub-card-icon">🆓</div>
+                            <div class="sub-card-info">
+                                <h3>Free Plan</h3>
+                                <p>25MB limit · Standard tools only</p>
+                            </div>
                         </div>
+                        <div class="sub-upgrade-list">
+                            <p class="sub-upgrade-label">Unlock with Pro:</p>
+                            <div class="sub-upgrade-feat">✨ All AI tools</div>
+                            <div class="sub-upgrade-feat">📦 Batch processing</div>
+                            <div class="sub-upgrade-feat">📁 Unlimited file size</div>
+                            <div class="sub-upgrade-feat">📋 30-day history</div>
+                        </div>
+                        <a href="/pricing" class="download-button"
+                           style="display:block; text-align:center; text-decoration:none; margin-top:1rem;">
+                            Upgrade to Pro — $19/mo
+                        </a>
                     }
+
+                    <!-- Quick links -->
+                    <div class="account-quick-links">
+                        <h3>Quick links</h3>
+                        <a href="/ai-pdf-assist" class="account-quick-link">✨ AI Tools</a>
+                        <a href="/extract-invoice-data" class="account-quick-link">🧾 Extract Invoice Data</a>
+                        <a href="/batch" class="account-quick-link">📦 Batch Process</a>
+                        <a href="/compare-pdf" class="account-quick-link">🔍 Compare PDFs</a>
+                        <a href="/pricing" class="account-quick-link">💳 Pricing</a>
+                    </div>
                 </div>
 
-                <!-- Download History -->
-                <div class="account-section">
-                    <h2>Recent Documents</h2>
+                <!-- Right: Document History -->
+                <div class="account-panel">
+                    <div class="account-panel-header">
+                        <h2>Recent Documents</h2>
+                        @if (_history?.Any() == true)
+                        {
+                            <span class="account-panel-count">@_history.Count files</span>
+                        }
+                    </div>
 
                     @if (_historyLoading)
                     {
-                        <p style="color: var(--gray);">Loading history...</p>
+                        <div class="account-loading-state">
+                            <div class="spinner"></div>
+                            <p>Loading your documents...</p>
+                        </div>
                     }
                     else if (_history == null || !_history.Any())
                     {
-                        <p style="color: var(--gray);">
-                            No documents processed yet. Your history will appear here once you start using the tools.
-                        </p>
+                        <div class="account-empty-state">
+                            <div class="account-empty-icon">📄</div>
+                            <h3>No documents yet</h3>
+                            <p>Your processed documents will appear here. Start by using any tool.</p>
+                            <a href="/" class="process-button"
+                               style="display:inline-block; text-decoration:none; max-width:200px;">
+                                Browse Tools
+                            </a>
+                        </div>
                     }
                     else
                     {
-                        <div class="history-table-wrap">
-                            <table class="history-table">
-                                <thead>
-                                    <tr>
-                                        <th>File</th>
-                                        <th>Tool</th>
-                                        <th>Size</th>
-                                        <th>Processed</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var item in _history)
-                                    {
-                                        <tr>
-                                            <td class="history-filename">
-                                                @TruncateFileName(item.FileName)
-                                            </td>
-                                            <td>
-                                                <span class="history-tool-badge">
-                                                    @FormatToolType(item.ToolType)
-                                                </span>
-                                            </td>
-                                            <td class="history-size">
-                                                @FormatFileSize(item.FileSizeBytes)
-                                            </td>
-                                            <td class="history-date">
-                                                @item.ProcessedAt.ToString("MMM d, yyyy · h:mm tt")
-                                            </td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
+                        <div class="history-list">
+                            @foreach (var item in _history.Take(20))
+                            {
+                                <div class="history-item">
+                                    <div class="history-item-icon" style="background:@GetToolColor(item.ToolType)">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;">
+                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                            <polyline points="14,2 14,8 20,8" />
+                                        </svg>
+                                    </div>
+                                    <div class="history-item-info">
+                                        <span class="history-item-name">@TruncateFileName(item.FileName)</span>
+                                        <span class="history-item-meta">
+                                            @FormatToolType(item.ToolType) · @FormatFileSize(item.FileSizeBytes)
+                                        </span>
+                                    </div>
+                                    <div class="history-item-date">
+                                        @GetRelativeDate(item.ProcessedAt)
+                                    </div>
+                                </div>
+                            }
                         </div>
 
                         @if (!_subStatus!.HasPro)
                         {
-                            <p class="history-pro-nudge">
-                                ⭐ Upgrade to Pro to keep 30 days of history and re-download processed files.
-                                <a href="/pricing">See plans</a>
-                            </p>
+                            <div class="history-pro-nudge">
+                                <span>⭐ Pro users get 30-day history.</span>
+                                <a href="/pricing">Upgrade →</a>
+                            </div>
                         }
                     }
                 </div>
 
-            </Authorized>
-            <NotAuthorized>
-                <p>Please <a href="authentication/login">sign in</a> to view your account.</p>
-            </NotAuthorized>
-        </AuthorizeView>
-    </div>
+            </div>
+        </Authorized>
+        <NotAuthorized>
+            <div class="account-signin-prompt">
+                <div class="account-empty-icon">🔐</div>
+                <h2>Sign in to view your account</h2>
+                <p>Access your document history, manage your subscription, and unlock Pro features.</p>
+                <a href="authentication/login" class="download-button"
+                   style="display:inline-block; text-decoration:none; max-width:200px;">
+                    Sign In
+                </a>
+            </div>
+        </NotAuthorized>
+    </AuthorizeView>
 </div>
 
 @code {
@@ -159,15 +204,12 @@
         var authState = await Auth.GetAuthenticationStateAsync();
         var user = authState.User;
 
-        if (!user.Identity?.IsAuthenticated ?? true)
-            return;
+        if (!user.Identity?.IsAuthenticated ?? true) return;
 
         _userId = user.FindFirst("sub")?.Value ?? string.Empty;
         _baseUrl = Navigation.BaseUri.TrimEnd('/');
 
-        await Task.WhenAll(
-            LoadSubscriptionAsync(),
-            LoadHistoryAsync());
+        await Task.WhenAll(LoadSubscriptionAsync(), LoadHistoryAsync());
     }
 
     private async Task LoadSubscriptionAsync()
@@ -181,8 +223,7 @@
         try
         {
             _history = await ApiService
-                .GetAsync<List<DownloadHistoryDto>>(
-                    $"api/subscription/history/{_userId}");
+                .GetAsync<List<DownloadHistoryDto>>($"api/subscription/history/{_userId}");
         }
         catch
         {
@@ -197,23 +238,64 @@
 
     private async Task ManageBilling()
     {
-        var url = await SubService
-            .CreatePortalSessionAsync(_userId, _baseUrl);
+        var url = await SubService.CreatePortalSessionAsync(_userId, _baseUrl);
         if (!string.IsNullOrEmpty(url))
             Navigation.NavigateTo(url, forceLoad: true);
     }
 
+    private string GetInitials(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "?";
+        var parts = name.Trim().Split(' ');
+        if (parts.Length >= 2)
+            return $"{parts[0][0]}{parts[^1][0]}".ToUpper();
+        return name.Length >= 2 ? name[..2].ToUpper() : name.ToUpper();
+    }
+
+    private string GetUniqueTools()
+    {
+        if (_history == null || !_history.Any()) return "0";
+        return _history.Select(h => h.ToolType).Distinct().Count().ToString();
+    }
+
+    private string GetTotalSize()
+    {
+        if (_history == null || !_history.Any()) return "0 KB";
+        var total = _history.Sum(h => h.FileSizeBytes);
+        return FormatFileSize(total);
+    }
+
+    private string GetRelativeDate(DateTime date)
+    {
+        var diff = DateTime.UtcNow - date;
+        if (diff.TotalMinutes < 60) return $"{(int)diff.TotalMinutes}m ago";
+        if (diff.TotalHours < 24) return $"{(int)diff.TotalHours}h ago";
+        if (diff.TotalDays < 7) return $"{(int)diff.TotalDays}d ago";
+        return date.ToString("MMM d");
+    }
+
+    private string GetToolColor(string toolType) => toolType switch
+    {
+        var t when t.Contains("Compress") => "#E85D04",
+        var t when t.Contains("Word") => "#2563EB",
+        var t when t.Contains("Merge") => "#0D9488",
+        var t when t.Contains("Split") => "#EA580C",
+        var t when t.Contains("Sign") => "#D97706",
+        var t when t.Contains("Ai") || t.Contains("AI") => "#7C3AED",
+        var t when t.Contains("Extract") => "#6D28D9",
+        var t when t.Contains("Protect") => "#1E40AF",
+        _ => "#4338CA"
+    };
+
     private static string FormatFileSize(long bytes)
     {
-        if (bytes >= 1_048_576)
-            return $"{bytes / 1_048_576.0:F1} MB";
-        if (bytes >= 1_024)
-            return $"{bytes / 1_024.0:F0} KB";
+        if (bytes >= 1_048_576) return $"{bytes / 1_048_576.0:F1} MB";
+        if (bytes >= 1_024) return $"{bytes / 1_024.0:F0} KB";
         return $"{bytes} B";
     }
 
     private static string TruncateFileName(string name)
-        => name.Length > 36 ? name[..33] + "..." : name;
+        => name.Length > 40 ? name[..37] + "..." : name;
 
     private static string FormatToolType(string toolType)
         => System.Text.RegularExpressions.Regex

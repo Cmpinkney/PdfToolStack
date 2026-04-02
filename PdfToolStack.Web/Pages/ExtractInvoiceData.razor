@@ -5,6 +5,7 @@
 @inject PdfToolStack.Web.Services.SubscriptionService SubService
 @inject AuthenticationStateProvider Auth
 @inject IJSRuntime JS
+@inject ToastService Toast
 @using Microsoft.AspNetCore.Components.Authorization
 @using System.Text.Json
 
@@ -20,161 +21,269 @@
 </HeadContent>
 
 <div class="tool-page">
-    <div class="tool-hero">
-        <h1>Extract Invoice Data from PDF</h1>
-        <p>
-            Upload an invoice PDF. AI extracts vendor, amounts, dates,
-            and line items — then exports directly to Excel.
-            No manual entry.
-        </p>
-    </div>
+    <AdSlot Size="banner" />
 
-    <AuthorizeView>
-        <NotAuthorized>
-            <div class="upgrade-nudge">
-                <p>⭐ AI Data Extraction is a <strong>Pro feature</strong>.</p>
-                <a href="/pricing" class="process-button"
-                   style="display:inline-block; max-width:200px;">
-                    Upgrade to Pro — $19/mo
-                </a>
-            </div>
-        </NotAuthorized>
-        <Authorized>
-            @if (!_isPro)
-            {
-                <div class="upgrade-nudge">
-                    <p>⭐ AI Data Extraction is a <strong>Pro feature</strong>.</p>
-                    <a href="/pricing" class="process-button"
-                       style="display:inline-block; max-width: 200px;">
-                        Upgrade to Pro — $19/mo
-                    </a>
+    <div class="tool-container">
+
+        <!-- Header -->
+        <div class="ai-tool-header">
+            <div class="ai-tool-badge">✨ AI-Powered</div>
+            <h1>Extract Invoice Data from PDF</h1>
+            <p class="tool-subtitle">
+                Upload any invoice, contract, or form — AI reads every field
+                and exports structured data to Excel in seconds. No manual entry ever again.
+            </p>
+        </div>
+
+        <!-- How it works -->
+        <div class="how-it-works">
+            <div class="hiw-step">
+                <div class="hiw-num">1</div>
+                <div class="hiw-text">
+                    <strong>Upload your PDF</strong>
+                    <span>Invoice, contract, or any form</span>
                 </div>
-            }
-            else
-            {
-                <!-- Document type selector -->
-                <div class="tool-card" style="margin-bottom: 1.25rem;">
-                    <label class="upload-label">Document type</label>
-                    <div class="extract-type-grid">
-                        <button class="extract-type-btn @(_type == "invoice" ? "active" : "")"
-                                @onclick='() => _type = "invoice"'>
-                            🧾 Invoice
-                        </button>
-                        <button class="extract-type-btn @(_type == "contract" ? "active" : "")"
-                                @onclick='() => _type = "contract"'>
-                            📋 Contract
-                        </button>
-                        <button class="extract-type-btn @(_type == "general" ? "active" : "")"
-                                @onclick='() => _type = "general"'>
-                            📄 General
-                        </button>
+            </div>
+            <div class="hiw-arrow">→</div>
+            <div class="hiw-step">
+                <div class="hiw-num">2</div>
+                <div class="hiw-text">
+                    <strong>AI extracts all fields</strong>
+                    <span>Vendor, amounts, dates, line items</span>
+                </div>
+            </div>
+            <div class="hiw-arrow">→</div>
+            <div class="hiw-step">
+                <div class="hiw-num">3</div>
+                <div class="hiw-text">
+                    <strong>Download Excel</strong>
+                    <span>Structured, ready to use</span>
+                </div>
+            </div>
+        </div>
+
+        <AuthorizeView>
+            <NotAuthorized>
+                <div class="ai-upgrade-card">
+                    <div class="ai-upgrade-icon">🔐</div>
+                    <h2>AI Data Extraction — Pro Feature</h2>
+                    <p>
+                        This tool uses Claude AI to read and extract structured data from your documents.
+                        Available with any Pro plan — starting at $19/month.
+                    </p>
+                    <div class="ai-upgrade-features">
+                        <div class="ai-upgrade-feat">✓ Invoice &amp; contract extraction</div>
+                        <div class="ai-upgrade-feat">✓ Export directly to Excel</div>
+                        <div class="ai-upgrade-feat">✓ Chat with PDF, AI Summarizer</div>
+                        <div class="ai-upgrade-feat">✓ Batch process up to 20 files</div>
+                        <div class="ai-upgrade-feat">✓ Unlimited file size</div>
+                    </div>
+                    <div class="ai-upgrade-actions">
+                        <a href="/pricing" class="download-button" style="display:inline-block; text-decoration:none;">
+                            Upgrade to Pro — $19/mo
+                        </a>
+                        <a href="authentication/login" class="reset-button" style="display:inline-block; text-decoration:none;">
+                            Sign in if you have Pro
+                        </a>
                     </div>
                 </div>
+            </NotAuthorized>
 
-                <!-- Upload -->
-                <div class="tool-card" style="margin-bottom: 1.25rem;">
-                    <label class="upload-label">Upload PDF</label>
-                    <InputFile OnChange="OnFileSelected"
-                               accept=".pdf"
-                               class="file-input" />
-                    @if (_fileName != null)
+            <Authorized>
+                @if (!_isPro)
+                {
+                    <div class="ai-upgrade-card">
+                        <div class="ai-upgrade-icon">⭐</div>
+                        <h2>Upgrade to Pro to unlock AI tools</h2>
+                        <p>
+                            You're signed in but on the Free plan. Upgrade to Pro to access
+                            AI data extraction, Chat with PDF, AI Summarizer, and more.
+                        </p>
+                        <div class="ai-upgrade-actions">
+                            <a href="/pricing" class="download-button" style="display:inline-block; text-decoration:none;">
+                                Upgrade to Pro — $19/mo
+                            </a>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <!-- Document type selector -->
+                    <div class="extract-type-section">
+                        <p class="extract-type-label">What type of document are you extracting?</p>
+                        <div class="extract-type-grid">
+                            <button class="extract-type-btn @(_type == "invoice" ? "active" : "")"
+                                    @onclick='() => _type = "invoice"'>
+                                <span class="extract-type-icon">🧾</span>
+                                <span class="extract-type-name">Invoice</span>
+                                <span class="extract-type-desc">Vendor, amounts, line items</span>
+                            </button>
+                            <button class="extract-type-btn @(_type == "contract" ? "active" : "")"
+                                    @onclick='() => _type = "contract"'>
+                                <span class="extract-type-icon">📋</span>
+                                <span class="extract-type-name">Contract</span>
+                                <span class="extract-type-desc">Parties, dates, obligations</span>
+                            </button>
+                            <button class="extract-type-btn @(_type == "general" ? "active" : "")"
+                                    @onclick='() => _type = "general"'>
+                                <span class="extract-type-icon">📄</span>
+                                <span class="extract-type-name">General Form</span>
+                                <span class="extract-type-desc">Any structured document</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Upload area -->
+                    @if (CurrentState == PageState.Upload)
                     {
-                        <div class="compare-file-badge" style="margin-top: 0.5rem;">
-                            📄 @_fileName
+                        <FileUpload OnFileSelected="HandleFileSelected"
+                                    OnFileRemoved="HandleFileRemoved"
+                                    HintText="Upload a PDF invoice, contract, or form — up to 50MB" />
+
+                        @if (_fileBytes != null)
+                        {
+                            <button class="process-button" @onclick="RunExtract">
+                                ✨ Extract Data with AI
+                            </button>
+                        }
+                    }
+
+                    <!-- Processing -->
+                    @if (CurrentState == PageState.Processing)
+                    {
+                        <div class="ai-processing-container">
+                            <div class="ai-processing-icon">✨</div>
+                            <h3>AI is reading your document...</h3>
+                            <p>Extracting fields, amounts, and line items</p>
+                            <div class="ai-processing-steps">
+                                <div class="ai-processing-step @(_step >= 1 ? "done" : "")">Reading PDF text</div>
+                                <div class="ai-processing-step @(_step >= 2 ? "done" : "")">Identifying fields</div>
+                                <div class="ai-processing-step @(_step >= 3 ? "done" : "")">Structuring data</div>
+                                <div class="ai-processing-step @(_step >= 4 ? "done" : "")">Building Excel file</div>
+                            </div>
                         </div>
                     }
-                </div>
 
-                <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem;">
-                    <button class="process-button"
-                            style="max-width: 200px;"
-                            @onclick="RunExtract"
-                            disabled="@(_processing || _fileBytes == null)">
-                        @(_processing ? "Extracting..." : "Extract Data")
-                    </button>
-
-                    @if (_excelReady)
+                    <!-- Results -->
+                    @if (CurrentState == PageState.Complete && _extractedJson != null)
                     {
-                        <button class="download-button"
-                                style="max-width: 220px;"
-                                @onclick="DownloadExcel">
-                            ⬇ Download Excel
-                        </button>
-                    }
-                </div>
+                        <div class="extract-results">
+                            <div class="extract-results-header">
+                                <div>
+                                    <h2>Extraction complete</h2>
+                                    <p style="color:var(--text-secondary); font-size:0.875rem;">
+                                        @_fields.Count fields extracted from @_fileName
+                                    </p>
+                                </div>
+                                <div class="extract-results-actions">
+                                    @if (_excelReady)
+                                    {
+                                        <button class="download-button" @onclick="DownloadExcel">
+                                            Download Excel
+                                        </button>
+                                    }
+                                    <button class="reset-button" @onclick="Reset">
+                                        Extract Another
+                                    </button>
+                                </div>
+                            </div>
 
-                <!-- JSON preview -->
-                @if (_extractedJson != null)
-                {
-                    <div class="tool-card" style="margin-bottom: 1.25rem;">
-                        <h3 style="margin-bottom: 0.75rem;">
-                            Extracted fields
-                        </h3>
-                        <div class="extract-field-grid">
-                            @foreach (var field in _fields)
+                            <!-- Field cards -->
+                            <div class="extract-field-grid">
+                                @foreach (var field in _fields)
+                                {
+                                    <div class="extract-field-card">
+                                        <span class="extract-field-label">@field.Key</span>
+                                        <span class="extract-field-value">@field.Value</span>
+                                    </div>
+                                }
+                            </div>
+
+                            <!-- Line items table -->
+                            @if (_lineItems.Any())
                             {
-                                <div class="extract-field">
-                                    <span class="extract-field-label">
-                                        @field.Key
-                                    </span>
-                                    <span class="extract-field-value">
-                                        @field.Value
-                                    </span>
+                                <div class="extract-line-items">
+                                    <h3>Line items</h3>
+                                    <div class="compare-table-wrap">
+                                        <table class="compare-table">
+                                            <thead>
+                                                <tr>
+                                                    <th style="text-align:left;">Description</th>
+                                                    <th>Qty</th>
+                                                    <th>Unit Price</th>
+                                                    <th>Total</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach (var item in _lineItems)
+                                                {
+                                                    <tr>
+                                                        <td style="text-align:left;">@item.GetValueOrDefault("description")</td>
+                                                        <td>@item.GetValueOrDefault("quantity")</td>
+                                                        <td>@item.GetValueOrDefault("unitPrice")</td>
+                                                        <td>@item.GetValueOrDefault("total")</td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
                             }
                         </div>
+                    }
 
-                        @if (_lineItems.Any())
-                        {
-                            <h4 style="margin: 1rem 0 0.5rem;">Line items</h4>
-                            <div class="history-table-wrap">
-                                <table class="history-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Description</th>
-                                            <th>Qty</th>
-                                            <th>Unit Price</th>
-                                            <th>Total</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach (var item in _lineItems)
-                                        {
-                                            <tr>
-                                                <td>@item.GetValueOrDefault("description")</td>
-                                                <td>@item.GetValueOrDefault("quantity")</td>
-                                                <td>@item.GetValueOrDefault("unitPrice")</td>
-                                                <td>@item.GetValueOrDefault("total")</td>
-                                            </tr>
-                                        }
-                                    </tbody>
-                                </table>
-                            </div>
-                        }
-                    </div>
+                    <!-- Error -->
+                    @if (CurrentState == PageState.Error)
+                    {
+                        <div class="error-container" role="alert">
+                            <span class="error-icon" aria-hidden="true">❌</span>
+                            <p class="error-message">@_error</p>
+                            <button class="reset-button" @onclick="Reset">Try Again</button>
+                        </div>
+                    }
                 }
+            </Authorized>
+        </AuthorizeView>
 
-                @if (!string.IsNullOrEmpty(_error))
-                {
-                    <div class="error-message">@_error</div>
-                }
-            }
-        </Authorized>
-    </AuthorizeView>
+    </div>
+
+    <!-- FAQ -->
+    <div class="faq-section">
+        <h2>Frequently Asked Questions</h2>
+        <div class="faq-item">
+            <h3>What types of documents can it extract?</h3>
+            <p>Invoices, purchase orders, contracts, forms, receipts, and any structured PDF document. The AI adapts to the document type you select.</p>
+        </div>
+        <div class="faq-item">
+            <h3>How accurate is the extraction?</h3>
+            <p>Very accurate for standard invoices and forms — typically 95%+ field accuracy. Complex or handwritten documents may need minor review.</p>
+        </div>
+        <div class="faq-item">
+            <h3>Is my document stored anywhere?</h3>
+            <p>No. Your PDF is processed in memory and deleted within 1 hour. We never store document contents on our servers permanently.</p>
+        </div>
+        <div class="faq-item">
+            <h3>What does the Excel output look like?</h3>
+            <p>Each extracted field gets its own row with a label and value. Line items appear in a structured table. Ready to paste into your accounting software.</p>
+        </div>
+    </div>
 </div>
 
 @code {
+    private enum PageState { Upload, Processing, Complete, Error }
+    private PageState CurrentState = PageState.Upload;
+
     private byte[]? _fileBytes;
     private string? _fileName;
     private string _type = "invoice";
     private bool _isPro = false;
-    private bool _processing = false;
-    private bool _excelReady = false;
-    private string? _extractedJson;
+    private int _step = 0;
     private string _error = string.Empty;
+    private string? _extractedJson;
     private List<KeyValuePair<string, string>> _fields = new();
     private List<Dictionary<string, string>> _lineItems = new();
     private byte[]? _excelBytes;
+    private bool _excelReady = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -188,10 +297,8 @@
         }
     }
 
-    private async Task OnFileSelected(InputFileChangeEventArgs e)
+    private async Task HandleFileSelected(IBrowserFile file)
     {
-        var file = e.File;
-        if (file == null) return;
         using var ms = new MemoryStream();
         await file.OpenReadStream(maxAllowedSize: 52_428_800).CopyToAsync(ms);
         _fileBytes = ms.ToArray();
@@ -203,73 +310,66 @@
         _error = string.Empty;
     }
 
+    private void HandleFileRemoved()
+    {
+        _fileBytes = null;
+        _fileName = null;
+    }
+
     private async Task RunExtract()
     {
         if (_fileBytes == null) return;
 
-        _processing = true;
-        _error = string.Empty;
-        _extractedJson = null;
-        _fields.Clear();
-        _lineItems.Clear();
-        _excelReady = false;
+        CurrentState = PageState.Processing;
+        _step = 1;
         StateHasChanged();
 
         try
         {
-            // Step 1: get JSON preview
-            using var previewContent = new MultipartFormDataContent();
-            var fc = new ByteArrayContent(_fileBytes);
-            fc.Headers.ContentType =
-                new System.Net.Http.Headers
-                    .MediaTypeHeaderValue("application/pdf");
-            previewContent.Add(fc, "file", _fileName ?? "document.pdf");
+            await Task.Delay(600);
+            _step = 2; StateHasChanged();
 
-            var previewResult = await ApiService.GetAsync<ExtractResponse>(
-                $"api/ai/extract?type={_type}");
+            var (json, error) = await PostExtractAsync("api/ai/extract");
 
-            // Re-post with file for preview
-            var (json, previewError) = await PostExtractAsync(
-                "api/ai/extract");
-
-            if (previewError != null)
+            if (error != null)
             {
-                _error = previewError;
+                _error = error;
+                CurrentState = PageState.Error;
                 return;
             }
 
             _extractedJson = json;
             ParseFields(json!);
+            _step = 3; StateHasChanged();
 
-            // Step 2: get Excel
-            var (excelBytes, excelError) = await PostExtractBytesAsync(
-                "api/ai/extract/excel");
+            await Task.Delay(400);
+            _step = 4; StateHasChanged();
 
+            var (excelBytes, _) = await PostExtractBytesAsync("api/ai/extract/excel");
             if (excelBytes != null)
             {
                 _excelBytes = excelBytes;
                 _excelReady = true;
             }
+
+            CurrentState = PageState.Complete;
+            Toast.ShowSuccess("Data extracted successfully!");
         }
         catch (Exception ex)
         {
-            _error = $"Error: {ex.Message}";
+            _error = $"Extraction failed: {ex.Message}";
+            CurrentState = PageState.Error;
+            Toast.ShowError(_error);
         }
-        finally
-        {
-            _processing = false;
-            StateHasChanged();
-        }
+
+        StateHasChanged();
     }
 
-    private async Task<(string? Json, string? Error)> PostExtractAsync(
-        string endpoint)
+    private async Task<(string? Json, string? Error)> PostExtractAsync(string endpoint)
     {
         using var content = new MultipartFormDataContent();
         var fc = new ByteArrayContent(_fileBytes!);
-        fc.Headers.ContentType =
-            new System.Net.Http.Headers
-                .MediaTypeHeaderValue("application/pdf");
+        fc.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/pdf");
         content.Add(fc, "file", _fileName ?? "document.pdf");
 
         var response = await ApiService.PostMultipartAsync<ExtractResponse>(
@@ -281,14 +381,11 @@
         return (response.Json, null);
     }
 
-    private async Task<(byte[]? Bytes, string? Error)> PostExtractBytesAsync(
-        string endpoint)
+    private async Task<(byte[]? Bytes, string? Error)> PostExtractBytesAsync(string endpoint)
     {
         using var content = new MultipartFormDataContent();
         var fc = new ByteArrayContent(_fileBytes!);
-        fc.Headers.ContentType =
-            new System.Net.Http.Headers
-                .MediaTypeHeaderValue("application/pdf");
+        fc.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/pdf");
         content.Add(fc, "file", _fileName ?? "document.pdf");
 
         var bytes = await ApiService.PostMultipartBytesAsync(
@@ -303,7 +400,6 @@
         {
             var doc = JsonDocument.Parse(json);
             var root = doc.RootElement;
-
             var skip = new HashSet<string> { "lineItems" };
 
             foreach (var prop in root.EnumerateObject())
@@ -311,10 +407,8 @@
                 if (skip.Contains(prop.Name)) continue;
                 if (prop.Value.ValueKind == JsonValueKind.Null) continue;
                 if (prop.Value.ValueKind == JsonValueKind.Array) continue;
-
                 _fields.Add(new KeyValuePair<string, string>(
-                    ToLabel(prop.Name),
-                    prop.Value.ToString()));
+                    ToLabel(prop.Name), prop.Value.ToString()));
             }
 
             if (root.TryGetProperty("lineItems", out var items) &&
@@ -330,15 +424,28 @@
                 }
             }
         }
-        catch { /* show raw if parse fails */ }
+        catch { }
     }
 
     private async Task DownloadExcel()
     {
         if (_excelBytes == null) return;
         var name = $"extracted_{_type}_{DateTime.Now:yyyyMMdd}.xlsx";
-        await JS.InvokeVoidAsync("downloadFile",
-            name, Convert.ToBase64String(_excelBytes));
+        await JS.InvokeVoidAsync("downloadFile", name, Convert.ToBase64String(_excelBytes));
+    }
+
+    private void Reset()
+    {
+        CurrentState = PageState.Upload;
+        _fileBytes = null;
+        _fileName = null;
+        _extractedJson = null;
+        _excelReady = false;
+        _excelBytes = null;
+        _fields.Clear();
+        _lineItems.Clear();
+        _error = string.Empty;
+        _step = 0;
     }
 
     private static string ToLabel(string camelCase) =>
