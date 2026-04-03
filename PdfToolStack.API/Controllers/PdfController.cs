@@ -9,6 +9,8 @@ using PdfToolStack.Domain.Enums;
 using PdfToolStack.Infrastructure.Processors;
 using PdfToolStack.Infrastructure.Services;
 using System.IO.Compression;
+using SharpCompress.Writers.Zip;
+using SharpCompress.Common;
 using DomainRedactionRegion = PdfToolStack.Domain.Entities.RedactionRegion;
 
 namespace PdfToolStack.API.Controllers
@@ -184,30 +186,33 @@ namespace PdfToolStack.API.Controllers
                 }
             }
 
-            // Build ZIP
+            // Build ZIP using SharpCompress for better compression
             using var zipStream = new MemoryStream();
-            using (var archive = new ZipArchive(
-                zipStream, ZipArchiveMode.Create, leaveOpen: true))
+            using (var writer = new SharpCompress.Writers.Zip.ZipWriter(
+                zipStream,
+                new SharpCompress.Writers.Zip.ZipWriterOptions(
+                    SharpCompress.Common.CompressionType.Deflate)
+                {
+                    LeaveStreamOpen = true
+                }))
             {
                 foreach (var (fileName, bytes, error) in results)
                 {
                     if (bytes.Length == 0) continue;
 
                     var outName = $"processed_{Path.GetFileNameWithoutExtension(fileName)}.pdf";
-                    var entry = archive.CreateEntry(outName, CompressionLevel.Fastest);
-                    using var entryStream = entry.Open();
-                    await entryStream.WriteAsync(bytes, cancellationToken);
+                    using var entryStream = new MemoryStream(bytes);
+                    writer.Write(outName, entryStream, DateTime.UtcNow);
                 }
 
-                // Add a summary log if any files failed
                 var failed = results.Where(r => r.Error != null).ToList();
                 if (failed.Any())
                 {
-                    var logEntry = archive.CreateEntry("batch_errors.txt");
-                    using var logStream = logEntry.Open();
-                    using var writer = new StreamWriter(logStream);
-                    foreach (var (fileName, _, error) in failed)
-                        await writer.WriteLineAsync($"{fileName}: {error}");
+                    var errorText = string.Join("\n",
+                        failed.Select(f => $"{f.FileName}: {f.Error}"));
+                    var errorBytes = System.Text.Encoding.UTF8.GetBytes(errorText);
+                    using var errorStream = new MemoryStream(errorBytes);
+                    writer.Write("batch_errors.txt", errorStream, DateTime.UtcNow);
                 }
             }
 
