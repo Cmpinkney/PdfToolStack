@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using PdfToolStack.Application.DTOs;
+using PdfToolStack.Application.Interfaces;
 using PdfToolStack.Domain.Entities;
 using PdfToolStack.Infrastructure.Data;
 using Stripe;
@@ -12,13 +13,16 @@ namespace PdfToolStack.Infrastructure.Services
     {
         private readonly AppDbContext _db;
         private readonly IConfiguration _config;
+        private readonly IEmailService _emailService;
 
         public SubscriptionService(
             AppDbContext db,
-            IConfiguration config)
+            IConfiguration config,
+            IEmailService emailService)
         {
             _db = db;
             _config = config;
+            _emailService = emailService;
             StripeConfiguration.ApiKey =
                 _config["Stripe:SecretKey"];
         }
@@ -206,6 +210,16 @@ namespace PdfToolStack.Infrastructure.Services
             }
 
             await _db.SaveChangesAsync();
+
+            // Send Pro welcome email
+            var customerEmail = session.CustomerEmail ?? string.Empty;
+            var customerName = customerEmail.Split('@')[0];
+
+            if (!string.IsNullOrEmpty(customerEmail))
+            {
+                await _emailService.SendProWelcomeEmailAsync(
+                    customerEmail, customerName);
+            }
         }
 
         private async Task HandleSubscriptionUpdatedAsync(

@@ -29,4 +29,8 @@
 		<ProjectReference Include="..\PdfToolStack.Infrastructure\PdfToolStack.Infrastructure.csproj" />
 	</ItemGroup>
 
+	<ItemGroup>
+		<None Include="tessdata\**" CopyToOutputDirectory="Always"/>
+	</ItemGroup>
+
 </Project>

@@ -1,74 +1,223 @@
 ﻿@page "/pdf-ocr"
+@inject ApiService ApiService
+@inject IJSRuntime JS
+@inject FileValidationService Validator
+@inject ToastService Toast
 
 <PageTitle>PDF OCR Free Online — Make Scanned PDF Searchable</PageTitle>
 
 <HeadContent>
     <meta name="description"
           content="Make scanned PDFs searchable with OCR free online.
-                   Extract text from scanned documents.
+                   Extract text from scanned documents. Powered by Tesseract.
                    No signup required." />
     <meta name="keywords"
           content="pdf ocr, ocr pdf online free,
-                   make pdf searchable, scanned pdf to text, searchable pdf" />
-    <link rel="canonical"
-          href="https://pdftoolstack.com/pdf-ocr" />
+                   make pdf searchable, scanned pdf to text" />
+    <link rel="canonical" href="https://pdftoolstack.com/pdf-ocr" />
 </HeadContent>
 
 <div class="tool-page">
+    <AdSlot Size="banner" />
     <div class="tool-container">
+
         <h1>PDF OCR Online</h1>
         <p class="tool-subtitle">
-            Make text in scanned PDFs searchable and
-            selectable with optical character recognition.
+            Upload a scanned PDF and OCR makes every word searchable,
+            selectable, and copyable. Powered by Tesseract. No signup required.
         </p>
-        <div class="coming-soon-banner">
-            <span class="coming-soon-icon">🔍</span>
-            <div>
-                <h3>PDF OCR Coming Soon</h3>
-                <p>
-                    We are integrating Tesseract OCR to
-                    make scanned PDFs fully searchable.
-                    Supports 50+ languages.
+
+        @if (CurrentState == PageState.Upload)
+        {
+            <!-- Language selector -->
+            <div class="extract-type-section">
+                <p class="extract-type-label">Document language</p>
+                <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:1.5rem;">
+                    @foreach (var lang in _languages)
+                    {
+                        <button class="extract-type-btn @(_language == lang.Code ? "active" : "")"
+                                style="flex-direction:row; padding:0.5rem 1rem; min-width:auto;"
+                                @onclick="() => _language = lang.Code">
+                            @lang.Name
+                        </button>
+                    }
+                </div>
+            </div>
+
+            <FileUpload OnFileSelected="HandleFileSelected"
+                        OnFileRemoved="HandleFileRemoved"
+                        HintText="Upload a scanned PDF — photos of documents, faxes, or image-based PDFs" />
+
+            @if (_fileBytes != null)
+            {
+                <button class="process-button" @onclick="RunOcr">
+                    🔍 Make Searchable with OCR
+                </button>
+            }
+        }
+
+        @if (CurrentState == PageState.Processing)
+        {
+            <div class="processing-container" role="status">
+                <div class="spinner"></div>
+                <p>Running OCR on your document...</p>
+                <p style="font-size:0.8rem; color:var(--text-muted); margin-top:0.5rem;">
+                    This may take 30–60 seconds for multi-page documents
                 </p>
             </div>
+        }
+
+        @if (CurrentState == PageState.Complete && _outputBytes != null)
+        {
+            <div class="result-container">
+                <span class="result-icon" aria-hidden="true">✅</span>
+                <h2>OCR Complete!</h2>
+                <p style="color:var(--text-secondary); font-size:0.9rem; margin-bottom:1.25rem;">
+                    Your PDF is now fully searchable. Text can be selected, copied, and indexed by search engines.
+                </p>
+                <button class="download-button" @onclick="DownloadFile">
+                    Download Searchable PDF
+                </button>
+                <button class="reset-button" @onclick="Reset">
+                    Process Another PDF
+                </button>
+            </div>
+        }
+
+        @if (CurrentState == PageState.Error)
+        {
+            <div class="error-container" role="alert">
+                <span class="error-icon" aria-hidden="true">❌</span>
+                <p class="error-message">@_error</p>
+                <button class="reset-button" @onclick="Reset">Try Again</button>
+            </div>
+        }
+
+    </div>
+
+    <div class="faq-section">
+        <h2>Frequently Asked Questions</h2>
+        <div class="faq-item">
+            <h3>What is OCR?</h3>
+            <p>OCR (Optical Character Recognition) reads text from images and scanned documents, making it searchable and selectable. Perfect for faxes, scanned contracts, and photo PDFs.</p>
         </div>
-        <div class="notify-section">
-            <h3>Get notified when it launches</h3>
-            @if (NotifySubmitted)
-            {
-                <div class="contact-success">
-                    <span>✅</span>
-                    <p>We'll notify you when OCR launches!</p>
-                </div>
-            }
-            else
-            {
-                <div class="notify-form">
-                    <input type="email"
-                           class="field-input"
-                           style="max-width: 300px;"
-                           placeholder="your@email.com"
-                           @bind="NotifyEmail" />
-                    <button class="process-button"
-                            style="max-width: 160px;"
-                            @onclick="SubmitNotify">
-                        Notify Me
-                    </button>
-                </div>
-            }
+        <div class="faq-item">
+            <h3>What types of PDFs does this work on?</h3>
+            <p>Any image-based PDF — scanned documents, photographed pages, faxes, and PDFs where you can't select the text. If you can already select text in your PDF, it doesn't need OCR.</p>
+        </div>
+        <div class="faq-item">
+            <h3>How accurate is the OCR?</h3>
+            <p>Tesseract OCR is very accurate on clean, high-contrast scans. Handwriting and very low-quality scans may have reduced accuracy.</p>
+        </div>
+        <div class="faq-item">
+            <h3>Is my document stored anywhere?</h3>
+            <p>No. Files are processed in memory and deleted within 1 hour. We never store your documents permanently.</p>
         </div>
     </div>
 </div>
 
 @code {
-    private string NotifyEmail = string.Empty;
-    private bool NotifySubmitted = false;
-    private async Task SubmitNotify()
+    private enum PageState { Upload, Processing, Complete, Error }
+    private PageState CurrentState = PageState.Upload;
+    private byte[]? _fileBytes;
+    private string? _fileName;
+    private byte[]? _outputBytes;
+    private string _language = "eng";
+    private string _error = string.Empty;
+
+    private record LangOption(string Code, string Name);
+
+    private readonly List<LangOption> _languages = new()
     {
-        if (string.IsNullOrWhiteSpace(NotifyEmail) ||
-            !NotifyEmail.Contains('@')) return;
-        await Task.Delay(500);
-        NotifySubmitted = true;
+        new("eng", "English"),
+        new("fra", "French"),
+        new("deu", "German"),
+        new("spa", "Spanish"),
+        new("ita", "Italian"),
+        new("por", "Portuguese"),
+        new("chi_sim", "Chinese"),
+        new("jpn", "Japanese"),
+        new("ara", "Arabic"),
+    };
+
+    private async Task HandleFileSelected(IBrowserFile file)
+    {
+        var validation = Validator.ValidatePdfFile(file);
+        if (!validation.IsValid)
+        {
+            Toast.ShowError(validation.Message!);
+            return;
+        }
+
+        using var stream = file.OpenReadStream(maxAllowedSize: 524288000);
+        using var ms = new MemoryStream();
+        await stream.CopyToAsync(ms);
+        _fileBytes = ms.ToArray();
+        _fileName = file.Name;
+        Toast.ShowSuccess($"File ready — {Validator.FormatSize(file.Size)}");
         StateHasChanged();
+    }
+
+    private void HandleFileRemoved()
+    {
+        _fileBytes = null;
+        _fileName = null;
+    }
+
+    private async Task RunOcr()
+    {
+        if (_fileBytes == null) return;
+
+        CurrentState = PageState.Processing;
+        StateHasChanged();
+
+        try
+        {
+            using var content = new MultipartFormDataContent();
+            var fc = new ByteArrayContent(_fileBytes);
+            fc.Headers.ContentType = new System.Net.Http.Headers
+                .MediaTypeHeaderValue("application/pdf");
+            content.Add(fc, "file", _fileName ?? "document.pdf");
+
+            _outputBytes = await ApiService.PostMultipartBytesAsync(
+                $"api/ai/ocr?language={_language}", content);
+
+            if (_outputBytes == null || _outputBytes.Length == 0)
+            {
+                _error = "OCR processing failed. Please try again.";
+                CurrentState = PageState.Error;
+                Toast.ShowError(_error);
+                return;
+            }
+
+            CurrentState = PageState.Complete;
+            Toast.ShowSuccess("OCR complete — your PDF is now searchable!");
+        }
+        catch (Exception ex)
+        {
+            _error = $"OCR failed: {ex.Message}";
+            CurrentState = PageState.Error;
+            Toast.ShowError(_error);
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task DownloadFile()
+    {
+        if (_outputBytes == null) return;
+        var name = Path.GetFileNameWithoutExtension(
+            _fileName ?? "document") + "_searchable.pdf";
+        await JS.InvokeVoidAsync("downloadFile", name,
+            Convert.ToBase64String(_outputBytes));
+    }
+
+    private void Reset()
+    {
+        CurrentState = PageState.Upload;
+        _fileBytes = null;
+        _fileName = null;
+        _outputBytes = null;
+        _error = string.Empty;
     }
 }

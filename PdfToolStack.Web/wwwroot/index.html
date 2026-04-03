@@ -36,6 +36,11 @@
             return localStorage.getItem('PdfToolStack-theme') || 'light';
         };
 
+        window.getSystemTheme = () => {
+            return window.matchMedia('(prefers-color-scheme: dark)').matches
+                ? 'dark' : 'light';
+        };
+
         window.addEventListener('scroll', () => {
             const navbar = document.getElementById('mainNavbar');
             if (navbar) {

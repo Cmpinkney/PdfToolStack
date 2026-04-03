@@ -4,9 +4,11 @@ using PdfToolStack.API.Configuration;
 using PdfToolStack.API.Middleware;
 using PdfToolStack.API.Services;
 using PdfToolStack.Application.Factories;
+using PdfToolStack.Application.Interfaces;
 using PdfToolStack.Application.Services;
 using PdfToolStack.Application.Strategies;
 using PdfToolStack.Domain.Interfaces;
+using PdfToolStack.Infrastructure.Configuration;
 using PdfToolStack.Infrastructure.Data;
 using PdfToolStack.Infrastructure.Processors;
 using PdfToolStack.Infrastructure.Repositories;
@@ -210,6 +212,11 @@ try
     builder.Services.AddScoped<IProcessingStrategy>(sp =>
         new PdfToolStack.Infrastructure.Strategies.PdfToExcelStrategy(
             sp.GetRequiredService<PdfToExcelProcessor>()));
+
+    // -- Email service ---------------------------------------------------------
+    builder.Services.Configure<EmailOptions>(
+        builder.Configuration.GetSection(EmailOptions.SectionName));
+    builder.Services.AddHttpClient<IEmailService, EmailService>();
 
     // ── AI Service ────────────────────────────────────────────────────────────
     builder.Services.AddHttpClient();

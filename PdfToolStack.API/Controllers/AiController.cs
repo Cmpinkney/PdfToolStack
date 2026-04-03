@@ -159,6 +159,45 @@ namespace PdfToolStack.API.Controllers
             return Ok(new { json = result.JsonData });
         }
 
+        // POST api/ai/ocr
+        [HttpPost("ocr")]
+        [RequestSizeLimit(52428800)]
+        public async Task<IActionResult> OcrPdf(
+            IFormFile file,
+            [FromQuery] string language = "eng",
+            CancellationToken cancellationToken = default)
+        {
+            if (!IsValidPdf(file))
+                return BadRequest(new { error = "Please upload a valid PDF file under 50MB." });
+
+            _logger.LogInformation(
+                "OCR request. Language: {Lang}, File: {File}",
+                language, file.FileName);
+
+            try
+            {
+                using var ms = new MemoryStream();
+                await file.CopyToAsync(ms, cancellationToken);
+
+                var tessDataPath = Path.Combine(
+                    AppContext.BaseDirectory, "tessdata");
+
+                var processor = new PdfToolStack.Infrastructure
+                    .Processors.PdfOcrProcessor(tessDataPath);
+
+                var outputBytes = await processor.ProcessAsync(
+                    ms.ToArray(), language, cancellationToken);
+
+                return File(outputBytes, "application/pdf",
+                    Path.GetFileNameWithoutExtension(file.FileName)
+                    + "_searchable.pdf");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "OCR failed");
+                return StatusCode(500, new { error = ex.Message });
+            }
+        }
         private static byte[] BuildExcel(string json, string type)
         {
             using var wb = new XLWorkbook();
