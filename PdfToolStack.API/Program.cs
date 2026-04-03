@@ -289,7 +289,19 @@ try
         context.Response.Headers.Append("X-Frame-Options", "DENY");
         context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
         context.Response.Headers.Append("X-XSS-Protection", "1; mode=block");
-        context.Response.Headers.Append("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+        context.Response.Headers.Append("Permissions-Policy",
+            "camera=(), microphone=(), geolocation=(), payment=()");
+        context.Response.Headers.Append("Content-Security-Policy",
+            "default-src 'none'; frame-ancestors 'none'");
+
+        // HSTS — only in production
+        if (!app.Environment.IsDevelopment())
+        {
+            context.Response.Headers.Append(
+                "Strict-Transport-Security",
+                "max-age=31536000; includeSubDomains");
+        }
+
         await next();
     });
 

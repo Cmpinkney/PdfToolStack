@@ -11,9 +11,13 @@ namespace PdfToolStack.API.Middleware
         private readonly ProcessingOptions _options;
         private readonly ILogger<RateLimitingMiddleware> _logger;
 
-        // Thread-safe dictionary tracking requests per IP
+        // Separate buckets for PDF and AI endpoints
         private static readonly ConcurrentDictionary<string,
-            (int Count, DateTime WindowStart)> _requestCounts = new();
+            (int Count, DateTime WindowStart)> _pdfCounts = new();
+        private static readonly ConcurrentDictionary<string,
+            (int Count, DateTime WindowStart)> _aiCounts = new();
+
+        // AI endpoints are much stricter — expensive Claude API calls
 
         public RateLimitingMiddleware(
             RequestDelegate next,
@@ -27,55 +31,63 @@ namespace PdfToolStack.API.Middleware
 
         public async Task InvokeAsync(HttpContext context)
         {
-            // Only rate limit PDF processing endpoints
-            if (!context.Request.Path.StartsWithSegments("/api/pdf"))
+            var path = context.Request.Path;
+            var ip = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+
+            if (path.StartsWithSegments("/api/pdf"))
             {
-                await _next(context);
-                return;
-            }
-
-            var ipAddress = context.Connection
-                .RemoteIpAddress?.ToString() ?? "unknown";
-
-            if (IsRateLimited(ipAddress))
-            {
-                _logger.LogWarning(
-                    "Rate limit exceeded for IP {IpAddress}",
-                    ipAddress);
-
-                context.Response.StatusCode =
-                    (int)HttpStatusCode.TooManyRequests;
-
-                await context.Response.WriteAsJsonAsync(new
+                if (IsRateLimited(_pdfCounts, ip, _options.MaxRequestsPerHour))
                 {
-                    error = "Too many requests. " +
-                            "Please try again in an hour.",
-                    statusCode = 429
-                });
-                return;
+                    await TooManyRequests(context, ip, "PDF");
+                    return;
+                }
+            }
+            else if (path.StartsWithSegments("/api/ai"))
+            {
+                if (IsRateLimited(_aiCounts, ip, _options.AiMaxRequestsPerHour))
+                {
+                    await TooManyRequests(context, ip, "AI");
+                    return;
+                }
             }
 
             await _next(context);
         }
 
-        private bool IsRateLimited(string ipAddress)
+        private static bool IsRateLimited(
+            ConcurrentDictionary<string, (int Count, DateTime WindowStart)> bucket,
+            string ip,
+            int maxPerHour)
         {
             var now = DateTime.UtcNow;
 
-            _requestCounts.AddOrUpdate(
-                ipAddress,
+            bucket.AddOrUpdate(
+                ip,
                 (1, now),
-                (key, existing) =>
+                (_, existing) =>
                 {
-                    // Reset window if an hour has passed
                     if ((now - existing.WindowStart).TotalHours >= 1)
                         return (1, now);
-
                     return (existing.Count + 1, existing.WindowStart);
                 });
 
-            var current = _requestCounts[ipAddress];
-            return current.Count > _options.MaxRequestsPerHour;
+            return bucket[ip].Count > maxPerHour;
+        }
+
+        private async Task TooManyRequests(
+            HttpContext context, string ip, string endpoint)
+        {
+            _logger.LogWarning(
+                "Rate limit exceeded for IP {Ip} on {Endpoint} endpoint", ip, endpoint);
+
+            context.Response.StatusCode = (int)HttpStatusCode.TooManyRequests;
+            context.Response.Headers.Append("Retry-After", "3600");
+
+            await context.Response.WriteAsJsonAsync(new
+            {
+                error = "Too many requests. Please try again in an hour.",
+                statusCode = 429
+            });
         }
     }
 }

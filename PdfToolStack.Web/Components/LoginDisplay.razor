@@ -5,46 +5,61 @@
 <AuthorizeView>
     <Authorized>
         <div class="user-menu">
-            <span class="user-name">
-                👤 @context.User.Identity?.Name
-            </span>
-            <a href="/account" class="nav-link">
-                My Account
+            <a href="/account" class="nav-user-chip">
+                @if (!string.IsNullOrEmpty(GetPicture(context.User)))
+                {
+                    <img src="@GetPicture(context.User)"
+                         alt="@GetFirstName(context.User.Identity?.Name)"
+                         class="nav-user-avatar-img" />
+                }
+                else
+                {
+                    <span class="nav-user-avatar">
+                        @GetInitials(context.User.Identity?.Name)
+                    </span>
+                }
+                <span class="nav-user-name">
+                    @GetFirstName(context.User.Identity?.Name)
+                </span>
             </a>
-            <button class="login-btn logout-btn"
-                    @onclick="BeginLogout">
+            <button class="nav-signout-btn" @onclick="BeginLogout">
                 Sign Out
             </button>
         </div>
     </Authorized>
     <NotAuthorized>
         <div class="auth-buttons">
-            <a href="authentication/login" class="login-btn">
-                Sign In
-            </a>
-            <a href="authentication/login?screen_hint=signup" class="signup-btn">
-                Get started free
-            </a>
+            <a href="authentication/login" class="login-btn">Sign In</a>
+            <a href="authentication/login?screen_hint=signup"
+               class="signup-btn">Get started free</a>
         </div>
     </NotAuthorized>
 </AuthorizeView>
 
 @code {
-    private void BeginLogin()
+    private void BeginLogout() =>
+        Navigation.NavigateToLogout("authentication/logout");
+
+    private static string? GetPicture(System.Security.Claims.ClaimsPrincipal user)
     {
-        Navigation.NavigateTo(
-            "authentication/login");
+        // Auth0 sends picture in these claim types
+        return user.FindFirst("picture")?.Value
+            ?? user.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/uri")?.Value;
     }
 
-    private void BeginSignUp()
+    private static string GetInitials(string? name)
     {
-        Navigation.NavigateTo(
-            "authentication/login?screen_hint=signup");
+        if (string.IsNullOrWhiteSpace(name)) return "?";
+        var parts = name.Trim().Split(' ',
+            StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length >= 2)
+            return $"{parts[0][0]}{parts[1][0]}".ToUpper();
+        return name.Length >= 2 ? name[..2].ToUpper() : name.ToUpper();
     }
 
-    private void BeginLogout()
+    private static string GetFirstName(string? name)
     {
-        Navigation.NavigateToLogout(
-            "authentication/logout");
+        if (string.IsNullOrWhiteSpace(name)) return "Account";
+        return name.Trim().Split(' ')[0];
     }
 }

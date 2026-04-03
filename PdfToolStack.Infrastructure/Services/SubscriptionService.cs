@@ -23,9 +23,26 @@ namespace PdfToolStack.Infrastructure.Services
                 _config["Stripe:SecretKey"];
         }
 
-        public async Task<SubscriptionStatusDto>
-            GetStatusAsync(string userId)
+        public async Task<SubscriptionStatusDto> GetStatusAsync(string userId)
         {
+            // Admin bypass
+            var adminIds = _config["AdminUserIds"]?.Split(',',
+                StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                ?? Array.Empty<string>();
+
+            if (adminIds.Contains(userId))
+            {
+                return new SubscriptionStatusDto
+                {
+                    IsActive = true,
+                    PlanType = "monthly",
+                    Status = "active",
+                    CurrentPeriodEnd = DateTime.UtcNow.AddYears(10),
+                    CancelAtPeriodEnd = false
+                };
+            }
+
+            // Normal database lookup
             var sub = await _db.UserSubscriptions
                 .Where(s => s.UserId == userId)
                 .OrderByDescending(s => s.CreatedAt)

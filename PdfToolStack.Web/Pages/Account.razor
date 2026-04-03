@@ -13,9 +13,19 @@
         <Authorized>
             <!-- Header -->
             <div class="account-header">
-                <div class="account-avatar">
-                    @(GetInitials(context.User.Identity?.Name))
-                </div>
+                @{
+                    var picture = context.User.FindFirst("picture")?.Value;
+                }
+                @if (!string.IsNullOrEmpty(picture))
+                {
+                    <img src="@picture" alt="Profile" class="account-avatar-img" />
+                }
+                else
+                {
+                    <div class="account-avatar">
+                        @(GetInitials(context.User.Identity?.Name))
+                    </div>
+                }
                 <div>
                     <h1>@context.User.Identity?.Name</h1>
                     <p class="account-email">@context.User.FindFirst("email")?.Value</p>
@@ -135,8 +145,8 @@
                             <div class="account-empty-icon">📄</div>
                             <h3>No documents yet</h3>
                             <p>Your processed documents will appear here. Start by using any tool.</p>
-                            <a href="/" class="process-button"
-                               style="display:inline-block; text-decoration:none; max-width:200px;">
+                            <a href="/" class="reset-button"
+                               style="display:inline-block; text-decoration:none; max-width:160px;">
                                 Browse Tools
                             </a>
                         </div>
@@ -246,9 +256,10 @@
     private string GetInitials(string? name)
     {
         if (string.IsNullOrWhiteSpace(name)) return "?";
-        var parts = name.Trim().Split(' ');
+        var parts = name.Trim().Split(' ',
+            StringSplitOptions.RemoveEmptyEntries);
         if (parts.Length >= 2)
-            return $"{parts[0][0]}{parts[^1][0]}".ToUpper();
+            return $"{parts[0][0]}{parts[1][0]}".ToUpper();
         return name.Length >= 2 ? name[..2].ToUpper() : name.ToUpper();
     }
 

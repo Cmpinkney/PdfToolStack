@@ -1,0 +1,479 @@
+﻿@page "/review-contract"
+@page "/ai-contract-reviewer"
+@inject ApiService ApiService
+@inject PdfToolStack.Web.Services.SubscriptionService SubService
+@inject AuthenticationStateProvider Auth
+@inject IJSRuntime JS
+@inject ToastService Toast
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Text.Json
+
+<PageTitle>AI Contract Reviewer — Review Contracts Instantly | PdfToolStack</PageTitle>
+
+<HeadContent>
+    <meta name="description"
+          content="Upload any contract and AI instantly identifies risky clauses,
+                   key dates, obligations, and missing elements. Perfect for
+                   freelancers, paralegals, and small business owners." />
+    <link rel="canonical" href="https://pdftoolstack.com/review-contract" />
+</HeadContent>
+
+<div class="tool-page">
+    <AdSlot Size="banner" />
+
+    <div class="tool-container">
+
+        <div class="ai-tool-header">
+            <div class="ai-tool-badge">✨ AI-Powered</div>
+            <h1>AI Contract Reviewer</h1>
+            <p class="tool-subtitle">
+                Upload any contract — AI identifies risky clauses, key dates,
+                obligations, and missing elements in seconds.
+                No legal expertise required.
+            </p>
+        </div>
+
+        <!-- How it works -->
+        <div class="how-it-works">
+            <div class="hiw-step">
+                <div class="hiw-num">1</div>
+                <div class="hiw-text">
+                    <strong>Upload contract PDF</strong>
+                    <span>NDA, service agreement, lease</span>
+                </div>
+            </div>
+            <div class="hiw-arrow">→</div>
+            <div class="hiw-step">
+                <div class="hiw-num">2</div>
+                <div class="hiw-text">
+                    <strong>AI reviews every clause</strong>
+                    <span>Risks, dates, obligations</span>
+                </div>
+            </div>
+            <div class="hiw-arrow">→</div>
+            <div class="hiw-step">
+                <div class="hiw-num">3</div>
+                <div class="hiw-text">
+                    <strong>Get a full report</strong>
+                    <span>Plain English, actionable</span>
+                </div>
+            </div>
+        </div>
+
+        <AuthorizeView>
+            <NotAuthorized>
+                <div class="ai-upgrade-card">
+                    <div class="ai-upgrade-icon">⚖️</div>
+                    <h2>AI Contract Reviewer — Pro Feature</h2>
+                    <p>
+                        Review contracts instantly with Claude AI. Catch risky clauses
+                        before you sign. Available with any Pro plan.
+                    </p>
+                    <div class="ai-upgrade-features">
+                        <div class="ai-upgrade-feat">✓ Risky clause detection</div>
+                        <div class="ai-upgrade-feat">✓ Key dates &amp; deadlines</div>
+                        <div class="ai-upgrade-feat">✓ Party obligations summary</div>
+                        <div class="ai-upgrade-feat">✓ Missing elements checklist</div>
+                        <div class="ai-upgrade-feat">✓ Plain English recommendations</div>
+                    </div>
+                    <div class="ai-upgrade-actions">
+                        <a href="/pricing" class="download-button"
+                           style="display:inline-block; text-decoration:none;">
+                            Upgrade to Pro — $19/mo
+                        </a>
+                        <a href="authentication/login" class="reset-button"
+                           style="display:inline-block; text-decoration:none;">
+                            Sign in if you have Pro
+                        </a>
+                    </div>
+                </div>
+            </NotAuthorized>
+
+            <Authorized>
+                @if (!_isPro)
+                {
+                    <div class="ai-upgrade-card">
+                        <div class="ai-upgrade-icon">⭐</div>
+                        <h2>Upgrade to Pro to unlock AI Contract Review</h2>
+                        <p>You're signed in but on the Free plan. Upgrade to access this and all AI tools.</p>
+                        <div class="ai-upgrade-actions">
+                            <a href="/pricing" class="download-button"
+                               style="display:inline-block; text-decoration:none;">
+                                Upgrade to Pro — $19/mo
+                            </a>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    @if (CurrentState == PageState.Upload)
+                    {
+                        <FileUpload OnFileSelected="HandleFileSelected"
+                                    OnFileRemoved="HandleFileRemoved"
+                                    HintText="Upload a contract PDF — NDA, service agreement, lease, employment contract" />
+
+                        @if (_fileBytes != null)
+                        {
+                            <button class="process-button" @onclick="RunReview">
+                                ⚖️ Review Contract with AI
+                            </button>
+                        }
+                    }
+
+                    @if (CurrentState == PageState.Processing)
+                    {
+                        <div class="ai-processing-container">
+                            <div class="ai-processing-icon">⚖️</div>
+                            <h3>AI is reviewing your contract...</h3>
+                            <p>Analyzing clauses, dates, obligations and risks</p>
+                            <div class="ai-processing-steps">
+                                <div class="ai-processing-step @(_step >= 1 ? "done" : "")">Reading contract text</div>
+                                <div class="ai-processing-step @(_step >= 2 ? "done" : "")">Identifying parties &amp; dates</div>
+                                <div class="ai-processing-step @(_step >= 3 ? "done" : "")">Detecting risky clauses</div>
+                                <div class="ai-processing-step @(_step >= 4 ? "done" : "")">Generating recommendations</div>
+                            </div>
+                        </div>
+                    }
+
+                    @if (CurrentState == PageState.Complete && _review != null)
+                    {
+                        <div class="contract-review-results">
+
+                            <!-- Header with risk badge -->
+                            <div class="review-header">
+                                <div>
+                                    <h2>Contract Review Complete</h2>
+                                    <p style="color:var(--text-secondary); font-size:0.875rem;">
+                                        @_fileName
+                                    </p>
+                                </div>
+                                <div class="review-risk-badge risk-@_review.RiskLevel.ToLower()">
+                                    @GetRiskIcon(_review.RiskLevel) @_review.RiskLevel.ToUpper() RISK
+                                </div>
+                            </div>
+
+                            <!-- Summary -->
+                            <div class="review-section">
+                                <h3>Summary</h3>
+                                <p class="review-summary">@_review.Summary</p>
+                            </div>
+
+                            <!-- Parties -->
+                            @if (_review.Parties?.Any() == true)
+                            {
+                                <div class="review-section">
+                                    <h3>Parties Involved</h3>
+                                    <div class="review-tags">
+                                        @foreach (var party in _review.Parties)
+                                        {
+                                            <div class="review-tag">
+                                                <span class="review-tag-label">@party.Role</span>
+                                                <span class="review-tag-value">@party.Name</span>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+
+                            <!-- Key dates -->
+                            @if (_review.KeyDates?.Any() == true)
+                            {
+                                <div class="review-section">
+                                    <h3>Key Dates &amp; Deadlines</h3>
+                                    <div class="review-dates-grid">
+                                        @foreach (var date in _review.KeyDates)
+                                        {
+                                            <div class="review-date-card">
+                                                <span class="review-date-label">@date.Label</span>
+                                                <span class="review-date-value">@date.Date</span>
+                                                <span class="review-date-note">@date.Importance</span>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+
+                            <!-- Risky clauses -->
+                            @if (_review.RiskyClauses?.Any() == true)
+                            {
+                                <div class="review-section">
+                                    <h3>⚠️ Risky Clauses</h3>
+                                    <div class="review-risks">
+                                        @foreach (var clause in _review.RiskyClauses)
+                                        {
+                                            <div class="review-risk-card severity-@clause.Severity.ToLower()">
+                                                <div class="review-risk-header">
+                                                    <span class="review-risk-title">@clause.Title</span>
+                                                    <span class="review-risk-severity">@clause.Severity.ToUpper()</span>
+                                                </div>
+                                                @if (!string.IsNullOrEmpty(clause.Excerpt))
+                                                {
+                                                    <blockquote class="review-risk-excerpt">@clause.Excerpt</blockquote>
+                                                }
+                                                <p class="review-risk-explanation">@clause.Risk</p>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+
+                            <!-- Obligations -->
+                            @if (_review.Obligations?.Any() == true)
+                            {
+                                <div class="review-section">
+                                    <h3>Key Obligations</h3>
+                                    <div class="review-obligations">
+                                        @foreach (var ob in _review.Obligations)
+                                        {
+                                            <div class="review-obligation @(ob.Critical ? "obligation-critical" : "")">
+                                                <span class="obligation-party">@ob.Party</span>
+                                                <span class="obligation-text">@ob.Description</span>
+                                                @if (ob.Critical)
+                                                {
+                                                    <span class="obligation-critical-badge">Critical</span>
+                                                }
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+
+                            <!-- Missing elements -->
+                            @if (_review.MissingElements?.Any() == true)
+                            {
+                                <div class="review-section">
+                                    <h3>🔍 Missing Elements</h3>
+                                    <div class="review-missing">
+                                        @foreach (var item in _review.MissingElements)
+                                        {
+                                            <div class="review-missing-item">⚠️ @item</div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+
+                            <!-- Recommendations -->
+                            @if (_review.Recommendations?.Any() == true)
+                            {
+                                <div class="review-section">
+                                    <h3>✅ Recommendations</h3>
+                                    <div class="review-recommendations">
+                                        @foreach (var rec in _review.Recommendations)
+                                        {
+                                            <div class="review-rec-item">@rec</div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+
+                            <div class="review-disclaimer">
+                                <strong>Note:</strong> This AI review is for informational purposes only
+                                and does not constitute legal advice. Consult a qualified attorney for
+                                legally binding decisions.
+                            </div>
+
+                            <button class="reset-button" style="margin-top:1rem;" @onclick="Reset">
+                                Review Another Contract
+                            </button>
+                        </div>
+                    }
+
+                    @if (CurrentState == PageState.Error)
+                    {
+                        <div class="error-container" role="alert">
+                            <span class="error-icon" aria-hidden="true">❌</span>
+                            <p class="error-message">@_error</p>
+                            <button class="reset-button" @onclick="Reset">Try Again</button>
+                        </div>
+                    }
+                }
+            </Authorized>
+        </AuthorizeView>
+    </div>
+
+    <div class="faq-section">
+        <h2>Frequently Asked Questions</h2>
+        <div class="faq-item">
+            <h3>What types of contracts can it review?</h3>
+            <p>NDAs, service agreements, employment contracts, lease agreements, freelance contracts, vendor agreements, and any other standard contract format.</p>
+        </div>
+        <div class="faq-item">
+            <h3>Is this a replacement for a lawyer?</h3>
+            <p>No — this tool helps you understand your contract before you consult a lawyer, saving time and billable hours. Always consult a qualified attorney for legally binding decisions.</p>
+        </div>
+        <div class="faq-item">
+            <h3>Is my contract stored anywhere?</h3>
+            <p>No. Your PDF is processed in memory and deleted within 1 hour. We never store document contents permanently.</p>
+        </div>
+        <div class="faq-item">
+            <h3>How accurate is the AI review?</h3>
+            <p>Very accurate for standard contract clauses and common risk patterns. Powered by Claude AI with legal document training. Complex or jurisdiction-specific issues may need professional review.</p>
+        </div>
+    </div>
+</div>
+
+@code {
+    private enum PageState { Upload, Processing, Complete, Error }
+    private PageState CurrentState = PageState.Upload;
+    private byte[]? _fileBytes;
+    private string? _fileName;
+    private bool _isPro = false;
+    private int _step = 0;
+    private string _error = string.Empty;
+    private ContractReview? _review;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await Auth.GetAuthenticationStateAsync();
+        var user = authState.User;
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            var userId = user.FindFirst("sub")?.Value ?? string.Empty;
+            var status = await SubService.GetStatusAsync(userId);
+            _isPro = status.HasPro;
+        }
+    }
+
+    private async Task HandleFileSelected(IBrowserFile file)
+    {
+        using var ms = new MemoryStream();
+        await file.OpenReadStream(maxAllowedSize: 52_428_800).CopyToAsync(ms);
+        _fileBytes = ms.ToArray();
+        _fileName = file.Name;
+        _error = string.Empty;
+    }
+
+    private void HandleFileRemoved()
+    {
+        _fileBytes = null;
+        _fileName = null;
+    }
+
+    private async Task RunReview()
+    {
+        if (_fileBytes == null) return;
+
+        CurrentState = PageState.Processing;
+        _step = 1;
+        StateHasChanged();
+
+        try
+        {
+            await Task.Delay(500);
+            _step = 2; StateHasChanged();
+
+            using var content = new MultipartFormDataContent();
+            var fc = new ByteArrayContent(_fileBytes);
+            fc.Headers.ContentType = new System.Net.Http.Headers
+                .MediaTypeHeaderValue("application/pdf");
+            content.Add(fc, "file", _fileName ?? "contract.pdf");
+
+            await Task.Delay(400);
+            _step = 3; StateHasChanged();
+
+            var response = await ApiService.PostMultipartAsync<ReviewResponse>(
+                "api/ai/review", content);
+
+            _step = 4; StateHasChanged();
+            await Task.Delay(300);
+
+            if (response == null)
+            {
+                _error = "Review failed. Please try again.";
+                CurrentState = PageState.Error;
+                return;
+            }
+
+            _review = ParseReview(response.Json);
+            CurrentState = PageState.Complete;
+            Toast.ShowSuccess("Contract review complete!");
+        }
+        catch (Exception ex)
+        {
+            _error = $"Review failed: {ex.Message}";
+            CurrentState = PageState.Error;
+            Toast.ShowError(_error);
+        }
+
+        StateHasChanged();
+    }
+
+    private ContractReview? ParseReview(string json)
+    {
+        try
+        {
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+            return JsonSerializer.Deserialize<ContractReview>(json, options);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private void Reset()
+    {
+        CurrentState = PageState.Upload;
+        _fileBytes = null;
+        _fileName = null;
+        _review = null;
+        _error = string.Empty;
+        _step = 0;
+    }
+
+    private static string GetRiskIcon(string risk) => risk.ToLower() switch
+    {
+        "high" => "🔴",
+        "medium" => "🟡",
+        _ => "🟢"
+    };
+
+    // Response shapes
+    private class ReviewResponse
+    {
+        public string Json { get; set; } = string.Empty;
+    }
+
+    private class ContractReview
+    {
+        public string Summary { get; set; } = string.Empty;
+        public string RiskLevel { get; set; } = "medium";
+        public List<KeyDate>? KeyDates { get; set; }
+        public List<Party>? Parties { get; set; }
+        public List<Obligation>? Obligations { get; set; }
+        public List<RiskyClause>? RiskyClauses { get; set; }
+        public List<string>? MissingElements { get; set; }
+        public List<string>? Recommendations { get; set; }
+    }
+
+    private class KeyDate
+    {
+        public string Label { get; set; } = string.Empty;
+        public string Date { get; set; } = string.Empty;
+        public string Importance { get; set; } = string.Empty;
+    }
+
+    private class Party
+    {
+        public string Role { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+    }
+
+    private class Obligation
+    {
+        public string Party { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public bool Critical { get; set; }
+    }
+
+    private class RiskyClause
+    {
+        public string Title { get; set; } = string.Empty;
+        public string Excerpt { get; set; } = string.Empty;
+        public string Risk { get; set; } = string.Empty;
+        public string Severity { get; set; } = "medium";
+    }
+}

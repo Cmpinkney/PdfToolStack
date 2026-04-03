@@ -157,6 +157,91 @@ namespace PdfToolStack.Infrastructure.Services
             return await CallApiAsync(requestBody, cancellationToken);
         }
 
+        public async Task<ContractReviewResult> ReviewContractAsync(
+    byte[] pdfBytes,
+    CancellationToken cancellationToken = default)
+        {
+            var text = ExtractText(pdfBytes);
+
+            if (string.IsNullOrWhiteSpace(text))
+                return ContractReviewResult.Failure(
+                    "Could not extract text from this PDF. " +
+                    "It may be a scanned image — try OCR first.");
+
+            if (text.Length > 16000)
+                text = text[..16000] + "\n[Document truncated]";
+
+            var systemPrompt = """
+        You are an expert contract reviewer. Analyze the contract and return a JSON object with this exact structure:
+        {
+          "summary": "2-3 sentence plain English summary of what this contract is about",
+          "riskLevel": "low|medium|high",
+          "keyDates": [{"label": "string", "date": "string", "importance": "string"}],
+          "parties": [{"role": "string", "name": "string"}],
+          "obligations": [{"party": "string", "obligation": "string", "critical": true|false}],
+          "riskyClauses": [{"title": "string", "excerpt": "string", "risk": "string", "severity": "low|medium|high"}],
+          "missingElements": ["string"],
+          "recommendations": ["string"]
+        }
+        Return ONLY valid JSON. No markdown, no explanation.
+        """;
+
+            var userPrompt = $"Review this contract:\n\n{text}";
+
+            var requestBody = new
+            {
+                model = _model,
+                max_tokens = 4000,
+                system = systemPrompt,
+                messages = new[] { new { role = "user", content = userPrompt } }
+            };
+
+            var json = JsonSerializer.Serialize(requestBody);
+            using var request = new HttpRequestMessage(
+                HttpMethod.Post, "https://api.anthropic.com/v1/messages");
+            request.Headers.Add("x-api-key", _apiKey);
+            request.Headers.Add("anthropic-version", "2023-06-01");
+            request.Content = new StringContent(json,
+                Encoding.UTF8, "application/json");
+
+            var response = await _http.SendAsync(request, cancellationToken);
+            var responseJson = await response.Content.ReadAsStringAsync(cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+                return ContractReviewResult.Failure(
+                    $"AI service error: {response.StatusCode}");
+
+            using var doc = JsonDocument.Parse(responseJson);
+            var content = doc.RootElement
+                .GetProperty("content")[0]
+                .GetProperty("text")
+                .GetString() ?? "";
+
+            // Strip markdown if present
+            content = content.Trim();
+            if (content.StartsWith("```json"))
+                content = content[7..];
+            if (content.StartsWith("```"))
+                content = content[3..];
+            if (content.EndsWith("```"))
+                content = content[..^3];
+
+            return ContractReviewResult.Success(content.Trim());
+        }
+
+        public class ContractReviewResult
+        {
+            public bool IsSuccess { get; private set; }
+            public string JsonData { get; private set; } = string.Empty;
+            public string? ErrorMessage { get; private set; }
+
+            public static ContractReviewResult Success(string json) =>
+                new() { IsSuccess = true, JsonData = json };
+
+            public static ContractReviewResult Failure(string error) =>
+                new() { IsSuccess = false, ErrorMessage = error };
+        }
+
         public async Task<string> ChatAsync(
             byte[] pdfBytes,
             string question,
