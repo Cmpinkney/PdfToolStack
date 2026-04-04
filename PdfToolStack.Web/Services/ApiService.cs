@@ -88,6 +88,9 @@ namespace PdfToolStack.Web.Services
 
         private byte[]? _lastMergedBytes;
 
+        public async Task<AiUsageDto?> GetAiUsageAsync(string userId) =>
+        await GetAsync<AiUsageDto>($"api/ai/usage/{userId}");
+
         public async Task<ProcessResponse?> MergePdfsAsync(
             MultipartFormDataContent content,
             CancellationToken cancellationToken = default)
@@ -456,8 +459,8 @@ namespace PdfToolStack.Web.Services
         }
 
         public async Task<byte[]?> ExtractPagesAsync(
-    byte[] fileBytes, string fileName,
-    IEnumerable<int> pages)
+        byte[] fileBytes, string fileName,
+        IEnumerable<int> pages)
         {
             using var content = new MultipartFormDataContent();
             content.Add(new ByteArrayContent(fileBytes),
@@ -746,8 +749,8 @@ namespace PdfToolStack.Web.Services
         }
 
         public async Task<T?> PostMultipartAsync<T>(
-    string endpoint,
-    MultipartFormDataContent content)
+        string endpoint,
+        MultipartFormDataContent content)
         {
             try
             {

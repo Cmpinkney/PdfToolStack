@@ -13,6 +13,7 @@ namespace PdfToolStack.Infrastructure.Data
         public DbSet<PdfJob> PdfJobs => Set<PdfJob>();
         public DbSet<UserSubscription> UserSubscriptions => Set<UserSubscription>();
         public DbSet<DownloadHistory> DownloadHistory => Set<DownloadHistory>();
+        public DbSet<AiUsageLog> AiUsageLogs => Set<AiUsageLog>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

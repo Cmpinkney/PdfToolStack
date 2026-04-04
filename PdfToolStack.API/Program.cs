@@ -99,7 +99,6 @@ try
     builder.Services.AddScoped<SignPdfProcessor>();
     builder.Services.AddScoped<EditPdfProcessor>();
     builder.Services.AddScoped<AnnotatePdfProcessor>();
-    builder.Services.AddScoped<SubscriptionService>();
     builder.Services.AddScoped<FlattenPdfProcessor>();
     builder.Services.AddScoped<RotatePdfProcessor>();
     builder.Services.AddScoped<WatermarkPdfProcessor>();
@@ -112,6 +111,17 @@ try
     builder.Services.AddScoped<ExcelToPdfProcessor>();
     builder.Services.AddScoped<PdfToJpgProcessor>();
     builder.Services.AddScoped<PdfToExcelProcessor>();
+
+    if (hasDatabase)
+    {
+        builder.Services.AddScoped<SubscriptionService>();
+        builder.Services.AddScoped<IAiUsageService, AiUsageService>();
+    }
+    else
+    {
+        builder.Services.AddScoped<IAiUsageService, NullAiUsageService>();
+    }
+
     builder.Services.AddScoped<IDeletePagesProcessor, DeletePagesProcessor>();
     builder.Services.AddScoped<IExtractPagesProcessor, ExtractPagesProcessor>();
     builder.Services.AddScoped<IFileValidationService, FileValidationService>();

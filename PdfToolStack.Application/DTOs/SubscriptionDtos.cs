@@ -39,4 +39,12 @@
         public long FileSizeBytes { get; set; }
         public DateTime ProcessedAt { get; set; }
     }
+
+    public class AiUsageDto
+    {
+        public int Used { get; set; }
+        public int Limit { get; set; }
+        public int Remaining => Limit - Used;
+        public double Percentage => (double)Used / Limit * 100;
+    }
 }

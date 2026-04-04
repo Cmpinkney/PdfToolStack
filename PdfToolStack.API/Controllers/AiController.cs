@@ -1,9 +1,7 @@
 ﻿using ClosedXML.Excel;
-using DocumentFormat.OpenXml.Spreadsheet;
-using iTextSharp.text.html.simpleparser;
 using Microsoft.AspNetCore.Mvc;
+using PdfToolStack.Application.Interfaces;
 using PdfToolStack.Infrastructure.Services;
-using System.Text;
 using System.Text.Json;
 
 namespace PdfToolStack.API.Controllers
@@ -13,13 +11,22 @@ namespace PdfToolStack.API.Controllers
     public class AiController : ControllerBase
     {
         private readonly AiService _aiService;
+        private readonly IAiUsageService _usageService;
+        private readonly SubscriptionService? _subscriptionService;
         private readonly ILogger<AiController> _logger;
 
+        private const string HaikuModel = "claude-haiku-4-5-20251001";
+        private const string OpusModel = "claude-opus-4-6";
+
         public AiController(
-            AiService aiService,
-            ILogger<AiController> logger)
+        AiService aiService,
+        IAiUsageService usageService,
+        ILogger<AiController> logger,
+        SubscriptionService? subscriptionService = null)
         {
             _aiService = aiService;
+            _usageService = usageService;
+            _subscriptionService = subscriptionService;
             _logger = logger;
         }
 
@@ -34,6 +41,11 @@ namespace PdfToolStack.API.Controllers
             if (!IsValidPdf(file))
                 return BadRequest(new { error = "Please upload a valid PDF file under 50MB." });
 
+            var userId = User.FindFirst("sub")?.Value ?? "anonymous";
+            (bool allowed, IActionResult? limitResponse) = await CheckAiUsageAsync(
+                userId, "extract", HaikuModel);
+            if (!allowed) return limitResponse!;
+
             _logger.LogInformation(
                 "AI extract request. Type: {Type}, File: {File}",
                 type, file.FileName);
@@ -45,8 +57,7 @@ namespace PdfToolStack.API.Controllers
                 ms.ToArray(), type, cancellationToken);
 
             if (!result.IsSuccess)
-                return UnprocessableEntity(
-                    new { error = result.ErrorMessage });
+                return UnprocessableEntity(new { error = result.ErrorMessage });
 
             return Ok(new
             {
@@ -66,6 +77,11 @@ namespace PdfToolStack.API.Controllers
             if (!IsValidPdf(file))
                 return BadRequest(new { error = "Please upload a valid PDF file under 50MB." });
 
+            var userId = User.FindFirst("sub")?.Value ?? "anonymous";
+            (bool allowed, IActionResult? limitResponse) = await CheckAiUsageAsync(
+                userId, "extract-excel", HaikuModel);
+            if (!allowed) return limitResponse!;
+
             using var ms = new MemoryStream();
             await file.CopyToAsync(ms, cancellationToken);
 
@@ -73,16 +89,14 @@ namespace PdfToolStack.API.Controllers
                 ms.ToArray(), type, cancellationToken);
 
             if (!result.IsSuccess)
-                return UnprocessableEntity(
-                    new { error = result.ErrorMessage });
+                return UnprocessableEntity(new { error = result.ErrorMessage });
 
             try
             {
                 var excelBytes = BuildExcel(result.JsonData, type);
                 var outName = $"extracted_{type}_{DateTime.UtcNow:yyyyMMdd}.xlsx";
                 return File(excelBytes,
-                    "application/vnd.openxmlformats-officedocument" +
-                    ".spreadsheetml.sheet",
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                     outName);
             }
             catch (Exception ex)
@@ -101,6 +115,11 @@ namespace PdfToolStack.API.Controllers
         {
             if (!IsValidPdf(file))
                 return BadRequest(new { error = "Please upload a valid PDF file under 50MB." });
+
+            var userId = User.FindFirst("sub")?.Value ?? "anonymous";
+            (bool allowed, IActionResult? limitResponse) = await CheckAiUsageAsync(
+                userId, "summarize", HaikuModel);
+            if (!allowed) return limitResponse!;
 
             using var ms = new MemoryStream();
             await file.CopyToAsync(ms, cancellationToken);
@@ -125,6 +144,11 @@ namespace PdfToolStack.API.Controllers
             if (string.IsNullOrWhiteSpace(question))
                 return BadRequest(new { error = "No question provided." });
 
+            var userId = User.FindFirst("sub")?.Value ?? "anonymous";
+            (bool allowed, IActionResult? limitResponse) = await CheckAiUsageAsync(
+                userId, "chat", HaikuModel);
+            if (!allowed) return limitResponse!;
+
             using var ms = new MemoryStream();
             await file.CopyToAsync(ms, cancellationToken);
 
@@ -132,6 +156,63 @@ namespace PdfToolStack.API.Controllers
                 ms.ToArray(), question, cancellationToken);
 
             return Ok(new { answer });
+        }
+
+        // POST api/ai/questions
+        [HttpPost("questions")]
+        [RequestSizeLimit(52428800)]
+        public async Task<IActionResult> GenerateQuestions(
+            IFormFile file,
+            [FromForm] int count = 5,
+            CancellationToken cancellationToken = default)
+        {
+            if (!IsValidPdf(file))
+                return BadRequest(new { error = "Please upload a valid PDF file under 50MB." });
+
+            var userId = User.FindFirst("sub")?.Value ?? "anonymous";
+            (bool allowed, IActionResult? limitResponse) = await CheckAiUsageAsync(
+                userId, "questions", HaikuModel);
+            if (!allowed) return limitResponse!;
+
+            count = Math.Clamp(count, 3, 15);
+
+            using var ms = new MemoryStream();
+            await file.CopyToAsync(ms, cancellationToken);
+
+            var prompt =
+                $"Generate exactly {count} thought-provoking questions based " +
+                $"on this document. Return ONLY a JSON array of strings — " +
+                $"no numbering, no markdown, no explanation. " +
+                $"Example: [\"Question one?\", \"Question two?\"]";
+
+            var rawAnswer = await _aiService.ChatAsync(
+                ms.ToArray(), prompt, cancellationToken);
+
+            try
+            {
+                var clean = rawAnswer
+                    .Replace("```json", "")
+                    .Replace("```", "")
+                    .Trim();
+
+                var questions = JsonSerializer
+                    .Deserialize<List<string>>(clean)
+                    ?? new List<string>();
+
+                return Ok(new { questions });
+            }
+            catch
+            {
+                var lines = rawAnswer
+                    .Split('\n', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(l => l.TrimStart('-', '*', '0', '1', '2', '3',
+                        '4', '5', '6', '7', '8', '9', '.', ' '))
+                    .Where(l => l.Length > 10)
+                    .Take(count)
+                    .ToList();
+
+                return Ok(new { questions = lines });
+            }
         }
 
         // POST api/ai/review
@@ -143,6 +224,11 @@ namespace PdfToolStack.API.Controllers
         {
             if (!IsValidPdf(file))
                 return BadRequest(new { error = "Please upload a valid PDF file under 50MB." });
+
+            var userId = User.FindFirst("sub")?.Value ?? "anonymous";
+            (bool allowed, IActionResult? limitResponse) = await CheckAiUsageAsync(
+                userId, "contract-review", OpusModel);
+            if (!allowed) return limitResponse!;
 
             _logger.LogInformation(
                 "Contract review request. File: {File}", file.FileName);
@@ -169,6 +255,11 @@ namespace PdfToolStack.API.Controllers
         {
             if (!IsValidPdf(file))
                 return BadRequest(new { error = "Please upload a valid PDF file under 50MB." });
+
+            var userId = User.FindFirst("sub")?.Value ?? "anonymous";
+            (bool allowed, IActionResult? limitResponse) = await CheckAiUsageAsync(
+                userId, "ocr", HaikuModel);
+            if (!allowed) return limitResponse!;
 
             _logger.LogInformation(
                 "OCR request. Language: {Lang}, File: {File}",
@@ -198,6 +289,71 @@ namespace PdfToolStack.API.Controllers
                 return StatusCode(500, new { error = ex.Message });
             }
         }
+
+        // GET api/ai/usage/{userId}
+        [HttpGet("usage/{userId}")]
+        public async Task<IActionResult> GetUsage(string userId)
+        {
+            var status = await _subscriptionService.GetStatusAsync(userId);
+            var (used, limit) = await _usageService.GetUsageAsync(
+                userId, status.PlanType);
+            return Ok(new
+            {
+                used,
+                limit,
+                remaining = limit - used,
+                percentage = (double)used / limit * 100
+            });
+        }
+
+        // ── Helpers ───────────────────────────────────────────
+        private async Task<(bool Allowed, IActionResult? Response)>
+        CheckAiUsageAsync(string userId, string feature, string model)
+        {
+            try
+            {
+                var planType = "monthly"; // default to Pro limits
+                if (_subscriptionService != null)
+                {
+                    var status = await _subscriptionService
+                        .GetStatusAsync(userId);
+                    planType = status.PlanType;
+                }
+
+                (bool allowed, int used, int limit) = await _usageService
+                    .CheckAndLogAsync(userId, feature, model, planType);
+
+                if (!allowed)
+                    return (false, StatusCode(429, new
+                    {
+                        error = $"Monthly AI limit reached ({limit} requests). " +
+                                "Upgrade your plan for more.",
+                        used,
+                        limit
+                    }));
+
+                return (true, null);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex,
+                    "Usage check failed — allowing request");
+                return (true, null);
+            }
+        }
+
+        private static bool IsValidPdf(IFormFile? file)
+        {
+            if (file == null || file.Length == 0) return false;
+            if (file.Length > 52_428_800) return false;
+
+            using var stream = file.OpenReadStream();
+            var header = new byte[4];
+            stream.Read(header, 0, 4);
+            return header[0] == 0x25 && header[1] == 0x50 &&
+                   header[2] == 0x44 && header[3] == 0x46;
+        }
+
         private static byte[] BuildExcel(string json, string type)
         {
             using var wb = new XLWorkbook();
@@ -208,18 +364,15 @@ namespace PdfToolStack.API.Controllers
 
             int row = 1;
 
-            // Header styling helper
             void StyleHeader(IXLCell cell)
             {
                 cell.Style.Font.Bold = true;
-                cell.Style.Fill.BackgroundColor =
-                    XLColor.FromHtml("#2563EB");
+                cell.Style.Fill.BackgroundColor = XLColor.FromHtml("#2563EB");
                 cell.Style.Font.FontColor = XLColor.White;
             }
 
             if (type == "invoice")
             {
-                // Summary section
                 ws.Cell(row, 1).Value = "Field";
                 ws.Cell(row, 2).Value = "Value";
                 StyleHeader(ws.Cell(row, 1));
@@ -246,14 +399,12 @@ namespace PdfToolStack.API.Controllers
 
                 row += 2;
 
-                // Line items section
                 if (root.TryGetProperty("lineItems", out var items) &&
                     items.ValueKind == JsonValueKind.Array &&
                     items.GetArrayLength() > 0)
                 {
                     ws.Cell(row, 1).Value = "Line Items";
                     ws.Cell(row, 1).Style.Font.Bold = true;
-                    ws.Cell(row, 1).Style.Font.FontSize = 12;
                     row++;
 
                     ws.Cell(row, 1).Value = "Description";
@@ -278,13 +429,11 @@ namespace PdfToolStack.API.Controllers
             }
             else
             {
-                // Generic flat extraction
                 ws.Cell(row, 1).Value = "Field";
                 ws.Cell(row, 2).Value = "Value";
                 StyleHeader(ws.Cell(row, 1));
                 StyleHeader(ws.Cell(row, 2));
                 row++;
-
                 FlattenJson(root, ws, ref row, string.Empty);
             }
 
@@ -333,61 +482,6 @@ namespace PdfToolStack.API.Controllers
             }
         }
 
-        // POST api/ai/questions
-        [HttpPost("questions")]
-        [RequestSizeLimit(52428800)]
-        public async Task<IActionResult> GenerateQuestions(
-            IFormFile file,
-            [FromForm] int count = 5,
-            CancellationToken cancellationToken = default)
-        {
-            if (!IsValidPdf(file))
-                return BadRequest(new { error = "Please upload a valid PDF file under 50MB." });
-
-            count = Math.Clamp(count, 3, 15);
-
-            using var ms = new MemoryStream();
-            await file.CopyToAsync(ms, cancellationToken);
-
-            // Reuse AiService chat with a questions-specific prompt
-            var prompt =
-                $"Generate exactly {count} thought-provoking questions based " +
-                $"on this document. Return ONLY a JSON array of strings — " +
-                $"no numbering, no markdown, no explanation. " +
-                $"Example: [\"Question one?\", \"Question two?\"]";
-
-            var rawAnswer = await _aiService.ChatAsync(
-                ms.ToArray(), prompt, cancellationToken);
-
-            try
-            {
-                // Strip markdown fences if present
-                var clean = rawAnswer
-                    .Replace("```json", "")
-                    .Replace("```", "")
-                    .Trim();
-
-                var questions = System.Text.Json.JsonSerializer
-                    .Deserialize<List<string>>(clean)
-                    ?? new List<string>();
-
-                return Ok(new { questions });
-            }
-            catch
-            {
-                // Fallback: split by newlines if JSON parse fails
-                var lines = rawAnswer
-                    .Split('\n', StringSplitOptions.RemoveEmptyEntries)
-                    .Select(l => l.TrimStart('-', '*', '0', '1', '2', '3',
-                        '4', '5', '6', '7', '8', '9', '.', ' '))
-                    .Where(l => l.Length > 10)
-                    .Take(count)
-                    .ToList();
-
-                return Ok(new { questions = lines });
-            }
-        }
-
         private static string GetStr(JsonElement el, string key) =>
             el.TryGetProperty(key, out var v) &&
             v.ValueKind != JsonValueKind.Null
@@ -398,18 +492,5 @@ namespace PdfToolStack.API.Controllers
                 .Replace(camelCase, "([A-Z])", " $1")
                 .Trim()
                 .Replace("_", " ");
-
-        private static bool IsValidPdf(IFormFile file)
-        {
-            if (file == null || file.Length == 0) return false;
-            if (file.Length > 52_428_800) return false; // 50MB max
-
-            // Check PDF magic bytes
-            using var stream = file.OpenReadStream();
-            var header = new byte[4];
-            stream.Read(header, 0, 4);
-            return header[0] == 0x25 && header[1] == 0x50 &&
-                   header[2] == 0x44 && header[3] == 0x46;
-        }
     }
 }

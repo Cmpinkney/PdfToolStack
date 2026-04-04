@@ -15,6 +15,9 @@ namespace PdfToolStack.Infrastructure.Services
         private readonly string _model;
         private readonly int _maxTokens;
         private readonly ILogger<AiService> _logger;
+        // Add these constants inside AiService class
+        private const string HaikuModel = "claude-haiku-4-5-20251001";
+        // _model field stays as Opus for contract review
 
         public AiService(
             HttpClient http,
@@ -53,7 +56,7 @@ namespace PdfToolStack.Infrastructure.Services
 
             var requestBody = new
             {
-                model = _model,
+                model = HaikuModel,
                 max_tokens = _maxTokens,
                 system = systemPrompt,
                 messages = new[]
@@ -138,7 +141,7 @@ namespace PdfToolStack.Infrastructure.Services
 
             var requestBody = new
             {
-                model = _model,
+                model = HaikuModel,
                 max_tokens = _maxTokens,
                 system = "You are a document summarization expert. " +
                          "Produce clear, concise summaries that capture " +
@@ -257,7 +260,7 @@ namespace PdfToolStack.Infrastructure.Services
 
             var requestBody = new
             {
-                model = _model,
+                model = HaikuModel,
                 max_tokens = _maxTokens,
                 system = "You are a helpful assistant that answers questions " +
                          "about documents. Only use information from the " +

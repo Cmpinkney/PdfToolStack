@@ -180,6 +180,8 @@ body {
 /* ── Search Bar ───────────────────────────────────────────── */
 .nav-search {
     position: relative;
+    display: flex;
+    align-items: center;
     flex: 1;
     max-width: 280px;
 }
@@ -209,11 +211,12 @@ body {
 
 .nav-search-icon {
     position: absolute;
-    left: 0.7rem;
+    left: 0.75rem;
     top: 50%;
     transform: translateY(-50%);
+    display: flex;
+    align-items: center;
     color: var(--text-muted);
-    font-size: 0.85rem;
     pointer-events: none;
 }
 
@@ -376,33 +379,28 @@ body {
 
 .login-btn {
     font-size: 0.85rem;
-    font-weight: 600;
-    padding: 0.45rem 1rem;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--border);
-    background: transparent;
-    color: var(--text);
-    cursor: pointer;
+    font-weight: 500;
+    color: var(--text-secondary);
     text-decoration: none;
+    padding: 0.4rem 0.75rem;
+    border-radius: var(--radius-sm);
     transition: var(--transition);
-    white-space: nowrap;
+    background: none;
+    border: none;
 }
 
     .login-btn:hover {
-        border-color: var(--primary);
-        color: var(--primary);
-        background: var(--primary-light);
+        color: var(--text);
+        background: var(--surface-2);
     }
 
 .signup-btn {
     font-size: 0.85rem;
     font-weight: 600;
+    color: white;
+    background: var(--primary);
     padding: 0.45rem 1rem;
     border-radius: var(--radius-sm);
-    border: 1px solid var(--primary);
-    background: var(--primary);
-    color: #fff;
-    cursor: pointer;
     text-decoration: none;
     transition: var(--transition);
     white-space: nowrap;
@@ -410,7 +408,6 @@ body {
 
     .signup-btn:hover {
         background: var(--primary-dark);
-        border-color: var(--primary-dark);
     }
 
 .logout-btn {
@@ -569,7 +566,7 @@ body {
     text-align: center;
     text-decoration: none;
     color: var(--text);
-    transition: var(--transition);
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
     box-shadow: var(--card-shadow);
     cursor: pointer;
     position: relative;
@@ -577,8 +574,9 @@ body {
 }
 
     .tool-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+        transform: translateY(-3px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+        border-color: var(--primary);
     }
 
         .tool-card:hover .tool-card-icon {
@@ -2166,7 +2164,9 @@ body {
 }
 
 .ai-tools-grid {
-    grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 1rem;
 }
 
 /* iPad */
@@ -2239,7 +2239,11 @@ body {
     }
 
     .trust-item {
-        padding: 0 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.82rem;
+        color: var(--text-secondary);
     }
 
     .pricing-grid {
@@ -3712,16 +3716,14 @@ body {
 
 /* ── AI tools section ────────────────────────── */
 .ai-category {
-    background: var(--accent-light);
-    border-radius: 12px;
-    padding: 1.25rem 1.25rem 0.5rem;
-    margin-bottom: 2rem;
+    background: var(--primary-light);
+    border: 1px solid var(--primary-mid);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
 }
 
 .ai-category-title {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
+    color: var(--primary);
 }
 
 .pro-label {
@@ -5578,10 +5580,13 @@ button,
     }
 
 .profile-menu-icon {
-    font-size: 1rem;
     width: 20px;
-    text-align: center;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     flex-shrink: 0;
+    color: var(--text-muted);
 }
 
 .profile-menu-signout {
@@ -5645,27 +5650,6 @@ button,
 
     .profile-theme-btn span {
         font-size: 1rem;
-    }
-
-/* Simple theme toggle for non-auth users */
-.theme-toggle-simple {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    border: 1px solid var(--border);
-    background: var(--surface);
-    font-size: 1rem;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: var(--transition);
-    padding: 0;
-}
-
-    .theme-toggle-simple:hover {
-        border-color: var(--primary);
-        background: var(--primary-light);
     }
 
 /* ── Footer Logo ──────────────────────────────────────────── */
@@ -5987,4 +5971,93 @@ button,
     .blog-article-header h1 {
         font-size: 1.4rem;
     }
+}
+
+.theme-toggle-switch {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.theme-toggle-track {
+    width: 40px;
+    height: 22px;
+    background: var(--border);
+    border-radius: 11px;
+    position: relative;
+    transition: background 0.2s ease;
+}
+
+.theme-toggle-switch.active .theme-toggle-track {
+    background: var(--primary);
+}
+
+.theme-toggle-thumb {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: white;
+    transition: transform 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #94A3B8;
+}
+
+.theme-toggle-switch.active .theme-toggle-thumb {
+    transform: translateX(18px);
+    color: var(--primary);
+}
+
+.ai-usage-meter {
+    margin-top: 1rem;
+    padding: 0.85rem;
+    background: var(--surface-2);
+    border-radius: var(--radius-sm);
+}
+
+.ai-usage-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.ai-usage-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.ai-usage-count {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.ai-usage-bar {
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 0.4rem;
+}
+
+.ai-usage-fill {
+    height: 100%;
+    background: var(--primary);
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+.ai-usage-remaining {
+    font-size: 0.72rem;
+    color: var(--text-muted);
 }

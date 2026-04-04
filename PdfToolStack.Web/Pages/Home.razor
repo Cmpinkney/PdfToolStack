@@ -14,11 +14,10 @@
 <div class="home-page">
 
     <div class="hero-section">
-        <div class="hero-badge">✨ Powered by Claude AI</div>
-        <h1>The AI document workspace<br /><span>for small teams</span></h1>
+        <h1>PDF tools that actually<br /><span>work for your team</span></h1>
         <p>
-            Extract invoice data, compare contracts, summarize documents —
-            plus 35+ PDF tools. Privacy-first. No signup required.
+            35+ PDF tools plus AI features for invoice extraction,
+            contract review, and document analysis. No signup required.
         </p>
         <div class="hero-cta-row">
             <a href="/" class="hero-cta-primary">Try free — no signup</a>
@@ -46,7 +45,12 @@
             </div>
         </div>
         <div class="hero-search">
-            <span class="hero-search-icon">🔍</span>
+            <span class="hero-search-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+            </span>
             <input type="text"
                    placeholder="Search tools — compress, sign, extract invoice..."
                    @bind="HeroSearch"
@@ -55,13 +59,38 @@
     </div>
 
     <div class="trust-bar">
-        <div class="trust-item">🔒 256-bit encryption</div>
+        <div class="trust-item">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+            256-bit encryption
+        </div>
         <div class="trust-divider"></div>
-        <div class="trust-item">🗑️ Files deleted in 1 hour</div>
+        <div class="trust-item">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3,6 5,6 21,6" />
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+            </svg>
+            Files deleted in 1 hour
+        </div>
         <div class="trust-divider"></div>
-        <div class="trust-item">🚫 No data training</div>
+        <div class="trust-item">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
+                <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
+                <line x1="1" y1="1" x2="23" y2="23" />
+            </svg>
+            No data training
+        </div>
         <div class="trust-divider"></div>
-        <div class="trust-item">⚡ No signup required</div>
+        <div class="trust-item">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12,6 12,12 16,14" />
+            </svg>
+            No signup required
+        </div>
     </div>
 
 
@@ -94,12 +123,15 @@
         else
         {
             <!-- AI Tools -->
-            <div class="tools-category ai-category">
-                <div class="tools-category-title ai-category-title">
-                    ✨ AI Tools
+        <div class="tools-category">
+                <div class="tools-category-title">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--primary);">
+                        <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26 12,2" />
+                    </svg>
+                    AI Tools
                     <span class="pro-label">Pro</span>
                 </div>
-                <div class="tools-grid ai-tools-grid">
+            <div class="tools-grid ai-tools-grid">
 
                     <a href="/extract-invoice-data" class="tool-card tool-card-ai featured-ai-card">
                         <div class="tool-icon-tile" style="background:#6D28D9;">
@@ -199,7 +231,6 @@
                     </a>
 
                 </div>
-            </div>
 
             <!-- Popular fixes -->
             <div class="tools-category">
@@ -257,7 +288,7 @@
 
                 </div>
             </div>
-
+        </div>
             <!-- Compress & Convert -->
             <div class="tools-category">
                 <div class="tools-category-title">Compress &amp; Convert</div>
