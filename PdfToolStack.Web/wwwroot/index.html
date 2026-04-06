@@ -16,6 +16,20 @@
 </head>
 <body>
     <script>
+        // ── MUST BE FIRST: patch navigator.permissions before Blazor WASM loads ──
+        (function () {
+            if (navigator.permissions && navigator.permissions.query) {
+                const _origQuery = navigator.permissions.query.bind(navigator.permissions);
+                navigator.permissions.query = function (params) {
+                    try {
+                        return _origQuery(params);
+                    } catch (e) {
+                        return Promise.resolve({ state: 'granted', onchange: null });
+                    }
+                };
+            }
+        })();
+
         (function () {
             const theme = localStorage.getItem('PdfToolStack-theme') || 'light';
             if (theme === 'dark') {
@@ -410,5 +424,283 @@
             });
         }
     </script>
+
+    <!-- ── Cloud Storage Pickers ────────────────────────────────────────── -->
+    <!-- Dropbox Chooser SDK -->
+    <script src="https://www.dropbox.com/static/api/2/dropins.js"
+            id="dropboxjs"
+            data-app-key="gc1swzrvkh8l4rs"></script>
+
+    <!-- Google APIs -->
+    <script src="https://apis.google.com/js/api.js"></script>
+    <script src="https://accounts.google.com/gsi/client"></script>
+
+    <!-- MSAL for OneDrive (replaces broken OneDrive.js SDK) -->
+    <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.38.3/lib/msal-browser.min.js"></script>
+    <script>
+        window.cloudPickers = {
+
+            // ── Google Drive ──────────────────────────────────────────────
+            _googleClientId: '342984371109-kcpka8n5ildp8fg9u97tu3qlqed82eke.apps.googleusercontent.com',
+            _googleDeveloperKey: 'AIzaSyDIIP3v7arpE2gWa-aWJ4Rqh9XS5wS693A',
+
+            openGoogleDrive: function () {
+                return new Promise((resolve) => {
+                    gapi.load('picker', () => {
+                        const tokenClient = google.accounts.oauth2.initTokenClient({
+                            client_id: window.cloudPickers._googleClientId,
+                            scope: 'https://www.googleapis.com/auth/drive.readonly',
+                            callback: (tokenResponse) => {
+                                if (tokenResponse.error) {
+                                    resolve(null);
+                                    return;
+                                }
+                                const picker = new google.picker.PickerBuilder()
+                                    .addView(new google.picker.DocsView()
+                                        .setMimeTypes('application/pdf')
+                                        .setMode(google.picker.DocsViewMode.LIST))
+                                    .setOAuthToken(tokenResponse.access_token)
+                                    .setDeveloperKey(window.cloudPickers._googleDeveloperKey)
+                                    .setCallback((data) => {
+                                        if (data.action === google.picker.Action.PICKED) {
+                                            const doc = data.docs[0];
+                                            resolve({
+                                                name: doc.name,
+                                                url: `https://www.googleapis.com/drive/v3/files/${doc.id}?alt=media`,
+                                                accessToken: tokenResponse.access_token
+                                            });
+                                        } else if (data.action === google.picker.Action.CANCEL) {
+                                            resolve(null);
+                                        }
+                                    })
+                                    .build();
+                                picker.setVisible(true);
+                            }
+                        });
+                        tokenClient.requestAccessToken({ prompt: '' });
+                    });
+                });
+            },
+
+            // ── Dropbox ───────────────────────────────────────────────────
+            openDropbox: function () {
+                return new Promise((resolve) => {
+                    Dropbox.choose({
+                        success: function (files) {
+                            const file = files[0];
+                            resolve({
+                                name: file.name,
+                                url: file.link,
+                                accessToken: null
+                            });
+                        },
+                        cancel: function () {
+                            resolve(null);
+                        },
+                        linkType: 'direct',
+                        multiselect: false,
+                        extensions: ['.pdf'],
+                        folderselect: false
+                    });
+                });
+            },
+
+            // ── OneDrive (MSAL + Microsoft Graph) ─────────────────────────
+            // Replaces broken OneDrive.js SDK entirely
+            _msalInstance: null,
+
+            openOneDrive: async function () {
+                try {
+                    if (!window.cloudPickers._msalInstance) {
+                        window.cloudPickers._msalInstance =
+                            new msal.PublicClientApplication({
+                                auth: {
+                                    clientId: 'bc19984e-2a13-4980-a125-371325127176',
+                                    authority: 'https://login.microsoftonline.com/common',
+                                    redirectUri: window.location.origin
+                                },
+                                cache: { cacheLocation: 'sessionStorage' }
+                            });
+                        await window.cloudPickers._msalInstance.initialize();
+                        await window.cloudPickers._msalInstance.handleRedirectPromise();
+                    }
+
+                    const msalInstance = window.cloudPickers._msalInstance;
+                    const scopes = ['Files.Read', 'Files.Read.All'];
+                    let tokenResponse;
+
+                    const accounts = msalInstance.getAllAccounts();
+                    if (accounts.length > 0) {
+                        try {
+                            tokenResponse = await msalInstance.acquireTokenSilent({
+                                scopes, account: accounts[0]
+                            });
+                        } catch {
+                            // Silent failed — use popup with explicit blank redirectUri
+                            tokenResponse = await msalInstance.acquireTokenPopup({
+                                scopes,
+                                redirectUri: window.location.origin
+                            });
+                        }
+                    } else {
+                        // No account — login with popup
+                        const loginResponse = await msalInstance.loginPopup({
+                            scopes,
+                            redirectUri: window.location.origin
+                        });
+                        tokenResponse = loginResponse;
+                    }
+
+                    const token = tokenResponse.accessToken;
+
+                    const response = await fetch(
+                        'https://graph.microsoft.com/v1.0/me/drive/root/children' +
+                        '?$select=name,size,file,@microsoft.graph.downloadUrl&$top=200',
+                        { headers: { Authorization: `Bearer ${token}` } }
+                    );
+
+                    if (!response.ok) {
+                        console.error('Graph API error:', response.status);
+                        return null;
+                    }
+
+                    const data = await response.json();
+                    const pdfs = (data.value || []).filter(f =>
+                        f.name?.toLowerCase().endsWith('.pdf'));
+
+                    if (pdfs.length === 0) {
+                        alert('No PDF files found in your OneDrive root folder.');
+                        return null;
+                    }
+
+                    const chosen = await window.cloudPickers._showOneDrivePicker(pdfs);
+                    if (!chosen) return null;
+
+                    return {
+                        name: chosen.name,
+                        url: chosen['@microsoft.graph.downloadUrl'],
+                        accessToken: null
+                    };
+
+                } catch (e) {
+                    console.error('OneDrive error', e);
+                    return null;
+                }
+            },
+
+            // Custom file picker overlay for OneDrive
+            _showOneDrivePicker: function (files) {
+                return new Promise((resolve) => {
+                    const existing = document.getElementById('od-picker-overlay');
+                    if (existing) existing.remove();
+
+                    const overlay = document.createElement('div');
+                    overlay.id = 'od-picker-overlay';
+                    overlay.style.cssText = [
+                        'position:fixed', 'top:0', 'left:0', 'width:100%', 'height:100%',
+                        'background:rgba(0,0,0,0.55)', 'z-index:99999',
+                        'display:flex', 'align-items:center', 'justify-content:center'
+                    ].join(';');
+
+                    const box = document.createElement('div');
+                    box.style.cssText = [
+                        'background:#fff', 'border-radius:12px', 'padding:24px',
+                        'width:500px', 'max-height:65vh', 'overflow-y:auto',
+                        'box-shadow:0 20px 60px rgba(0,0,0,0.3)',
+                        'font-family:system-ui,sans-serif'
+                    ].join(';');
+
+                    box.innerHTML = `
+                                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                                    <div style="display:flex;align-items:center;gap:10px;">
+                                        <svg width="22" height="22" viewBox="0 0 24 24">
+                                            <path d="M20.7 11.4c-.1-.6-.3-1.1-.6-1.6A5.6 5.6 0 0 0 14.7 7a5.5 5.5 0 0 0-4.6 2.5 3.3 3.3 0 0 0-1.4-.3A3.3 3.3 0 0 0 5.4 12a3.3 3.3 0 0 0 .1.7A4 4 0 0 0 4 16a4 4 0 0 0 4 4h12a4 4 0 0 0 .7-7.9z" fill="#0364B8"/>
+                                        </svg>
+                                        <h3 style="margin:0;font-size:1rem;color:#1a1a2e;">Select a PDF from OneDrive</h3>
+                                    </div>
+                                    <button id="od-close" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:#888;line-height:1;">×</button>
+                                </div>
+                                <p style="font-size:0.8rem;color:#999;margin:0 0 12px;">Showing PDF files from your OneDrive root folder</p>
+                                <div id="od-file-list"></div>`;
+
+                    const list = box.querySelector('#od-file-list');
+
+                    files.forEach(file => {
+                        const btn = document.createElement('button');
+                        btn.style.cssText = [
+                            'display:flex', 'align-items:center', 'gap:12px',
+                            'width:100%', 'padding:10px 12px', 'margin-bottom:6px',
+                            'border:1px solid #e8e8e8', 'border-radius:8px',
+                            'background:#fff', 'cursor:pointer', 'text-align:left',
+                            'font-size:0.875rem', 'color:#1a1a2e'
+                        ].join(';');
+
+                        const sizeKb = file.size ? Math.round(file.size / 1024) : 0;
+                        const sizeStr = sizeKb > 1024
+                            ? (sizeKb / 1024).toFixed(1) + ' MB'
+                            : sizeKb + ' KB';
+
+                        btn.innerHTML = `
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                        stroke="#e74c3c" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" style="flex-shrink:0;">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                        <polyline points="14,2 14,8 20,8"/>
+                                    </svg>
+                                    <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${file.name}</span>
+                                    <span style="color:#aaa;font-size:0.78rem;flex-shrink:0;">${sizeStr}</span>`;
+
+                        btn.onmouseover = () => btn.style.background = '#f5f7ff';
+                        btn.onmouseout = () => btn.style.background = '#fff';
+                        btn.onclick = () => { overlay.remove(); resolve(file); };
+                        list.appendChild(btn);
+                    });
+
+                    box.querySelector('#od-close').onclick = () => {
+                        overlay.remove();
+                        resolve(null);
+                    };
+
+                    overlay.appendChild(box);
+                    document.body.appendChild(overlay);
+                });
+            },
+
+            // ── Download file via API proxy → return as base64 ────────────
+            downloadFileAsBase64: async function (url, accessToken) {
+                try {
+                    const proxyUrl = `https://localhost:7100/api/cloud/download?url=${encodeURIComponent(url)}${accessToken ? '&token=' + encodeURIComponent(accessToken) : ''}`;
+
+                    console.log('Downloading via proxy:', proxyUrl.substring(0, 100) + '...');
+
+                    const controller = new AbortController();
+                    const timeout = setTimeout(() => controller.abort(), 30000);
+
+                    const response = await fetch(proxyUrl, { signal: controller.signal });
+                    clearTimeout(timeout);
+
+                    console.log('Proxy response status:', response.status);
+
+                    if (!response.ok) {
+                        console.error('Cloud proxy download failed:', response.status);
+                        return null;
+                    }
+
+                    const buffer = await response.arrayBuffer();
+                    const bytes = new Uint8Array(buffer);
+                    let binary = '';
+                    const chunkSize = 8192;
+                    for (let i = 0; i < bytes.length; i += chunkSize) {
+                        binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+                    }
+                    return btoa(binary);
+                } catch (e) {
+                    console.error('Cloud file download failed', e);
+                    return null;
+                }
+            }
+        };
+    </script>
+
 </body>
 </html>

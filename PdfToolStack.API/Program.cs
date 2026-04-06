@@ -8,6 +8,7 @@ using PdfToolStack.Application.Interfaces;
 using PdfToolStack.Application.Services;
 using PdfToolStack.Application.Strategies;
 using PdfToolStack.Domain.Interfaces;
+using PdfToolStack.Infrastructure.Auth;
 using PdfToolStack.Infrastructure.Configuration;
 using PdfToolStack.Infrastructure.Data;
 using PdfToolStack.Infrastructure.Processors;
@@ -125,6 +126,9 @@ try
     builder.Services.AddScoped<IDeletePagesProcessor, DeletePagesProcessor>();
     builder.Services.AddScoped<IExtractPagesProcessor, ExtractPagesProcessor>();
     builder.Services.AddScoped<IFileValidationService, FileValidationService>();
+
+    builder.Services.AddMemoryCache();
+    builder.Services.AddScoped<ICloudAuthStateStore, InMemoryCloudAuthStateStore>();
 
     // ── Strategies ────────────────────────────────────────────────────────
     builder.Services.AddScoped<IProcessingStrategy>(sp =>
@@ -245,6 +249,28 @@ try
             logger);
     });
 
+    // ── Cloud Service ────────────────────────────────────────────────────────────
+    builder.Services.Configure<OneDriveOptions>(
+    builder.Configuration.GetSection(OneDriveOptions.SectionName));
+
+    builder.Services.AddHttpClient("CloudProxy", client => {
+        client.DefaultRequestHeaders.Add("User-Agent", "PdfToolStack/1.0");
+        client.Timeout = TimeSpan.FromSeconds(35);
+    });
+
+    builder.Services.AddHttpClient("OneDrive", client => {
+        client.Timeout = TimeSpan.FromSeconds(35);
+    });
+
+    builder.Services.AddScoped<ICloudStorageService, OneDriveService>();
+
+    // ── HttpClient Service ────────────────────────────────────────────────────────────
+    builder.Services.AddHttpClient("CloudProxy", client =>
+    {
+        client.DefaultRequestHeaders.Add("User-Agent", "PdfToolStack/1.0");
+        client.Timeout = TimeSpan.FromSeconds(35);
+    });
+
     // ── Factory ───────────────────────────────────────────────────────────
     builder.Services.AddScoped<PdfProcessorFactory>(sp =>
         new PdfProcessorFactory(
@@ -261,7 +287,9 @@ try
         {
             if (builder.Environment.IsDevelopment())
             {
-                policy.AllowAnyOrigin()
+                policy.WithOrigins(
+                        "https://localhost:7025",
+                        "http://localhost:5049")
                       .AllowAnyMethod()
                       .AllowAnyHeader();
             }
@@ -308,8 +336,6 @@ try
         context.Response.Headers.Append("X-XSS-Protection", "1; mode=block");
         context.Response.Headers.Append("Permissions-Policy",
             "camera=(), microphone=(), geolocation=(), payment=()");
-        context.Response.Headers.Append("Content-Security-Policy",
-            "default-src 'none'; frame-ancestors 'none'");
 
         // HSTS — only in production
         if (!app.Environment.IsDevelopment())

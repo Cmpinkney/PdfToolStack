@@ -36,5 +36,7 @@ builder.Services.AddScoped<FileValidationService>();
 builder.Services.AddScoped<ToastService>();
 builder.Services.AddScoped<CookieConsentService>();
 builder.Services.AddScoped<SubscriptionService>();
+builder.Services.AddHttpClient<CloudPickerService>(
+    client => client.BaseAddress = new Uri(apiBaseUrl));
 
 await builder.Build().RunAsync();

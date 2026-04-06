@@ -4,16 +4,16 @@
 @using PdfToolStack.Web.Services
 
 <div class="upgrade-banner">
+
     @if (PaymentService.IsTestModeEnabled)
     {
         <div class="test-mode-badge">Test Mode</div>
     }
 
-    <div class="upgrade-icon">📦</div>
+    <div class="upgrade-icon">🚀</div>
 
     <div class="upgrade-content">
         <h3>@Title</h3>
-
         <p>
             @if (PaymentService.IsTestModeEnabled)
             {
@@ -22,99 +22,63 @@
                     <strong>@PaymentService.FormatFileSize(FileSizeBytes)</strong>.
                     The free limit is temporarily set to
                     <strong>@PaymentService.FormatFileSize(PaymentService.FreeTierMaxBytes)</strong>
-                    for testing, so this file requires a one-time payment.
+                    for testing. Upgrade to Pro to process any file up to 500MB.
                 </span>
             }
             else
             {
                 <span>
-                    @Message
                     Your file is
                     <strong>@PaymentService.FormatFileSize(FileSizeBytes)</strong>.
                     Free processing is limited to
                     <strong>@PaymentService.FormatFileSize(PaymentService.FreeTierMaxBytes)</strong>.
+                    Upgrade to Pro to process files up to 500MB.
                 </span>
             }
         </p>
 
         <p class="upgrade-price">
-            Process this file for just
-            <strong class="price-highlight">$0.99</strong>
+            Unlock with <strong class="price-highlight">Pro — $19/month</strong>
         </p>
 
         <div class="upgrade-features">
             <span>✅ Files up to 500MB</span>
-            <span>✅ One-time payment</span>
-            <span>✅ No subscription</span>
-            <span>✅ Secure checkout</span>
+            <span>✅ All 35+ PDF tools</span>
+            <span>✅ All AI tools</span>
+            <span>✅ Batch processing</span>
+            <span>✅ No ads</span>
+            <span>✅ Cancel anytime</span>
         </div>
     </div>
 
     <div class="upgrade-actions">
         <button class="process-button upgrade-btn"
-                @onclick="HandleUpgrade"
-                disabled="@IsLoading">
-            @(IsLoading ? "Redirecting..." : PrimaryButtonText)
+                @onclick="HandleUpgrade">
+            Upgrade to Pro
         </button>
-
         <button class="reset-button"
                 @onclick="HandleSecondaryAction">
             @SecondaryButtonText
         </button>
     </div>
+
 </div>
 
 @code {
     [Parameter] public long FileSizeBytes { get; set; }
-
-    [Parameter]
-    public string FileName { get; set; } = string.Empty;
-
-    [Parameter]
-    public string ToolType { get; set; } = string.Empty;
-
+    [Parameter] public string FileName { get; set; } = string.Empty;
+    [Parameter] public string ToolType { get; set; } = string.Empty;
     [Parameter] public EventCallback OnCancel { get; set; }
+    [Parameter] public string Title { get; set; } = "This file is over the free limit";
+    [Parameter] public string Message { get; set; } = "This file is above the free processing limit.";
+    [Parameter] public string PrimaryButtonText { get; set; } = "Upgrade to Pro";
+    [Parameter] public string SecondaryButtonText { get; set; } = "Return to upload";
 
-    [Parameter]
-    public string Title { get; set; } = "This file is over the free limit";
-
-    [Parameter]
-    public string Message { get; set; } = "This file is above the free processing limit.";
-
-    [Parameter]
-    public string PrimaryButtonText { get; set; } = "Fix instantly for $0.99";
-
-    [Parameter]
-    public string SecondaryButtonText { get; set; } = "Return to upload";
-
-    private bool IsLoading = false;
-    private string JobId = Guid.NewGuid().ToString();
-
-    private async Task HandleUpgrade()
+    private void HandleUpgrade()
     {
-        IsLoading = true;
-        StateHasChanged();
-
-        var currentUrl = Navigation.Uri;
-        var successUrl = Navigation.ToAbsoluteUri(
-            $"/payment-success?jobId={JobId}&toolType={ToolType}").ToString();
-        var cancelUrl = currentUrl;
-
-        var checkoutUrl = await PaymentService.CreateCheckoutSessionAsync(
-            JobId,
-            ToolType,
-            successUrl,
-            cancelUrl);
-
-        if (!string.IsNullOrEmpty(checkoutUrl))
-        {
-            Navigation.NavigateTo(checkoutUrl, forceLoad: true);
-        }
-        else
-        {
-            IsLoading = false;
-            StateHasChanged();
-        }
+        // Pass return URL so user lands back on the tool after subscribing
+        var returnUrl = Uri.EscapeDataString(Navigation.Uri);
+        Navigation.NavigateTo($"/pricing?from={returnUrl}", forceLoad: false);
     }
 
     private async Task HandleSecondaryAction()

@@ -1,42 +1,107 @@
-﻿@inject IJSRuntime JS
+﻿@using PdfToolStack.Web.Services
+@inject CloudPickerService CloudPicker
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
 
 <div class="upload-container @(IsDragging ? "dragging" : "")"
-     role="region"
-     aria-label="File upload area"
      @ondragover="HandleDragOver"
      @ondragover:preventDefault="true"
      @ondragleave="HandleDragLeave"
      @ondrop="HandleDrop"
      @ondrop:preventDefault="true">
+
     @if (SelectedFile == null)
     {
-        <span class="upload-icon" aria-hidden="true">📄</span>
+        <svg class="upload-icon-svg" width="40" height="40" viewBox="0 0 24 24"
+             fill="none" stroke="currentColor" stroke-width="1.5"
+             stroke-linecap="round" stroke-linejoin="round"
+             style="color:var(--text-muted); margin-bottom:0.75rem;">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14,2 14,8 20,8" />
+            <line x1="12" y1="13" x2="12" y2="19" />
+            <polyline points="9,16 12,19 15,16" />
+        </svg>
+
         <p style="color:var(--text-secondary); margin-bottom:0.75rem;">
             Drag and drop your file here or
         </p>
+
         <label class="upload-button">
             Browse File
             <InputFile OnChange="HandleFileSelected"
                        accept="@Accept"
-                       aria-label="Choose a file to upload"
                        style="display:none" />
         </label>
+
         <p class="upload-hint">@HintText</p>
+
+        <!-- Cloud Storage Pickers -->
+        <div class="cloud-picker-row">
+            <span class="cloud-picker-label">Or import from</span>
+            <div class="cloud-picker-buttons">
+                <button class="cloud-picker-btn"
+                        @onclick="HandleGoogleDrive"
+                        disabled="@_cloudLoading">
+                    <svg class="cloud-icon" viewBox="0 0 24 24">
+                        <path d="M9.6 3.2 3 14.5h4.5l6.5-11.3H9.6Z" fill="#34A853" />
+                        <path d="M14.1 3.2h-4.5l6.6 11.3h4.5L14.1 3.2Z" fill="#FBBC04" />
+                        <path d="M7.5 14.5 9.8 18.4h10.9L18.4 14.5H7.5Z" fill="#4285F4" />
+                    </svg>
+                    <span>Google Drive</span>
+                </button>
+
+                <button class="cloud-picker-btn"
+                        @onclick="HandleDropbox"
+                        disabled="@_cloudLoading">
+                    <svg class="cloud-icon" viewBox="0 0 24 24">
+                        <path d="M7.1 3.2 2 6.5l5.1 3.3 5.1-3.3-5.1-3.3Zm9.8 0-5.1 3.3 5.1 3.3L22 6.5l-5.1-3.3ZM2 13l5.1 3.3 5.1-3.3-5.1-3.3L2 13Zm14.9-3.3L11.8 13l5.1 3.3L22 13l-5.1-3.3ZM12 14.8 7.1 18 12 21.2l4.9-3.2-4.9-3.2Z"
+                              fill="#0061FF" />
+                    </svg>
+                    <span>Dropbox</span>
+                </button>
+
+               @*  <button class="cloud-picker-btn"
+                        @onclick="HandleOneDrive"
+                        disabled="@_cloudLoading"
+                        title="Import from OneDrive">
+                    <svg width="22" height="22" viewBox="0 0 24 24">
+                        <path d="M20.7 11.4c-.1-.6-.3-1.1-.6-1.6A5.6 5.6 0 0 0 14.7 7a5.5 5.5 0 0 0-4.6 2.5 3.3 3.3 0 0 0-1.4-.3A3.3 3.3 0 0 0 5.4 12a3.3 3.3 0 0 0 .1.7A4 4 0 0 0 4 16a4 4 0 0 0 4 4h12a4 4 0 0 0 .7-7.9z" fill="#0364B8" />
+                    </svg>
+                    OneDrive
+                </button> *@
+
+            </div>
+        </div>
+
+        @if (_cloudLoading)
+        {
+            <p style="font-size:0.85rem; color:var(--text-muted); margin-top:0.75rem;">
+                ⏳ Downloading file from cloud...
+            </p>
+        }
+
+        @if (!string.IsNullOrEmpty(_cloudError))
+        {
+            <p style="font-size:0.85rem; color:var(--danger); margin-top:0.75rem;">
+                @_cloudError
+            </p>
+        }
     }
     else
     {
-        <span aria-hidden="true" style="font-size:2rem;">✅</span>
-        <p style="font-size:0.95rem; font-weight:600; color:var(--text); margin:0.5rem 0 0.25rem;"
-           aria-live="polite">
-            @SelectedFile.Name selected
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none"
+             stroke="var(--success)" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round"
+             style="margin-bottom:0.5rem;">
+            <polyline points="20,6 9,17 4,12" />
+        </svg>
+        <p style="font-size:0.95rem; font-weight:600; color:var(--text); margin:0.5rem 0 0.25rem;">
+            @SelectedFile.Name
         </p>
         <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.75rem;">
             @FormatFileSize(SelectedFile.Size)
         </p>
-        <button class="reset-button"
-                style="max-width:120px;"
-                aria-label="Remove selected file"
-                @onclick="RemoveFile">
+        <button class="reset-button" style="max-width:120px;" @onclick="RemoveFile">
             Remove
         </button>
     }
@@ -46,10 +111,29 @@
     [Parameter] public EventCallback<IBrowserFile> OnFileSelected { get; set; }
     [Parameter] public EventCallback OnFileRemoved { get; set; }
     [Parameter] public string Accept { get; set; } = ".pdf";
-    [Parameter] public string HintText { get; set; } = "Maximum file size: 10MB free · 500MB paid";
+    [Parameter] public string HintText { get; set; } = "Up to 25MB free · 500MB with Pro";
 
     private IBrowserFile? SelectedFile;
-    private bool IsDragging = false;
+    private bool IsDragging;
+    private bool _cloudLoading;
+    //private bool _handledOneDriveCallback;
+    private string _cloudError = string.Empty;
+
+    // protected override async Task OnParametersSetAsync()
+    // {
+    //     if (_handledOneDriveCallback)
+    //         return;
+
+    //     var currentUrl = Navigation.Uri;
+
+    //     if (CloudPicker.HasPendingOneDriveCallback(currentUrl))
+    //     {
+    //         _handledOneDriveCallback = true;
+    //         await HandleOneDriveCallback(currentUrl);
+    //     }
+    // }
+
+    // ── File input ────────────────────────────────────────────────────────
 
     private async Task HandleFileSelected(InputFileChangeEventArgs e)
     {
@@ -72,10 +156,158 @@
         await OnFileRemoved.InvokeAsync();
     }
 
+    // ── Cloud pickers ─────────────────────────────────────────────────────
+
+    private async Task HandleGoogleDrive()
+    {
+        await RunCloudPicker("Google Drive", async () =>
+        {
+            var file = await CloudPicker.OpenGoogleDriveAsync();
+            if (file is null) return;
+            await DownloadAndSetFile(file.Name, file.Url, file.AccessToken);
+        });
+    }
+
+    private async Task HandleDropbox()
+    {
+        await RunCloudPicker("Dropbox", async () =>
+        {
+            var file = await CloudPicker.OpenDropboxAsync();
+            if (file is null) return;
+            await DownloadAndSetFile(file.Name, file.Url, file.AccessToken);
+        });
+    }
+
+    // private async Task HandleOneDrive()
+    // {
+    //     // OneDrive uses server-side OAuth — navigates away and returns
+    //     // with callback params handled in HandleOneDriveCallback
+    //     await CloudPicker.OpenOneDriveAsync();
+    // }
+
+    // private async Task HandleOneDriveCallback(string url)
+    // {
+    //     var query = System.Web.HttpUtility.ParseQueryString(
+    //         new Uri(url).Query);
+
+    //     var cloudError = query["cloud_error"];
+    //     if (!string.IsNullOrEmpty(cloudError))
+    //     {
+    //         _cloudError = cloudError switch
+    //         {
+    //             "auth_denied" => "OneDrive access was denied.",
+    //             "token_failed" => "Could not connect to OneDrive. Please try again.",
+    //             "no_pdfs" => "No PDF files found in your OneDrive root folder.",
+    //             _ => "OneDrive connection failed. Please try again."
+    //         };
+    //         await CloudPicker.CleanCallbackUrlAsync();
+    //         StateHasChanged();
+    //         return;
+    //     }
+
+    //     var files = CloudPicker.ParseCallbackFiles(url);
+    //     if (files is null || files.Count == 0)
+    //     {
+    //         await CloudPicker.CleanCallbackUrlAsync();
+    //         return;
+    //     }
+
+    //     // Show OneDrive file picker UI via JS
+    //     var chosen = await JS.InvokeAsync<OneDriveFileSelection?>(
+    //         "cloudPickers.showOneDriveFilePicker",
+    //         files.Select(f => new { name = f.Name, url = f.Url, size = f.Size })
+    //              .ToArray());
+
+    //     await CloudPicker.CleanCallbackUrlAsync();
+
+    //     if (chosen is null) return;
+
+    //     await RunCloudPicker("OneDrive", async () =>
+    //     {
+    //         await DownloadAndSetFile(chosen.Name, chosen.Url, null);
+    //     });
+    // }
+
+    // ── Shared helpers ────────────────────────────────────────────────────
+
+    private async Task RunCloudPicker(string providerName, Func<Task> action)
+    {
+        _cloudError = string.Empty;
+        try
+        {
+            await action();
+        }
+        catch (Exception ex)
+        {
+            _cloudError = $"{providerName} error: {ex.Message}";
+            StateHasChanged();
+        }
+    }
+
+    private async Task DownloadAndSetFile(
+        string name, string url, string? accessToken)
+    {
+        _cloudLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            var bytes = await CloudPicker.DownloadFileAsync(url, accessToken);
+
+            if (bytes is null || bytes.Length == 0)
+            {
+                _cloudError = "Could not download the file. Please try again.";
+                return;
+            }
+
+            var file = new CloudBrowserFile(name, bytes);
+            SelectedFile = file;
+            await OnFileSelected.InvokeAsync(file);
+        }
+        finally
+        {
+            _cloudLoading = false;
+            StateHasChanged();
+        }
+    }
+
     private static string FormatFileSize(long bytes)
     {
         if (bytes < 1024) return $"{bytes} B";
-        if (bytes < 1024 * 1024) return $"{Math.Round((double)bytes / 1024, 1)} KB";
+        if (bytes < 1024 * 1024)
+            return $"{Math.Round((double)bytes / 1024, 1)} KB";
         return $"{Math.Round((double)bytes / (1024 * 1024), 1)} MB";
+    }
+
+    // ── Private types ─────────────────────────────────────────────────────
+
+    //private sealed record OneDriveFileSelection(string Name, string Url, long Size);
+
+    /// <summary>
+    /// Adapts downloaded cloud file bytes to IBrowserFile so existing
+    /// tool pages receive the same type regardless of upload source.
+    /// </summary>
+    private sealed class CloudBrowserFile : IBrowserFile
+    {
+        private readonly byte[] _bytes;
+
+        public CloudBrowserFile(string name, byte[] bytes)
+        {
+            Name = name;
+            Size = bytes.Length;
+            _bytes = bytes;
+            LastModified = DateTimeOffset.UtcNow;
+            ContentType = "application/pdf";
+        }
+
+        public string Name { get; }
+        public DateTimeOffset LastModified { get; }
+        public long Size { get; }
+        public string ContentType { get; }
+
+        public Stream OpenReadStream(
+            long maxAllowedSize = 512000,
+            CancellationToken cancellationToken = default)
+            => new MemoryStream(_bytes);
     }
 }
