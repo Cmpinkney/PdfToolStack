@@ -8,45 +8,41 @@ namespace PdfToolStack.API.Services
     {
         Task<(bool IsValid, string? Error)> ValidatePdfAsync(
             IFormFile file,
+            bool isPro = false,
+            CancellationToken cancellationToken = default);
+
+        Task<(bool IsValid, string? Error)> ValidateFileAsync(
+            IFormFile file,
+            bool isPro = false,
             CancellationToken cancellationToken = default);
     }
 
     public sealed class FileValidationService : IFileValidationService
     {
-        private static readonly string[] AllowedExtensions =
-        [
-            ".pdf"
-        ];
+        private static readonly string[] AllowedPdfExtensions = [".pdf"];
 
-        private static readonly string[] AllowedMimeTypes =
+        private static readonly string[] AllowedPdfMimeTypes =
         [
             "application/pdf",
             "application/x-pdf",
             "binary/octet-stream"
         ];
 
-        private readonly ProcessingOptions _options;
+        private readonly FileLimit _limits;
 
-        public FileValidationService(IOptions<ProcessingOptions> options)
+        public FileValidationService(IOptions<FileLimit> limits)
         {
-            _options = options.Value;
+            _limits = limits.Value;
         }
 
         public async Task<(bool IsValid, string? Error)> ValidatePdfAsync(
             IFormFile file,
+            bool isPro = false,
             CancellationToken cancellationToken = default)
         {
-            if (file == null)
-                return (false, "No file provided.");
-
-            if (file.Length == 0)
-                return (false, "The uploaded file is empty.");
-
-            if (file.Length > _options.MaxFileSizeBytes)
-            {
-                var maxMb = _options.MaxFileSizeBytes / 1024 / 1024;
-                return (false, $"File exceeds maximum size of {maxMb}MB.");
-            }
+            var sizeResult = ValidateSize(file, isPro);
+            if (!sizeResult.IsValid)
+                return sizeResult;
 
             var fileName = file.FileName?.Trim();
             if (string.IsNullOrWhiteSpace(fileName))
@@ -54,35 +50,67 @@ namespace PdfToolStack.API.Services
 
             var extension = Path.GetExtension(fileName);
             if (string.IsNullOrWhiteSpace(extension) ||
-                !AllowedExtensions.Contains(extension, StringComparer.OrdinalIgnoreCase))
-            {
+                !AllowedPdfExtensions.Contains(
+                    extension, StringComparer.OrdinalIgnoreCase))
                 return (false, "Only PDF files are allowed.");
-            }
 
             if (!string.IsNullOrWhiteSpace(file.ContentType) &&
-                !AllowedMimeTypes.Contains(file.ContentType, StringComparer.OrdinalIgnoreCase))
-            {
+                !AllowedPdfMimeTypes.Contains(
+                    file.ContentType, StringComparer.OrdinalIgnoreCase))
                 return (false, "Invalid file type.");
-            }
 
             await using var stream = file.OpenReadStream();
-
             if (!stream.CanRead)
                 return (false, "Unable to read uploaded file.");
 
-            var headerBuffer = new byte[5];
-            var bytesRead = await stream.ReadAsync(headerBuffer, cancellationToken);
+            var header = new byte[5];
+            var bytesRead = await stream.ReadAsync(header, cancellationToken);
 
             var hasPdfHeader =
                 bytesRead >= 5 &&
-                headerBuffer[0] == 0x25 && // %
-                headerBuffer[1] == 0x50 && // P
-                headerBuffer[2] == 0x44 && // D
-                headerBuffer[3] == 0x46 && // F
-                headerBuffer[4] == 0x2D;   // -
+                header[0] == 0x25 && // %
+                header[1] == 0x50 && // P
+                header[2] == 0x44 && // D
+                header[3] == 0x46 && // F
+                header[4] == 0x2D;   // -
 
             if (!hasPdfHeader)
                 return (false, "File must be a valid PDF.");
+
+            return (true, null);
+        }
+
+        public Task<(bool IsValid, string? Error)> ValidateFileAsync(
+            IFormFile file,
+            bool isPro = false,
+            CancellationToken cancellationToken = default)
+        {
+            var sizeResult = ValidateSize(file, isPro);
+            return Task.FromResult(sizeResult);
+        }
+
+        private (bool IsValid, string? Error) ValidateSize(
+            IFormFile file,
+            bool isPro)
+        {
+            if (file is null)
+                return (false, "No file provided.");
+
+            if (file.Length == 0)
+                return (false, "The uploaded file is empty.");
+
+            var maxBytes = isPro
+                ? _limits.PaidTierMaxBytes
+                : _limits.FreeTierMaxBytes;
+
+            if (file.Length > maxBytes)
+            {
+                var maxMb = maxBytes / 1024 / 1024;
+                var tier = isPro ? "" : " on the free plan";
+                return (false,
+                    $"File exceeds the {maxMb}MB limit{tier}. " +
+                    (isPro ? "" : "Upgrade to Pro for files up to 500MB."));
+            }
 
             return (true, null);
         }

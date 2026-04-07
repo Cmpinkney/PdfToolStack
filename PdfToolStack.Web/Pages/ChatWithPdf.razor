@@ -2,6 +2,7 @@
 @inject ApiService ApiService
 @inject PdfToolStack.Web.Services.SubscriptionService SubService
 @inject AuthenticationStateProvider Auth
+@inject IJSRuntime JS
 @using Microsoft.AspNetCore.Components.Authorization
 
 <PageTitle>Chat with PDF — Ask Your Document Questions | PdfToolStack</PageTitle>
@@ -16,92 +17,217 @@
 </HeadContent>
 
 <div class="tool-page">
-    <div class="tool-hero">
-        <h1>Chat with PDF</h1>
-        <p>Upload your PDF and ask it anything. Get instant answers based on your document — no reading required.</p>
-    </div>
+    <div class="tool-container">
 
-    <AuthorizeView>
-        <NotAuthorized>
-            <div class="upgrade-nudge">
-                <p>⭐ Chat with PDF is a <strong>Pro feature</strong>.</p>
-                <a href="/pricing" class="process-button" style="display:inline-block; max-width:200px;">Upgrade to Pro — $19/mo</a>
-            </div>
-        </NotAuthorized>
-        <Authorized>
-            @if (!_isPro)
-            {
-                <div class="upgrade-nudge">
-                    <p>⭐ Chat with PDF is a <strong>Pro feature</strong>.</p>
-                    <a href="/pricing" class="process-button" style="display:inline-block; max-width:200px;">Upgrade to Pro — $19/mo</a>
+        <!-- Header -->
+        <div class="ai-tool-header">
+            <div class="ai-tool-badge">✨ AI-Powered</div>
+            <h1>Chat with PDF</h1>
+            <p class="tool-subtitle">
+                Upload your PDF and ask it anything. Get instant answers
+                based on your document — no reading required.
+            </p>
+        </div>
+
+        <!-- How it works -->
+        <div class="how-it-works">
+            <div class="hiw-step">
+                <div class="hiw-num">1</div>
+                <div class="hiw-text">
+                    <strong>Upload your PDF</strong>
+                    <span>Contract, manual, paper</span>
                 </div>
-            }
-            else
-            {
-                <!-- Upload -->
-                @if (_fileBytes == null)
+            </div>
+            <div class="hiw-arrow">→</div>
+            <div class="hiw-step">
+                <div class="hiw-num">2</div>
+                <div class="hiw-text">
+                    <strong>Ask any question</strong>
+                    <span>In plain English</span>
+                </div>
+            </div>
+            <div class="hiw-arrow">→</div>
+            <div class="hiw-step">
+                <div class="hiw-num">3</div>
+                <div class="hiw-text">
+                    <strong>Get instant answers</strong>
+                    <span>Grounded in your document</span>
+                </div>
+            </div>
+        </div>
+
+        <AuthorizeView>
+            <NotAuthorized>
+                <div class="ai-upgrade-card">
+                    <div class="ai-upgrade-icon">💬</div>
+                    <h2>Chat with PDF — Pro Feature</h2>
+                    <p>Ask your documents anything. Claude reads your PDF and answers based on the content. Available on Pro — $19/month.</p>
+                    <div class="ai-upgrade-features">
+                        <div class="ai-upgrade-feat">✓ Ask unlimited questions</div>
+                        <div class="ai-upgrade-feat">✓ Answers grounded in your document</div>
+                        <div class="ai-upgrade-feat">✓ Works on contracts, manuals, papers</div>
+                        <div class="ai-upgrade-feat">✓ Full conversation history</div>
+                    </div>
+                    <div class="ai-upgrade-actions">
+                        <a href="/pricing" class="download-button"
+                           style="display:inline-block; text-decoration:none;">
+                            Upgrade to Pro — $19/mo
+                        </a>
+                        <a href="authentication/login" class="reset-button"
+                           style="display:inline-block; text-decoration:none;">
+                            Sign in if you have Pro
+                        </a>
+                    </div>
+                </div>
+            </NotAuthorized>
+
+            <Authorized>
+                @if (!_isPro)
                 {
-                    <div class="tool-card" style="margin-bottom:1.25rem;">
-                        <label class="upload-label">Upload PDF to chat with</label>
-                        <InputFile OnChange="OnFileSelected" accept=".pdf" class="file-input" />
+                    <div class="ai-upgrade-card">
+                        <div class="ai-upgrade-icon">💬</div>
+                        <h2>Upgrade to Pro to unlock Chat with PDF</h2>
+                        <p>You're signed in but on the Free plan. Upgrade to ask your documents anything.</p>
+                        <div class="ai-upgrade-actions">
+                            <a href="/pricing" class="download-button"
+                               style="display:inline-block; text-decoration:none;">
+                                Upgrade to Pro — $19/mo
+                            </a>
+                        </div>
                     </div>
                 }
                 else
                 {
-                    <div class="tool-card" style="margin-bottom:1.25rem; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.75rem;">
-                        <div class="compare-file-badge">📄 @_fileName</div>
-                        <button class="secondary-button" @onclick="ClearFile">Change file</button>
-                    </div>
-
-                    <!-- Chat history -->
-                    @if (_messages.Any())
+                    @if (_fileBytes == null)
                     {
-                        <div class="chat-history">
-                            @foreach (var msg in _messages)
-                            {
-                                <div class="chat-bubble @(msg.IsUser ? "chat-user" : "chat-ai")">
-                                    @if (!msg.IsUser)
-                                    {
-                                        <span class="chat-ai-label">AI</span>
-                                    }
-                                    <div class="chat-bubble-text">@msg.Text</div>
+                        <FileUpload OnFileSelected="HandleFileSelected"
+                                    OnFileRemoved="HandleFileRemoved"
+                                    HintText="Upload a PDF to start chatting — up to 50MB" />
+                    }
+                    else
+                    {
+                        <!-- File indicator -->
+                        <div class="chat-file-bar">
+                            <div class="chat-file-bar-left">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                     stroke="currentColor" stroke-width="1.5"
+                                     stroke-linecap="round" stroke-linejoin="round"
+                                     style="color:var(--primary); flex-shrink:0;">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                    <polyline points="14,2 14,8 20,8" />
+                                </svg>
+                                <span class="chat-file-name">@_fileName</span>
+                                <span class="chat-file-ready">Ready to chat</span>
+                            </div>
+                            <button class="reset-button"
+                                    style="max-width:120px; padding:0.35rem 0.75rem; font-size:0.8rem;"
+                                    @onclick="ClearFile">
+                                Change file
+                            </button>
+                        </div>
+
+                        <!-- Chat history -->
+                        @if (_messages.Any())
+                        {
+                            <div class="chat-history" id="chatHistory">
+                                @foreach (var msg in _messages)
+                                {
+                                    <div class="chat-bubble @(msg.IsUser ? "chat-user" : "chat-ai")">
+                                        @if (!msg.IsUser)
+                                        {
+                                            <div class="chat-ai-avatar">AI</div>
+                                        }
+                                        <div class="chat-bubble-text">@msg.Text</div>
+                                    </div>
+                                }
+                                @if (_processing)
+                                {
+                                    <div class="chat-bubble chat-ai">
+                                        <div class="chat-ai-avatar">AI</div>
+                                        <div class="chat-bubble-text chat-thinking">
+                                            <span class="chat-dot"></span>
+                                            <span class="chat-dot"></span>
+                                            <span class="chat-dot"></span>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <!-- Suggested questions -->
+                            <div class="chat-suggestions">
+                                <p class="chat-suggestions-label">Try asking:</p>
+                                <div class="chat-suggestions-grid">
+                                    <button class="chat-suggestion-btn"
+                                            @onclick='() => SetQuestion("What is the main topic of this document?")'>
+                                        What is the main topic?
+                                    </button>
+                                    <button class="chat-suggestion-btn"
+                                            @onclick='() => SetQuestion("Summarize the key points in 3 bullet points.")'>
+                                        Summarize in 3 bullet points
+                                    </button>
+                                    <button class="chat-suggestion-btn"
+                                            @onclick='() => SetQuestion("What are the most important dates or deadlines mentioned?")'>
+                                        What are the key dates?
+                                    </button>
+                                    <button class="chat-suggestion-btn"
+                                            @onclick='() => SetQuestion("What action items or obligations are mentioned?")'>
+                                        What are the action items?
+                                    </button>
                                 </div>
-                            }
-                            @if (_processing)
-                            {
-                                <div class="chat-bubble chat-ai">
-                                    <span class="chat-ai-label">AI</span>
-                                    <div class="chat-bubble-text chat-thinking">Thinking...</div>
-                                </div>
-                            }
+                            </div>
+                        }
+
+                        <!-- Input -->
+                        <div class="chat-input-row">
+                            <input class="chat-input"
+                                   type="text"
+                                   placeholder="Ask a question about your document..."
+                                   @bind="_question"
+                                   @bind:event="oninput"
+                                   @onkeydown="OnKeyDown"
+                                   disabled="@_processing" />
+                            <button class="process-button"
+                                    style="max-width:90px; margin-top:0; flex-shrink:0;"
+                                    @onclick="AskQuestion"
+                                    disabled="@(_processing || string.IsNullOrWhiteSpace(_question))">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                     stroke="currentColor" stroke-width="2.5"
+                                     stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="22" y1="2" x2="11" y2="13" />
+                                    <polygon points="22,2 15,22 11,13 2,9" />
+                                </svg>
+                                Ask
+                            </button>
                         </div>
                     }
 
-                    <!-- Input -->
-                    <div class="chat-input-row">
-                        <input class="chat-input"
-                               type="text"
-                               placeholder="Ask a question about your document..."
-                               @bind="_question"
-                               @bind:event="oninput"
-                               @onkeydown="OnKeyDown"
-                               disabled="@_processing" />
-                        <button class="process-button"
-                                style="max-width:100px; flex-shrink:0;"
-                                @onclick="AskQuestion"
-                                disabled="@(_processing || string.IsNullOrWhiteSpace(_question))">
-                            Ask
-                        </button>
-                    </div>
+                    @if (!string.IsNullOrEmpty(_error))
+                    {
+                        <div class="error-message" style="margin-top:1rem;">@_error</div>
+                    }
                 }
+            </Authorized>
+        </AuthorizeView>
 
-                @if (!string.IsNullOrEmpty(_error))
-                {
-                    <div class="error-message" style="margin-top:1rem;">@_error</div>
-                }
-            }
-        </Authorized>
-    </AuthorizeView>
+    </div>
+
+    <div class="faq-section">
+        <h2>Frequently Asked Questions</h2>
+        <div class="faq-item">
+            <h3>What kinds of questions can I ask?</h3>
+            <p>Anything about the document — summaries, specific facts, dates, names, clauses, definitions, or comparisons between sections.</p>
+        </div>
+        <div class="faq-item">
+            <h3>Does it remember previous questions?</h3>
+            <p>Yes — the conversation is maintained within your session. Each answer considers the full chat history.</p>
+        </div>
+        <div class="faq-item">
+            <h3>Is my document stored?</h3>
+            <p>No. Your PDF is processed in memory and deleted within 1 hour. We never store document contents permanently.</p>
+        </div>
+    </div>
 </div>
 
 @code {
@@ -125,14 +251,22 @@
         }
     }
 
-    private async Task OnFileSelected(InputFileChangeEventArgs e)
+    private async Task HandleFileSelected(IBrowserFile file)
     {
         using var ms = new MemoryStream();
-        await e.File.OpenReadStream(maxAllowedSize: 52_428_800).CopyToAsync(ms);
+        await file.OpenReadStream(maxAllowedSize: 52_428_800).CopyToAsync(ms);
         _fileBytes = ms.ToArray();
-        _fileName = e.File.Name;
+        _fileName = file.Name;
         _messages.Clear();
         _error = string.Empty;
+    }
+
+    private void HandleFileRemoved()
+    {
+        _fileBytes = null;
+        _fileName = null;
+        _messages.Clear();
+        _question = string.Empty;
     }
 
     private void ClearFile()
@@ -143,9 +277,17 @@
         _question = string.Empty;
     }
 
+    private void SetQuestion(string q)
+    {
+        _question = q;
+        StateHasChanged();
+    }
+
     private async Task OnKeyDown(KeyboardEventArgs e)
     {
-        if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(_question) && !_processing)
+        if (e.Key == "Enter" &&
+            !string.IsNullOrWhiteSpace(_question) &&
+            !_processing)
             await AskQuestion();
     }
 
@@ -159,6 +301,8 @@
         _messages.Add(new ChatMessage(q, true));
         _processing = true;
         StateHasChanged();
+
+        await JS.InvokeVoidAsync("scrollToBottom", "chatHistory");
 
         try
         {
@@ -184,6 +328,7 @@
         {
             _processing = false;
             StateHasChanged();
+            await JS.InvokeVoidAsync("scrollToBottom", "chatHistory");
         }
     }
 

@@ -17,86 +17,206 @@
 </HeadContent>
 
 <div class="tool-page">
-    <div class="tool-hero">
-        <h1>AI Questions Generator</h1>
-        <p>Upload any PDF and let AI generate quiz questions automatically. Export as a printable question sheet.</p>
+    <div class="tool-container">
+
+        <!-- Header -->
+        <div class="ai-tool-header">
+            <div class="ai-tool-badge">✨ AI-Powered</div>
+            <h1>AI Questions Generator</h1>
+            <p class="tool-subtitle">
+                Upload any PDF and let AI generate quiz questions automatically.
+                Perfect for studying, teaching, or testing comprehension.
+            </p>
+        </div>
+
+        <!-- How it works -->
+        <div class="how-it-works">
+            <div class="hiw-step">
+                <div class="hiw-num">1</div>
+                <div class="hiw-text">
+                    <strong>Upload your PDF</strong>
+                    <span>Any document up to 50MB</span>
+                </div>
+            </div>
+            <div class="hiw-arrow">→</div>
+            <div class="hiw-step">
+                <div class="hiw-num">2</div>
+                <div class="hiw-text">
+                    <strong>Choose question count</strong>
+                    <span>3 to 15 questions</span>
+                </div>
+            </div>
+            <div class="hiw-arrow">→</div>
+            <div class="hiw-step">
+                <div class="hiw-num">3</div>
+                <div class="hiw-text">
+                    <strong>Copy or export</strong>
+                    <span>Ready to use instantly</span>
+                </div>
+            </div>
+        </div>
+
+        <AuthorizeView>
+            <NotAuthorized>
+                <div class="ai-upgrade-card">
+                    <div class="ai-upgrade-icon">📝</div>
+                    <h2>AI Questions Generator — Pro Feature</h2>
+                    <p>Generate quiz questions from any PDF automatically. Available on Pro — $19/month.</p>
+                    <div class="ai-upgrade-features">
+                        <div class="ai-upgrade-feat">✓ Generate up to 15 questions</div>
+                        <div class="ai-upgrade-feat">✓ Works on any PDF document</div>
+                        <div class="ai-upgrade-feat">✓ Copy all questions instantly</div>
+                        <div class="ai-upgrade-feat">✓ Perfect for studying and teaching</div>
+                    </div>
+                    <div class="ai-upgrade-actions">
+                        <a href="/pricing" class="download-button"
+                           style="display:inline-block; text-decoration:none;">
+                            Upgrade to Pro — $19/mo
+                        </a>
+                        <a href="authentication/login" class="reset-button"
+                           style="display:inline-block; text-decoration:none;">
+                            Sign in if you have Pro
+                        </a>
+                    </div>
+                </div>
+            </NotAuthorized>
+
+            <Authorized>
+                @if (!_isPro)
+                {
+                    <div class="ai-upgrade-card">
+                        <div class="ai-upgrade-icon">📝</div>
+                        <h2>Upgrade to Pro to unlock AI Questions</h2>
+                        <p>You're signed in but on the Free plan. Upgrade to generate quiz questions from any PDF.</p>
+                        <div class="ai-upgrade-actions">
+                            <a href="/pricing" class="download-button"
+                               style="display:inline-block; text-decoration:none;">
+                                Upgrade to Pro — $19/mo
+                            </a>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    @if (CurrentState == PageState.Upload)
+                    {
+                        <FileUpload OnFileSelected="HandleFileSelected"
+                                    OnFileRemoved="HandleFileRemoved"
+                                    HintText="Upload a PDF document — up to 50MB" />
+
+                        @if (_fileBytes != null)
+                        {
+                            <!-- Question count selector -->
+                            <div class="questions-count-section">
+                                <p class="questions-count-label">How many questions?</p>
+                                <div class="questions-count-grid">
+                                    @foreach (var count in new[] { 3, 5, 8, 10, 15 })
+                                    {
+                                        <button class="questions-count-btn @(_questionCount == count ? "active" : "")"
+                                                @onclick="() => _questionCount = count">
+                                            @count
+                                        </button>
+                                    }
+                                </div>
+                            </div>
+
+                            <button class="process-button" @onclick="RunGenerate">
+                                📝 Generate @_questionCount Questions
+                            </button>
+                        }
+                    }
+
+                    @if (CurrentState == PageState.Processing)
+                    {
+                        <div class="ai-processing-container">
+                            <div class="ai-processing-icon">📝</div>
+                            <h3>AI is generating questions...</h3>
+                            <p>Reading your document and creating @_questionCount questions</p>
+                            <div class="ai-processing-steps">
+                                <div class="ai-processing-step @(_step >= 1 ? "done" : "")">Reading PDF content</div>
+                                <div class="ai-processing-step @(_step >= 2 ? "done" : "")">Identifying key concepts</div>
+                                <div class="ai-processing-step @(_step >= 3 ? "done" : "")">Generating questions</div>
+                            </div>
+                        </div>
+                    }
+
+                    @if (CurrentState == PageState.Complete && _questions.Any())
+                    {
+                        <div class="ai-result-card">
+                            <div class="ai-result-header">
+                                <div>
+                                    <h2>@_questions.Count questions generated</h2>
+                                    <p style="color:var(--text-secondary); font-size:0.875rem;">
+                                        @_fileName
+                                    </p>
+                                </div>
+                                <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+                                    <button class="download-button"
+                                            style="max-width:160px; margin-top:0;"
+                                            @onclick="CopyQuestions">
+                                        @(_copied ? "✓ Copied!" : "📋 Copy All")
+                                    </button>
+                                    <button class="reset-button"
+                                            style="max-width:140px;"
+                                            @onclick="Reset">
+                                        Generate More
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="questions-result-list">
+                                @for (int i = 0; i < _questions.Count; i++)
+                                {
+                                    var index = i;
+                                    <div class="question-result-item">
+                                        <span class="question-result-num">@(index + 1)</span>
+                                        <span class="question-result-text">@_questions[index]</span>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+
+                    @if (CurrentState == PageState.Error)
+                    {
+                        <div class="error-container" role="alert">
+                            <span class="error-icon" aria-hidden="true">❌</span>
+                            <p class="error-message">@_error</p>
+                            <button class="reset-button" @onclick="Reset">Try Again</button>
+                        </div>
+                    }
+                }
+            </Authorized>
+        </AuthorizeView>
+
     </div>
 
-    <AuthorizeView>
-        <NotAuthorized>
-            <div class="upgrade-nudge">
-                <p>⭐ AI Questions Generator is a <strong>Pro feature</strong>.</p>
-                <a href="/pricing" class="process-button" style="display:inline-block; max-width:200px;">Upgrade to Pro — $19/mo</a>
-            </div>
-        </NotAuthorized>
-        <Authorized>
-            @if (!_isPro)
-            {
-                <div class="upgrade-nudge">
-                    <p>⭐ AI Questions Generator is a <strong>Pro feature</strong>.</p>
-                    <a href="/pricing" class="process-button" style="display:inline-block; max-width:200px;">Upgrade to Pro — $19/mo</a>
-                </div>
-            }
-            else
-            {
-                <div class="tool-card" style="margin-bottom:1.25rem;">
-                    <label class="upload-label">Upload PDF</label>
-                    <InputFile OnChange="OnFileSelected" accept=".pdf" class="file-input" />
-                    @if (_fileName != null)
-                    {
-                        <div class="compare-file-badge" style="margin-top:0.5rem;">📄 @_fileName</div>
-                    }
-                </div>
-
-                <div class="tool-card" style="margin-bottom:1.25rem;">
-                    <label class="upload-label">Number of questions</label>
-                    <div style="display:flex; align-items:center; gap:1rem; margin-top:0.5rem;">
-                        <input type="range" min="3" max="15" step="1"
-                               @bind="_questionCount"
-                               style="width:200px;" />
-                        <span style="font-weight:500; min-width:24px;">@_questionCount</span>
-                    </div>
-                </div>
-
-                <button class="process-button" style="max-width:220px; margin-bottom:1.5rem;"
-                        @onclick="RunGenerate"
-                        disabled="@(_processing || _fileBytes == null)">
-                    @(_processing ? "Generating..." : "Generate Questions")
-                </button>
-
-                @if (_questions.Any())
-                {
-                    <div class="tool-card ai-output-card">
-                        <div class="ai-output-label">📝 Generated Questions</div>
-                        <ol class="questions-list">
-                            @foreach (var q in _questions)
-                            {
-                                <li class="question-item">@q</li>
-                            }
-                        </ol>
-                        <button class="secondary-button"
-                                style="margin-top:1rem;"
-                                @onclick="CopyQuestions">
-                            @(_copied ? "✓ Copied!" : "Copy all questions")
-                        </button>
-                    </div>
-                }
-
-                @if (!string.IsNullOrEmpty(_error))
-                {
-                    <div class="error-message">@_error</div>
-                }
-            }
-        </Authorized>
-    </AuthorizeView>
+    <div class="faq-section">
+        <h2>Frequently Asked Questions</h2>
+        <div class="faq-item">
+            <h3>What types of questions does it generate?</h3>
+            <p>Open-ended comprehension questions based on the document content. Ideal for testing understanding of the material.</p>
+        </div>
+        <div class="faq-item">
+            <h3>How many questions can I generate?</h3>
+            <p>Between 3 and 15 questions per document. You can regenerate with a different count anytime.</p>
+        </div>
+        <div class="faq-item">
+            <h3>Is my document stored?</h3>
+            <p>No. Your PDF is processed in memory and deleted within 1 hour. We never store document contents permanently.</p>
+        </div>
+    </div>
 </div>
 
 @code {
+    private enum PageState { Upload, Processing, Complete, Error }
+    private PageState CurrentState = PageState.Upload;
+
     private byte[]? _fileBytes;
     private string? _fileName;
     private bool _isPro;
-    private bool _processing;
     private bool _copied;
+    private int _step = 0;
     private int _questionCount = 5;
     private List<string> _questions = new();
     private string _error = string.Empty;
@@ -113,26 +233,36 @@
         }
     }
 
-    private async Task OnFileSelected(InputFileChangeEventArgs e)
+    private async Task HandleFileSelected(IBrowserFile file)
     {
         using var ms = new MemoryStream();
-        await e.File.OpenReadStream(maxAllowedSize: 52_428_800).CopyToAsync(ms);
+        await file.OpenReadStream(maxAllowedSize: 52_428_800).CopyToAsync(ms);
         _fileBytes = ms.ToArray();
-        _fileName = e.File.Name;
+        _fileName = file.Name;
         _questions.Clear();
         _error = string.Empty;
+    }
+
+    private void HandleFileRemoved()
+    {
+        _fileBytes = null;
+        _fileName = null;
+        _questions.Clear();
     }
 
     private async Task RunGenerate()
     {
         if (_fileBytes == null) return;
-        _processing = true;
-        _questions.Clear();
-        _error = string.Empty;
+
+        CurrentState = PageState.Processing;
+        _step = 1;
         StateHasChanged();
 
         try
         {
+            await Task.Delay(500);
+            _step = 2; StateHasChanged();
+
             using var content = new MultipartFormDataContent();
             var fc = new ByteArrayContent(_fileBytes);
             fc.Headers.ContentType =
@@ -143,20 +273,26 @@
             var result = await ApiService.PostMultipartAsync<QuestionsResponse>(
                 "api/ai/questions", content);
 
+            _step = 3; StateHasChanged();
+
             if (result?.Questions != null && result.Questions.Any())
+            {
                 _questions = result.Questions;
+                CurrentState = PageState.Complete;
+            }
             else
+            {
                 _error = "Could not generate questions. Please try again.";
+                CurrentState = PageState.Error;
+            }
         }
         catch (Exception ex)
         {
             _error = $"Error: {ex.Message}";
+            CurrentState = PageState.Error;
         }
-        finally
-        {
-            _processing = false;
-            StateHasChanged();
-        }
+
+        StateHasChanged();
     }
 
     private async Task CopyQuestions()
@@ -169,6 +305,17 @@
         await Task.Delay(2000);
         _copied = false;
         StateHasChanged();
+    }
+
+    private void Reset()
+    {
+        CurrentState = PageState.Upload;
+        _fileBytes = null;
+        _fileName = null;
+        _questions.Clear();
+        _error = string.Empty;
+        _step = 0;
+        _copied = false;
     }
 
     private class QuestionsResponse

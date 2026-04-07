@@ -30,7 +30,7 @@ namespace PdfToolStack.API.Controllers
             IOptions<ProcessingOptions> options,
             ILogger<PdfController> logger,
             IFileValidationService fileValidationService,
-            SubscriptionService subscriptionService = null)
+            SubscriptionService? subscriptionService = null)
         {
             _pdfService = pdfService;
             _options = options.Value;
@@ -910,13 +910,17 @@ namespace PdfToolStack.API.Controllers
         // Helpers
 
         private async Task<IActionResult?> ValidateRequiredPdfAsync(
-            IFormFile? file,
-            CancellationToken cancellationToken)
+    IFormFile? file,
+    CancellationToken cancellationToken)
         {
             if (file == null || file.Length == 0)
                 return BadRequest(new { error = "No file provided." });
 
-            var validation = await _fileValidationService.ValidatePdfAsync(file, cancellationToken);
+            var isPro = await ResolveIsProAsync();
+
+            var validation = await _fileValidationService
+                .ValidatePdfAsync(file, isPro, cancellationToken);
+
             if (!validation.IsValid)
             {
                 _logger.LogWarning(
@@ -930,15 +934,41 @@ namespace PdfToolStack.API.Controllers
             return null;
         }
 
+        // ── Pro status helper — reads JWT sub claim ───────────────────────────────
+        private async Task<bool> ResolveIsProAsync()
+        {
+            if (_subscriptionService is null)
+                return false;
+
+            var userId = User.FindFirst("sub")?.Value;
+            if (string.IsNullOrEmpty(userId))
+                return false;
+
+            var status = await _subscriptionService.GetStatusAsync(userId);
+            return status.IsActive;
+        }
+
         private async Task<IActionResult?> ValidateRequiredFileAsync(
-            IFormFile? file,
-            CancellationToken cancellationToken)
+    IFormFile? file,
+    CancellationToken cancellationToken)
         {
             if (file == null || file.Length == 0)
                 return BadRequest(new { error = "No file provided." });
 
-            if (file.Length > _options.MaxFileSizeBytes)
-                return BadRequest(new { error = $"File exceeds maximum size of {_options.MaxFileSizeBytes / 1024 / 1024}MB." });
+            var isPro = await ResolveIsProAsync();
+
+            var validation = await _fileValidationService
+                .ValidateFileAsync(file, isPro, cancellationToken);
+
+            if (!validation.IsValid)
+            {
+                _logger.LogWarning(
+                    "File validation failed for {FileName}: {Error}",
+                    file.FileName,
+                    validation.Error);
+
+                return BadRequest(new { error = validation.Error });
+            }
 
             return null;
         }

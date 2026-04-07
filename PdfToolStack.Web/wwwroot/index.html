@@ -278,6 +278,11 @@
             setTimeout(() => setupSignaturePad(), 300);
         };
 
+        window.scrollToBottom = (elementId) => {
+            const el = document.getElementById(elementId);
+            if (el) el.scrollTop = el.scrollHeight;
+        };
+
         function setupSignaturePad() {
             const canvas = document.getElementById('signatureCanvas');
             if (!canvas) return;

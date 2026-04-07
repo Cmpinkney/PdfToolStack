@@ -11,139 +11,350 @@
 
 <HeadContent>
     <meta name="description" content="Batch process PDFs online. Apply any PDF tool to up to 20 files at once and download all results as a ZIP. Pro feature." />
-    <meta name="keywords" content="batch pdf processing, bulk pdf converter, process multiple pdfs, pdf batch tool" />
     <link rel="canonical" href="https://pdftoolstack.com/batch" />
 </HeadContent>
 
 <div class="tool-page">
-    <div class="tool-hero">
-        <h1>Batch Process PDFs</h1>
-        <p>Apply any tool to up to 20 PDFs at once. Download all results as a single ZIP file.</p>
-    </div>
 
-    <AuthorizeView>
-        <NotAuthorized>
-            <div class="upgrade-nudge">
-                <p>⭐ Batch processing is a <strong>Pro feature</strong>.</p>
-                <a href="/pricing" class="process-button" style="display:inline-block; max-width:200px;">
-                    Upgrade to Pro — $19/mo
-                </a>
+    <div class="tool-container">
+
+        <!-- Header -->
+        <div class="ai-tool-header">
+            <div class="ai-tool-badge">⚡ Pro Feature</div>
+            <h1>Batch Process PDFs</h1>
+            <p class="tool-subtitle">
+                Apply any tool to up to 20 PDFs at once.
+                All results bundled into a single ZIP file.
+            </p>
+        </div>
+
+        <!-- How it works -->
+        <div class="how-it-works">
+            <div class="hiw-step">
+                <div class="hiw-num">1</div>
+                <div class="hiw-text">
+                    <strong>Choose a tool</strong>
+                    <span>Compress, convert, watermark...</span>
+                </div>
             </div>
-        </NotAuthorized>
-        <Authorized>
-            @if (!_isPro)
-            {
-                <div class="upgrade-nudge">
-                    <p>⭐ Batch processing is a <strong>Pro feature</strong>.</p>
-                    <a href="/pricing" class="process-button" style="display:inline-block; max-width:200px;">
-                        Upgrade to Pro — $19/mo
-                    </a>
+            <div class="hiw-arrow">→</div>
+            <div class="hiw-step">
+                <div class="hiw-num">2</div>
+                <div class="hiw-text">
+                    <strong>Upload up to 20 PDFs</strong>
+                    <span>Drag & drop or browse</span>
                 </div>
-            }
-            else
-            {
-                <!-- Tool selector -->
-                <div class="tool-card" style="margin-bottom: 1.5rem;">
-                    <label class="upload-label">Select tool to apply</label>
-                    <select class="batch-select" @bind="_selectedTool">
-                        <optgroup label="Compress & Convert">
-                            <option value="@ToolType.CompressPdf">Compress PDF</option>
-                            <option value="@ToolType.PdfToWord">PDF to Word</option>
-                            <option value="@ToolType.PdfToJpg">PDF to JPG</option>
-                        </optgroup>
-                        <optgroup label="Edit">
-                            <option value="@ToolType.WatermarkPdf">Watermark PDF</option>
-                            <option value="@ToolType.NumberPages">Number Pages</option>
-                            <option value="@ToolType.FlattenPdf">Flatten PDF</option>
-                            <option value="@ToolType.RotatePdf">Rotate PDF</option>
-                        </optgroup>
-                        <optgroup label="Security">
-                            <option value="@ToolType.ProtectPdf">Protect PDF</option>
-                            <option value="@ToolType.UnlockPdf">Unlock PDF</option>
-                        </optgroup>
-                    </select>
+            </div>
+            <div class="hiw-arrow">→</div>
+            <div class="hiw-step">
+                <div class="hiw-num">3</div>
+                <div class="hiw-text">
+                    <strong>Download ZIP</strong>
+                    <span>All processed files, instant</span>
                 </div>
+            </div>
+        </div>
 
-                <!-- File upload -->
-                <div class="tool-card" style="margin-bottom: 1.5rem;">
-                    <label class="upload-label">
-                        Upload PDFs (max 20 files)
-                    </label>
-                    <InputFile OnChange="OnFilesSelected"
-                               multiple
-                               accept=".pdf"
-                               class="file-input" />
-
-                    @if (_files.Any())
-                    {
-                        <div class="batch-file-list">
-                            @foreach (var f in _files)
-                            {
-                                <div class="batch-file-row">
-                                    <span class="batch-file-name">@TruncateName(f.Name)</span>
-                                    <span class="batch-file-size">@FormatSize(f.Size)</span>
-                                    <span class="batch-file-status @GetStatusClass(f.Name)">
-                                        @GetStatusLabel(f.Name)
-                                    </span>
-                                </div>
-                            }
-                        </div>
-
-                        <div style="margin-top: 1rem; display: flex; gap: 1rem; align-items: center;">
-                            <button class="process-button"
-                                    style="max-width: 220px;"
-                                    @onclick="RunBatch"
-                                    disabled="@(_processing || _files.Count == 0)">
-                                @if (_processing)
-                                {
-                                    <span>Processing @_processedCount / @_files.Count...</span>
-                                }
-                                else
-                                {
-                                    <span>Process @_files.Count file@(_files.Count == 1 ? "" : "s")</span>
-                                }
-                            </button>
-
-                            @if (!_processing)
-                            {
-                                <button class="secondary-button"
-                                        @onclick="ClearFiles">
-                                    Clear
-                                </button>
-                            }
-                        </div>
-                    }
+        <AuthorizeView>
+            <NotAuthorized>
+                <div class="ai-upgrade-card">
+                    <div class="ai-upgrade-icon">⚡</div>
+                    <h2>Batch Processing — Pro Feature</h2>
+                    <p>Process up to 20 PDFs at once with any tool. Available on Pro — $19/month.</p>
+                    <div class="ai-upgrade-features">
+                        <div class="ai-upgrade-feat">✓ Up to 20 files per batch</div>
+                        <div class="ai-upgrade-feat">✓ All PDF tools available</div>
+                        <div class="ai-upgrade-feat">✓ Download as single ZIP</div>
+                        <div class="ai-upgrade-feat">✓ Unlimited file size</div>
+                    </div>
+                    <div class="ai-upgrade-actions">
+                        <a href="/pricing" class="download-button"
+                           style="display:inline-block; text-decoration:none;">
+                            Upgrade to Pro — $19/mo
+                        </a>
+                        <a href="authentication/login" class="reset-button"
+                           style="display:inline-block; text-decoration:none;">
+                            Sign in if you have Pro
+                        </a>
+                    </div>
                 </div>
+            </NotAuthorized>
 
-                <!-- Result -->
-                @if (_zipBytes != null)
+            <Authorized>
+                @if (!_isPro)
                 {
-                    <div class="tool-card result-card">
-                        <div class="result-success">
-                            <h3>✅ Batch complete</h3>
-                            <p>
-                                @_successCount of @_files.Count files processed successfully.
-                                @if (_failCount > 0)
-                                {
-                                    <span> @_failCount failed — check batch_errors.txt in the ZIP.</span>
-                                }
-                            </p>
-                            <button class="download-button"
-                                    @onclick="DownloadZip"
-                                    style="max-width: 240px; margin-top: 0.75rem;">
-                                ⬇ Download ZIP
-                            </button>
+                    <div class="ai-upgrade-card">
+                        <div class="ai-upgrade-icon">⚡</div>
+                        <h2>Upgrade to Pro to unlock Batch</h2>
+                        <p>You're signed in but on the Free plan. Upgrade to process up to 20 files at once.</p>
+                        <div class="ai-upgrade-actions">
+                            <a href="/pricing" class="download-button"
+                               style="display:inline-block; text-decoration:none;">
+                                Upgrade to Pro — $19/mo
+                            </a>
                         </div>
                     </div>
                 }
-
-                @if (!string.IsNullOrEmpty(_error))
+                else
                 {
-                    <div class="error-message">@_error</div>
+                    <!-- Step 1: Tool selector -->
+                    <div class="batch-section">
+                        <div class="batch-section-label">
+                            <span class="batch-step-num">1</span>
+                            Select tool to apply
+                        </div>
+                        <div class="batch-tool-grid">
+                            <button class="batch-tool-btn @(_selectedTool == ToolType.CompressPdf ? "active" : "")"
+                                    @onclick='() => _selectedTool = ToolType.CompressPdf'>
+                                <span class="batch-tool-icon" style="background:#E85D04;">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                        <polyline points="7,10 12,15 17,10" />
+                                        <line x1="12" y1="15" x2="12" y2="3" />
+                                    </svg>
+                                </span>
+                                Compress PDF
+                            </button>
+                            <button class="batch-tool-btn @(_selectedTool == ToolType.PdfToWord ? "active" : "")"
+                                    @onclick='() => _selectedTool = ToolType.PdfToWord'>
+                                <span class="batch-tool-icon" style="background:#2563EB;">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                        <polyline points="14,2 14,8 20,8" />
+                                        <path d="M9 13l1.5 4L12 14l1.5 3L15 13" />
+                                    </svg>
+                                </span>
+                                PDF to Word
+                            </button>
+                            <button class="batch-tool-btn @(_selectedTool == ToolType.PdfToJpg ? "active" : "")"
+                                    @onclick='() => _selectedTool = ToolType.PdfToJpg'>
+                                <span class="batch-tool-icon" style="background:#0891B2;">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="3" y="3" width="18" height="18" rx="2" />
+                                        <circle cx="8.5" cy="8.5" r="1.5" fill="white" stroke="none" />
+                                        <polyline points="21,15 16,10 5,21" />
+                                    </svg>
+                                </span>
+                                PDF to JPG
+                            </button>
+                            <button class="batch-tool-btn @(_selectedTool == ToolType.WatermarkPdf ? "active" : "")"
+                                    @onclick='() => _selectedTool = ToolType.WatermarkPdf'>
+                                <span class="batch-tool-icon" style="background:#9333EA;">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                                        <path d="M2 17l10 5 10-5" />
+                                        <path d="M2 12l10 5 10-5" />
+                                    </svg>
+                                </span>
+                                Watermark
+                            </button>
+                            <button class="batch-tool-btn @(_selectedTool == ToolType.NumberPages ? "active" : "")"
+                                    @onclick='() => _selectedTool = ToolType.NumberPages'>
+                                <span class="batch-tool-icon" style="background:#2563EB;">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                        <polyline points="14,2 14,8 20,8" />
+                                        <line x1="8" y1="17" x2="16" y2="17" />
+                                    </svg>
+                                </span>
+                                Number Pages
+                            </button>
+                            <button class="batch-tool-btn @(_selectedTool == ToolType.FlattenPdf ? "active" : "")"
+                                    @onclick='() => _selectedTool = ToolType.FlattenPdf'>
+                                <span class="batch-tool-icon" style="background:#4338CA;">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                        <polyline points="14,2 14,8 20,8" />
+                                        <line x1="8" y1="13" x2="16" y2="13" />
+                                        <line x1="8" y1="17" x2="16" y2="17" />
+                                    </svg>
+                                </span>
+                                Flatten
+                            </button>
+                            <button class="batch-tool-btn @(_selectedTool == ToolType.RotatePdf ? "active" : "")"
+                                    @onclick='() => _selectedTool = ToolType.RotatePdf'>
+                                <span class="batch-tool-icon" style="background:#15803D;">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M21.5 2v6h-6" />
+                                        <path d="M21.34 15.57a10 10 0 1 1-.57-8.38" />
+                                    </svg>
+                                </span>
+                                Rotate
+                            </button>
+                            <button class="batch-tool-btn @(_selectedTool == ToolType.ProtectPdf ? "active" : "")"
+                                    @onclick='() => _selectedTool = ToolType.ProtectPdf'>
+                                <span class="batch-tool-icon" style="background:#1E40AF;">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                                    </svg>
+                                </span>
+                                Protect
+                            </button>
+                            <button class="batch-tool-btn @(_selectedTool == ToolType.UnlockPdf ? "active" : "")"
+                                    @onclick='() => _selectedTool = ToolType.UnlockPdf'>
+                                <span class="batch-tool-icon" style="background:#D97706;">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                                        <path d="M7 11V7a5 5 0 0 1 9.9-1" />
+                                    </svg>
+                                </span>
+                                Unlock
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: File upload -->
+                    <div class="batch-section">
+                        <div class="batch-section-label">
+                            <span class="batch-step-num">2</span>
+                            Upload PDFs
+                            <span class="batch-file-count-badge">
+                                @_files.Count / 20 files
+                            </span>
+                        </div>
+
+                        <label class="batch-drop-zone @(_batchDragging ? "dragging" : "")"
+                               @ondragover="() => _batchDragging = true"
+                               @ondragover:preventDefault="true"
+                               @ondragleave="() => _batchDragging = false"
+                               @ondrop="() => _batchDragging = false"
+                               @ondrop:preventDefault="true">
+                            <svg width="36" height="36" viewBox="0 0 24 24" fill="none"
+                                 stroke="currentColor" stroke-width="1.5"
+                                 stroke-linecap="round" stroke-linejoin="round"
+                                 style="color:var(--text-muted); margin-bottom:0.5rem;">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                <polyline points="14,2 14,8 20,8" />
+                                <line x1="12" y1="13" x2="12" y2="19" />
+                                <polyline points="9,16 12,19 15,16" />
+                            </svg>
+                            <p style="color:var(--text-secondary); margin-bottom:0.5rem; font-size:0.9rem;">
+                                Drag and drop PDFs here or
+                            </p>
+                            <span class="upload-button" style="pointer-events:none;">
+                                Browse Files
+                            </span>
+                            <p style="font-size:0.75rem; color:var(--text-muted); margin-top:0.5rem;">
+                                Up to 20 PDFs · 500MB per file
+                            </p>
+                            <InputFile OnChange="OnFilesSelected"
+                                       multiple
+                                       accept=".pdf"
+                                       style="position:absolute; inset:0; opacity:0; cursor:pointer;" />
+                        </label>
+
+                        @if (_files.Any())
+                        {
+                            <div class="batch-file-list">
+                                @foreach (var f in _files)
+                                {
+                                    var status = GetStatusLabel(f.Name);
+                                    var statusClass = GetStatusClass(f.Name);
+                                    <div class="batch-file-row-v2">
+                                        <div class="batch-file-icon">
+                                            <svg width="20" height="20" viewBox="0 0 24 24"
+                                                 fill="none" stroke="currentColor" stroke-width="1.5"
+                                                 stroke-linecap="round" stroke-linejoin="round"
+                                                 style="color:var(--primary);">
+                                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                                <polyline points="14,2 14,8 20,8" />
+                                            </svg>
+                                        </div>
+                                        <div class="batch-file-info">
+                                            <span class="batch-file-name-v2">@TruncateName(f.Name)</span>
+                                            <span class="batch-file-size-v2">@FormatSize(f.Size)</span>
+                                        </div>
+                                        <span class="batch-status-chip @statusClass">
+                                            @status
+                                        </span>
+                                    </div>
+                                }
+                            </div>
+
+                            <div class="batch-section" style="margin-top:1.5rem; border-top:1px solid var(--border); padding-top:1.5rem;">
+                                <div class="batch-section-label">
+                                    <span class="batch-step-num">3</span>
+                                    Process &amp; Download
+                                </div>
+                                <div style="display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap;">
+                                    <button class="process-button"
+                                            style="max-width:240px; margin-top:0;"
+                                            @onclick="RunBatch"
+                                            disabled="@(_processing || _files.Count == 0)">
+                                        @if (_processing)
+                                        {
+                                            <span>
+                                                <span class="batch-spinner"></span>
+                                                Processing @_processedCount / @_files.Count...
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span>⚡ Process @_files.Count file@(_files.Count == 1 ? "" : "s")</span>
+                                        }
+                                    </button>
+                                    @if (!_processing)
+                                    {
+                                        <button class="reset-button"
+                                                style="max-width:100px; margin-top:0;"
+                                                @onclick="ClearFiles">
+                                            Clear
+                                        </button>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    @if (_zipBytes != null)
+                    {
+                        <div class="batch-result-card">
+                            <div class="batch-result-icon">✅</div>
+                            <div class="batch-result-info">
+                                <h3>Batch complete!</h3>
+                                <p>
+                                    @_successCount of @_files.Count files processed successfully.
+                                    @if (_failCount > 0)
+                                    {
+                                        <span> @_failCount failed — see batch_errors.txt in ZIP.</span>
+                                    }
+                                </p>
+                            </div>
+                            <button class="download-button"
+                                    @onclick="DownloadZip"
+                                    style="max-width:200px; margin-top:0;">
+                                ⬇ Download ZIP
+                            </button>
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(_error))
+                    {
+                        <div class="error-message">@_error</div>
+                    }
                 }
-            }
-        </Authorized>
-    </AuthorizeView>
+            </Authorized>
+        </AuthorizeView>
+
+    </div>
+
+    <div class="faq-section">
+        <h2>Frequently Asked Questions</h2>
+        <div class="faq-item">
+            <h3>How many files can I process at once?</h3>
+            <p>Up to 20 PDFs per batch. Each file can be up to 500MB with a Pro plan.</p>
+        </div>
+        <div class="faq-item">
+            <h3>What happens if one file fails?</h3>
+            <p>The ZIP still downloads with all successful files. A batch_errors.txt file lists any failures.</p>
+        </div>
+        <div class="faq-item">
+            <h3>Are my files stored after processing?</h3>
+            <p>No. All files are deleted within 1 hour of processing. We never store document contents permanently.</p>
+        </div>
+    </div>
+
 </div>
 
 @code {
@@ -151,6 +362,7 @@
     private List<IBrowserFile> _files = new();
     private bool _isPro = false;
     private bool _processing = false;
+    private bool _batchDragging = false;
     private int _processedCount = 0;
     private int _successCount = 0;
     private int _failCount = 0;

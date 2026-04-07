@@ -1,9 +1,12 @@
-﻿@if (IsVisible)
+﻿@inject AuthenticationStateProvider Auth
+@inject PdfToolStack.Web.Services.SubscriptionService SubService
+@using Microsoft.AspNetCore.Components.Authorization
+
+@if (IsVisible && !_isPro)
 {
     <div class="ad-slot ad-slot-@Size">
         @if (IsAdSenseApproved)
         {
-            <!-- AdSense code goes here after approval -->
             <ins class="adsbygoogle"
                  style="display:block"
                  data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
@@ -14,7 +17,6 @@
         }
         else
         {
-            <!-- Placeholder until AdSense approved -->
             <div class="ad-placeholder">
                 <span>Advertisement</span>
             </div>
@@ -26,6 +28,22 @@
     [Parameter] public string Size { get; set; } = "banner";
     [Parameter] public bool IsVisible { get; set; } = true;
 
-    // Set to true after AdSense approval
     private bool IsAdSenseApproved = false;
+    private bool _isPro = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await Auth.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            var userId = user.FindFirst("sub")?.Value;
+            if (!string.IsNullOrEmpty(userId))
+            {
+                var status = await SubService.GetStatusAsync(userId);
+                _isPro = status.HasPro;
+            }
+        }
+    }
 }

@@ -20,11 +20,14 @@
         public string Currency { get; set; } = "usd";
     }
 
-    public class FileLimit
+    public sealed class FileLimit
     {
         public const string SectionName = "FileLimits";
 
-        public long FreeTierMaxBytes { get; set; } = 26214400;
-        public long PaidTierMaxBytes { get; set; } = 524288000;
+        public long FreeTierMaxBytes { get; set; }
+            = 26_214_400;   // 25 MB
+
+        public long PaidTierMaxBytes { get; set; }
+            = 524_288_000;  // 500 MB
     }
 }

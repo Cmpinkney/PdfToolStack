@@ -12,13 +12,16 @@ namespace PdfToolStack.API.Controllers
     {
         private readonly SubscriptionService? _service;
         private readonly StripeOptions _stripeOptions;
+        private readonly ILogger<SubscriptionController> _logger;
 
         public SubscriptionController(
-            IOptions<StripeOptions> stripeOptions,
-            SubscriptionService? service = null)
+    IOptions<StripeOptions> stripeOptions,
+    ILogger<SubscriptionController> logger,
+    SubscriptionService? service = null)
         {
             _service = service;
             _stripeOptions = stripeOptions.Value;
+            _logger = logger;
         }
 
         [HttpGet("status/{userId}")]
@@ -40,9 +43,15 @@ namespace PdfToolStack.API.Controllers
                 var url = await _service.CreateCheckoutSessionAsync(dto);
                 return Ok(new CheckoutResponseDto { Url = url });
             }
+            catch (Stripe.StripeException ex)
+            {
+                _logger.LogError("Stripe error: {Code} — {Message}", ex.StripeError?.Code, ex.Message);
+                return BadRequest(new { error = ex.Message });
+            }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                _logger.LogError("Checkout error: {Message}", ex.Message);
+                return BadRequest(new { error = ex.Message });
             }
         }
 

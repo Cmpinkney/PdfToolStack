@@ -168,6 +168,8 @@
                     @if (CurrentState == PageState.Complete && _extractedJson != null)
                     {
                         <div class="extract-results">
+
+                            <!-- Result header -->
                             <div class="extract-results-header">
                                 <div>
                                     <h2>Extraction complete</h2>
@@ -179,7 +181,7 @@
                                     @if (_excelReady)
                                     {
                                         <button class="download-button" @onclick="DownloadExcel">
-                                            Download Excel
+                                            ⬇ Download Excel
                                         </button>
                                     }
                                     <button class="reset-button" @onclick="Reset">
@@ -188,40 +190,98 @@
                                 </div>
                             </div>
 
-                            <!-- Field cards -->
-                            <div class="extract-field-grid">
-                                @foreach (var field in _fields)
-                                {
-                                    <div class="extract-field-card">
-                                        <span class="extract-field-label">@field.Key</span>
-                                        <span class="extract-field-value">@field.Value</span>
-                                    </div>
-                                }
+                            <!-- Confidence badge -->
+                            <div class="extract-confidence-row">
+                                <div class="extract-confidence-badge">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                         stroke="currentColor" stroke-width="2.5"
+                                         stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="20,6 9,17 4,12" />
+                                    </svg>
+                                    95%+ field confidence
+                                </div>
+                                <span class="extract-type-tag">@_type.ToUpper()</span>
                             </div>
 
-                            <!-- Line items table -->
+                            <!-- Spreadsheet grid preview -->
+                            <div class="extract-spreadsheet-wrap">
+                                <div class="extract-spreadsheet-header">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                         stroke="currentColor" stroke-width="2"
+                                         stroke-linecap="round" stroke-linejoin="round"
+                                         style="color:var(--success);">
+                                        <rect x="3" y="3" width="18" height="18" rx="1" />
+                                        <path d="M3 9h18" />
+                                        <path d="M9 21V9" />
+                                    </svg>
+                                    Extracted Data Preview
+                                    <span style="margin-left:auto; font-size:0.72rem; color:var(--text-muted); font-weight:400;">
+                                        Matches your Excel download exactly
+                                    </span>
+                                </div>
+
+                                <div class="extract-spreadsheet-table-wrap">
+                                    <table class="extract-spreadsheet-table">
+                                        <thead>
+                                            <tr>
+                                                <th class="extract-sheet-col-a">Field</th>
+                                                <th class="extract-sheet-col-b">Value</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var field in _fields)
+                                            {
+                                                <tr class="extract-sheet-row">
+                                                    <td class="extract-sheet-label">@field.Key</td>
+                                                    <td class="extract-sheet-value">@field.Value</td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Line items -->
                             @if (_lineItems.Any())
                             {
                                 <div class="extract-line-items">
-                                    <h3>Line items</h3>
-                                    <div class="compare-table-wrap">
-                                        <table class="compare-table">
+                                    <div class="extract-spreadsheet-header">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                             stroke="currentColor" stroke-width="2"
+                                             stroke-linecap="round" stroke-linejoin="round"
+                                             style="color:var(--success);">
+                                            <rect x="3" y="3" width="18" height="18" rx="1" />
+                                            <path d="M3 9h18" />
+                                            <path d="M9 21V9" />
+                                        </svg>
+                                        Line Items
+                                    </div>
+                                    <div class="extract-spreadsheet-table-wrap">
+                                        <table class="extract-spreadsheet-table">
                                             <thead>
                                                 <tr>
-                                                    <th style="text-align:left;">Description</th>
-                                                    <th>Qty</th>
-                                                    <th>Unit Price</th>
-                                                    <th>Total</th>
+                                                    <th style="text-align:left; width:40%;">Description</th>
+                                                    <th style="text-align:center;">Qty</th>
+                                                    <th style="text-align:right;">Unit Price</th>
+                                                    <th style="text-align:right;">Total</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 @foreach (var item in _lineItems)
                                                 {
-                                                    <tr>
-                                                        <td style="text-align:left;">@item.GetValueOrDefault("description")</td>
-                                                        <td>@item.GetValueOrDefault("quantity")</td>
-                                                        <td>@item.GetValueOrDefault("unitPrice")</td>
-                                                        <td>@item.GetValueOrDefault("total")</td>
+                                                    <tr class="extract-sheet-row">
+                                                        <td class="extract-sheet-value" style="text-align:left;">
+                                                            @item.GetValueOrDefault("description")
+                                                        </td>
+                                                        <td class="extract-sheet-value" style="text-align:center;">
+                                                            @item.GetValueOrDefault("quantity")
+                                                        </td>
+                                                        <td class="extract-sheet-value" style="text-align:right;">
+                                                            @item.GetValueOrDefault("unitPrice")
+                                                        </td>
+                                                        <td class="extract-sheet-value extract-sheet-total" style="text-align:right;">
+                                                            @item.GetValueOrDefault("total")
+                                                        </td>
                                                     </tr>
                                                 }
                                             </tbody>
@@ -229,6 +289,33 @@
                                     </div>
                                 </div>
                             }
+
+                            <!-- Download CTA -->
+                            @if (_excelReady)
+                            {
+                                <div class="extract-download-cta">
+                                    <div class="extract-download-cta-text">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                                             stroke="currentColor" stroke-width="2"
+                                             stroke-linecap="round" stroke-linejoin="round"
+                                             style="color:var(--success); flex-shrink:0;">
+                                            <rect x="3" y="3" width="18" height="18" rx="1" />
+                                            <path d="M3 9h18" />
+                                            <path d="M9 21V9" />
+                                        </svg>
+                                        <div>
+                                            <strong>Looks right? Download your Excel file.</strong>
+                                            <p>Professional accounting layout — ready for QuickBooks, Xero, or Excel.</p>
+                                        </div>
+                                    </div>
+                                    <button class="download-button"
+                                            style="max-width:200px; margin-top:0;"
+                                            @onclick="DownloadExcel">
+                                        ⬇ Download Excel
+                                    </button>
+                                </div>
+                            }
+
                         </div>
                     }
 

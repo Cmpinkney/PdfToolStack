@@ -16,65 +16,176 @@
 </HeadContent>
 
 <div class="tool-page">
-    <div class="tool-hero">
-        <h1>AI PDF Summarizer</h1>
-        <p>Upload any PDF and get a concise AI summary in seconds. Key points, main arguments, and important conclusions — without reading the whole document.</p>
-    </div>
+    <div class="tool-container">
 
-    <AuthorizeView>
-        <NotAuthorized>
-            <div class="upgrade-nudge">
-                <p>⭐ AI Summarizer is a <strong>Pro feature</strong>.</p>
-                <a href="/pricing" class="process-button" style="display:inline-block; max-width:200px;">Upgrade to Pro — $19/mo</a>
+        <!-- Header -->
+        <div class="ai-tool-header">
+            <div class="ai-tool-badge">✨ AI-Powered</div>
+            <h1>AI PDF Summarizer</h1>
+            <p class="tool-subtitle">
+                Upload any PDF and get a concise AI summary in seconds.
+                Key points, main arguments, and conclusions — without reading the whole document.
+            </p>
+        </div>
+
+        <!-- How it works -->
+        <div class="how-it-works">
+            <div class="hiw-step">
+                <div class="hiw-num">1</div>
+                <div class="hiw-text">
+                    <strong>Upload your PDF</strong>
+                    <span>Any document up to 50MB</span>
+                </div>
             </div>
-        </NotAuthorized>
-        <Authorized>
-            @if (!_isPro)
-            {
-                <div class="upgrade-nudge">
-                    <p>⭐ AI Summarizer is a <strong>Pro feature</strong>.</p>
-                    <a href="/pricing" class="process-button" style="display:inline-block; max-width:200px;">Upgrade to Pro — $19/mo</a>
+            <div class="hiw-arrow">→</div>
+            <div class="hiw-step">
+                <div class="hiw-num">2</div>
+                <div class="hiw-text">
+                    <strong>AI reads everything</strong>
+                    <span>Claude processes all pages</span>
                 </div>
-            }
-            else
-            {
-                <div class="tool-card" style="margin-bottom:1.25rem;">
-                    <label class="upload-label">Upload PDF</label>
-                    <InputFile OnChange="OnFileSelected" accept=".pdf" class="file-input" />
-                    @if (_fileName != null)
-                    {
-                        <div class="compare-file-badge" style="margin-top:0.5rem;">📄 @_fileName</div>
-                    }
+            </div>
+            <div class="hiw-arrow">→</div>
+            <div class="hiw-step">
+                <div class="hiw-num">3</div>
+                <div class="hiw-text">
+                    <strong>Get your summary</strong>
+                    <span>Key points in seconds</span>
                 </div>
+            </div>
+        </div>
 
-                <button class="process-button" style="max-width:200px; margin-bottom:1.5rem;"
-                        @onclick="RunSummarize"
-                        disabled="@(_processing || _fileBytes == null)">
-                    @(_processing ? "Summarizing..." : "Summarize PDF")
-                </button>
+        <AuthorizeView>
+            <NotAuthorized>
+                <div class="ai-upgrade-card">
+                    <div class="ai-upgrade-icon">✨</div>
+                    <h2>AI Summarizer — Pro Feature</h2>
+                    <p>Summarize any PDF instantly with Claude AI. Available on Pro — $19/month.</p>
+                    <div class="ai-upgrade-features">
+                        <div class="ai-upgrade-feat">✓ Summarize any PDF in seconds</div>
+                        <div class="ai-upgrade-feat">✓ Key points and conclusions</div>
+                        <div class="ai-upgrade-feat">✓ Works on reports, papers, contracts</div>
+                        <div class="ai-upgrade-feat">✓ Up to 50MB per document</div>
+                    </div>
+                    <div class="ai-upgrade-actions">
+                        <a href="/pricing" class="download-button"
+                           style="display:inline-block; text-decoration:none;">
+                            Upgrade to Pro — $19/mo
+                        </a>
+                        <a href="authentication/login" class="reset-button"
+                           style="display:inline-block; text-decoration:none;">
+                            Sign in if you have Pro
+                        </a>
+                    </div>
+                </div>
+            </NotAuthorized>
 
-                @if (!string.IsNullOrEmpty(_summary))
+            <Authorized>
+                @if (!_isPro)
                 {
-                    <div class="tool-card ai-output-card">
-                        <div class="ai-output-label">✨ AI Summary</div>
-                        <div class="ai-output-text">@_summary</div>
+                    <div class="ai-upgrade-card">
+                        <div class="ai-upgrade-icon">✨</div>
+                        <h2>Upgrade to Pro to unlock AI Summarizer</h2>
+                        <p>You're signed in but on the Free plan. Upgrade to summarize any PDF instantly.</p>
+                        <div class="ai-upgrade-actions">
+                            <a href="/pricing" class="download-button"
+                               style="display:inline-block; text-decoration:none;">
+                                Upgrade to Pro — $19/mo
+                            </a>
+                        </div>
                     </div>
                 }
-
-                @if (!string.IsNullOrEmpty(_error))
+                else
                 {
-                    <div class="error-message">@_error</div>
+                    @if (CurrentState == PageState.Upload)
+                    {
+                        <FileUpload OnFileSelected="HandleFileSelected"
+                                    OnFileRemoved="HandleFileRemoved"
+                                    HintText="Upload a PDF document — up to 50MB" />
+
+                        @if (_fileBytes != null)
+                        {
+                            <button class="process-button" @onclick="RunSummarize">
+                                ✨ Summarize with AI
+                            </button>
+                        }
+                    }
+
+                    @if (CurrentState == PageState.Processing)
+                    {
+                        <div class="ai-processing-container">
+                            <div class="ai-processing-icon">✨</div>
+                            <h3>AI is reading your document...</h3>
+                            <p>Extracting key points and main arguments</p>
+                            <div class="ai-processing-steps">
+                                <div class="ai-processing-step @(_step >= 1 ? "done" : "")">Reading PDF content</div>
+                                <div class="ai-processing-step @(_step >= 2 ? "done" : "")">Identifying key points</div>
+                                <div class="ai-processing-step @(_step >= 3 ? "done" : "")">Generating summary</div>
+                            </div>
+                        </div>
+                    }
+
+                    @if (CurrentState == PageState.Complete && !string.IsNullOrEmpty(_summary))
+                    {
+                        <div class="ai-result-card">
+                            <div class="ai-result-header">
+                                <div>
+                                    <h2>Summary complete</h2>
+                                    <p style="color:var(--text-secondary); font-size:0.875rem;">
+                                        @_fileName
+                                    </p>
+                                </div>
+                                <button class="reset-button"
+                                        style="max-width:140px;"
+                                        @onclick="Reset">
+                                    Summarize Another
+                                </button>
+                            </div>
+                            <div class="ai-summary-body">
+                                @_summary
+                            </div>
+                        </div>
+                    }
+
+                    @if (CurrentState == PageState.Error)
+                    {
+                        <div class="error-container" role="alert">
+                            <span class="error-icon" aria-hidden="true">❌</span>
+                            <p class="error-message">@_error</p>
+                            <button class="reset-button" @onclick="Reset">Try Again</button>
+                        </div>
+                    }
                 }
-            }
-        </Authorized>
-    </AuthorizeView>
+            </Authorized>
+        </AuthorizeView>
+
+    </div>
+
+    <div class="faq-section">
+        <h2>Frequently Asked Questions</h2>
+        <div class="faq-item">
+            <h3>What types of PDFs can it summarize?</h3>
+            <p>Any text-based PDF — reports, research papers, contracts, manuals, articles. Scanned image PDFs may have reduced accuracy.</p>
+        </div>
+        <div class="faq-item">
+            <h3>How long does it take?</h3>
+            <p>Usually 10–30 seconds depending on document length. Longer documents take slightly more time.</p>
+        </div>
+        <div class="faq-item">
+            <h3>Is my document stored?</h3>
+            <p>No. Your PDF is processed in memory and deleted within 1 hour. We never store document contents permanently.</p>
+        </div>
+    </div>
 </div>
 
 @code {
+    private enum PageState { Upload, Processing, Complete, Error }
+    private PageState CurrentState = PageState.Upload;
+
     private byte[]? _fileBytes;
     private string? _fileName;
     private bool _isPro;
-    private bool _processing;
+    private int _step = 0;
     private string _summary = string.Empty;
     private string _error = string.Empty;
 
@@ -90,26 +201,35 @@
         }
     }
 
-    private async Task OnFileSelected(InputFileChangeEventArgs e)
+    private async Task HandleFileSelected(IBrowserFile file)
     {
         using var ms = new MemoryStream();
-        await e.File.OpenReadStream(maxAllowedSize: 52_428_800).CopyToAsync(ms);
+        await file.OpenReadStream(maxAllowedSize: 52_428_800).CopyToAsync(ms);
         _fileBytes = ms.ToArray();
-        _fileName = e.File.Name;
+        _fileName = file.Name;
         _summary = string.Empty;
         _error = string.Empty;
+    }
+
+    private void HandleFileRemoved()
+    {
+        _fileBytes = null;
+        _fileName = null;
     }
 
     private async Task RunSummarize()
     {
         if (_fileBytes == null) return;
-        _processing = true;
-        _summary = string.Empty;
-        _error = string.Empty;
+
+        CurrentState = PageState.Processing;
+        _step = 1;
         StateHasChanged();
 
         try
         {
+            await Task.Delay(500);
+            _step = 2; StateHasChanged();
+
             using var content = new MultipartFormDataContent();
             var fc = new ByteArrayContent(_fileBytes);
             fc.Headers.ContentType =
@@ -119,20 +239,36 @@
             var result = await ApiService.PostMultipartAsync<SummarizeResponse>(
                 "api/ai/summarize", content);
 
+            _step = 3; StateHasChanged();
+
             if (result?.Summary != null)
+            {
                 _summary = result.Summary;
+                CurrentState = PageState.Complete;
+            }
             else
+            {
                 _error = "Summarization failed. Please try again.";
+                CurrentState = PageState.Error;
+            }
         }
         catch (Exception ex)
         {
             _error = $"Error: {ex.Message}";
+            CurrentState = PageState.Error;
         }
-        finally
-        {
-            _processing = false;
-            StateHasChanged();
-        }
+
+        StateHasChanged();
+    }
+
+    private void Reset()
+    {
+        CurrentState = PageState.Upload;
+        _fileBytes = null;
+        _fileName = null;
+        _summary = string.Empty;
+        _error = string.Empty;
+        _step = 0;
     }
 
     private class SummarizeResponse

@@ -3,7 +3,8 @@
 @inject IJSRuntime JS
 @inject NavigationManager Navigation
 
-<div class="upload-container @(IsDragging ? "dragging" : "")"
+<div id="@_dropZoneId"
+     class="upload-container @(IsDragging ? "dragging" : "")"
      @ondragover="HandleDragOver"
      @ondragover:preventDefault="true"
      @ondragleave="HandleDragLeave"
@@ -118,6 +119,8 @@
     private bool _cloudLoading;
     //private bool _handledOneDriveCallback;
     private string _cloudError = string.Empty;
+    private readonly string _dropZoneId =
+    $"dropzone-{Guid.NewGuid():N}";
 
     // protected override async Task OnParametersSetAsync()
     // {
@@ -144,10 +147,27 @@
     private void HandleDragOver() => IsDragging = true;
     private void HandleDragLeave() => IsDragging = false;
 
-    private Task HandleDrop(DragEventArgs e)
+    private async Task HandleDrop(DragEventArgs e)
     {
         IsDragging = false;
-        return Task.CompletedTask;
+        StateHasChanged();
+
+        try
+        {
+            var fileData = await JS.InvokeAsync<DroppedFileData>(
+                "getDroppedFile", _dropZoneId);
+
+            if (fileData is null || fileData.Bytes is null) return;
+
+            var bytes = Convert.FromBase64String(fileData.Bytes);
+            var file = new CloudBrowserFile(fileData.Name, bytes);
+            SelectedFile = file;
+            await OnFileSelected.InvokeAsync(file);
+        }
+        catch
+        {
+            // Silently ignore — user can use Browse File instead
+        }
     }
 
     private async Task RemoveFile()
@@ -310,4 +330,5 @@
             CancellationToken cancellationToken = default)
             => new MemoryStream(_bytes);
     }
+    private sealed record DroppedFileData(string Name, string Bytes);
 }
