@@ -16,6 +16,7 @@ using PdfToolStack.Infrastructure.Repositories;
 using PdfToolStack.Infrastructure.Services;
 using PdfToolStack.Infrastructure.Storage;
 using Serilog;
+using Syncfusion.Blazor;
 
 // ── Serilog Bootstrap Logger ──────────────────────────────────────────────
 Log.Logger = new LoggerConfiguration()
@@ -305,7 +306,11 @@ try
     });
 
     // ── Controllers + Swagger ─────────────────────────────────────────────
-    builder.Services.AddControllers();
+    builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+    });
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddSwaggerGen();
 

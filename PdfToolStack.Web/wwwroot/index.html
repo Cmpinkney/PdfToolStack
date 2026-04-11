@@ -2,8 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>PdfToolStack — AI-Powered PDF Tools</title>
     <base href="/" />
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
@@ -13,6 +12,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="_content/Microsoft.AspNetCore.Components.WebAssembly.Authentication/AuthenticationService.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 </head>
 <body>
     <script>
@@ -46,23 +46,15 @@
             localStorage.setItem('PdfToolStack-theme', theme);
         };
 
-        window.getTheme = () => {
-            return localStorage.getItem('PdfToolStack-theme') || 'light';
-        };
+        window.getTheme = () => localStorage.getItem('PdfToolStack-theme') || 'light';
 
-        window.getSystemTheme = () => {
-            return window.matchMedia('(prefers-color-scheme: dark)').matches
-                ? 'dark' : 'light';
-        };
+        window.getSystemTheme = () =>
+            window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 
         window.addEventListener('scroll', () => {
             const navbar = document.getElementById('mainNavbar');
             if (navbar) {
-                if (window.scrollY > 10) {
-                    navbar.classList.add('scrolled');
-                } else {
-                    navbar.classList.remove('scrolled');
-                }
+                navbar.classList.toggle('scrolled', window.scrollY > 10);
             }
         });
     </script>
@@ -81,6 +73,7 @@
     <script src="_framework/blazor.webassembly.js"></script>
 
     <script>
+        // ── File Download ─────────────────────────────────────────────────
         window.downloadFile = (fileName, base64Data) => {
             const extension = fileName.split('.').pop().toLowerCase();
             const mimeTypes = {
@@ -100,11 +93,12 @@
             link.click();
             document.body.removeChild(link);
         };
-    </script>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+        // ── PDF.js worker ─────────────────────────────────────────────────
+        pdfjsLib.GlobalWorkerOptions.workerSrc =
+            'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
-    <script>
+        // ── Redact PDF ────────────────────────────────────────────────────
         let dotNetHelper = null;
         let isDrawing = false;
         let startX = 0, startY = 0;
@@ -120,9 +114,6 @@
                 const pdfCanvas = document.getElementById('pdfCanvas');
                 const redactCanvas = document.getElementById('redactCanvas');
                 if (!pdfCanvas || !redactCanvas) return;
-
-                pdfjsLib.GlobalWorkerOptions.workerSrc =
-                    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
                 const binaryData = atob(base64Data);
                 const bytes = new Uint8Array(binaryData.length);
@@ -144,7 +135,6 @@
                 currentRegions = [];
                 clearRedactCanvas();
                 setupCanvasEvents(redactCanvas);
-
             } catch (err) {
                 console.error('Error rendering PDF:', err);
             }
@@ -153,7 +143,6 @@
         function setupCanvasEvents(canvas) {
             const newCanvas = canvas.cloneNode(true);
             canvas.parentNode.replaceChild(newCanvas, canvas);
-
             newCanvas.style.cursor = 'crosshair';
             newCanvas.style.position = 'absolute';
             newCanvas.style.top = '0';
@@ -161,29 +150,22 @@
 
             newCanvas.addEventListener('mousedown', (e) => {
                 const rect = newCanvas.getBoundingClientRect();
-                const scaleX = newCanvas.width / rect.width;
-                const scaleY = newCanvas.height / rect.height;
-                startX = (e.clientX - rect.left) * scaleX;
-                startY = (e.clientY - rect.top) * scaleY;
+                startX = (e.clientX - rect.left) * (newCanvas.width / rect.width);
+                startY = (e.clientY - rect.top) * (newCanvas.height / rect.height);
                 isDrawing = true;
             });
 
             newCanvas.addEventListener('mousemove', (e) => {
                 if (!isDrawing) return;
                 const rect = newCanvas.getBoundingClientRect();
-                const scaleX = newCanvas.width / rect.width;
-                const scaleY = newCanvas.height / rect.height;
-                const x = (e.clientX - rect.left) * scaleX;
-                const y = (e.clientY - rect.top) * scaleY;
-
+                const x = (e.clientX - rect.left) * (newCanvas.width / rect.width);
+                const y = (e.clientY - rect.top) * (newCanvas.height / rect.height);
                 const ctx = newCanvas.getContext('2d');
                 ctx.clearRect(0, 0, newCanvas.width, newCanvas.height);
-
                 currentRegions.forEach(r => {
                     ctx.fillStyle = 'rgba(0,0,0,0.85)';
                     ctx.fillRect(r.x1, r.y1, r.x2 - r.x1, r.y2 - r.y1);
                 });
-
                 ctx.fillStyle = 'rgba(0,0,0,0.5)';
                 ctx.fillRect(startX, startY, x - startX, y - startY);
                 ctx.strokeStyle = '#2250F4';
@@ -194,26 +176,17 @@
             newCanvas.addEventListener('mouseup', (e) => {
                 if (!isDrawing) return;
                 isDrawing = false;
-
                 const rect = newCanvas.getBoundingClientRect();
-                const scaleX = newCanvas.width / rect.width;
-                const scaleY = newCanvas.height / rect.height;
-                const endX = (e.clientX - rect.left) * scaleX;
-                const endY = (e.clientY - rect.top) * scaleY;
-
+                const endX = (e.clientX - rect.left) * (newCanvas.width / rect.width);
+                const endY = (e.clientY - rect.top) * (newCanvas.height / rect.height);
                 const x1 = Math.min(startX, endX);
                 const y1 = Math.min(startY, endY);
                 const x2 = Math.max(startX, endX);
                 const y2 = Math.max(startY, endY);
-
                 if (x2 - x1 > 5 && y2 - y1 > 5) {
                     currentRegions.push({ x1, y1, x2, y2 });
-                    if (dotNetHelper) {
-                        dotNetHelper.invokeMethodAsync(
-                            'AddRegion', x1, y1, x2, y2);
-                    }
+                    if (dotNetHelper) dotNetHelper.invokeMethodAsync('AddRegion', x1, y1, x2, y2);
                 }
-
                 redrawAllRegions(newCanvas);
             });
         }
@@ -231,9 +204,7 @@
         window.drawRedactPreview = () => { };
 
         window.redrawRegions = (regions) => {
-            currentRegions = regions.map(r => ({
-                x1: r.x1, y1: r.y1, x2: r.x2, y2: r.y2
-            }));
+            currentRegions = regions.map(r => ({ x1: r.x1, y1: r.y1, x2: r.x2, y2: r.y2 }));
             const canvas = document.getElementById('redactCanvas');
             if (canvas) redrawAllRegions(canvas);
         };
@@ -242,26 +213,21 @@
             currentRegions = [];
             const canvas = document.getElementById('redactCanvas');
             if (!canvas) return;
-            const ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
         };
 
+        // ── PDF Utilities ─────────────────────────────────────────────────
         window.getPdfPageCount = async (base64Data) => {
-            const bytes = Uint8Array.from(
-                atob(base64Data), c => c.charCodeAt(0));
-            const pdf = await pdfjsLib.getDocument(
-                { data: bytes }).promise;
+            const bytes = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+            const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
             return pdf.numPages;
         };
 
-        window.renderPdfReaderPage = async (
-            base64Data, pageNum, scale) => {
+        window.renderPdfReaderPage = async (base64Data, pageNum, scale) => {
             const canvas = document.getElementById('pdfReaderCanvas');
             if (!canvas) return;
-            const bytes = Uint8Array.from(
-                atob(base64Data), c => c.charCodeAt(0));
-            const pdf = await pdfjsLib.getDocument(
-                { data: bytes }).promise;
+            const bytes = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+            const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
             const page = await pdf.getPage(pageNum);
             const viewport = page.getViewport({ scale: scale || 1.0 });
             canvas.width = viewport.width;
@@ -270,52 +236,71 @@
             await page.render({ canvasContext: ctx, viewport }).promise;
         };
 
+        // ── Signature Pad ─────────────────────────────────────────────────
         let signatureDotNet = null;
         let isSignDrawing = false;
+        let signColor = '#000000';
 
         window.initSignaturePad = (dotNet) => {
             signatureDotNet = dotNet;
             setTimeout(() => setupSignaturePad(), 300);
         };
 
-        window.scrollToBottom = (elementId) => {
-            const el = document.getElementById(elementId);
-            if (el) el.scrollTop = el.scrollHeight;
-        };
-
         function setupSignaturePad() {
             const canvas = document.getElementById('signatureCanvas');
-            if (!canvas) return;
+            if (!canvas) { setTimeout(setupSignaturePad, 200); return; }
+            if (canvas.dataset.bound === 'true') return;
+            canvas.dataset.bound = 'true';
+
             const ctx = canvas.getContext('2d');
-            ctx.strokeStyle = '#000000';
-            ctx.lineWidth = 2;
+            ctx.strokeStyle = signColor;
+            ctx.lineWidth = 2.5;
             ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
 
             canvas.addEventListener('mousedown', (e) => {
                 isSignDrawing = true;
                 const r = canvas.getBoundingClientRect();
+                ctx.strokeStyle = signColor;
                 ctx.beginPath();
-                ctx.moveTo(e.clientX - r.left, e.clientY - r.top);
+                ctx.moveTo((e.clientX - r.left) * (canvas.width / r.width),
+                    (e.clientY - r.top) * (canvas.height / r.height));
             });
             canvas.addEventListener('mousemove', (e) => {
                 if (!isSignDrawing) return;
                 const r = canvas.getBoundingClientRect();
-                ctx.lineTo(e.clientX - r.left, e.clientY - r.top);
+                ctx.lineTo((e.clientX - r.left) * (canvas.width / r.width),
+                    (e.clientY - r.top) * (canvas.height / r.height));
                 ctx.stroke();
             });
-            canvas.addEventListener('mouseup', () => {
-                isSignDrawing = false;
-            });
-            canvas.addEventListener('mouseleave', () => {
-                isSignDrawing = false;
-            });
+            canvas.addEventListener('mouseup', () => { isSignDrawing = false; });
+            canvas.addEventListener('mouseleave', () => { isSignDrawing = false; });
+            canvas.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                isSignDrawing = true;
+                const r = canvas.getBoundingClientRect();
+                const t = e.touches[0];
+                ctx.strokeStyle = signColor;
+                ctx.beginPath();
+                ctx.moveTo((t.clientX - r.left) * (canvas.width / r.width),
+                    (t.clientY - r.top) * (canvas.height / r.height));
+            }, { passive: false });
+            canvas.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                if (!isSignDrawing) return;
+                const r = canvas.getBoundingClientRect();
+                const t = e.touches[0];
+                ctx.lineTo((t.clientX - r.left) * (canvas.width / r.width),
+                    (t.clientY - r.top) * (canvas.height / r.height));
+                ctx.stroke();
+            }, { passive: false });
+            canvas.addEventListener('touchend', () => { isSignDrawing = false; });
         }
 
         window.clearSignaturePad = () => {
             const canvas = document.getElementById('signatureCanvas');
             if (!canvas) return;
-            const ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
         };
 
         window.getSignatureImage = () => {
@@ -324,128 +309,515 @@
             return canvas.toDataURL('image/png');
         };
 
-        let editDotNet = null;
-        let isEditDrawing = false;
-        let editStartX = 0, editStartY = 0;
-
-        window.initEditCanvas = (dotNet) => {
-            editDotNet = dotNet;
-            setTimeout(() => setupEditCanvas(), 500);
+        window.setSignatureColor = (color) => {
+            signColor = color;
+            const canvas = document.getElementById('signatureCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            ctx.strokeStyle = color;
         };
 
-        function setupEditCanvas() {
-            const canvas = document.getElementById('editCanvas');
-            const pdfCanvas = document.getElementById('pdfCanvas');
-            if (!canvas || !pdfCanvas) {
-                setTimeout(setupEditCanvas, 300);
-                return;
+        // ── Sign PDF ──────────────────────────────────────────────────────
+        window.signPdfRenderPage = async (base64Data, pageNum) => {
+            const canvas = document.getElementById('signPdfCanvas');
+            const overlay = document.getElementById('signOverlayCanvas');
+            if (!canvas) return;
+
+            const bytes = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+            const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
+            const page = await pdf.getPage(pageNum);
+            const viewport = page.getViewport({ scale: 1.2 });
+
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            canvas.style.width = '100%';
+            canvas.style.height = 'auto';
+
+            if (overlay) {
+                overlay.width = viewport.width;
+                overlay.height = viewport.height;
+                overlay.style.width = '100%';
+                overlay.style.height = '100%';
             }
-            canvas.width = pdfCanvas.width;
-            canvas.height = pdfCanvas.height;
-            canvas.style.width = pdfCanvas.offsetWidth + 'px';
-            canvas.style.height = pdfCanvas.offsetHeight + 'px';
 
-            canvas.addEventListener('mousedown', (e) => {
-                const r = canvas.getBoundingClientRect();
-                const sx = canvas.width / r.width;
-                const sy = canvas.height / r.height;
-                editStartX = (e.clientX - r.left) * sx;
-                editStartY = (e.clientY - r.top) * sy;
-                isEditDrawing = true;
-            });
-            canvas.addEventListener('mouseup', (e) => {
-                if (!isEditDrawing) return;
-                isEditDrawing = false;
-                const r = canvas.getBoundingClientRect();
-                const sx = canvas.width / r.width;
-                const sy = canvas.height / r.height;
-                const endX = (e.clientX - r.left) * sx;
-                const endY = (e.clientY - r.top) * sy;
-                if (editDotNet) {
-                    editDotNet.invokeMethodAsync(
-                        'AddAnnotation',
-                        editStartX, editStartY,
-                        endX, endY);
-                }
-            });
-        }
-
-        let annotateDotNet = null;
-        let isAnnotateDrawing = false;
-        let annotateStartX = 0, annotateStartY = 0;
-        let freehandPoints = [];
-
-        window.initAnnotateCanvas = (dotNet) => {
-            annotateDotNet = dotNet;
-            setTimeout(() => setupAnnotateCanvas(), 500);
+            const ctx = canvas.getContext('2d');
+            await page.render({ canvasContext: ctx, viewport }).promise;
         };
 
-        function setupAnnotateCanvas() {
-            const canvas = document.getElementById('annotateCanvas');
-            const pdfCanvas = document.getElementById('pdfCanvas');
-            if (!canvas || !pdfCanvas) {
-                setTimeout(setupAnnotateCanvas, 300);
-                return;
-            }
-            canvas.width = pdfCanvas.width;
-            canvas.height = pdfCanvas.height;
-            canvas.style.width = pdfCanvas.offsetWidth + 'px';
-            canvas.style.height = pdfCanvas.offsetHeight + 'px';
+        window.signPdfInitDrag = (dotNetRef) => {
+            const overlay = document.getElementById('signOverlayCanvas');
+            if (!overlay) return;
 
-            canvas.addEventListener('mousedown', (e) => {
-                const r = canvas.getBoundingClientRect();
-                const sx = canvas.width / r.width;
-                const sy = canvas.height / r.height;
-                annotateStartX = (e.clientX - r.left) * sx;
-                annotateStartY = (e.clientY - r.top) * sy;
-                isAnnotateDrawing = true;
-                freehandPoints = [[annotateStartX, annotateStartY]];
+            // Always reset drag binding
+            const newOverlay = overlay.cloneNode(true);
+            overlay.parentNode.replaceChild(newOverlay, overlay);
+            const o = document.getElementById('signOverlayCanvas');
+
+            let dragging = false;
+            let offsetX = 0, offsetY = 0;
+
+            o.addEventListener('mousedown', (e) => {
+                if (!window._lastSigData) return;
+                dragging = true;
+                const coords = getOverlayCoords(o, e.clientX, e.clientY);
+                offsetX = coords[0] - (window._lastSigX || 0);
+                offsetY = coords[1] - (window._lastSigY || 0);
+                e.preventDefault();
             });
-            canvas.addEventListener('mousemove', (e) => {
-                if (!isAnnotateDrawing) return;
-                const r = canvas.getBoundingClientRect();
-                const sx = canvas.width / r.width;
-                const sy = canvas.height / r.height;
-                const x = (e.clientX - r.left) * sx;
-                const y = (e.clientY - r.top) * sy;
-                freehandPoints.push([x, y]);
+
+            window.addEventListener('mousemove', (e) => {
+                if (!dragging || !window._lastSigData) return;
+                const coords = getOverlayCoords(o, e.clientX, e.clientY);
+                const x = coords[0] - offsetX;
+                const y = coords[1] - offsetY;
+                window._lastSigX = x;
+                window._lastSigY = y;
+                _drawSigPreview(o, window._lastSigData, x, y);
             });
-            canvas.addEventListener('mouseup', (e) => {
-                if (!isAnnotateDrawing) return;
-                isAnnotateDrawing = false;
-                const r = canvas.getBoundingClientRect();
-                const sx = canvas.width / r.width;
-                const sy = canvas.height / r.height;
-                const endX = (e.clientX - r.left) * sx;
-                const endY = (e.clientY - r.top) * sy;
-                if (annotateDotNet) {
-                    annotateDotNet.invokeMethodAsync(
-                        'AddHighlight',
-                        annotateStartX, annotateStartY,
-                        endX - annotateStartX,
-                        endY - annotateStartY,
-                        freehandPoints);
-                }
+
+            window.addEventListener('mouseup', (e) => {
+                if (!dragging) return;
+                dragging = false;
+                const x = window._lastSigX || 0;
+                const y = window._lastSigY || 0;
+                dotNetRef.invokeMethodAsync('OnSignaturePlaced', x, y);
             });
+        };
+
+        window.signPdfSetLastSig = (sigData) => {
+            window._lastSigData = sigData;
+        };
+
+        function getOverlayCoords(overlay, clientX, clientY) {
+            const rect = overlay.getBoundingClientRect();
+            return [
+                (clientX - rect.left) * (overlay.width / rect.width),
+                (clientY - rect.top) * (overlay.height / rect.height)
+            ];
         }
+
+        window.signPdfDrawPreview = (sigDataUrl, x, y) => {
+            const overlay = document.getElementById('signOverlayCanvas');
+            if (!overlay || !sigDataUrl || sigDataUrl === 'data:,') return;
+            window._lastSigData = sigDataUrl;
+            window._lastSigX = x;
+            window._lastSigY = y;
+            _drawSigPreview(overlay, sigDataUrl, x, y);
+        };
+
+        function _drawSigPreview(overlay, sigDataUrl, x, y) {
+            const ctx = overlay.getContext('2d');
+            ctx.clearRect(0, 0, overlay.width, overlay.height);
+            const img = new Image();
+            img.onload = () => {
+                ctx.drawImage(img, x, y, 200, 80);
+                ctx.strokeStyle = '#2250F4';
+                ctx.lineWidth = 1.5;
+                ctx.setLineDash([4, 3]);
+                ctx.strokeRect(x, y, 200, 80);
+                ctx.setLineDash([]);
+            };
+            img.src = sigDataUrl;
+        }
+
+        window.signPdfClearOverlay = () => {
+            const overlay = document.getElementById('signOverlayCanvas');
+            if (!overlay) return;
+            overlay.getContext('2d').clearRect(0, 0, overlay.width, overlay.height);
+        };
+
+        window.signPdfGenerateTypedSig = (text, color) => {
+            if (!text) return 'data:,';
+            const canvas = document.createElement('canvas');
+            canvas.width = 400;
+            canvas.height = 120;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = color || '#000000';
+            ctx.font = "italic 52px 'Brush Script MT', cursive";
+            ctx.textBaseline = 'middle';
+            ctx.fillText(text, 10, 60);
+            return canvas.toDataURL('image/png');
+        };
+
+        // ── PDF Editor (Edit PDF + Annotator) ─────────────────────────────
+        window.pdfEditor = (() => {
+            let pdfDoc = null;
+            let currentPage = 1;
+            let totalPages = 0;
+            let scale = 1.5;
+            let annotations = [];
+            let currentTool = null;
+            let isDrawing = false;
+            let currentPathPoints = [];
+            let containerId = null;
+
+            function init(base64Data, fileName, containerIdParam) {
+                containerId = containerIdParam;
+                const container = document.getElementById(containerId);
+                if (!container) return;
+
+                container.innerHTML = buildEditorHTML(fileName);
+                bindToolbar(container);
+
+                const pdfBytes = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+
+                pdfjsLib.getDocument({ data: pdfBytes }).promise.then(pdf => {
+                    pdfDoc = pdf;
+                    totalPages = pdf.numPages;
+                    container.querySelector('#pdf-page-count').textContent = totalPages;
+                    renderPage(currentPage, container);
+                });
+
+                window._pdfBase64 = base64Data;
+                window._pdfFileName = fileName;
+            }
+
+            function buildEditorHTML(fileName) {
+                return `
+                    <div class="pdf-editor-wrap">
+                      <div class="pdf-toolbar">
+                        <div class="pdf-toolbar-left">
+                          <button class="pdf-tool-btn" data-tool="null" title="Select">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3l14 9-7 1-4 7z"/></svg>
+                          </button>
+                          <button class="pdf-tool-btn" data-tool="text" title="Add Text">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h7"/></svg>
+                            Text
+                          </button>
+                          <button class="pdf-tool-btn" data-tool="highlight" title="Highlight">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg>
+                            Highlight
+                          </button>
+                          <button class="pdf-tool-btn" data-tool="draw" title="Draw">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg>
+                            Draw
+                          </button>
+                          <button class="pdf-tool-btn" data-tool="rect" title="Rectangle">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+                            Shape
+                          </button>
+                          <div class="pdf-tool-divider"></div>
+                          <div class="pdf-color-palette" id="pdf-color-palette">
+                            <button class="pdf-color-swatch active" data-color="#000000" style="background:#000000"></button>
+                            <button class="pdf-color-swatch" data-color="#FF0000" style="background:#FF0000"></button>
+                            <button class="pdf-color-swatch" data-color="#FF8C00" style="background:#FF8C00"></button>
+                            <button class="pdf-color-swatch" data-color="#FFD700" style="background:#FFD700"></button>
+                            <button class="pdf-color-swatch" data-color="#00C851" style="background:#00C851"></button>
+                            <button class="pdf-color-swatch" data-color="#2196F3" style="background:#2196F3"></button>
+                            <button class="pdf-color-swatch" data-color="#9C27B0" style="background:#9C27B0"></button>
+                            <button class="pdf-color-swatch" data-color="#FFFFFF" style="background:#FFFFFF;border:1px solid #ccc"></button>
+                            <input type="color" id="pdf-color-pick" value="#000000" class="pdf-color-custom" title="Custom color" />
+                          </div>
+                          <select id="pdf-font-size" class="pdf-select" title="Size">
+                            <option value="12">12</option>
+                            <option value="14" selected>14</option>
+                            <option value="16">16</option>
+                            <option value="18">18</option>
+                            <option value="24">24</option>
+                            <option value="32">32</option>
+                          </select>
+                        </div>
+                        <div class="pdf-toolbar-center">
+                          <button class="pdf-nav-btn" id="pdf-prev">&#8592;</button>
+                          <span>Page <span id="pdf-page-num">1</span> of <span id="pdf-page-count">?</span></span>
+                          <button class="pdf-nav-btn" id="pdf-next">&#8594;</button>
+                          <button class="pdf-nav-btn" id="pdf-zoom-out">&#8722;</button>
+                          <button class="pdf-nav-btn" id="pdf-zoom-in">&#43;</button>
+                        </div>
+                        <div class="pdf-toolbar-right">
+                          <button class="pdf-tool-btn" id="pdf-undo">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7v6h6"/><path d="M3 13A9 9 0 1 0 6 6.7"/></svg>
+                            Undo
+                          </button>
+                          <button class="pdf-save-btn" id="pdf-save">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            Download
+                          </button>
+                        </div>
+                      </div>
+                      <div class="pdf-canvas-area">
+                        <div class="pdf-loader" id="pdf-loader">
+                          <div class="pdf-spinner"></div>
+                          <p>Loading PDF...</p>
+                        </div>
+                        <div class="pdf-canvas-container" id="pdf-canvas-container" style="display:none;">
+                          <canvas id="pdf-canvas"></canvas>
+                          <svg id="pdf-svg-overlay" style="position:absolute;top:0;left:0;pointer-events:none;"></svg>
+                        </div>
+                      </div>
+                    </div>`;
+            }
+
+            function bindToolbar(container) {
+                container.querySelectorAll('.pdf-tool-btn[data-tool]').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        currentTool = btn.dataset.tool === 'null' ? null : btn.dataset.tool;
+                        container.querySelectorAll('.pdf-tool-btn[data-tool]').forEach(b => b.classList.remove('active'));
+                        if (currentTool) btn.classList.add('active');
+                        updateCursor(container);
+                    });
+                });
+
+                container.querySelectorAll('.pdf-color-swatch').forEach(swatch => {
+                    swatch.addEventListener('click', () => {
+                        container.querySelectorAll('.pdf-color-swatch').forEach(s => s.classList.remove('active'));
+                        swatch.classList.add('active');
+                        container.querySelector('#pdf-color-pick').value = swatch.dataset.color;
+                    });
+                });
+
+                container.querySelector('#pdf-color-pick').addEventListener('input', () => {
+                    container.querySelectorAll('.pdf-color-swatch').forEach(s => s.classList.remove('active'));
+                });
+
+                container.querySelector('#pdf-prev').addEventListener('click', () => {
+                    if (currentPage > 1) { currentPage--; renderPage(currentPage, container); }
+                });
+                container.querySelector('#pdf-next').addEventListener('click', () => {
+                    if (currentPage < totalPages) { currentPage++; renderPage(currentPage, container); }
+                });
+                container.querySelector('#pdf-zoom-in').addEventListener('click', () => {
+                    scale = Math.min(scale + 0.25, 3.0);
+                    renderPage(currentPage, container);
+                });
+                container.querySelector('#pdf-zoom-out').addEventListener('click', () => {
+                    scale = Math.max(scale - 0.25, 0.5);
+                    renderPage(currentPage, container);
+                });
+                container.querySelector('#pdf-undo').addEventListener('click', () => {
+                    const pageAnns = annotations.filter(a => a.page === currentPage);
+                    if (pageAnns.length > 0) {
+                        annotations = annotations.filter(a => a !== pageAnns[pageAnns.length - 1]);
+                        redrawOverlay(container);
+                    }
+                });
+                container.querySelector('#pdf-save').addEventListener('click', () => saveAnnotatedPDF(container));
+            }
+
+            function updateCursor(container) {
+                const area = container.querySelector('#pdf-canvas-container');
+                if (!area) return;
+                const cursors = { text: 'text', highlight: 'crosshair', draw: 'crosshair', rect: 'crosshair' };
+                area.style.cursor = currentTool ? (cursors[currentTool] || 'default') : 'default';
+            }
+
+            function renderPage(num, container) {
+                container.querySelector('#pdf-page-num').textContent = num;
+                const loader = container.querySelector('#pdf-loader');
+                const canvasContainer = container.querySelector('#pdf-canvas-container');
+                if (loader) loader.style.display = 'flex';
+                if (canvasContainer) canvasContainer.style.display = 'none';
+
+                pdfDoc.getPage(num).then(page => {
+                    const viewport = page.getViewport({ scale });
+                    const canvas = container.querySelector('#pdf-canvas');
+                    const ctx = canvas.getContext('2d');
+                    canvas.width = viewport.width;
+                    canvas.height = viewport.height;
+                    canvasContainer.style.width = viewport.width + 'px';
+                    canvasContainer.style.height = viewport.height + 'px';
+
+                    const svg = container.querySelector('#pdf-svg-overlay');
+                    svg.setAttribute('width', viewport.width);
+                    svg.setAttribute('height', viewport.height);
+                    svg.style.width = viewport.width + 'px';
+                    svg.style.height = viewport.height + 'px';
+
+                    page.render({ canvasContext: ctx, viewport }).promise.then(() => {
+                        if (loader) loader.style.display = 'none';
+                        if (canvasContainer) canvasContainer.style.display = 'block';
+                        redrawOverlay(container);
+                        bindCanvasEvents(container, viewport);
+                    });
+                });
+            }
+
+            function bindCanvasEvents(container, viewport) {
+                const svg = container.querySelector('#pdf-svg-overlay');
+                const newSvg = svg.cloneNode(true);
+                svg.parentNode.replaceChild(newSvg, svg);
+                const activeSvg = container.querySelector('#pdf-svg-overlay');
+                activeSvg.style.pointerEvents = 'all';
+
+                let startX, startY, rectEl, inkPath;
+
+                activeSvg.addEventListener('mousedown', e => {
+                    if (!currentTool) return;
+                    isDrawing = true;
+                    const rect = activeSvg.getBoundingClientRect();
+                    startX = e.clientX - rect.left;
+                    startY = e.clientY - rect.top;
+                    currentPathPoints = [{ x: startX, y: startY }];
+
+                    if (currentTool === 'text') {
+                        isDrawing = false;
+                        const color = container.querySelector('#pdf-color-pick').value;
+                        const fontSize = parseInt(container.querySelector('#pdf-font-size').value);
+                        const text = prompt('Enter text:');
+                        if (text) {
+                            annotations.push({ type: 'text', page: currentPage, x: startX / scale, y: startY / scale, text, color, fontSize });
+                            redrawOverlay(container);
+                        }
+                    } else if (currentTool === 'draw') {
+                        inkPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                        inkPath.setAttribute('stroke', container.querySelector('#pdf-color-pick').value);
+                        inkPath.setAttribute('stroke-width', '2');
+                        inkPath.setAttribute('fill', 'none');
+                        inkPath.setAttribute('d', `M ${startX} ${startY}`);
+                        activeSvg.appendChild(inkPath);
+                    } else if (currentTool === 'rect') {
+                        rectEl = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                        rectEl.setAttribute('x', startX);
+                        rectEl.setAttribute('y', startY);
+                        rectEl.setAttribute('width', 0);
+                        rectEl.setAttribute('height', 0);
+                        rectEl.setAttribute('stroke', container.querySelector('#pdf-color-pick').value);
+                        rectEl.setAttribute('stroke-width', '2');
+                        rectEl.setAttribute('fill', 'none');
+                        activeSvg.appendChild(rectEl);
+                    } else if (currentTool === 'highlight') {
+                        rectEl = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                        rectEl.setAttribute('x', startX);
+                        rectEl.setAttribute('y', startY);
+                        rectEl.setAttribute('width', 0);
+                        rectEl.setAttribute('height', 20);
+                        rectEl.setAttribute('fill', container.querySelector('#pdf-color-pick').value);
+                        rectEl.setAttribute('opacity', '0.35');
+                        activeSvg.appendChild(rectEl);
+                    }
+                });
+
+                activeSvg.addEventListener('mousemove', e => {
+                    if (!isDrawing) return;
+                    const rect = activeSvg.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+
+                    if (currentTool === 'draw' && inkPath) {
+                        currentPathPoints.push({ x, y });
+                        inkPath.setAttribute('d', inkPath.getAttribute('d') + ` L ${x} ${y}`);
+                    } else if ((currentTool === 'rect' || currentTool === 'highlight') && rectEl) {
+                        const w = x - startX;
+                        const h = currentTool === 'highlight' ? 20 : y - startY;
+                        rectEl.setAttribute('x', w < 0 ? x : startX);
+                        rectEl.setAttribute('y', h < 0 ? y : startY);
+                        rectEl.setAttribute('width', Math.abs(w));
+                        rectEl.setAttribute('height', Math.abs(h));
+                    }
+                });
+
+                activeSvg.addEventListener('mouseup', e => {
+                    if (!isDrawing) return;
+                    isDrawing = false;
+                    const rect = activeSvg.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    const color = container.querySelector('#pdf-color-pick').value;
+
+                    if (currentTool === 'draw') {
+                        annotations.push({ type: 'ink', page: currentPage, points: [...currentPathPoints], color, scale });
+                        inkPath = null;
+                    } else if (currentTool === 'rect') {
+                        annotations.push({ type: 'rect', page: currentPage, x: Math.min(startX, x) / scale, y: Math.min(startY, y) / scale, width: Math.abs(x - startX) / scale, height: Math.abs(y - startY) / scale, color });
+                    } else if (currentTool === 'highlight') {
+                        annotations.push({ type: 'highlight', page: currentPage, x: Math.min(startX, x) / scale, y: startY / scale, width: Math.abs(x - startX) / scale, height: 20 / scale, color });
+                    }
+                    redrawOverlay(container);
+                });
+            }
+
+            function redrawOverlay(container) {
+                const svg = container.querySelector('#pdf-svg-overlay');
+                if (!svg) return;
+                svg.innerHTML = '';
+
+                annotations.filter(a => a.page === currentPage).forEach(a => {
+                    if (a.type === 'text') {
+                        const el = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                        el.setAttribute('x', a.x * scale);
+                        el.setAttribute('y', a.y * scale);
+                        el.setAttribute('fill', a.color);
+                        el.setAttribute('font-size', a.fontSize);
+                        el.setAttribute('font-family', 'Arial, sans-serif');
+                        el.textContent = a.text;
+                        svg.appendChild(el);
+                    } else if (a.type === 'ink') {
+                        const el = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                        const d = a.points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+                        el.setAttribute('d', d);
+                        el.setAttribute('stroke', a.color);
+                        el.setAttribute('stroke-width', '2');
+                        el.setAttribute('fill', 'none');
+                        svg.appendChild(el);
+                    } else if (a.type === 'rect') {
+                        const el = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                        el.setAttribute('x', a.x * scale);
+                        el.setAttribute('y', a.y * scale);
+                        el.setAttribute('width', a.width * scale);
+                        el.setAttribute('height', a.height * scale);
+                        el.setAttribute('stroke', a.color);
+                        el.setAttribute('stroke-width', '2');
+                        el.setAttribute('fill', 'none');
+                        svg.appendChild(el);
+                    } else if (a.type === 'highlight') {
+                        const el = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                        el.setAttribute('x', a.x * scale);
+                        el.setAttribute('y', a.y * scale);
+                        el.setAttribute('width', a.width * scale);
+                        el.setAttribute('height', a.height * scale);
+                        el.setAttribute('fill', a.color);
+                        el.setAttribute('opacity', '0.35');
+                        svg.appendChild(el);
+                    }
+                });
+            }
+
+            async function saveAnnotatedPDF(container) {
+                const btn = container.querySelector('#pdf-save');
+                btn.textContent = 'Saving...';
+                btn.disabled = true;
+                try {
+                    const payload = {
+                        pdfBase64: window._pdfBase64,
+                        fileName: window._pdfFileName,
+                        annotations: annotations
+                    };
+                    const response = await fetch('https://localhost:7100/api/annotation/apply', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (!response.ok) throw new Error('Server error');
+                    const blob = await response.blob();
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = (window._pdfFileName || 'annotated').replace('.pdf', '') + '_annotated.pdf';
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    btn.innerHTML = '✓ Downloaded';
+                    setTimeout(() => { btn.innerHTML = '⬇ Download'; btn.disabled = false; }, 3000);
+                } catch (err) {
+                    btn.textContent = 'Error — try again';
+                    btn.disabled = false;
+                }
+            }
+
+            return { init };
+        })();
     </script>
 
-    <!-- ── Cloud Storage Pickers ────────────────────────────────────────── -->
-    <!-- Dropbox Chooser SDK -->
+    <!-- ── Cloud Storage Pickers ──────────────────────────────────────── -->
     <script src="https://www.dropbox.com/static/api/2/dropins.js"
             id="dropboxjs"
             data-app-key="gc1swzrvkh8l4rs"></script>
-
-    <!-- Google APIs -->
     <script src="https://apis.google.com/js/api.js"></script>
     <script src="https://accounts.google.com/gsi/client"></script>
-
-    <!-- MSAL for OneDrive (replaces broken OneDrive.js SDK) -->
     <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.38.3/lib/msal-browser.min.js"></script>
+
     <script>
         window.cloudPickers = {
-
-            // ── Google Drive ──────────────────────────────────────────────
             _googleClientId: '342984371109-kcpka8n5ildp8fg9u97tu3qlqed82eke.apps.googleusercontent.com',
             _googleDeveloperKey: 'AIzaSyDIIP3v7arpE2gWa-aWJ4Rqh9XS5wS693A',
 
@@ -456,10 +828,7 @@
                             client_id: window.cloudPickers._googleClientId,
                             scope: 'https://www.googleapis.com/auth/drive.readonly',
                             callback: (tokenResponse) => {
-                                if (tokenResponse.error) {
-                                    resolve(null);
-                                    return;
-                                }
+                                if (tokenResponse.error) { resolve(null); return; }
                                 const picker = new google.picker.PickerBuilder()
                                     .addView(new google.picker.DocsView()
                                         .setMimeTypes('application/pdf')
@@ -487,21 +856,11 @@
                 });
             },
 
-            // ── Dropbox ───────────────────────────────────────────────────
             openDropbox: function () {
                 return new Promise((resolve) => {
                     Dropbox.choose({
-                        success: function (files) {
-                            const file = files[0];
-                            resolve({
-                                name: file.name,
-                                url: file.link,
-                                accessToken: null
-                            });
-                        },
-                        cancel: function () {
-                            resolve(null);
-                        },
+                        success: (files) => resolve({ name: files[0].name, url: files[0].link, accessToken: null }),
+                        cancel: () => resolve(null),
                         linkType: 'direct',
                         multiselect: false,
                         extensions: ['.pdf'],
@@ -510,22 +869,19 @@
                 });
             },
 
-            // ── OneDrive (MSAL + Microsoft Graph) ─────────────────────────
-            // Replaces broken OneDrive.js SDK entirely
             _msalInstance: null,
 
             openOneDrive: async function () {
                 try {
                     if (!window.cloudPickers._msalInstance) {
-                        window.cloudPickers._msalInstance =
-                            new msal.PublicClientApplication({
-                                auth: {
-                                    clientId: 'bc19984e-2a13-4980-a125-371325127176',
-                                    authority: 'https://login.microsoftonline.com/common',
-                                    redirectUri: window.location.origin
-                                },
-                                cache: { cacheLocation: 'sessionStorage' }
-                            });
+                        window.cloudPickers._msalInstance = new msal.PublicClientApplication({
+                            auth: {
+                                clientId: 'bc19984e-2a13-4980-a125-371325127176',
+                                authority: 'https://login.microsoftonline.com/common',
+                                redirectUri: window.location.origin
+                            },
+                            cache: { cacheLocation: 'sessionStorage' }
+                        });
                         await window.cloudPickers._msalInstance.initialize();
                         await window.cloudPickers._msalInstance.handleRedirectPromise();
                     }
@@ -533,67 +889,38 @@
                     const msalInstance = window.cloudPickers._msalInstance;
                     const scopes = ['Files.Read', 'Files.Read.All'];
                     let tokenResponse;
-
                     const accounts = msalInstance.getAllAccounts();
+
                     if (accounts.length > 0) {
                         try {
-                            tokenResponse = await msalInstance.acquireTokenSilent({
-                                scopes, account: accounts[0]
-                            });
+                            tokenResponse = await msalInstance.acquireTokenSilent({ scopes, account: accounts[0] });
                         } catch {
-                            // Silent failed — use popup with explicit blank redirectUri
-                            tokenResponse = await msalInstance.acquireTokenPopup({
-                                scopes,
-                                redirectUri: window.location.origin
-                            });
+                            tokenResponse = await msalInstance.acquireTokenPopup({ scopes, redirectUri: window.location.origin });
                         }
                     } else {
-                        // No account — login with popup
-                        const loginResponse = await msalInstance.loginPopup({
-                            scopes,
-                            redirectUri: window.location.origin
-                        });
+                        const loginResponse = await msalInstance.loginPopup({ scopes, redirectUri: window.location.origin });
                         tokenResponse = loginResponse;
                     }
 
-                    const token = tokenResponse.accessToken;
-
                     const response = await fetch(
-                        'https://graph.microsoft.com/v1.0/me/drive/root/children' +
-                        '?$select=name,size,file,@microsoft.graph.downloadUrl&$top=200',
-                        { headers: { Authorization: `Bearer ${token}` } }
+                        'https://graph.microsoft.com/v1.0/me/drive/root/children?$select=name,size,file,@microsoft.graph.downloadUrl&$top=200',
+                        { headers: { Authorization: `Bearer ${tokenResponse.accessToken}` } }
                     );
-
-                    if (!response.ok) {
-                        console.error('Graph API error:', response.status);
-                        return null;
-                    }
+                    if (!response.ok) { console.error('Graph API error:', response.status); return null; }
 
                     const data = await response.json();
-                    const pdfs = (data.value || []).filter(f =>
-                        f.name?.toLowerCase().endsWith('.pdf'));
-
-                    if (pdfs.length === 0) {
-                        alert('No PDF files found in your OneDrive root folder.');
-                        return null;
-                    }
+                    const pdfs = (data.value || []).filter(f => f.name?.toLowerCase().endsWith('.pdf'));
+                    if (pdfs.length === 0) { alert('No PDF files found in your OneDrive root folder.'); return null; }
 
                     const chosen = await window.cloudPickers._showOneDrivePicker(pdfs);
                     if (!chosen) return null;
-
-                    return {
-                        name: chosen.name,
-                        url: chosen['@microsoft.graph.downloadUrl'],
-                        accessToken: null
-                    };
-
+                    return { name: chosen.name, url: chosen['@microsoft.graph.downloadUrl'], accessToken: null };
                 } catch (e) {
                     console.error('OneDrive error', e);
                     return null;
                 }
             },
 
-            // Custom file picker overlay for OneDrive
             _showOneDrivePicker: function (files) {
                 return new Promise((resolve) => {
                     const existing = document.getElementById('od-picker-overlay');
@@ -601,103 +928,57 @@
 
                     const overlay = document.createElement('div');
                     overlay.id = 'od-picker-overlay';
-                    overlay.style.cssText = [
-                        'position:fixed', 'top:0', 'left:0', 'width:100%', 'height:100%',
-                        'background:rgba(0,0,0,0.55)', 'z-index:99999',
-                        'display:flex', 'align-items:center', 'justify-content:center'
-                    ].join(';');
+                    overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.55);z-index:99999;display:flex;align-items:center;justify-content:center';
 
                     const box = document.createElement('div');
-                    box.style.cssText = [
-                        'background:#fff', 'border-radius:12px', 'padding:24px',
-                        'width:500px', 'max-height:65vh', 'overflow-y:auto',
-                        'box-shadow:0 20px 60px rgba(0,0,0,0.3)',
-                        'font-family:system-ui,sans-serif'
-                    ].join(';');
-
+                    box.style.cssText = 'background:#fff;border-radius:12px;padding:24px;width:500px;max-height:65vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3);font-family:system-ui,sans-serif';
                     box.innerHTML = `
-                                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-                                    <div style="display:flex;align-items:center;gap:10px;">
-                                        <svg width="22" height="22" viewBox="0 0 24 24">
-                                            <path d="M20.7 11.4c-.1-.6-.3-1.1-.6-1.6A5.6 5.6 0 0 0 14.7 7a5.5 5.5 0 0 0-4.6 2.5 3.3 3.3 0 0 0-1.4-.3A3.3 3.3 0 0 0 5.4 12a3.3 3.3 0 0 0 .1.7A4 4 0 0 0 4 16a4 4 0 0 0 4 4h12a4 4 0 0 0 .7-7.9z" fill="#0364B8"/>
-                                        </svg>
-                                        <h3 style="margin:0;font-size:1rem;color:#1a1a2e;">Select a PDF from OneDrive</h3>
-                                    </div>
-                                    <button id="od-close" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:#888;line-height:1;">×</button>
-                                </div>
-                                <p style="font-size:0.8rem;color:#999;margin:0 0 12px;">Showing PDF files from your OneDrive root folder</p>
-                                <div id="od-file-list"></div>`;
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                                <h3 style="margin:0;font-size:1rem;color:#1a1a2e;">Select a PDF from OneDrive</h3>
+                                <button id="od-close" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:#888;">×</button>
+                            </div>
+                            <p style="font-size:0.8rem;color:#999;margin:0 0 12px;">Showing PDF files from your OneDrive root folder</p>
+                            <div id="od-file-list"></div>`;
 
                     const list = box.querySelector('#od-file-list');
-
                     files.forEach(file => {
                         const btn = document.createElement('button');
-                        btn.style.cssText = [
-                            'display:flex', 'align-items:center', 'gap:12px',
-                            'width:100%', 'padding:10px 12px', 'margin-bottom:6px',
-                            'border:1px solid #e8e8e8', 'border-radius:8px',
-                            'background:#fff', 'cursor:pointer', 'text-align:left',
-                            'font-size:0.875rem', 'color:#1a1a2e'
-                        ].join(';');
-
+                        btn.style.cssText = 'display:flex;align-items:center;gap:12px;width:100%;padding:10px 12px;margin-bottom:6px;border:1px solid #e8e8e8;border-radius:8px;background:#fff;cursor:pointer;text-align:left;font-size:0.875rem;color:#1a1a2e';
                         const sizeKb = file.size ? Math.round(file.size / 1024) : 0;
-                        const sizeStr = sizeKb > 1024
-                            ? (sizeKb / 1024).toFixed(1) + ' MB'
-                            : sizeKb + ' KB';
-
+                        const sizeStr = sizeKb > 1024 ? (sizeKb / 1024).toFixed(1) + ' MB' : sizeKb + ' KB';
                         btn.innerHTML = `
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-                                        stroke="#e74c3c" stroke-width="2" stroke-linecap="round"
-                                        stroke-linejoin="round" style="flex-shrink:0;">
-                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                                        <polyline points="14,2 14,8 20,8"/>
-                                    </svg>
-                                    <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${file.name}</span>
-                                    <span style="color:#aaa;font-size:0.78rem;flex-shrink:0;">${sizeStr}</span>`;
-
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#e74c3c" stroke-width="2" style="flex-shrink:0;">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                    <polyline points="14,2 14,8 20,8"/>
+                                </svg>
+                                <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${file.name}</span>
+                                <span style="color:#aaa;font-size:0.78rem;">${sizeStr}</span>`;
                         btn.onmouseover = () => btn.style.background = '#f5f7ff';
                         btn.onmouseout = () => btn.style.background = '#fff';
                         btn.onclick = () => { overlay.remove(); resolve(file); };
                         list.appendChild(btn);
                     });
 
-                    box.querySelector('#od-close').onclick = () => {
-                        overlay.remove();
-                        resolve(null);
-                    };
-
+                    box.querySelector('#od-close').onclick = () => { overlay.remove(); resolve(null); };
                     overlay.appendChild(box);
                     document.body.appendChild(overlay);
                 });
             },
 
-            // ── Download file via API proxy → return as base64 ────────────
             downloadFileAsBase64: async function (url, accessToken) {
                 try {
                     const proxyUrl = `https://localhost:7100/api/cloud/download?url=${encodeURIComponent(url)}${accessToken ? '&token=' + encodeURIComponent(accessToken) : ''}`;
-
-                    console.log('Downloading via proxy:', proxyUrl.substring(0, 100) + '...');
-
                     const controller = new AbortController();
                     const timeout = setTimeout(() => controller.abort(), 30000);
-
                     const response = await fetch(proxyUrl, { signal: controller.signal });
                     clearTimeout(timeout);
-
-                    console.log('Proxy response status:', response.status);
-
-                    if (!response.ok) {
-                        console.error('Cloud proxy download failed:', response.status);
-                        return null;
-                    }
-
+                    if (!response.ok) { console.error('Cloud proxy download failed:', response.status); return null; }
                     const buffer = await response.arrayBuffer();
                     const bytes = new Uint8Array(buffer);
                     let binary = '';
                     const chunkSize = 8192;
-                    for (let i = 0; i < bytes.length; i += chunkSize) {
+                    for (let i = 0; i < bytes.length; i += chunkSize)
                         binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
-                    }
                     return btoa(binary);
                 } catch (e) {
                     console.error('Cloud file download failed', e);

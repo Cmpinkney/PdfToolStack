@@ -141,6 +141,7 @@
                         <div class="contract-review-results">
 
                             <!-- Header with risk badge -->
+                            <!-- Header with risk score -->
                             <div class="review-header">
                                 <div>
                                     <h2>Contract Review Complete</h2>
@@ -148,8 +149,36 @@
                                         @_fileName
                                     </p>
                                 </div>
-                                <div class="review-risk-badge risk-@_review.RiskLevel.ToLower()">
-                                    @GetRiskIcon(_review.RiskLevel) @_review.RiskLevel.ToUpper() RISK
+                                <button class="reset-button"
+                                        style="max-width:180px;"
+                                        @onclick="Reset">
+                                    Review Another
+                                </button>
+                            </div>
+
+                            <!-- Risk score card -->
+                            <div class="risk-score-card risk-score-@_review.RiskLevel.ToLower()">
+                                <div class="risk-score-left">
+                                    <div class="risk-score-meter">
+                                        <div class="risk-score-track">
+                                            <div class="risk-score-fill risk-fill-@_review.RiskLevel.ToLower()"></div>
+                                            <div class="risk-score-marker risk-marker-@_review.RiskLevel.ToLower()"></div>
+                                        </div>
+                                        <div class="risk-score-labels">
+                                            <span>Low</span>
+                                            <span>Medium</span>
+                                            <span>High</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="risk-score-right">
+                                    <div class="risk-score-badge risk-badge-@_review.RiskLevel.ToLower()">
+                                        @GetRiskIcon(_review.RiskLevel)
+                                        @_review.RiskLevel.ToUpper() RISK
+                                    </div>
+                                    <p class="risk-score-desc">
+                                        @GetRiskDescription(_review.RiskLevel, _review.RiskyClauses?.Count ?? 0)
+                                    </p>
                                 </div>
                             </div>
 
@@ -414,6 +443,14 @@
             return null;
         }
     }
+
+    private static string GetRiskDescription(string risk, int riskyCount) =>
+    risk.ToLower() switch
+    {
+        "high" => $"This contract has {riskyCount} high-risk clause{(riskyCount == 1 ? "" : "s")} that need immediate attention before signing.",
+        "medium" => $"This contract has {riskyCount} clause{(riskyCount == 1 ? "" : "s")} worth reviewing. Proceed with caution.",
+        _ => "This contract appears relatively standard. Review the details below before signing."
+    };
 
     private void Reset()
     {

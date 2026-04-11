@@ -18,9 +18,12 @@
 		<PackageReference Include="Serilog.AspNetCore" Version="8.0.0" />
 		<PackageReference Include="Serilog.Sinks.Console" Version="5.0.0" />
 		<PackageReference Include="Serilog.Settings.Configuration" Version="8.0.0" />
+		<PackageReference Include="SkiaSharp.Views.Blazor" Version="3.119.1" />
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.0" />
 		<PackageReference Include="ClosedXML" Version="0.104.1" />
+		<PackageReference Include="Syncfusion.Blazor.SfPdfViewer" Version="32.2.7" />
+		<PackageReference Include="Syncfusion.Blazor.Themes" Version="32.2.7" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -30,7 +33,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<None Include="tessdata\**" CopyToOutputDirectory="Always"/>
+		<None Include="tessdata\**" CopyToOutputDirectory="Always" />
 	</ItemGroup>
 
 </Project>

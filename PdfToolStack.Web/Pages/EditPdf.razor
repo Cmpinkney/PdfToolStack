@@ -1,328 +1,119 @@
 ﻿@page "/edit-pdf"
-@inject ApiService ApiService
 @inject IJSRuntime JS
 @inject PaymentService PaymentService
-@implements IDisposable
 @inject FileValidationService Validator
 @inject ToastService Toast
 
-<PageTitle>Edit PDF Free Online — Add Text and Shapes to PDF</PageTitle>
-
+<PageTitle>Edit PDF Free Online — Add Text, Highlight and Annotate PDF | PdfToolStack</PageTitle>
 <HeadContent>
-    <meta name="description"
-          content="Edit PDF files free online. Add text, shapes,
-                   and drawings to your PDF. No signup required." />
-    <meta name="keywords"
-          content="edit pdf online free, add text to pdf,
-                   pdf editor free, annotate pdf, pdf editor online free" />
-    <link rel="canonical"
-          href="https://pdftoolstack.com/edit-pdf" />
+    <meta name="description" content="Edit PDF files free online. Add text, shapes, highlights and drawings to your PDF. No signup required." />
+    <link rel="canonical" href="https://pdftoolstack.com/edit-pdf" />
 </HeadContent>
 
 <div class="tool-page">
     <AdSlot Size="banner" />
-
     <div class="tool-container">
-        <h1>Edit PDF Online</h1>
-        <p class="tool-subtitle">
-            Add text, shapes, and drawings to your PDF for free.
-            No signup required. Files deleted within 1 hour.
-        </p>
 
-        @if (CurrentState == PageState.Upload)
+        <div class="ai-tool-header">
+            <div class="ai-tool-badge">✏️ Free Tool</div>
+            <h1>Edit PDF Online</h1>
+            <p class="tool-subtitle">
+                Add text, shapes, highlights and drawings to any PDF.
+                Full annotation toolbar with undo/redo built in. No signup required.
+            </p>
+        </div>
+
+        <div class="how-it-works">
+            <div class="hiw-step">
+                <div class="hiw-num">1</div>
+                <div class="hiw-text"><strong>Upload your PDF</strong><span>Up to 25MB free</span></div>
+            </div>
+            <div class="hiw-arrow">→</div>
+            <div class="hiw-step">
+                <div class="hiw-num">2</div>
+                <div class="hiw-text"><strong>Edit with toolbar</strong><span>Text, shapes, highlights</span></div>
+            </div>
+            <div class="hiw-arrow">→</div>
+            <div class="hiw-step">
+                <div class="hiw-num">3</div>
+                <div class="hiw-text"><strong>Download edited PDF</strong><span>Edits saved permanently</span></div>
+            </div>
+        </div>
+
+        @if (!_editorVisible)
         {
             <FileUpload OnFileSelected="HandleFileSelected"
                         OnFileRemoved="HandleFileRemoved" />
-
-            @if (SelectedFile != null)
-            {
-                <div class="edit-toolbar">
-                    <div class="tool-options">
-                        <button class="tool-option-btn
-                                    @(ActiveTool == "text"
-                                                                ? "active" : "")"
-                        @onclick='() =>
-                                                            SetTool("text")'>
-                                                                        📝 Text
-                                                                    </button>
-                                                                    <button class="tool-option-btn
-                            @(ActiveTool == "rectangle"
-                                                        ? "active" : "")"
-                        @onclick='() =>
-                                                            SetTool("rectangle")'>
-                                                                             ▭ Rectangle
-                                                                         </button>
-                                                                         <button class="tool-option-btn
-                            @(ActiveTool == "circle"
-                                                        ? "active" : "")"
-                        @onclick='() =>
-                                                            SetTool("circle")'>
-                                                                          ○ Circle
-                                                                      </button>
-                                                                      <button class="tool-option-btn
-                            @(ActiveTool == "line"
-                                                        ? "active" : "")"
-                        @onclick='() =>
-                                                            SetTool("line")'>
-                    ╱ Line
-                </button>
-            </div>
-
-                    <div class="tool-settings">
-                @if (ActiveTool == "text")
-                        {
-                            <input type="text"
-                                   class="field-input"
-                                   style="max-width: 200px;"
-                                   placeholder="Enter text..."
-                                   @bind="TextContent" />
-                            <input type="number"
-                                   class="field-input"
-                                   style="max-width: 80px;"
-                                   min="8" max="72"
-                                   @bind="FontSize"
-                                   title="Font size" />
-                        }
-                        <input type="color"
-                               @bind="SelectedColor"
-                               title="Color"
-                               style="width: 40px;
-                                              height: 36px;
-                                              border-radius: 6px;
-                                              cursor: pointer;" />
-                        <button class="reset-button"
-                                style="padding: 0.4rem 1rem;"
-                                @onclick="ClearAnnotations">
-                            Clear All
-                        </button>
-                    </div>
-                </div>
-
-                <div class="canvas-wrapper"
-                     style="position: relative;
-                                    display: block;
-                                    width: 100%;
-                                    margin-bottom: 1rem;">
-                    <canvas id="pdfCanvas"
-                            style="display: block;
-                                           max-width: 100%;
-                                           border-radius: 8px;
-                                           border: 2px solid
-                                           var(--primary-light);">
-                    </canvas>
-                    <canvas id="editCanvas"
-                            style="position: absolute;
-                                           top: 0; left: 0;
-                                           cursor: crosshair;">
-                    </canvas>
-                </div>
-
-                <div class="page-controls"
-                     style="margin-bottom: 1rem;">
-                    <button class="page-btn"
-                            @onclick="PreviousPage"
-                            disabled="@(CurrentPage <= 1)">
-                        ◀ Prev
-                    </button>
-                    <span class="page-info">
-                        Page @CurrentPage of @TotalPages
-                    </span>
-                    <button class="page-btn"
-                            @onclick="NextPage"
-                            disabled="@(CurrentPage >= TotalPages)">
-                        Next ▶
-                    </button>
-                </div>
-
-                @if (Annotations.Any())
-                {
-                    <p class="regions-summary">
-                        @Annotations.Count annotation(s) added
-                    </p>
-                }
-
-                <button class="process-button"
-                        @onclick="ProcessFile">
-                    Save Edited PDF
-                </button>
-            }
         }
 
         @if (CurrentState == PageState.LargeFile)
         {
             <LargeFileUpgrade FileSizeBytes="@(SelectedFile?.Size ?? 0)"
                               FileName="@(SelectedFile?.Name ?? "")"
-                              ToolType="EditPdf"
-                              OnCancel="Reset" />
+                              ToolType="EditPdf" OnCancel="Reset" />
         }
 
-        @if (CurrentState == PageState.Processing)
+        @if (_editorVisible)
         {
-            <div class="processing-container">
-                <div class="spinner"></div>
-                <p>Saving your edits to PDF...</p>
+            <div style="margin-bottom:1rem; display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap;">
+                <span style="font-size:0.875rem; color:var(--text-secondary);">📄 @SelectedFile?.Name</span>
+                <button class="reset-button" style="max-width:160px;" @onclick="Reset">Edit Another PDF</button>
             </div>
-        }
-
-        @if (CurrentState == PageState.Complete
-                && ResultBytes != null)
-        {
-            <AdSlot Size="rectangle" />
-            <div class="result-container">
-                <span class="result-icon">✅</span>
-                <h2>PDF Edited!</h2>
-                <p style="color: var(--gray);
-                               margin-bottom: 1.5rem;">
-                    Your edits have been saved to the PDF.
-                </p>
-                <button class="download-button"
-                        @onclick="DownloadFile">
-                    Download Edited PDF
-                </button>
-                <button class="reset-button"
-                        @onclick="Reset">
-                    Edit Another PDF
-                </button>
-            </div>
+            <div id="pdf-editor-container"></div>
         }
 
         @if (CurrentState == PageState.Error)
         {
-            <div class="error-container">
+            <div class="error-container" role="alert">
                 <span class="error-icon">❌</span>
                 <p class="error-message">@ErrorMessage</p>
-                <button class="reset-button" @onclick="Reset">
-                    Try Again
-                </button>
+                <button class="reset-button" @onclick="Reset">Try Again</button>
             </div>
         }
+
     </div>
 
     <div class="faq-section">
         <h2>Frequently Asked Questions</h2>
         <div class="faq-item">
             <h3>What can I add to my PDF?</h3>
-            <p>
-                You can add text, rectangles, circles,
-                and lines in any color.
-            </p>
+            <p>Text boxes, highlights, underlines, strikethroughs, shapes, images, and freehand ink drawings — all in any color.</p>
         </div>
         <div class="faq-item">
-            <h3>Will the original content be preserved?</h3>
-            <p>
-                Yes — your additions are overlaid on the
-                existing PDF content without removing
-                anything.
-            </p>
+            <h3>Can I undo changes?</h3>
+            <p>Yes — full undo and redo is built into the toolbar.</p>
+        </div>
+        <div class="faq-item">
+            <h3>Is my file private?</h3>
+            <p>Yes — all editing happens entirely in your browser. Your PDF never leaves your device.</p>
         </div>
         <div class="faq-item">
             <h3>Is this tool free?</h3>
-            <p>
-                Yes — completely free up to 25MB with no
-                signup required.
-            </p>
+            <p>Yes — completely free up to 25MB with no signup required.</p>
         </div>
     </div>
 </div>
 
 @code {
-    private enum PageState
-    {
-        Upload, Processing, Complete, Error, LargeFile
-    }
-
-    private class AnnotationModel
-    {
-        public string Type { get; set; } = "text";
-        public int PageNumber { get; set; }
-        public float X { get; set; }
-        public float Y { get; set; }
-        public float X2 { get; set; }
-        public float Y2 { get; set; }
-        public float Width { get; set; }
-        public float Height { get; set; }
-        public string? Text { get; set; }
-        public float FontSize { get; set; } = 12f;
-        public float LineWidth { get; set; } = 2f;
-        public string Color { get; set; } = "#000000";
-    }
+    private enum PageState { Upload, Error, LargeFile }
 
     private PageState CurrentState = PageState.Upload;
     private IBrowserFile? SelectedFile;
-    private byte[]? UploadedBytes;
-    private byte[]? ResultBytes;
     private string? ErrorMessage;
-    private int CurrentPage = 1;
-    private int TotalPages = 1;
-    private string ActiveTool = "text";
-    private string TextContent = string.Empty;
-    private int FontSize = 14;
-    private string SelectedColor = "#000000";
-    private List<AnnotationModel> Annotations = new();
-    private DotNetObjectReference<EditPdf>? _dotNetRef;
-
-    [SupplyParameterFromQuery]
-    private string? Paid { get; set; }
-
-    protected override void OnInitialized()
-    {
-        if (Paid == "true")
-            CurrentState = PageState.Upload;
-    }
-
-    protected override async Task OnAfterRenderAsync(
-        bool firstRender)
-    {
-        if (firstRender)
-        {
-            _dotNetRef = DotNetObjectReference.Create(this);
-            await JS.InvokeVoidAsync(
-                "initEditCanvas", _dotNetRef);
-        }
-    }
-
-    public void Dispose() => _dotNetRef?.Dispose();
-
-    private void SetTool(string tool)
-    {
-        ActiveTool = tool;
-        StateHasChanged();
-    }
+    private bool _editorVisible = false;
 
     private async Task HandleFileSelected(IBrowserFile file)
     {
-        SelectedFile = null;
-        UploadedBytes = null;
-        Annotations.Clear();
         ErrorMessage = null;
+        SelectedFile = null;
+        _editorVisible = false;
 
         var validation = Validator.ValidatePdfFile(file);
-        if (!validation.IsValid)
-        {
-            Toast.ShowError(validation.Message!);
-            return;
-        }
-        if (validation.IsWarning)
-            Toast.ShowWarning(validation.Message!);
+        if (!validation.IsValid) { Toast.ShowError(validation.Message!); return; }
+        if (validation.IsWarning) Toast.ShowWarning(validation.Message!);
 
         try
         {
-            using var stream = file.OpenReadStream(
-                maxAllowedSize: 524288000);
-            using var ms = new MemoryStream();
-            await stream.CopyToAsync(ms);
-            UploadedBytes = ms.ToArray();
-
-            var bytesVal = Validator.ValidatePdfBytes(UploadedBytes);
-            if (!bytesVal.IsValid)
-            {
-                Toast.ShowError(bytesVal.Message!);
-                UploadedBytes = null;
-                return;
-            }
-            if (bytesVal.IsWarning)
-                Toast.ShowWarning(bytesVal.Message!);
-
             if (PaymentService.IsFileTooLargeForFree(file.Size))
             {
                 CurrentState = PageState.LargeFile;
@@ -330,136 +121,41 @@
                 return;
             }
 
-            TotalPages = await ApiService.GetPageCountAsync(
-                UploadedBytes, file.Name);
+            using var stream = file.OpenReadStream(maxAllowedSize: 524288000);
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            var bytes = ms.ToArray();
 
-            CurrentPage = 1;
+            var bytesVal = Validator.ValidatePdfBytes(bytes);
+            if (!bytesVal.IsValid) { Toast.ShowError(bytesVal.Message!); return; }
+
             SelectedFile = file;
-            StateHasChanged();
+            _editorVisible = true;
+            await InvokeAsync(StateHasChanged);
 
-            await JS.InvokeVoidAsync("renderPdfPage",
-                Convert.ToBase64String(UploadedBytes),
-                CurrentPage);
+            await Task.Delay(100);
+            await JS.InvokeVoidAsync("pdfEditor.init",
+            Convert.ToBase64String(bytes), file.Name, "pdf-editor-container");
 
-            Toast.ShowSuccess(
-                $"File ready — {Validator.FormatSize(file.Size)}");
+            Toast.ShowSuccess($"File ready — {Validator.FormatSize(file.Size)}");
         }
         catch (Exception ex)
         {
             Toast.ShowError($"Could not read file: {ex.Message}");
-            UploadedBytes = null;
         }
-        StateHasChanged();
     }
 
     private void HandleFileRemoved()
     {
+        _editorVisible = false;
         SelectedFile = null;
-        UploadedBytes = null;
-        Annotations.Clear();
-    }
-
-    private async Task PreviousPage()
-    {
-        if (CurrentPage <= 1) return;
-        CurrentPage--;
-        await JS.InvokeVoidAsync("renderPdfPage",
-            Convert.ToBase64String(UploadedBytes!),
-            CurrentPage);
-    }
-
-    private async Task NextPage()
-    {
-        if (CurrentPage >= TotalPages) return;
-        CurrentPage++;
-        await JS.InvokeVoidAsync("renderPdfPage",
-            Convert.ToBase64String(UploadedBytes!),
-            CurrentPage);
-    }
-
-    [JSInvokable]
-    public void AddAnnotation(float x, float y,
-        float x2, float y2)
-    {
-        Annotations.Add(new AnnotationModel
-        {
-            Type = ActiveTool,
-            PageNumber = CurrentPage,
-            X = x,
-            Y = y,
-            X2 = x2,
-            Y2 = y2,
-            Width = x2 - x,
-            Height = y2 - y,
-            Text = ActiveTool == "text"
-                ? TextContent : null,
-            FontSize = FontSize,
-            LineWidth = 2f,
-            Color = SelectedColor
-        });
-        StateHasChanged();
-    }
-
-    private void ClearAnnotations()
-    {
-        Annotations.RemoveAll(
-            a => a.PageNumber == CurrentPage);
-        StateHasChanged();
-    }
-
-    private async Task ProcessFile()
-    {
-        if (UploadedBytes == null) return;
-
-        CurrentState = PageState.Processing;
-        StateHasChanged();
-
-        try
-        {
-            ResultBytes = await ApiService.EditPdfAsync(
-                UploadedBytes,
-                SelectedFile!.Name,
-                Annotations);
-
-            if (ResultBytes != null)
-                CurrentState = PageState.Complete;
-            else
-            {
-                ErrorMessage =
-                    "Failed to save edits. " +
-                    "Please try again.";
-                CurrentState = PageState.Error;
-            }
-        }
-        catch (Exception ex)
-        {
-            ErrorMessage = $"Error: {ex.Message}";
-            CurrentState = PageState.Error;
-        }
-
-        StateHasChanged();
-    }
-
-    private async Task DownloadFile()
-    {
-        if (ResultBytes == null) return;
-        var fileName = Path.GetFileNameWithoutExtension(
-            SelectedFile?.Name ?? "document")
-            + "_edited.pdf";
-        await JS.InvokeVoidAsync("downloadFile",
-            fileName,
-            Convert.ToBase64String(ResultBytes));
     }
 
     private void Reset()
     {
         CurrentState = PageState.Upload;
         SelectedFile = null;
-        UploadedBytes = null;
-        ResultBytes = null;
         ErrorMessage = null;
-        CurrentPage = 1;
-        TotalPages = 1;
-        Annotations.Clear();
+        _editorVisible = false;
     }
 }

@@ -1,50 +1,234 @@
 ﻿@page "/ai-pdf-assist"
 @inject NavigationManager Navigation
 
-<PageTitle>AI PDF Tools — Summarize, Chat, Extract Data | PdfToolStack</PageTitle>
+<PageTitle>AI PDF Tools — Summarize, Chat, Extract, Translate | PdfToolStack</PageTitle>
 
 <HeadContent>
     <meta name="description"
           content="AI-powered PDF tools. Summarize documents, chat with your PDF,
-                   extract invoice data, and generate questions — all with AI." />
+                   extract invoice data, translate, rewrite, and review contracts — all powered by Claude AI." />
     <meta name="keywords" content="ai pdf tools, pdf ai assistant, document ai, intelligent pdf processing" />
     <link rel="canonical" href="https://pdftoolstack.com/ai-pdf-assist" />
 </HeadContent>
 
 <div class="tool-page">
-    <div class="tool-hero">
-        <h1>AI PDF Tools</h1>
-        <p>Everything you need to work smarter with documents. Powered by Claude AI.</p>
-    </div>
 
-    <div class="ai-hub-grid">
+    <div class="tool-container">
 
-        <div class="ai-hub-card" @onclick='() => Navigation.NavigateTo("/ai-summarizer")'>
-            <div class="ai-hub-icon">✨</div>
-            <div class="ai-hub-name">AI Summarizer</div>
-            <div class="ai-hub-desc">Get concise summaries of long documents. Key points in seconds.</div>
-            <span class="ai-hub-badge">Pro</span>
+        <div class="ai-tool-header">
+            <div class="ai-tool-badge">✨ Powered by Claude AI</div>
+            <h1>AI PDF Tools</h1>
+            <p class="tool-subtitle">
+                Everything you need to work smarter with documents.
+                Summarize, translate, rewrite, extract, and review —
+                all in one place.
+            </p>
         </div>
 
-        <div class="ai-hub-card" @onclick='() => Navigation.NavigateTo("/chat-with-pdf")'>
-            <div class="ai-hub-icon">💬</div>
-            <div class="ai-hub-name">Chat with PDF</div>
-            <div class="ai-hub-desc">Ask your document anything. Get instant answers based on its content.</div>
-            <span class="ai-hub-badge">Pro</span>
+        <div class="ai-hub-grid">
+
+            <a href="/extract-invoice-data" class="ai-hub-card ai-hub-featured">
+                <div class="ai-hub-icon-tile" style="background:#6D28D9;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2" />
+                        <path d="M3 9h18" />
+                        <path d="M9 21V9" />
+                        <path d="M15 14h3" />
+                        <path d="M15 17h2" />
+                    </svg>
+                </div>
+                <div class="ai-hub-content">
+                    <div class="ai-hub-name">Extract Invoice Data</div>
+                    <div class="ai-hub-desc">
+                        AI reads any invoice or contract and exports structured
+                        data to Excel. No manual entry ever again.
+                    </div>
+                </div>
+                <div class="ai-hub-footer">
+                    <span class="ai-hub-badge">Pro</span>
+                    <span class="ai-hub-arrow">→</span>
+                </div>
+            </a>
+
+            <a href="/chat-with-pdf" class="ai-hub-card">
+                <div class="ai-hub-icon-tile" style="background:#7C3AED;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                    </svg>
+                </div>
+                <div class="ai-hub-content">
+                    <div class="ai-hub-name">Chat with PDF</div>
+                    <div class="ai-hub-desc">
+                        Ask your document anything. Get instant answers
+                        grounded in your document's content.
+                    </div>
+                </div>
+                <div class="ai-hub-footer">
+                    <span class="ai-hub-badge">Pro</span>
+                    <span class="ai-hub-arrow">→</span>
+                </div>
+            </a>
+
+            <a href="/ai-summarizer" class="ai-hub-card">
+                <div class="ai-hub-icon-tile" style="background:#4F46E5;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="8" y1="6" x2="21" y2="6" />
+                        <line x1="8" y1="12" x2="21" y2="12" />
+                        <line x1="8" y1="18" x2="15" y2="18" />
+                        <path d="M3 6l1 1 2-3" />
+                        <path d="M3 12l1 1 2-3" />
+                        <path d="M3 18l1 1 2-3" />
+                    </svg>
+                </div>
+                <div class="ai-hub-content">
+                    <div class="ai-hub-name">AI Summarizer</div>
+                    <div class="ai-hub-desc">
+                        Get concise summaries of long documents.
+                        Key points and conclusions in seconds.
+                    </div>
+                </div>
+                <div class="ai-hub-footer">
+                    <span class="ai-hub-badge">Pro</span>
+                    <span class="ai-hub-arrow">→</span>
+                </div>
+            </a>
+
+            <a href="/review-contract" class="ai-hub-card">
+                <div class="ai-hub-icon-tile" style="background:#7C3AED;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+                              fill="rgba(255,255,255,0.15)" />
+                        <polyline points="14,2 14,8 20,8" />
+                        <path d="M9 13h6M9 17h4" />
+                    </svg>
+                </div>
+                <div class="ai-hub-content">
+                    <div class="ai-hub-name">AI Contract Reviewer</div>
+                    <div class="ai-hub-desc">
+                        Catch risky clauses, key dates, and missing elements
+                        before you sign. No legal expertise needed.
+                    </div>
+                </div>
+                <div class="ai-hub-footer">
+                    <span class="ai-hub-badge">Pro</span>
+                    <span class="ai-hub-arrow">→</span>
+                </div>
+            </a>
+
+            <a href="/ai-rewrite" class="ai-hub-card">
+                <div class="ai-hub-icon-tile" style="background:#6D28D9;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 20h9" />
+                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                    </svg>
+                </div>
+                <div class="ai-hub-content">
+                    <div class="ai-hub-name">AI Rewriter</div>
+                    <div class="ai-hub-desc">
+                        Change tone, simplify language, make it more formal
+                        or concise — any custom rewrite instruction.
+                    </div>
+                </div>
+                <div class="ai-hub-footer">
+                    <span class="ai-hub-badge">Pro</span>
+                    <span class="ai-hub-arrow">→</span>
+                </div>
+            </a>
+
+            <a href="/translate-pdf" class="ai-hub-card">
+                <div class="ai-hub-icon-tile" style="background:#0369A1;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 0 1 6.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+                    </svg>
+                </div>
+                <div class="ai-hub-content">
+                    <div class="ai-hub-name">Translate PDF</div>
+                    <div class="ai-hub-desc">
+                        Translate any PDF into 50+ languages instantly.
+                        Spanish, French, Chinese, Arabic and more.
+                    </div>
+                </div>
+                <div class="ai-hub-footer">
+                    <span class="ai-hub-badge">Pro</span>
+                    <span class="ai-hub-arrow">→</span>
+                </div>
+            </a>
+
+            <a href="/compare-pdf" class="ai-hub-card">
+                <div class="ai-hub-icon-tile" style="background:#8B5CF6;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h4" />
+                        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                        <line x1="12" y1="3" x2="12" y2="21" />
+                        <line x1="6" y1="9" x2="9" y2="9" />
+                        <line x1="15" y1="9" x2="18" y2="9" />
+                    </svg>
+                </div>
+                <div class="ai-hub-content">
+                    <div class="ai-hub-name">Compare PDFs</div>
+                    <div class="ai-hub-desc">
+                        Find differences between two documents.
+                        Word-level diff report, instantly.
+                    </div>
+                </div>
+                <div class="ai-hub-footer">
+                    <span class="ai-hub-badge">Pro</span>
+                    <span class="ai-hub-arrow">→</span>
+                </div>
+            </a>
+
+            <a href="/ai-questions" class="ai-hub-card">
+                <div class="ai-hub-icon-tile" style="background:#A855F7;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10" />
+                        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                        <line x1="12" y1="17" x2="12.01" y2="17" />
+                    </svg>
+                </div>
+                <div class="ai-hub-content">
+                    <div class="ai-hub-name">AI Questions Generator</div>
+                    <div class="ai-hub-desc">
+                        Generate quiz questions and study guides
+                        from any PDF document automatically.
+                    </div>
+                </div>
+                <div class="ai-hub-footer">
+                    <span class="ai-hub-badge">Pro</span>
+                    <span class="ai-hub-arrow">→</span>
+                </div>
+            </a>
+
         </div>
 
-        <div class="ai-hub-card" @onclick='() => Navigation.NavigateTo("/extract-invoice-data")'>
-            <div class="ai-hub-icon">📊</div>
-            <div class="ai-hub-name">Data Extractor</div>
-            <div class="ai-hub-desc">Extract invoice data, contract fields, and form values to Excel automatically.</div>
-            <span class="ai-hub-badge">Pro</span>
-        </div>
-
-        <div class="ai-hub-card" @onclick='() => Navigation.NavigateTo("/ai-questions")'>
-            <div class="ai-hub-icon">📝</div>
-            <div class="ai-hub-name">Questions Generator</div>
-            <div class="ai-hub-desc">Generate quiz questions and study guides from any PDF document.</div>
-            <span class="ai-hub-badge">Pro</span>
+        <!-- Claude AI callout -->
+        <div class="ai-hub-callout">
+            <div class="ai-hub-callout-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26 12,2" />
+                </svg>
+            </div>
+            <div class="ai-hub-callout-text">
+                <strong>Powered by Claude AI</strong>
+                <p>
+                    All AI tools use Claude by Anthropic — one of the most capable
+                    AI models available. Better results than tools using older models.
+                </p>
+            </div>
+            <a href="/pricing" class="download-button"
+               style="display:inline-block; text-decoration:none;
+                      max-width:160px; white-space:nowrap;">
+                Upgrade to Pro
+            </a>
         </div>
 
     </div>

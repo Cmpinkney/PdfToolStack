@@ -8,7 +8,7 @@
 <PageTitle>Pricing — PdfToolStack AI Document Tools</PageTitle>
 
 <HeadContent>
-    <meta name="description" content="Simple pricing for PdfToolStack. Free forever for 35+ PDF tools. Pro at $19/month for AI tools, batch processing, and unlimited files. Teams at $39/seat." />
+    <meta name="description" content="Simple pricing for PdfToolStack. Free forever for 35+ PDF tools. Pro at $12/month for AI tools, batch processing, and unlimited files. Teams at $29/month for 5 users." />
     <link rel="canonical" href="https://pdftoolstack.com/pricing" />
 </HeadContent>
 
@@ -23,6 +23,20 @@
             <span>🚫 No data training</span>
             <span>⚡ Instant access</span>
         </div>
+
+        <!-- Billing toggle -->
+        <div class="pricing-toggle-wrap">
+            <span class="pricing-toggle-label @(!_isAnnual ? "active" : "")">Monthly</span>
+            <button class="pricing-toggle @(_isAnnual ? "on" : "")"
+                    @onclick="ToggleBilling"
+                    aria-label="Toggle billing period">
+                <span class="pricing-toggle-thumb"></span>
+            </button>
+            <span class="pricing-toggle-label @(_isAnnual ? "active" : "")">
+                Annual
+                <span class="pricing-save-badge">Save 31%</span>
+            </span>
+        </div>
     </div>
 
     <!-- Pricing Cards -->
@@ -36,16 +50,16 @@
                 <span>/forever</span>
             </div>
             <div class="pricing-desc">
-                Perfect for occasional use
+                Perfect for occasional use. No credit card needed.
             </div>
             <ul class="pricing-features">
                 <li class="feat-yes">All 35+ PDF tools</li>
                 <li class="feat-yes">Up to 25MB per file</li>
+                <li class="feat-yes">5 AI uses per month</li>
                 <li class="feat-yes">Files deleted in 1 hour</li>
                 <li class="feat-yes">No signup required</li>
-                <li class="feat-no">No AI tools</li>
-                <li class="feat-no">No download history</li>
                 <li class="feat-no">No batch processing</li>
+                <li class="feat-no">No download history</li>
                 <li class="feat-no">Ads shown</li>
             </ul>
             <a href="/" class="pricing-btn-free">
@@ -58,30 +72,68 @@
             <div class="pricing-popular-badge">Most Popular</div>
             <div class="pricing-plan-name">Pro</div>
             <div class="pricing-price">
-                $19
-                <span>/month</span>
+                @if (_isAnnual)
+                {
+                    <span class="pricing-price-old">$12</span>
+                    <span class="pricing-price-main">$8</span>
+                    <span>/month</span>
+                }
+                else
+                {
+                    <span class="pricing-price-main">$12</span>
+                    <span>/month</span>
+                }
             </div>
+            @if (_isAnnual)
+            {
+                <div class="pricing-billed-note">Billed $99/year — save $45</div>
+            }
+            else
+            {
+                <div class="pricing-billed-note">Or $99/year and save $45</div>
+            }
             <div class="pricing-desc">
-                For professionals who work with PDFs daily
+                For professionals who work with PDFs daily.
             </div>
             <ul class="pricing-features">
                 <li class="feat-yes">Everything in Free</li>
-                <li class="feat-yes">Unlimited file size</li>
-                <li class="feat-yes">All AI tools (Chat, Summarize, Extract)</li>
+                <li class="feat-yes">Unlimited file size (500MB)</li>
+                <li class="feat-yes">200 AI uses per month</li>
+                <li class="feat-yes">All AI tools — Chat, Summarize, Translate</li>
+                <li class="feat-yes">AI Contract Reviewer</li>
+                <li class="feat-yes">AI Invoice Data Extractor</li>
                 <li class="feat-yes">Batch processing — up to 20 files</li>
+                <li class="feat-yes">OCR — make scans searchable</li>
                 <li class="feat-yes">Download history — 30 days</li>
-                <li class="feat-yes">PDF Compare &amp; Diff</li>
-                <li class="feat-yes">Priority processing</li>
+                <li class="feat-yes">Cloud storage (Drive, OneDrive, Dropbox)</li>
                 <li class="feat-yes">No ads</li>
             </ul>
             <button class="pricing-btn-pro"
-                    @onclick="() => Subscribe(false)"
-                    disabled="@(IsLoading || _monthlyPriceId == null)">
-                @(IsLoading ? "Loading..." : "Start Pro — $19/mo")
+                    @onclick="() => Subscribe(_isAnnual ? _yearlyPriceId : _monthlyPriceId)"
+                    disabled="@(IsLoading || (_isAnnual ? _yearlyPriceId == null : _monthlyPriceId == null))">
+                @if (IsLoading && _checkoutTarget == "pro")
+                {
+                    <span>Loading...</span>
+                }
+                else if (_isAnnual)
+                {
+                    <span>Start Pro — $99/year</span>
+                }
+                else
+                {
+                    <span>Start Pro — $12/month</span>
+                }
             </button>
-            <div class="pricing-yearly-nudge">
-                Or <button class="pricing-link-btn" @onclick="() => Subscribe(true)">save 34% with annual billing — $150/yr</button>
-            </div>
+            @if (!_isAnnual)
+            {
+                <div class="pricing-yearly-nudge">
+                    Or
+                    <button class="pricing-link-btn"
+                            @onclick='() => { _isAnnual = true; }'>
+                        save $45 with annual billing →
+                    </button>
+                </div>
+            }
         </div>
 
         <!-- Teams -->
@@ -89,30 +141,68 @@
             <div class="pricing-teams-badge">For Small Teams</div>
             <div class="pricing-plan-name">Teams</div>
             <div class="pricing-price">
-                $39
-                <span>/seat/month</span>
+                <span class="pricing-price-main">$29</span>
+                <span>/month</span>
+            </div>
+            <div class="pricing-billed-note">
+                Up to 5 users included — $6/mo per additional seat
             </div>
             <div class="pricing-desc">
-                For accounting firms, law offices &amp; agencies
+                For accounting firms, law offices &amp; agencies.
             </div>
             <ul class="pricing-features">
                 <li class="feat-yes">Everything in Pro</li>
-                <li class="feat-yes">3–10 seats</li>
-                <li class="feat-yes">Shared document workspace</li>
-                <li class="feat-yes">AI invoice data extractor</li>
-                <li class="feat-yes">AI contract reviewer</li>
-                <li class="feat-yes">Admin dashboard</li>
+                <li class="feat-yes">5 seats included</li>
+                <li class="feat-yes">500 AI uses per month (shared)</li>
+                <li class="feat-yes">Shared team workspace</li>
+                <li class="feat-yes">Admin usage dashboard</li>
                 <li class="feat-yes">Invoice &amp; PO billing</li>
                 <li class="feat-yes">Priority support</li>
+                <li class="feat-yes">Onboarding call included</li>
             </ul>
-            <a href="/contact?subject=Teams" class="pricing-btn-teams">
-                Contact Us for Teams
-            </a>
+            <button class="pricing-btn-teams"
+                    @onclick='() => Subscribe(_teamsPriceId)'
+                    disabled="@(IsLoading || _teamsPriceId == null)">
+                @if (IsLoading && _checkoutTarget == "teams")
+                {
+                    <span>Loading...</span>
+                }
+                else
+                {
+                    <span>Start Teams — $29/month</span>
+                }
+            </button>
             <div class="pricing-yearly-nudge">
-                5 seats = $195/mo — less than one billable hour
+                5 seats = $29/mo — less than one billable hour
             </div>
         </div>
 
+    </div>
+
+    <!-- Competitor comparison -->
+    <div class="pricing-vs-bar">
+        <div class="pricing-vs-inner">
+            <span class="pricing-vs-label">How we compare</span>
+            <div class="pricing-vs-items">
+                <div class="pricing-vs-item">
+                    <span class="pricing-vs-them">Smallpdf Pro</span>
+                    <span class="pricing-vs-price-them">$15/mo</span>
+                    <span class="pricing-vs-sep">vs</span>
+                    <span class="pricing-vs-us">PdfToolStack Pro</span>
+                    <span class="pricing-vs-price-us">$12/mo</span>
+                    <span class="pricing-vs-badge">+ Claude AI</span>
+                </div>
+                <div class="pricing-vs-divider"></div>
+                <div class="pricing-vs-item">
+                    <span class="pricing-vs-them">iLovePDF Premium</span>
+                    <span class="pricing-vs-price-them">$4/mo</span>
+                    <span class="pricing-vs-sep">vs</span>
+                    <span class="pricing-vs-us">PdfToolStack Free</span>
+                    <span class="pricing-vs-price-us">$0/mo</span>
+                    <span class="pricing-vs-badge">No watermarks</span>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Feature comparison table -->
@@ -143,12 +233,30 @@
                         <td>500MB</td>
                     </tr>
                     <tr>
+                        <td>Watermarks on output</td>
+                        <td>None</td>
+                        <td>None</td>
+                        <td>None</td>
+                    </tr>
+                    <tr>
                         <td>Batch processing</td>
                         <td>—</td>
-                        <td>Up to 20 files</td>
-                        <td>Up to 20 files</td>
+                        <td>20 files</td>
+                        <td>20 files</td>
+                    </tr>
+                    <tr>
+                        <td>OCR (scanned PDFs)</td>
+                        <td>—</td>
+                        <td>✅</td>
+                        <td>✅</td>
                     </tr>
                     <tr class="compare-section-row"><td colspan="4">AI Tools</td></tr>
+                    <tr>
+                        <td>AI uses per month</td>
+                        <td>5</td>
+                        <td>200</td>
+                        <td>500</td>
+                    </tr>
                     <tr>
                         <td>Chat with PDF</td>
                         <td>—</td>
@@ -157,6 +265,12 @@
                     </tr>
                     <tr>
                         <td>AI Summarizer</td>
+                        <td>—</td>
+                        <td>✅</td>
+                        <td>✅</td>
+                    </tr>
+                    <tr>
+                        <td>Translate PDF</td>
                         <td>—</td>
                         <td>✅</td>
                         <td>✅</td>
@@ -182,10 +296,16 @@
                     <tr>
                         <td>AI Contract Reviewer</td>
                         <td>—</td>
-                        <td>—</td>
+                        <td>✅</td>
                         <td>✅</td>
                     </tr>
                     <tr class="compare-section-row"><td colspan="4">Account &amp; Storage</td></tr>
+                    <tr>
+                        <td>Cloud storage (Drive, OneDrive)</td>
+                        <td>—</td>
+                        <td>✅</td>
+                        <td>✅</td>
+                    </tr>
                     <tr>
                         <td>Download history</td>
                         <td>—</td>
@@ -199,7 +319,7 @@
                         <td>✅</td>
                     </tr>
                     <tr>
-                        <td>Admin dashboard</td>
+                        <td>Admin usage dashboard</td>
                         <td>—</td>
                         <td>—</td>
                         <td>✅</td>
@@ -222,6 +342,12 @@
                         <td>Community</td>
                         <td>Email</td>
                         <td>Priority</td>
+                    </tr>
+                    <tr>
+                        <td>Onboarding call</td>
+                        <td>—</td>
+                        <td>—</td>
+                        <td>✅</td>
                     </tr>
                 </tbody>
             </table>
@@ -273,15 +399,23 @@
             </div>
             <div class="faq-item">
                 <h3>Can I switch between monthly and yearly?</h3>
-                <p>Yes — upgrade to annual billing anytime from your account portal and save 34% immediately.</p>
+                <p>Yes — upgrade to annual billing anytime from your account portal and save $45 immediately.</p>
             </div>
             <div class="faq-item">
                 <h3>How does Teams billing work?</h3>
-                <p>Teams plans are billed per seat per month. We support invoice and purchase order billing for businesses that need it. Contact us to set up your team.</p>
+                <p>$29/month includes 5 seats. Additional seats are $6/month each. We support invoice and purchase order billing for businesses. Start your plan and contact us to add more seats.</p>
             </div>
             <div class="faq-item">
                 <h3>Is there a free trial for Pro?</h3>
-                <p>The Free plan gives you full access to all 35+ PDF tools indefinitely — no credit card needed. AI tools are unlocked with any Pro plan.</p>
+                <p>The Free plan gives you 5 AI uses per month and all 35+ PDF tools forever — no credit card needed. Upgrade to Pro anytime for unlimited AI access.</p>
+            </div>
+            <div class="faq-item">
+                <h3>What AI model powers PdfToolStack?</h3>
+                <p>Claude by Anthropic — one of the most capable AI models available. This means better contract analysis, more accurate translations, and smarter document understanding than competitors.</p>
+            </div>
+            <div class="faq-item">
+                <h3>How does PdfToolStack compare to Smallpdf?</h3>
+                <p>PdfToolStack Pro is $12/month vs Smallpdf's $15/month, and is powered by Claude AI which produces noticeably better results for contract review and document analysis.</p>
             </div>
         </div>
     </div>
@@ -290,10 +424,13 @@
 
 @code {
     private bool IsLoading = false;
+    private bool _isAnnual = false;
+    private string _checkoutTarget = string.Empty;
     private string UserId = string.Empty;
     private string UserEmail = string.Empty;
     private string? _monthlyPriceId;
     private string? _yearlyPriceId;
+    private string? _teamsPriceId;
 
     protected override async Task OnInitializedAsync()
     {
@@ -304,6 +441,8 @@
 
         await LoadPlansAsync();
     }
+
+    private void ToggleBilling() => _isAnnual = !_isAnnual;
 
     private async Task LoadPlansAsync()
     {
@@ -316,6 +455,7 @@
             {
                 _monthlyPriceId = plans.Monthly?.PriceId;
                 _yearlyPriceId = plans.Yearly?.PriceId;
+                _teamsPriceId = plans.Teams?.PriceId;
             }
         }
         catch
@@ -324,10 +464,8 @@
         }
     }
 
-    private async Task Subscribe(bool yearly)
+    private async Task Subscribe(string? priceId)
     {
-        var priceId = yearly ? _yearlyPriceId : _monthlyPriceId;
-
         if (string.IsNullOrEmpty(priceId)) return;
 
         if (string.IsNullOrEmpty(UserId))
@@ -336,6 +474,7 @@
             return;
         }
 
+        _checkoutTarget = priceId == _teamsPriceId ? "teams" : "pro";
         IsLoading = true;
         StateHasChanged();
 
@@ -347,12 +486,14 @@
             Navigation.NavigateTo(url, true);
 
         IsLoading = false;
+        StateHasChanged();
     }
 
     private class PlansResponse
     {
         public PlanInfo? Monthly { get; set; }
         public PlanInfo? Yearly { get; set; }
+        public PlanInfo? Teams { get; set; }
     }
 
     private class PlanInfo

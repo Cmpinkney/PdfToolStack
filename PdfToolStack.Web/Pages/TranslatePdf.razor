@@ -1,121 +1,423 @@
 ﻿@page "/translate-pdf"
 @inject ApiService ApiService
+@inject PdfToolStack.Web.Services.SubscriptionService SubService
+@inject AuthenticationStateProvider Auth
 @inject IJSRuntime JS
-@inject PaymentService PaymentService
+@using Microsoft.AspNetCore.Components.Authorization
 
-<PageTitle>Translate PDF Free Online — PDF Translation Tool</PageTitle>
+<PageTitle>Translate PDF Online — 50+ Languages | PdfToolStack</PageTitle>
 
 <HeadContent>
     <meta name="description"
-          content="Translate your PDF document summary free online.
-                   Extract and translate PDF content instantly.
-                   No signup required." />
+          content="Translate any PDF into 50+ languages instantly with AI.
+                   Spanish, French, German, Chinese, Arabic and more.
+                   Download translated text in seconds." />
     <meta name="keywords"
-          content="translate pdf, pdf translator online free,
-                   pdf translation tool, pdf translation, translate document online" />
-    <link rel="canonical"
-          href="https://pdftoolstack.com/translate-pdf" />
+          content="translate pdf, pdf translator online, translate pdf to spanish,
+                   pdf translation tool, translate document online free" />
+    <link rel="canonical" href="https://pdftoolstack.com/translate-pdf" />
 </HeadContent>
 
 <div class="tool-page">
     <AdSlot Size="banner" />
 
     <div class="tool-container">
-        <h1>Translate PDF Online</h1>
-        <p class="tool-subtitle">
-            Extract and translate the text content of your PDF.
-            No signup required. Files deleted within 1 hour.
-        </p>
 
-        <div class="coming-soon-banner">
-            <span class="coming-soon-icon">🌍</span>
-            <div>
-                <h3>Full AI Translation Coming Soon</h3>
-                <p>
-                    We are integrating AI-powered translation
-                    to support 50+ languages. This feature
-                    will be available shortly.
-                </p>
-                <p>
-                    In the meantime you can use our
-                    <a href="/pdf-to-word">PDF to Word</a>
-                    tool to extract text, then paste it into
-                    Google Translate.
-                </p>
+        <div class="ai-tool-header">
+            <div class="ai-tool-badge">🌍 AI-Powered</div>
+            <h1>Translate PDF Online</h1>
+            <p class="tool-subtitle">
+                Upload any PDF and AI translates the full content into
+                your chosen language. 50+ languages supported.
+                No signup required for basic use.
+            </p>
+        </div>
+
+        <div class="how-it-works">
+            <div class="hiw-step">
+                <div class="hiw-num">1</div>
+                <div class="hiw-text">
+                    <strong>Upload your PDF</strong>
+                    <span>Any text-based document</span>
+                </div>
+            </div>
+            <div class="hiw-arrow">→</div>
+            <div class="hiw-step">
+                <div class="hiw-num">2</div>
+                <div class="hiw-text">
+                    <strong>Choose language</strong>
+                    <span>50+ languages available</span>
+                </div>
+            </div>
+            <div class="hiw-arrow">→</div>
+            <div class="hiw-step">
+                <div class="hiw-num">3</div>
+                <div class="hiw-text">
+                    <strong>Download translation</strong>
+                    <span>Clean text file, instant</span>
+                </div>
             </div>
         </div>
 
-        <div class="notify-section">
-            <h3>Get notified when it launches</h3>
-            @if (NotifySubmitted)
-            {
-                <div class="contact-success">
-                    <span>✅</span>
+        <AuthorizeView>
+            <NotAuthorized>
+                <div class="ai-upgrade-card">
+                    <div class="ai-upgrade-icon">🌍</div>
+                    <h2>AI PDF Translator</h2>
                     <p>
-                        We'll notify you when
-                        PDF translation launches!
+                        Translate any PDF into 50+ languages instantly.
+                        Sign in to access — free with any account.
                     </p>
+                    <div class="ai-upgrade-features">
+                        <div class="ai-upgrade-feat">✓ 50+ languages supported</div>
+                        <div class="ai-upgrade-feat">✓ Spanish, French, German, Chinese, Arabic</div>
+                        <div class="ai-upgrade-feat">✓ Powered by Claude AI</div>
+                        <div class="ai-upgrade-feat">✓ Files deleted within 1 hour</div>
+                    </div>
+                    <div class="ai-upgrade-actions">
+                        <a href="authentication/login?screen_hint=signup"
+                           class="download-button"
+                           style="display:inline-block; text-decoration:none;">
+                            Sign up free
+                        </a>
+                        <a href="authentication/login"
+                           class="reset-button"
+                           style="display:inline-block; text-decoration:none;">
+                            Sign in
+                        </a>
+                    </div>
                 </div>
-            }
-            else
-            {
-                <div class="notify-form">
-                    <input type="email"
-                           class="field-input"
-                           style="max-width: 300px;"
-                           placeholder="your@email.com"
-                           @bind="NotifyEmail" />
-                    <button class="process-button"
-                            style="max-width: 160px;"
-                            @onclick="SubmitNotify">
-                        Notify Me
-                    </button>
-                </div>
-            }
-        </div>
+            </NotAuthorized>
+
+            <Authorized>
+                @if (CurrentState == PageState.Upload)
+                {
+                    <FileUpload OnFileSelected="HandleFileSelected"
+                                OnFileRemoved="HandleFileRemoved"
+                                HintText="Upload a PDF document — up to 50MB" />
+
+                    @if (_fileBytes != null)
+                    {
+                        <!-- Language selector -->
+                        <div class="translate-lang-section">
+                            <p class="translate-lang-label">Translate into:</p>
+                            <div class="translate-lang-grid">
+                                @foreach (var lang in _languages)
+                                {
+                                    <button class="translate-lang-btn @(_selectedLang == lang.Code ? "active" : "")"
+                                            @onclick="() => SelectLanguage(lang)">
+                                        <span class="translate-lang-flag">@lang.Flag</span>
+                                        <span class="translate-lang-name">@lang.Name</span>
+                                    </button>
+                                }
+                            </div>
+
+                            @if (_selectedLang == "other")
+                            {
+                                <div class="translate-custom-wrap">
+                                    <input type="text"
+                                           class="chat-input"
+                                           placeholder="Enter language name (e.g. Turkish, Vietnamese...)"
+                                           @bind="_customLanguage"
+                                           style="max-width:320px;" />
+                                </div>
+                            }
+                        </div>
+
+                        <button class="process-button" @onclick="RunTranslate">
+                            🌍 Translate PDF
+                        </button>
+                    }
+                }
+
+                @if (CurrentState == PageState.Processing)
+                {
+                    <div class="ai-processing-container">
+                        <div class="ai-processing-icon">🌍</div>
+                        <h3>Translating your document...</h3>
+                        <p>AI is translating into @_selectedLangName</p>
+                        <div class="ai-processing-steps">
+                            <div class="ai-processing-step @(_step >= 1 ? "done" : "")">
+                                Reading PDF content
+                            </div>
+                            <div class="ai-processing-step @(_step >= 2 ? "done" : "")">
+                                Translating text
+                            </div>
+                            <div class="ai-processing-step @(_step >= 3 ? "done" : "")">
+                                Preparing download
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                @if (CurrentState == PageState.Complete &&
+                                !string.IsNullOrEmpty(_translatedText))
+                {
+                    <div class="ai-result-card">
+                        <div class="ai-result-header">
+                            <div>
+                                <h2>Translation complete</h2>
+                                <p style="color:var(--text-secondary); font-size:0.875rem;">
+                                    @_fileName → @_selectedLangName
+                                </p>
+                            </div>
+                            <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+                                <button class="download-button"
+                                        style="max-width:180px; margin-top:0;"
+                                        @onclick="DownloadTranslation">
+                                    ⬇ Download .txt
+                                </button>
+                                <button class="reset-button"
+                                        style="max-width:140px;"
+                                        @onclick="Reset">
+                                    Translate Another
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Language badge -->
+                        <div style="margin-bottom:1rem;">
+                            <span class="extract-confidence-badge">
+                                🌍 Translated to @_selectedLangName
+                            </span>
+                        </div>
+
+                        <!-- Preview -->
+                        <div class="translate-preview">
+                            <div class="translate-preview-header">
+                                <svg width="14" height="14" viewBox="0 0 24 24"
+                                     fill="none" stroke="currentColor" stroke-width="2"
+                                     stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0
+                                                 0 1 6.412 9m6.088 9h7M11 21l5-10 5 10M12.751
+                                                 5C11.783 10.77 8.07 15.61 3 18.129" />
+                                </svg>
+                                Translation Preview
+                                <span style="margin-left:auto; font-size:0.72rem;
+                                                 color:var(--text-muted); font-weight:400;">
+                                    Scroll to read full translation
+                                </span>
+                            </div>
+                            <div class="translate-preview-body">
+                                @_translatedText
+                            </div>
+                        </div>
+
+                        <!-- Download CTA -->
+                        <div class="extract-download-cta" style="margin-top:1rem;">
+                            <div class="extract-download-cta-text">
+                                <svg width="20" height="20" viewBox="0 0 24 24"
+                                     fill="none" stroke="currentColor" stroke-width="2"
+                                     stroke-linecap="round" stroke-linejoin="round"
+                                     style="color:var(--success); flex-shrink:0;">
+                                    <path d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022
+                                                 0 0 1 6.412 9m6.088 9h7M11 21l5-10
+                                                 5 10M12.751 5C11.783 10.77 8.07
+                                                 15.61 3 18.129" />
+                                </svg>
+                                <div>
+                                    <strong>Download your translation</strong>
+                                    <p>Clean text file ready to use in Word, Google Docs, or email.</p>
+                                </div>
+                            </div>
+                            <button class="download-button"
+                                    style="max-width:180px; margin-top:0;"
+                                    @onclick="DownloadTranslation">
+                                ⬇ Download .txt
+                            </button>
+                        </div>
+                    </div>
+                }
+
+                @if (CurrentState == PageState.Error)
+                {
+                    <div class="error-container" role="alert">
+                        <span class="error-icon">❌</span>
+                        <p class="error-message">@_error</p>
+                        <button class="reset-button" @onclick="Reset">Try Again</button>
+                    </div>
+                }
+            </Authorized>
+        </AuthorizeView>
+
     </div>
 
     <div class="faq-section">
         <h2>Frequently Asked Questions</h2>
         <div class="faq-item">
-            <h3>What languages will be supported?</h3>
+            <h3>What languages are supported?</h3>
             <p>
-                We plan to support 50+ languages including
-                Spanish, French, German, Chinese, Japanese,
-                Arabic, Portuguese, and many more.
+                50+ languages including Spanish, French, German, Italian,
+                Portuguese, Chinese (Simplified & Traditional), Japanese,
+                Korean, Arabic, Hindi, Russian, Dutch, Swedish, and many more.
             </p>
         </div>
         <div class="faq-item">
-            <h3>Will the PDF formatting be preserved?</h3>
+            <h3>Does it preserve formatting?</h3>
             <p>
-                Yes — the translated content will be returned
-                as a new PDF with the same layout as
-                the original.
+                The translation preserves document structure — headings,
+                paragraphs, and lists. The download is a clean text file.
+                For fully formatted PDF output, upgrade to Pro.
             </p>
         </div>
         <div class="faq-item">
-            <h3>Will this be free?</h3>
+            <h3>How accurate is the translation?</h3>
             <p>
-                Basic translation will be free. Large documents
-                may use our pay-per-file model.
+                Very accurate for standard documents. Powered by Claude AI,
+                which understands context and produces natural-sounding
+                translations rather than word-for-word substitutions.
+            </p>
+        </div>
+        <div class="faq-item">
+            <h3>Is my document stored?</h3>
+            <p>
+                No. Your PDF is processed in memory and deleted within
+                1 hour. We never store document contents permanently.
             </p>
         </div>
     </div>
 </div>
 
 @code {
-    private string NotifyEmail = string.Empty;
-    private bool NotifySubmitted = false;
+    private enum PageState { Upload, Processing, Complete, Error }
+    private PageState CurrentState = PageState.Upload;
 
-    private async Task SubmitNotify()
+    private byte[]? _fileBytes;
+    private string? _fileName;
+    private string _selectedLang = "es";
+    private string _selectedLangName = "Spanish";
+    private string _customLanguage = string.Empty;
+    private int _step = 0;
+    private string _translatedText = string.Empty;
+    private string _error = string.Empty;
+
+    private record Language(string Code, string Name, string Flag);
+
+    private readonly List<Language> _languages = new()
     {
-        if (string.IsNullOrWhiteSpace(NotifyEmail) ||
-            !NotifyEmail.Contains('@'))
-            return;
+        new("es", "Spanish",    "🇪🇸"),
+        new("fr", "French",     "🇫🇷"),
+        new("de", "German",     "🇩🇪"),
+        new("it", "Italian",    "🇮🇹"),
+        new("pt", "Portuguese", "🇵🇹"),
+        new("zh", "Chinese",    "🇨🇳"),
+        new("ja", "Japanese",   "🇯🇵"),
+        new("ko", "Korean",     "🇰🇷"),
+        new("ar", "Arabic",     "🇸🇦"),
+        new("hi", "Hindi",      "🇮🇳"),
+        new("ru", "Russian",    "🇷🇺"),
+        new("nl", "Dutch",      "🇳🇱"),
+        new("pl", "Polish",     "🇵🇱"),
+        new("tr", "Turkish",    "🇹🇷"),
+        new("sv", "Swedish",    "🇸🇪"),
+        new("other", "Other",   "🌐"),
+    };
 
-        // Placeholder — wire to email service later
-        await Task.Delay(500);
-        NotifySubmitted = true;
+    private async Task HandleFileSelected(IBrowserFile file)
+    {
+        using var ms = new MemoryStream();
+        await file.OpenReadStream(maxAllowedSize: 52_428_800).CopyToAsync(ms);
+        _fileBytes = ms.ToArray();
+        _fileName = file.Name;
+        _translatedText = string.Empty;
+        _error = string.Empty;
+    }
+
+    private void HandleFileRemoved()
+    {
+        _fileBytes = null;
+        _fileName = null;
+    }
+
+    private void SelectLanguage(Language lang)
+    {
+        _selectedLang = lang.Code;
+        _selectedLangName = lang.Name;
+    }
+
+    private async Task RunTranslate()
+    {
+        if (_fileBytes == null) return;
+
+        var langName = _selectedLang == "other"
+            ? _customLanguage.Trim()
+            : _selectedLangName;
+
+        if (string.IsNullOrWhiteSpace(langName))
+        {
+            _error = "Please enter a target language.";
+            return;
+        }
+
+        _selectedLangName = langName;
+        CurrentState = PageState.Processing;
+        _step = 1;
         StateHasChanged();
+
+        try
+        {
+            await Task.Delay(500);
+            _step = 2; StateHasChanged();
+
+            using var content = new MultipartFormDataContent();
+            var fc = new ByteArrayContent(_fileBytes);
+            fc.Headers.ContentType =
+                new System.Net.Http.Headers.MediaTypeHeaderValue("application/pdf");
+            content.Add(fc, "file", _fileName ?? "document.pdf");
+            content.Add(new StringContent(_selectedLang), "targetLanguage");
+            content.Add(new StringContent(langName), "languageName");
+
+            var result = await ApiService.PostMultipartAsync<TranslateResponse>(
+                "api/ai/translate", content);
+
+            _step = 3; StateHasChanged();
+
+            if (result?.TranslatedText != null)
+            {
+                _translatedText = result.TranslatedText;
+                CurrentState = PageState.Complete;
+            }
+            else
+            {
+                _error = "Translation failed. Please try again.";
+                CurrentState = PageState.Error;
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = $"Error: {ex.Message}";
+            CurrentState = PageState.Error;
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task DownloadTranslation()
+    {
+        if (string.IsNullOrEmpty(_translatedText)) return;
+        var bytes = System.Text.Encoding.UTF8.GetBytes(_translatedText);
+        var base64 = Convert.ToBase64String(bytes);
+        var name = $"translated_{_selectedLang}_{Path.GetFileNameWithoutExtension(_fileName ?? "document")}.txt";
+        await JS.InvokeVoidAsync("downloadFile", name, base64);
+    }
+
+    private void Reset()
+    {
+        CurrentState = PageState.Upload;
+        _fileBytes = null;
+        _fileName = null;
+        _translatedText = string.Empty;
+        _error = string.Empty;
+        _step = 0;
+        _selectedLang = "es";
+        _selectedLangName = "Spanish";
+        _customLanguage = string.Empty;
+    }
+
+    private class TranslateResponse
+    {
+        public string TranslatedText { get; set; } = string.Empty;
+        public string TargetLanguage { get; set; } = string.Empty;
+        public string LanguageName { get; set; } = string.Empty;
     }
 }

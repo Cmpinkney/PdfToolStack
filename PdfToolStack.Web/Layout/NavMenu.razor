@@ -117,6 +117,8 @@
     <a href="/compare-pdf" class="mobile-nav-link" @onclick="CloseMobileMenu">🔍 Compare PDF</a>
     <a href="/extract-invoice-data" class="mobile-nav-link" @onclick="CloseMobileMenu">📊 Extract Invoice Data</a>
     <a href="/review-contract" class="mobile-nav-link" @onclick="CloseMobileMenu">⚖️ Contract Reviewer</a>
+    <a href="/ai-rewrite" class="mobile-nav-link" @onclick="CloseMobileMenu">✍️ AI Rewriter</a>
+    <a href="/translate-pdf" class="mobile-nav-link" @onclick="CloseMobileMenu">🌍 Translate PDF</a>
 </div>
 
 @code {
@@ -168,6 +170,7 @@
         new("Sign Contract", "Sign contracts online", "/sign-contract", "✒️"),
         new("Merge for Submission", "Combine PDFs for filing", "/merge-pdfs-for-submission", "🔗"),
         new("Compare Contracts", "Find differences in contracts", "/compare-contracts", "🔍"),
+        new("AI Rewriter", "Rewrite PDF content with AI", "/ai-rewrite", "✍️"),
     };
 
     private IEnumerable<ToolInfo> FilteredTools =>

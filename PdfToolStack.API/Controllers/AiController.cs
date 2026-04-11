@@ -1,4 +1,6 @@
 ﻿using ClosedXML.Excel;
+using DocumentFormat.OpenXml.Packaging;
+using DocumentFormat.OpenXml.Wordprocessing;
 using Microsoft.AspNetCore.Mvc;
 using PdfToolStack.Application.Interfaces;
 using PdfToolStack.Infrastructure.Services;
@@ -288,6 +290,193 @@ namespace PdfToolStack.API.Controllers
                 _logger.LogError(ex, "OCR failed");
                 return StatusCode(500, new { error = ex.Message });
             }
+        }
+
+        // POST api/ai/translate
+        [HttpPost("translate")]
+        [RequestSizeLimit(52428800)]
+        public async Task<IActionResult> Translate(
+            IFormFile file,
+            [FromForm] string targetLanguage = "es",
+            [FromForm] string languageName = "Spanish",
+            CancellationToken cancellationToken = default)
+        {
+            if (!IsValidPdf(file))
+                return BadRequest(new { error = "Please upload a valid PDF file under 50MB." });
+
+            var userId = User.FindFirst("sub")?.Value ?? "anonymous";
+            (bool allowed, IActionResult? limitResponse) = await CheckAiUsageAsync(
+                userId, "translate", HaikuModel);
+            if (!allowed) return limitResponse!;
+
+            _logger.LogInformation(
+                "Translate request. Language: {Lang}, File: {File}",
+                languageName, file.FileName);
+
+            using var ms = new MemoryStream();
+            await file.CopyToAsync(ms, cancellationToken);
+
+            var result = await _aiService.TranslateAsync(
+                ms.ToArray(), targetLanguage, languageName, cancellationToken);
+
+            if (!result.IsSuccess)
+                return UnprocessableEntity(new { error = result.ErrorMessage });
+
+            return Ok(new
+            {
+                translatedText = result.TranslatedText,
+                targetLanguage = result.TargetLanguage,
+                languageName = result.LanguageName
+            });
+        }
+
+        // POST api/ai/rewrite
+        [HttpPost("rewrite")]
+        [RequestSizeLimit(52428800)]
+        public async Task<IActionResult> Rewrite(
+            IFormFile file,
+            [FromForm] string instruction,
+            [FromForm] string tone = "default",
+            CancellationToken cancellationToken = default)
+        {
+            if (!IsValidPdf(file))
+                return BadRequest(new { error = "Please upload a valid PDF file under 50MB." });
+
+            if (string.IsNullOrWhiteSpace(instruction))
+                return BadRequest(new { error = "Please provide a rewrite instruction." });
+
+            var userId = User.FindFirst("sub")?.Value ?? "anonymous";
+            (bool allowed, IActionResult? limitResponse) = await CheckAiUsageAsync(
+                userId, "rewrite", HaikuModel);
+            if (!allowed) return limitResponse!;
+
+            _logger.LogInformation(
+                "Rewrite request. Tone: {Tone}, File: {File}",
+                tone, file.FileName);
+
+            using var ms = new MemoryStream();
+            await file.CopyToAsync(ms, cancellationToken);
+
+            var result = await _aiService.RewriteAsync(
+                ms.ToArray(), instruction, tone, cancellationToken);
+
+            if (!result.IsSuccess)
+                return UnprocessableEntity(new { error = result.ErrorMessage });
+
+            return Ok(new { rewrittenText = result.RewrittenText });
+        }
+
+        // POST api/ai/rewrite/download
+        [HttpPost("rewrite/download")]
+        public async Task<IActionResult> DownloadRewrite(
+            [FromForm] string text,
+            [FromForm] string format = "txt",
+            [FromForm] string fileName = "rewritten",
+            CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+                return BadRequest(new { error = "No text provided." });
+
+            try
+            {
+                switch (format.ToLower())
+                {
+                    case "docx":
+                        var docxBytes = BuildDocx(text, fileName);
+                        return File(docxBytes,
+                            "application/vnd.openxmlformats-officedocument" +
+                            ".wordprocessingml.document",
+                            $"{fileName}.docx");
+
+                    case "pdf":
+                        var pdfBytes = BuildPdf(text, fileName);
+                        return File(pdfBytes, "application/pdf", $"{fileName}.pdf");
+
+                    default:
+                        var txtBytes = System.Text.Encoding.UTF8.GetBytes(text);
+                        return File(txtBytes, "text/plain", $"{fileName}.txt");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Download failed for format {Format}", format);
+                return StatusCode(500, new { error = ex.Message });
+            }
+        }
+
+        private static byte[] BuildDocx(string text, string title)
+        {
+            using var ms = new MemoryStream();
+
+            using var wordDoc = DocumentFormat.OpenXml.Packaging
+                .WordprocessingDocument.Create(ms,
+                DocumentFormat.OpenXml.WordprocessingDocumentType.Document);
+
+            var mainPart = wordDoc.AddMainDocumentPart();
+            mainPart.Document = new DocumentFormat.OpenXml.Wordprocessing.Document();
+            var body = mainPart.Document.AppendChild(
+                new DocumentFormat.OpenXml.Wordprocessing.Body());
+
+            var paragraphs = text.Split('\n',
+                StringSplitOptions.None);
+
+            foreach (var para in paragraphs)
+            {
+                var p = body.AppendChild(
+                    new DocumentFormat.OpenXml.Wordprocessing.Paragraph());
+                var r = p.AppendChild(
+                    new DocumentFormat.OpenXml.Wordprocessing.Run());
+                r.AppendChild(
+                    new DocumentFormat.OpenXml.Wordprocessing.Text(para)
+                    {
+                        Space = DocumentFormat.OpenXml.SpaceProcessingModeValues.Preserve
+                    });
+            }
+
+            mainPart.Document.Save();
+            wordDoc.Dispose();
+
+            return ms.ToArray();
+        }
+
+        private static byte[] BuildPdf(string text, string title)
+        {
+            using var ms = new MemoryStream();
+
+            var document = new iTextSharp.text.Document(
+                iTextSharp.text.PageSize.A4, 60, 60, 60, 60);
+
+            var writer = iTextSharp.text.pdf.PdfWriter
+                .GetInstance(document, ms);
+            writer.CloseStream = false;
+
+            document.Open();
+
+            var font = iTextSharp.text.FontFactory.GetFont(
+                iTextSharp.text.FontFactory.HELVETICA, 11,
+                iTextSharp.text.BaseColor.Black);
+
+            var paragraphs = text.Split('\n',
+                StringSplitOptions.None);
+
+            foreach (var para in paragraphs)
+            {
+                if (string.IsNullOrWhiteSpace(para))
+                {
+                    document.Add(new iTextSharp.text.Paragraph(" ", font));
+                }
+                else
+                {
+                    document.Add(new iTextSharp.text.Paragraph(para, font)
+                    {
+                        SpacingAfter = 4f
+                    });
+                }
+            }
+
+            document.Close();
+            ms.Position = 0;
+            return ms.ToArray();
         }
 
         // GET api/ai/usage/{userId}

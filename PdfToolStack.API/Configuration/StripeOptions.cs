@@ -17,6 +17,9 @@
         public string ProMonthlyPriceIdV2 { get; set; } = string.Empty;
         public string ProYearlyPriceIdV2 { get; set; } = string.Empty;
 
+        // Teams plan
+        public string TeamsMonthlyPriceId { get; set; } = string.Empty;
+
         public string Currency { get; set; } = "usd";
     }
 
@@ -24,10 +27,8 @@
     {
         public const string SectionName = "FileLimits";
 
-        public long FreeTierMaxBytes { get; set; }
-            = 26_214_400;   // 25 MB
+        public long FreeTierMaxBytes { get; set; } = 26214400;   // 25 MB
 
-        public long PaidTierMaxBytes { get; set; }
-            = 524_288_000;  // 500 MB
+        public long PaidTierMaxBytes { get; set; } = 524288000;  // 500 MB
     }
 }

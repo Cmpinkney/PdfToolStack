@@ -134,6 +134,7 @@ body {
     transition: background 0.25s ease, border-color 0.25s ease, height 0.25s ease, box-shadow 0.25s ease;
 }
 
+
     .navbar.scrolled {
         height: 56px;
         box-shadow: 0 1px 12px rgba(0,0,0,0.08);
@@ -156,8 +157,6 @@ body {
 .nav-links {
     display: flex;
     gap: 0.25rem;
-    flex: 1;
-    overflow: hidden;
 }
 
 .nav-link {
@@ -187,8 +186,8 @@ body {
     position: relative;
     display: flex;
     align-items: center;
-    flex: 1;
     max-width: 280px;
+    margin-left: auto; 
 }
 
     .nav-search input {
@@ -6840,3 +6839,1734 @@ div.picker-dialog,
             width: 100%;
         }
 }
+
+/* ── Translate Tool ───────────────────────────────────────── */
+.translate-lang-section {
+    margin: 1.25rem 0;
+}
+
+.translate-lang-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 0.75rem;
+}
+
+.translate-lang-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.translate-lang-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.55rem 0.75rem;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-family: inherit;
+    transition: var(--transition);
+    text-align: left;
+}
+
+    .translate-lang-btn:hover {
+        border-color: var(--primary);
+        color: var(--text);
+        background: var(--primary-light);
+    }
+
+    .translate-lang-btn.active {
+        border-color: var(--primary);
+        background: var(--primary-light);
+        color: var(--primary);
+        font-weight: 700;
+        box-shadow: 0 0 0 3px var(--primary-mid);
+    }
+
+.translate-lang-flag {
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.translate-lang-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.translate-custom-wrap {
+    margin-top: 0.75rem;
+}
+
+/* Translation preview */
+.translate-preview {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    margin-bottom: 0;
+}
+
+.translate-preview-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.65rem 1rem;
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--border);
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+}
+
+.translate-preview-body {
+    padding: 1.25rem;
+    font-size: 0.9rem;
+    line-height: 1.8;
+    color: var(--text-secondary);
+    white-space: pre-wrap;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+@media (max-width: 640px) {
+    .translate-lang-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* ── Pricing Toggle ───────────────────────────────────────── */
+.pricing-toggle-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+}
+
+.pricing-toggle-label {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    transition: color 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+    .pricing-toggle-label.active {
+        color: var(--text);
+        font-weight: 700;
+    }
+
+.pricing-toggle {
+    all: unset;
+    width: 44px;
+    height: 24px;
+    border-radius: 12px;
+    background: var(--border);
+    cursor: pointer;
+    position: relative;
+    display: inline-block;
+    flex-shrink: 0;
+    transition: background 0.25s ease;
+    box-sizing: border-box;
+}
+
+
+    .pricing-toggle.on {
+        background: var(--primary);
+    }
+
+.pricing-toggle-thumb {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: white;
+    transition: transform 0.25s ease;
+    display: block;
+    pointer-events: none;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.pricing-toggle.on .pricing-toggle-thumb {
+    transform: translateX(20px);
+}
+
+.pricing-save-badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.15rem 0.5rem;
+    background: var(--success-light);
+    color: var(--success);
+    border-radius: 20px;
+    white-space: nowrap;
+}
+
+/* Pricing price display */
+.pricing-price-old {
+    font-size: 1.2rem;
+    color: var(--text-muted);
+    text-decoration: line-through;
+    margin-right: 0.25rem;
+    font-weight: 400;
+}
+
+.pricing-price-main {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--text);
+}
+
+.pricing-billed-note {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-top: 0.25rem;
+    margin-bottom: 0.75rem;
+    text-align: center;
+}
+
+/* Competitor comparison bar */
+.pricing-vs-bar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem 1.5rem;
+    margin: 2rem auto;
+    max-width: 860px;
+}
+
+.pricing-vs-inner {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.pricing-vs-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+.pricing-vs-items {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    flex: 1;
+}
+
+.pricing-vs-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.pricing-vs-them {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+}
+
+.pricing-vs-price-them {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-decoration: line-through;
+}
+
+.pricing-vs-sep {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.pricing-vs-us {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.pricing-vs-price-us {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.pricing-vs-badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.15rem 0.5rem;
+    background: var(--primary-light);
+    color: var(--primary);
+    border-radius: 20px;
+}
+
+.pricing-vs-divider {
+    width: 1px;
+    height: 24px;
+    background: var(--border);
+    flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+    .pricing-vs-items {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .pricing-vs-divider {
+        width: 100%;
+        height: 1px;
+    }
+}
+
+/* ── AI Rewrite Tool ──────────────────────────────────────── */
+.rewrite-section {
+    margin: 1.25rem 0;
+}
+
+.rewrite-section-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 0.75rem;
+    display: block;
+}
+
+.rewrite-tone-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.rewrite-tone-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.2rem;
+    padding: 0.65rem 0.75rem;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-family: inherit;
+    transition: var(--transition);
+    text-align: left;
+}
+
+    .rewrite-tone-btn:hover {
+        border-color: var(--primary);
+        background: var(--primary-light);
+    }
+
+    .rewrite-tone-btn.active {
+        border-color: var(--primary);
+        background: var(--primary-light);
+        box-shadow: 0 0 0 3px var(--primary-mid);
+    }
+
+.rewrite-tone-icon {
+    font-size: 1.1rem;
+}
+
+.rewrite-tone-name {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.rewrite-tone-desc {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+}
+
+.rewrite-suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-bottom: 0.75rem;
+}
+
+.rewrite-suggestion-btn {
+    font-size: 0.78rem;
+    font-weight: 500;
+    padding: 0.3rem 0.75rem;
+    background: var(--surface-2);
+    border: 0.5px solid var(--border);
+    border-radius: 20px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-family: inherit;
+    transition: var(--transition);
+    white-space: nowrap;
+}
+
+    .rewrite-suggestion-btn:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+        background: var(--primary-light);
+    }
+
+.rewrite-textarea {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 0.9rem;
+    font-family: inherit;
+    color: var(--text);
+    background: var(--surface);
+    resize: vertical;
+    transition: var(--transition);
+    line-height: 1.6;
+}
+
+    .rewrite-textarea:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px var(--primary-mid);
+    }
+
+.rewrite-char-count {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    text-align: right;
+    margin-top: 0.25rem;
+}
+
+/* Before / After tabs */
+.rewrite-compare-tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.rewrite-compare-tab {
+    padding: 0.6rem 1.25rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    font-family: inherit;
+    transition: var(--transition);
+    margin-bottom: -1px;
+}
+
+    .rewrite-compare-tab:hover {
+        color: var(--text);
+    }
+
+    .rewrite-compare-tab.active {
+        color: var(--primary);
+        border-bottom-color: var(--primary);
+        font-weight: 600;
+    }
+
+@media (max-width: 640px) {
+    .rewrite-tone-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* ── Contract Risk Score Card ─────────────────────────────── */
+.risk-score-card {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1.25rem 1.5rem;
+    border-radius: var(--radius-lg);
+    margin-bottom: 1.75rem;
+    border: 1.5px solid;
+    flex-wrap: wrap;
+}
+
+    .risk-score-card.risk-score-low {
+        background: #F0FDF4;
+        border-color: #86EFAC;
+    }
+
+    .risk-score-card.risk-score-medium {
+        background: #FFFBEB;
+        border-color: #FCD34D;
+    }
+
+    .risk-score-card.risk-score-high {
+        background: #FFF1F2;
+        border-color: #FCA5A5;
+    }
+
+[data-theme="dark"] .risk-score-card.risk-score-low {
+    background: #052E16;
+    border-color: #166534;
+}
+
+[data-theme="dark"] .risk-score-card.risk-score-medium {
+    background: #1C1500;
+    border-color: #854D0E;
+}
+
+[data-theme="dark"] .risk-score-card.risk-score-high {
+    background: #1C0000;
+    border-color: #991B1B;
+}
+
+.risk-score-left {
+    flex: 1;
+    min-width: 200px;
+}
+
+.risk-score-meter {
+    width: 100%;
+}
+
+.risk-score-track {
+    height: 10px;
+    border-radius: 5px;
+    background: linear-gradient(to right, #22C55E 0%, #EAB308 50%, #EF4444 100%);
+    position: relative;
+    margin-bottom: 6px;
+}
+
+.risk-score-marker {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: white;
+    border: 2.5px solid;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+
+.risk-marker-low {
+    left: 16.5%;
+    border-color: #16A34A;
+}
+
+.risk-marker-medium {
+    left: 50%;
+    border-color: #D97706;
+}
+
+.risk-marker-high {
+    left: 83.5%;
+    border-color: #DC2626;
+}
+
+.risk-score-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: var(--text-muted);
+}
+
+.risk-score-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.risk-score-badge {
+    font-size: 0.8rem;
+    font-weight: 800;
+    padding: 0.35rem 0.875rem;
+    border-radius: 20px;
+    white-space: nowrap;
+    letter-spacing: 0.03em;
+}
+
+.risk-badge-low {
+    background: #DCFCE7;
+    color: #14532D;
+}
+
+.risk-badge-medium {
+    background: #FEF3C7;
+    color: #78350F;
+}
+
+.risk-badge-high {
+    background: #FEE2E2;
+    color: #7F1D1D;
+}
+
+[data-theme="dark"] .risk-badge-low {
+    background: #166534;
+    color: #DCFCE7;
+}
+
+[data-theme="dark"] .risk-badge-medium {
+    background: #78350F;
+    color: #FEF3C7;
+}
+
+[data-theme="dark"] .risk-badge-high {
+    background: #7F1D1D;
+    color: #FEE2E2;
+}
+
+.risk-score-desc {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    text-align: right;
+    max-width: 240px;
+    line-height: 1.5;
+    margin: 0;
+}
+
+@media (max-width: 640px) {
+    .risk-score-card {
+        flex-direction: column;
+    }
+
+    .risk-score-right {
+        align-items: flex-start;
+        width: 100%;
+    }
+
+    .risk-score-desc {
+        text-align: left;
+        max-width: 100%;
+    }
+}
+
+/* ── Rewrite format selector ──────────────────────────────── */
+.rewrite-format-select {
+    position: relative;
+}
+
+.rewrite-format-dropdown {
+    appearance: none;
+    padding: 0.55rem 2rem 0.55rem 0.875rem;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 0.85rem;
+    font-family: inherit;
+    font-weight: 500;
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6,9 12,15 18,9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.6rem center;
+    transition: var(--transition);
+}
+
+    .rewrite-format-dropdown:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px var(--primary-mid);
+    }
+
+    .rewrite-format-dropdown:hover {
+        border-color: var(--primary);
+    }
+
+/* ── AI Hub Page ──────────────────────────────────────────── */
+.ai-hub-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.ai-hub-card {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-xl);
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.875rem;
+    text-decoration: none;
+    color: inherit;
+    transition: var(--transition);
+    cursor: pointer;
+    position: relative;
+}
+
+    .ai-hub-card:hover {
+        border-color: var(--primary);
+        box-shadow: 0 4px 16px rgba(124,58,237,0.1);
+        transform: translateY(-2px);
+    }
+
+.ai-hub-featured {
+    border-color: var(--primary);
+    background: var(--primary-light);
+    grid-column: span 2;
+    flex-direction: row;
+    align-items: center;
+}
+
+    .ai-hub-featured:hover {
+        box-shadow: 0 4px 20px rgba(124,58,237,0.15);
+    }
+
+    .ai-hub-featured .ai-hub-content {
+        flex: 1;
+    }
+
+.ai-hub-icon-tile {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+    .ai-hub-icon-tile svg {
+        width: 24px;
+        height: 24px;
+    }
+
+.ai-hub-content {
+    flex: 1;
+}
+
+.ai-hub-name {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 0.3rem;
+}
+
+.ai-hub-desc {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.ai-hub-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: auto;
+}
+
+.ai-hub-badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.2rem 0.6rem;
+    background: var(--primary-light);
+    color: var(--primary);
+    border-radius: 20px;
+    border: 0.5px solid var(--primary-mid);
+}
+
+.ai-hub-arrow {
+    font-size: 1rem;
+    color: var(--primary);
+    font-weight: 600;
+    transition: transform 0.15s ease;
+}
+
+.ai-hub-card:hover .ai-hub-arrow {
+    transform: translateX(4px);
+}
+
+/* Claude callout */
+.ai-hub-callout {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem 1.5rem;
+    flex-wrap: wrap;
+}
+
+.ai-hub-callout-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: var(--primary-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: var(--primary);
+}
+
+.ai-hub-callout-text {
+    flex: 1;
+    min-width: 200px;
+}
+
+    .ai-hub-callout-text strong {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: var(--text);
+        display: block;
+        margin-bottom: 0.2rem;
+    }
+
+    .ai-hub-callout-text p {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        margin: 0;
+        line-height: 1.5;
+    }
+
+@media (max-width: 640px) {
+    .ai-hub-featured {
+        grid-column: span 1;
+        flex-direction: column;
+    }
+
+    .ai-hub-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .ai-hub-callout {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+/* ── OCR Tool ─────────────────────────────────────────────── */
+.ocr-lang-section {
+    margin-bottom: 1.5rem;
+}
+
+.ocr-lang-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 0.75rem;
+    display: block;
+}
+
+.ocr-lang-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 0.5rem;
+}
+
+.ocr-lang-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.55rem 0.75rem;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-family: inherit;
+    transition: var(--transition);
+}
+
+    .ocr-lang-btn:hover {
+        border-color: var(--primary);
+        color: var(--text);
+        background: var(--primary-light);
+    }
+
+    .ocr-lang-btn.active {
+        border-color: var(--primary);
+        background: var(--primary-light);
+        color: var(--primary);
+        font-weight: 700;
+        box-shadow: 0 0 0 3px var(--primary-mid);
+    }
+
+.ocr-lang-flag {
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.ocr-lang-name {
+    flex: 1;
+    text-align: left;
+}
+
+/* OCR result features */
+.ocr-result-features {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.875rem;
+    margin-top: 1.25rem;
+    padding: 1.25rem;
+    background: var(--surface-2);
+    border-radius: var(--radius);
+}
+
+.ocr-result-feat {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+
+.ocr-result-feat-icon {
+    font-size: 1.25rem;
+    flex-shrink: 0;
+    margin-top: 0.1rem;
+}
+
+.ocr-result-feat strong {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text);
+    display: block;
+    margin-bottom: 0.2rem;
+}
+
+.ocr-result-feat p {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin: 0;
+    line-height: 1.4;
+}
+
+@media (max-width: 640px) {
+    .ocr-result-features {
+        grid-template-columns: 1fr;
+    }
+
+    .ocr-lang-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* ── PDF Editor ───────────────────────────────────────────── */
+.edit-toolbar-v2 {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.875rem 1rem;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    margin-bottom: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.edit-toolbar-tools {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+}
+
+.edit-tool-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.45rem 0.875rem;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--text-secondary);
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: inherit;
+    transition: var(--transition);
+}
+
+    .edit-tool-btn:hover {
+        border-color: var(--primary);
+        color: var(--text);
+        background: var(--primary-light);
+    }
+
+    .edit-tool-btn.active {
+        border-color: var(--primary);
+        background: var(--primary);
+        color: white;
+        box-shadow: 0 0 0 3px var(--primary-mid);
+    }
+
+.edit-toolbar-settings {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    margin-left: auto;
+}
+
+.edit-text-input {
+    padding: 0.4rem 0.75rem;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 0.85rem;
+    font-family: inherit;
+    color: var(--text);
+    background: var(--surface);
+    width: 180px;
+    transition: var(--transition);
+}
+
+    .edit-text-input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px var(--primary-mid);
+    }
+
+.edit-font-size {
+    padding: 0.4rem 0.5rem;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 0.82rem;
+    font-family: inherit;
+    color: var(--text);
+    background: var(--surface);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+    .edit-font-size:focus {
+        outline: none;
+        border-color: var(--primary);
+    }
+
+.edit-color-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.edit-color-label {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.edit-color-picker {
+    width: 36px;
+    height: 32px;
+    border-radius: 6px;
+    border: 1.5px solid var(--border);
+    cursor: pointer;
+    padding: 2px;
+    background: var(--surface);
+}
+
+.edit-clear-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.4rem 0.75rem;
+    border: 1.5px solid var(--error);
+    border-radius: var(--radius);
+    background: var(--error-light);
+    color: var(--error);
+    font-size: 0.78rem;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: inherit;
+    transition: var(--transition);
+}
+
+    .edit-clear-btn:hover {
+        background: var(--error);
+        color: white;
+    }
+
+.edit-hint {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    padding: 0.5rem 0.875rem;
+    background: var(--surface-2);
+    border-radius: var(--radius);
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.edit-canvas-wrap {
+    position: relative;
+    display: block;
+    width: 100%;
+    margin-bottom: 1rem;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    border: 1.5px solid var(--border);
+}
+
+.edit-page-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    justify-content: center;
+    margin-bottom: 1rem;
+}
+
+.edit-page-btn {
+    padding: 0.4rem 1rem;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: inherit;
+    transition: var(--transition);
+}
+
+    .edit-page-btn:hover:not(:disabled) {
+        border-color: var(--primary);
+        color: var(--primary);
+    }
+
+    .edit-page-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+
+.edit-page-info {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    min-width: 100px;
+    text-align: center;
+}
+
+.edit-annotation-count {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.82rem;
+    color: var(--primary);
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    padding: 0.4rem 0.875rem;
+    background: var(--primary-light);
+    border-radius: var(--radius);
+    width: fit-content;
+}
+
+@media (max-width: 640px) {
+    .edit-toolbar-v2 {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .edit-toolbar-settings {
+        margin-left: 0;
+    }
+}
+
+.edit-undo-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.4rem 0.75rem;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--text-secondary);
+    font-size: 0.78rem;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: inherit;
+    transition: var(--transition);
+}
+
+    .edit-undo-btn:hover:not(:disabled) {
+        border-color: var(--primary);
+        color: var(--primary);
+        background: var(--primary-light);
+    }
+
+    .edit-undo-btn:disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+    }
+
+/* PDF Editor */
+.pdf-editor-wrap {
+    display: flex;
+    flex-direction: column;
+    border-radius: var(--radius-lg);
+    border: 1.5px solid var(--border);
+    overflow: hidden;
+    background: var(--surface);
+}
+
+.pdf-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+}
+
+.pdf-toolbar-left,
+.pdf-toolbar-center,
+.pdf-toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.pdf-tool-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.35rem 0.65rem;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+    .pdf-tool-btn:hover {
+        background: var(--primary-light);
+        border-color: var(--primary);
+    }
+
+    .pdf-tool-btn.active {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary);
+    }
+
+.pdf-nav-btn {
+    padding: 0.35rem 0.6rem;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+    .pdf-nav-btn:hover {
+        background: var(--surface-2);
+    }
+
+.pdf-save-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.4rem 0.9rem;
+    border-radius: var(--radius);
+    border: none;
+    background: var(--primary);
+    color: white;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s;
+}
+
+    .pdf-save-btn:hover {
+        opacity: 0.9;
+    }
+
+    .pdf-save-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+.pdf-color-input {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    padding: 0;
+    cursor: pointer;
+}
+
+.pdf-select {
+    padding: 0.3rem 0.4rem;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 0.8rem;
+}
+
+.pdf-tool-divider {
+    width: 1px;
+    height: 24px;
+    background: var(--border);
+    margin: 0 0.25rem;
+}
+
+.pdf-canvas-area {
+    overflow: auto;
+    background: #666;
+    min-height: 700px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 1.5rem;
+}
+
+.pdf-canvas-container {
+    position: relative;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+    display: inline-block;
+}
+
+#pdf-canvas {
+    display: block;
+}
+
+#pdf-svg-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.pdf-color-palette {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 5px 7px;
+}
+
+.pdf-color-swatch {
+    width: 18px;
+    height: 18px;
+    border-radius: 3px;
+}
+
+    .pdf-color-swatch:hover {
+        transform: scale(1.2);
+        box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+    }
+
+    .pdf-color-swatch.active {
+        border-color: #333;
+        transform: scale(1.15);
+        box-shadow: 0 0 0 1.5px var(--surface), 0 0 0 3px #333;
+    }
+
+.pdf-color-custom {
+    width: 18px;
+    height: 18px;
+    border-radius: 3px;
+    border: 1.5px solid var(--border);
+    padding: 0;
+    cursor: pointer;
+    background: conic-gradient(red, yellow, lime, cyan, blue, magenta, red);
+    -webkit-appearance: none;
+    appearance: none;
+    overflow: hidden;
+}
+
+    .pdf-color-custom::-webkit-color-swatch-wrapper {
+        padding: 0;
+    }
+
+    .pdf-color-custom::-webkit-color-swatch {
+        border: none;
+        border-radius: 2px;
+    }
+.pdf-loader {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 500px;
+    width: 100%;
+    gap: 1rem;
+    color: #fff;
+    font-size: 0.9rem;
+}
+
+.pdf-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--border);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: pdf-spin 0.8s linear infinite;
+}
+
+@keyframes pdf-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ── PDF Editor Mobile ─────────────────────────────────────── */
+@media (max-width: 768px) {
+    .pdf-toolbar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+        padding: 0.6rem 0.75rem;
+    }
+
+    .pdf-toolbar-left {
+        flex-wrap: wrap;
+        gap: 0.35rem;
+        width: 100%;
+    }
+
+    .pdf-toolbar-center {
+        width: 100%;
+        justify-content: center;
+        gap: 0.35rem;
+    }
+
+    .pdf-toolbar-right {
+        width: 100%;
+        justify-content: flex-end;
+        gap: 0.35rem;
+    }
+
+    .pdf-tool-btn {
+        padding: 0.35rem 0.5rem;
+        font-size: 0.75rem;
+    }
+
+    .pdf-nav-btn {
+        padding: 0.35rem 0.5rem;
+        font-size: 0.8rem;
+    }
+
+    .pdf-save-btn {
+        flex: 1;
+        justify-content: center;
+    }
+
+    .pdf-color-palette {
+        gap: 3px;
+        padding: 4px 6px;
+    }
+
+    .pdf-color-swatch {
+        width: 16px;
+        height: 16px;
+    }
+
+    .pdf-color-custom {
+        width: 16px;
+        height: 16px;
+    }
+
+    .pdf-select {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.35rem;
+    }
+
+    .pdf-canvas-area {
+        padding: 0.5rem;
+    }
+
+    .pdf-tool-divider {
+        display: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .pdf-tool-btn span,
+    .pdf-tool-btn svg + * {
+        display: none;
+    }
+
+    .pdf-tool-btn {
+        padding: 0.4rem;
+        min-width: 36px;
+        justify-content: center;
+    }
+
+    .pdf-save-btn span {
+        display: none;
+    }
+}
+
+/* ── Sign PDF ──────────────────────────────────────────────── */
+.sign-workflow {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.sign-card {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+}
+
+.sign-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+}
+
+    .sign-card-header h3 {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--text);
+    }
+
+.sign-step-num {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: white;
+    font-size: 0.85rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.sign-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    background: var(--surface-2);
+    border-radius: 10px;
+    padding: 4px;
+    width: fit-content;
+}
+
+.sign-tab {
+    padding: 0.45rem 1.25rem;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+    .sign-tab.active {
+        background: var(--surface);
+        color: var(--primary);
+        font-weight: 600;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    }
+
+.sign-pad-container {
+    position: relative;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 2px solid var(--primary);
+    background: white;
+}
+
+.sign-canvas {
+    display: block;
+    width: 100%;
+    cursor: crosshair;
+    touch-action: none;
+}
+
+.sign-pad-hint {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.75rem;
+    color: #ccc;
+    pointer-events: none;
+    letter-spacing: 0.05em;
+}
+
+.sign-pad-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 0.75rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.sign-action-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.4rem 0.9rem;
+    border-radius: var(--radius);
+    border: 1.5px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text-secondary);
+    font-size: 0.825rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+    .sign-action-btn:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+        background: var(--primary-light);
+    }
+
+.sign-color-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.sign-color-swatches {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.sign-color-dot {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: transform 0.12s, box-shadow 0.12s;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+    .sign-color-dot:hover {
+        transform: scale(1.2);
+    }
+
+    .sign-color-dot.active {
+        border-color: var(--text);
+        box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--text);
+        transform: scale(1.15);
+    }
+
+.sign-color-custom {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    padding: 0;
+    cursor: pointer;
+    background: conic-gradient(red, yellow, lime, cyan, blue, magenta, red);
+    -webkit-appearance: none;
+    appearance: none;
+    overflow: hidden;
+}
+
+    .sign-color-custom::-webkit-color-swatch-wrapper {
+        padding: 0;
+    }
+
+    .sign-color-custom::-webkit-color-swatch {
+        border: none;
+        border-radius: 50%;
+    }
+
+.sign-type-container {
+    margin-top: 0.5rem;
+}
+
+.sign-type-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 2px solid var(--primary);
+    border-radius: 10px;
+    background: white;
+    color: #1a1a2e;
+    font-family: 'Brush Script MT', cursive;
+    font-size: 2rem;
+    outline: none;
+    transition: border-color 0.15s;
+}
+
+    .sign-type-input:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px var(--primary-light);
+    }
+
+.sign-pdf-nav {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.sign-placed-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.825rem;
+    color: var(--success);
+    font-weight: 600;
+}
+
+.sign-drag-hint {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.825rem;
+    color: var(--text-secondary);
+}
+
+.sign-pdf-preview-wrap {
+    position: relative;
+    display: inline-block;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    width: 100%;
+}
+
+    .sign-pdf-preview-wrap canvas {
+        display: block;
+        max-width: 100%;
+    }
+
+#signOverlayCanvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    cursor: grab;
+}
+
+    #signOverlayCanvas:active {
+        cursor: grabbing;
+    }

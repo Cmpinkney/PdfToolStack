@@ -4,13 +4,13 @@
 @inject FileValidationService Validator
 @inject ToastService Toast
 
-<PageTitle>PDF OCR Free Online — Make Scanned PDF Searchable</PageTitle>
+<PageTitle>PDF OCR Free Online — Make Scanned PDF Searchable | PdfToolStack</PageTitle>
 
 <HeadContent>
     <meta name="description"
           content="Make scanned PDFs searchable with OCR free online.
-                   Extract text from scanned documents. Powered by Tesseract.
-                   No signup required." />
+                   Extract text from scanned documents, faxes, and image PDFs.
+                   Powered by Tesseract. No signup required." />
     <meta name="keywords"
           content="pdf ocr, ocr pdf online free,
                    make pdf searchable, scanned pdf to text" />
@@ -19,26 +19,57 @@
 
 <div class="tool-page">
     <AdSlot Size="banner" />
+
     <div class="tool-container">
 
-        <h1>PDF OCR Online</h1>
-        <p class="tool-subtitle">
-            Upload a scanned PDF and OCR makes every word searchable,
-            selectable, and copyable. Powered by Tesseract. No signup required.
-        </p>
+        <div class="ai-tool-header">
+            <div class="ai-tool-badge">🔍 OCR Technology</div>
+            <h1>PDF OCR — Make Scans Searchable</h1>
+            <p class="tool-subtitle">
+                Upload a scanned PDF and OCR makes every word searchable,
+                selectable, and copyable. Works on faxes, photos of documents,
+                and any image-based PDF. No signup required.
+            </p>
+        </div>
+
+        <div class="how-it-works">
+            <div class="hiw-step">
+                <div class="hiw-num">1</div>
+                <div class="hiw-text">
+                    <strong>Upload scanned PDF</strong>
+                    <span>Fax, photo, image-based</span>
+                </div>
+            </div>
+            <div class="hiw-arrow">→</div>
+            <div class="hiw-step">
+                <div class="hiw-num">2</div>
+                <div class="hiw-text">
+                    <strong>OCR reads every word</strong>
+                    <span>Tesseract processes each page</span>
+                </div>
+            </div>
+            <div class="hiw-arrow">→</div>
+            <div class="hiw-step">
+                <div class="hiw-num">3</div>
+                <div class="hiw-text">
+                    <strong>Download searchable PDF</strong>
+                    <span>Text selectable and copyable</span>
+                </div>
+            </div>
+        </div>
 
         @if (CurrentState == PageState.Upload)
         {
             <!-- Language selector -->
-            <div class="extract-type-section">
-                <p class="extract-type-label">Document language</p>
-                <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:1.5rem;">
+            <div class="ocr-lang-section">
+                <p class="ocr-lang-label">Document language</p>
+                <div class="ocr-lang-grid">
                     @foreach (var lang in _languages)
                     {
-                        <button class="extract-type-btn @(_language == lang.Code ? "active" : "")"
-                                style="flex-direction:row; padding:0.5rem 1rem; min-width:auto;"
+                        <button class="ocr-lang-btn @(_language == lang.Code ? "active" : "")"
                                 @onclick="() => _language = lang.Code">
-                            @lang.Name
+                            <span class="ocr-lang-flag">@lang.Flag</span>
+                            <span class="ocr-lang-name">@lang.Name</span>
                         </button>
                     }
                 </div>
@@ -58,29 +89,100 @@
 
         @if (CurrentState == PageState.Processing)
         {
-            <div class="processing-container" role="status">
-                <div class="spinner"></div>
-                <p>Running OCR on your document...</p>
-                <p style="font-size:0.8rem; color:var(--text-muted); margin-top:0.5rem;">
-                    This may take 30–60 seconds for multi-page documents
-                </p>
+            <div class="ai-processing-container">
+                <div class="ai-processing-icon">🔍</div>
+                <h3>OCR is reading your document...</h3>
+                <p>This may take 30–60 seconds for multi-page documents</p>
+                <div class="ai-processing-steps">
+                    <div class="ai-processing-step @(_step >= 1 ? "done" : "")">
+                        Rendering PDF pages
+                    </div>
+                    <div class="ai-processing-step @(_step >= 2 ? "done" : "")">
+                        Reading text with OCR
+                    </div>
+                    <div class="ai-processing-step @(_step >= 3 ? "done" : "")">
+                        Building searchable PDF
+                    </div>
+                </div>
             </div>
         }
 
         @if (CurrentState == PageState.Complete && _outputBytes != null)
         {
-            <div class="result-container">
-                <span class="result-icon" aria-hidden="true">✅</span>
-                <h2>OCR Complete!</h2>
-                <p style="color:var(--text-secondary); font-size:0.9rem; margin-bottom:1.25rem;">
-                    Your PDF is now fully searchable. Text can be selected, copied, and indexed by search engines.
-                </p>
-                <button class="download-button" @onclick="DownloadFile">
-                    Download Searchable PDF
-                </button>
-                <button class="reset-button" @onclick="Reset">
-                    Process Another PDF
-                </button>
+            <div class="ai-result-card">
+                <div class="ai-result-header">
+                    <div>
+                        <h2>OCR complete</h2>
+                        <p style="color:var(--text-secondary); font-size:0.875rem;">
+                            @_fileName — now fully searchable
+                        </p>
+                    </div>
+                    <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+                        <button class="download-button"
+                                style="max-width:220px; margin-top:0;"
+                                @onclick="DownloadFile">
+                            ⬇ Download Searchable PDF
+                        </button>
+                        <button class="reset-button"
+                                style="max-width:160px;"
+                                @onclick="Reset">
+                            Process Another
+                        </button>
+                    </div>
+                </div>
+
+                <!-- What changed -->
+                <div class="ocr-result-features">
+                    <div class="ocr-result-feat">
+                        <div class="ocr-result-feat-icon">✅</div>
+                        <div>
+                            <strong>Text is now selectable</strong>
+                            <p>Click and drag to select any text in the PDF</p>
+                        </div>
+                    </div>
+                    <div class="ocr-result-feat">
+                        <div class="ocr-result-feat-icon">🔍</div>
+                        <div>
+                            <strong>Ctrl+F search works</strong>
+                            <p>Find any word or phrase in the document</p>
+                        </div>
+                    </div>
+                    <div class="ocr-result-feat">
+                        <div class="ocr-result-feat-icon">📋</div>
+                        <div>
+                            <strong>Text can be copied</strong>
+                            <p>Copy content directly from the PDF</p>
+                        </div>
+                    </div>
+                    <div class="ocr-result-feat">
+                        <div class="ocr-result-feat-icon">🌐</div>
+                        <div>
+                            <strong>Search engine indexed</strong>
+                            <p>Google can now read and index the content</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="extract-download-cta" style="margin-top:1rem;">
+                    <div class="extract-download-cta-text">
+                        <svg width="20" height="20" viewBox="0 0 24 24"
+                             fill="none" stroke="currentColor" stroke-width="2"
+                             stroke-linecap="round" stroke-linejoin="round"
+                             style="color:var(--success); flex-shrink:0;">
+                            <circle cx="11" cy="11" r="8" />
+                            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                        </svg>
+                        <div>
+                            <strong>Your PDF is ready</strong>
+                            <p>Same layout, same pages — now fully searchable and selectable.</p>
+                        </div>
+                    </div>
+                    <button class="download-button"
+                            style="max-width:220px; margin-top:0;"
+                            @onclick="DownloadFile">
+                        ⬇ Download Searchable PDF
+                    </button>
+                </div>
             </div>
         }
 
@@ -107,7 +209,11 @@
         </div>
         <div class="faq-item">
             <h3>How accurate is the OCR?</h3>
-            <p>Tesseract OCR is very accurate on clean, high-contrast scans. Handwriting and very low-quality scans may have reduced accuracy.</p>
+            <p>Our OCR engine is very accurate on clean, high-contrast scans. Handwriting and very low-quality scans may have reduced accuracy. For best results, use 300 DPI or higher scans.</p>
+        </div>
+        <div class="faq-item">
+            <h3>Which languages are supported?</h3>
+            <p>English, French, German, Spanish, Italian, Portuguese, Chinese (Simplified), Japanese, and Arabic. Select your language before uploading for best accuracy.</p>
         </div>
         <div class="faq-item">
             <h3>Is my document stored anywhere?</h3>
@@ -124,20 +230,21 @@
     private byte[]? _outputBytes;
     private string _language = "eng";
     private string _error = string.Empty;
+    private int _step = 0;
 
-    private record LangOption(string Code, string Name);
+    private record LangOption(string Code, string Name, string Flag);
 
     private readonly List<LangOption> _languages = new()
     {
-        new("eng", "English"),
-        new("fra", "French"),
-        new("deu", "German"),
-        new("spa", "Spanish"),
-        new("ita", "Italian"),
-        new("por", "Portuguese"),
-        new("chi_sim", "Chinese"),
-        new("jpn", "Japanese"),
-        new("ara", "Arabic"),
+        new("eng",     "English",    "🇬🇧"),
+        new("fra",     "French",     "🇫🇷"),
+        new("deu",     "German",     "🇩🇪"),
+        new("spa",     "Spanish",    "🇪🇸"),
+        new("ita",     "Italian",    "🇮🇹"),
+        new("por",     "Portuguese", "🇵🇹"),
+        new("chi_sim", "Chinese",    "🇨🇳"),
+        new("jpn",     "Japanese",   "🇯🇵"),
+        new("ara",     "Arabic",     "🇸🇦"),
     };
 
     private async Task HandleFileSelected(IBrowserFile file)
@@ -169,10 +276,14 @@
         if (_fileBytes == null) return;
 
         CurrentState = PageState.Processing;
+        _step = 1;
         StateHasChanged();
 
         try
         {
+            // Animate steps while processing
+            _ = AnimateSteps();
+
             using var content = new MultipartFormDataContent();
             var fc = new ByteArrayContent(_fileBytes);
             fc.Headers.ContentType = new System.Net.Http.Headers
@@ -190,6 +301,7 @@
                 return;
             }
 
+            _step = 3;
             CurrentState = PageState.Complete;
             Toast.ShowSuccess("OCR complete — your PDF is now searchable!");
         }
@@ -201,6 +313,16 @@
         }
 
         StateHasChanged();
+    }
+
+    private async Task AnimateSteps()
+    {
+        await Task.Delay(1500);
+        if (CurrentState == PageState.Processing)
+        {
+            _step = 2;
+            StateHasChanged();
+        }
     }
 
     private async Task DownloadFile()
@@ -219,5 +341,6 @@
         _fileName = null;
         _outputBytes = null;
         _error = string.Empty;
+        _step = 0;
     }
 }

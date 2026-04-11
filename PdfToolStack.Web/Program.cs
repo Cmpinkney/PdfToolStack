@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Components.Web;
+using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using PdfToolStack.Web;
 using PdfToolStack.Web.Services;
-using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
@@ -36,6 +36,7 @@ builder.Services.AddScoped<FileValidationService>();
 builder.Services.AddScoped<ToastService>();
 builder.Services.AddScoped<CookieConsentService>();
 builder.Services.AddScoped<SubscriptionService>();
+
 builder.Services.AddHttpClient<CloudPickerService>(
     client => client.BaseAddress = new Uri(apiBaseUrl));
 

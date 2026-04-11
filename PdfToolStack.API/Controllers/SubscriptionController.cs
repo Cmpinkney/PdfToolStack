@@ -106,14 +106,20 @@ namespace PdfToolStack.API.Controllers
                 monthly = new
                 {
                     priceId = _stripeOptions.ProMonthlyPriceIdV2,
-                    amount = 1900,
-                    label = "$19 / month"
+                    amount = 1200,
+                    label = "$12 / month"
                 },
                 yearly = new
                 {
                     priceId = _stripeOptions.ProYearlyPriceIdV2,
-                    amount = 15000,
-                    label = "$150 / year"
+                    amount = 9900,
+                    label = "$99 / year"
+                },
+                teams = new
+                {
+                    priceId = _stripeOptions.TeamsMonthlyPriceId,
+                    amount = 2900,
+                    label = "$29 / month"
                 }
             });
         }

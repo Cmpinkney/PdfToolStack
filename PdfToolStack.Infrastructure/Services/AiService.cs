@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using UglyToad.PdfPig;
+using static PdfToolStack.Infrastructure.Services.TranslateResult;
 
 namespace PdfToolStack.Infrastructure.Services
 {
@@ -161,8 +162,8 @@ namespace PdfToolStack.Infrastructure.Services
         }
 
         public async Task<ContractReviewResult> ReviewContractAsync(
-    byte[] pdfBytes,
-    CancellationToken cancellationToken = default)
+            byte[] pdfBytes,
+            CancellationToken cancellationToken = default)
         {
             var text = ExtractText(pdfBytes);
 
@@ -280,6 +281,115 @@ namespace PdfToolStack.Infrastructure.Services
             return await CallApiAsync(requestBody, cancellationToken);
         }
 
+        public async Task<TranslateResult> TranslateAsync(
+            byte[] pdfBytes,
+            string targetLanguage,
+            string languageName,
+            CancellationToken cancellationToken = default)
+        {
+            var text = ExtractText(pdfBytes);
+
+            if (string.IsNullOrWhiteSpace(text))
+                return TranslateResult.Failure(
+                    "Could not extract text from this PDF. " +
+                    "It may be a scanned image — try OCR first.");
+
+            if (text.Length > 14000)
+                text = text[..14000] + "\n[Document truncated]";
+
+            var requestBody = new
+            {
+                model = HaikuModel,
+                max_tokens = 4000,
+                system = $"""
+            You are a professional document translator.
+            Translate the provided document text into {languageName}.
+            Rules:
+            - Translate ALL text faithfully and completely
+            - Preserve the document structure (headings, paragraphs, lists)
+            - Keep numbers, dates, names, and proper nouns unchanged
+            - Do NOT add explanations or commentary
+            - Return ONLY the translated text, nothing else
+            """,
+                messages = new[]
+                {
+            new
+            {
+                role = "user",
+                content = $"Translate this document into {languageName}:\n\n{text}"
+            }
+        }
+            };
+
+            var translated = await CallApiAsync(requestBody, cancellationToken);
+
+            if (string.IsNullOrWhiteSpace(translated) ||
+                translated.StartsWith("AI service"))
+                return TranslateResult.Failure(
+                    "Translation failed. Please try again.");
+
+            return TranslateResult.Success(translated, targetLanguage, languageName);
+        }
+
+        public async Task<RewriteResult> RewriteAsync(
+    byte[] pdfBytes,
+    string instruction,
+    string tone,
+    CancellationToken cancellationToken = default)
+        {
+            var text = ExtractText(pdfBytes);
+
+            if (string.IsNullOrWhiteSpace(text))
+                return RewriteResult.Failure(
+                    "Could not extract text from this PDF. " +
+                    "It may be a scanned image — try OCR first.");
+
+            if (text.Length > 14000)
+                text = text[..14000] + "\n[Document truncated]";
+
+            var toneInstruction = tone switch
+            {
+                "formal" => "Use formal, professional language.",
+                "casual" => "Use friendly, conversational language.",
+                "concise" => "Make it concise — remove all unnecessary words.",
+                "detailed" => "Expand with more detail and explanation.",
+                "persuasive" => "Make it persuasive and compelling.",
+                _ => string.Empty
+            };
+
+            var requestBody = new
+            {
+                model = HaikuModel,
+                max_tokens = 4000,
+                system = $"""
+            You are a professional document editor.
+            Rewrite the provided document text according to the user's instruction.
+            {toneInstruction}
+            Rules:
+            - Apply the instruction faithfully throughout the entire document
+            - Preserve the document structure (headings, paragraphs, lists)
+            - Keep names, dates, numbers, and proper nouns unchanged
+            - Do NOT add commentary or explanations
+            - Return ONLY the rewritten document text
+            """,
+                messages = new[]
+                {
+            new
+            {
+                role = "user",
+                content = $"Instruction: {instruction}\n\nDocument:\n\n{text}"
+            }
+        }
+            };
+
+            var rewritten = await CallApiAsync(requestBody, cancellationToken);
+
+            if (string.IsNullOrWhiteSpace(rewritten) ||
+                rewritten.StartsWith("AI service"))
+                return RewriteResult.Failure("Rewrite failed. Please try again.");
+
+            return RewriteResult.Success(rewritten);
+        }
         private async Task<string> CallApiAsync(
             object requestBody,
             CancellationToken cancellationToken)
@@ -418,5 +528,40 @@ namespace PdfToolStack.Infrastructure.Services
 
         public static ExtractResult Failure(string error) =>
             new() { IsSuccess = false, ErrorMessage = error };
+    }
+
+    public class TranslateResult
+    {
+        public bool IsSuccess { get; private set; }
+        public string TranslatedText { get; private set; } = string.Empty;
+        public string TargetLanguage { get; private set; } = string.Empty;
+        public string LanguageName { get; private set; } = string.Empty;
+        public string? ErrorMessage { get; private set; }
+
+        public static TranslateResult Success(
+            string text, string lang, string name) =>
+            new()
+            {
+                IsSuccess = true,
+                TranslatedText = text,
+                TargetLanguage = lang,
+                LanguageName = name
+            };
+
+        public static TranslateResult Failure(string error) =>
+            new() { IsSuccess = false, ErrorMessage = error };
+
+        public class RewriteResult
+        {
+            public bool IsSuccess { get; private set; }
+            public string RewrittenText { get; private set; } = string.Empty;
+            public string? ErrorMessage { get; private set; }
+
+            public static RewriteResult Success(string text) =>
+                new() { IsSuccess = true, RewrittenText = text };
+
+            public static RewriteResult Failure(string error) =>
+                new() { IsSuccess = false, ErrorMessage = error };
+        }
     }
 }
