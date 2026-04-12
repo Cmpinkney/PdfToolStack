@@ -1,241 +1,228 @@
-﻿# PdfToolStack — Full Test Plan
+﻿# PdfToolStack — Growth Strategy & Session Log
 
-## Environment
-- Local: localhost:7025 (Blazor) + localhost:5XXX (API)
-- Staging: pdftoolstack-staging.azurewebsites.net
-- Production: pdftoolstack.com
-- Test user: google-oauth2|108268775305485144737 (admin bypass = Pro)
+> This file tracks the product strategy, completed work, and next steps. Paste it into a new Claude chat alongside PROJECT_CONTEXT.md to resume without re-explaining anything.
 
 ---
 
-## 1. AUTHENTICATION & ACCOUNT
+## How to resume in a new chat
 
-| Test | Steps | Expected |
-|------|-------|----------|
-| Google sign in | Click Sign In → Google | Redirects to Google, returns authenticated |
-| GitHub sign in | Click Sign In → GitHub | Redirects to GitHub, returns authenticated |
-| Profile dropdown | Click avatar chip | Dropdown shows name, email, avatar photo |
-| Theme switcher | Click Light / Dark / System in dropdown | Theme changes immediately |
-| My Account link | Click My Account in dropdown | Navigates to /account |
-| My Documents link | Click My Documents in dropdown | Navigates to /account#documents |
-| Logout | Click Logout in dropdown | Signs out, redirects to home |
-| Admin Pro bypass | Sign in with admin account | Account page shows Pro badge, Pro plan card |
-| Profile picture | Sign in with Google | Google avatar shows in navbar chip and account page |
-| Initials fallback | Sign in with no picture | Shows correct initials (CP not CH) |
+> "I'm Chrystal, building PdfToolStack.com — AI-powered PDF SaaS on .NET 9, Blazor WASM, Clean Architecture, Azure, Stripe, Auth0. I've uploaded my project context and growth strategy files. Please read both before we start."
+
+Attach: `PdfToolStack-Context.md` + `PdfToolStack_GrowthStrategy.md` + `PdfToolStack.zip`
 
 ---
 
-## 2. HOMEPAGE
+## Current product state (April 2026)
 
-| Test | Steps | Expected |
-|------|-------|----------|
-| Hero loads | Visit / | No blue rectangle focus ring, hero renders cleanly |
-| Stats row | View hero | 35+, AI, $0, 1hr stats show in pill |
-| Trust bar | Scroll below hero | Single trust bar shows 4 items |
-| Tool search | Type "compress" in search | Compress tool cards appear filtered |
-| AI tools section | Scroll to tools | AI tools grid shows with Pro badge |
-| PDF tools grid | Scroll further | All tool categories render with colored icons |
-| CTA buttons | Click "Try free — no signup" | Scrolls to tools or stays on page |
-| "See Pro plans" | Click secondary CTA | Navigates to /pricing |
-
----
-
-## 3. PDF TOOLS — CORE
-
-Test each with a sample PDF. Download and verify output opens correctly.
-
-| Tool | URL | Test |
-|------|-----|------|
-| Compress PDF | /compress-pdf | Upload 2MB PDF → download compressed → verify smaller |
-| Merge PDF | /merge-pdf | Upload 2 PDFs → download merged → verify pages from both |
-| Split PDF | /split-pdf | Upload 3-page PDF → split all → download ZIP → verify 3 files |
-| PDF to Word | /pdf-to-word | Upload PDF → download DOCX → open in Word |
-| Word to PDF | /word-to-pdf | Upload DOCX → download PDF → verify content |
-| PDF to JPG | /pdf-to-jpg | Upload 2-page PDF → download ZIP → verify 2 JPG images |
-| JPG to PDF | /jpg-to-pdf | Upload 2 JPGs → download PDF → verify both images |
-| PDF to Excel | /pdf-to-excel | Upload PDF with table → download XLSX → verify data |
-| Rotate PDF | /rotate-pdf | Upload PDF → rotate 90° → download → verify rotation |
-| Delete Pages | /delete-pdf-pages | Upload 3-page PDF → delete page 2 → verify 2 pages remain |
-| Extract Pages | /extract-pdf-pages | Upload 5-page PDF → extract pages 2-4 → verify 3 pages |
-| Organize PDF | /organize-pdf | Upload PDF → drag pages to reorder → download → verify order |
-| Protect PDF | /protect-pdf | Upload PDF → add password → download → verify password required |
-| Unlock PDF | /unlock-pdf | Upload password-protected PDF → unlock → download → verify no password |
-| Watermark | /watermark-pdf | Upload PDF → add text watermark → download → verify watermark visible |
-| Number Pages | /number-pages | Upload PDF → add page numbers → download → verify numbers visible |
-| Flatten PDF | /flatten-pdf | Upload form PDF → flatten → download → verify fields uneditable |
-| Redact PDF | /redact-pdf | Upload PDF → redact text → download → verify text gone |
-| Fill Form | /fill-pdf-form | Upload form PDF → fill fields → download → verify filled |
-| Sign PDF | /sign-pdf | Upload PDF → add signature → download → verify signature visible |
-| Annotate PDF | /pdf-annotator | Upload PDF → add highlight → download → verify annotation |
-| Crop PDF | /crop-pdf | Upload PDF → crop margins → download → verify cropped |
+| Property | Value |
+|---|---|
+| URL | pdftoolstack.com |
+| Status | Built, tested, staged — pre-launch |
+| Revenue | $0 (pre-launch) |
+| Target | $1,000 MRR → $10,000 MRR |
+| Pricing | Free / Pro $12/mo or $99/yr / Teams $29/mo (5 seats) / Developer API $49/mo |
+| Stack | ASP.NET Core + Blazor WASM, Azure, Stripe, Auth0, Serilog, Clarity |
+| GitHub | https://github.com/Cmpinkney/PdfToolkit |
 
 ---
 
-## 4. CONVERSION TOOLS
+## Strategy summary
 
-| Tool | URL | Test |
-|------|-----|------|
-| PPT to PDF | /ppt-to-pdf | Upload PPTX → download PDF → verify slides |
-| Excel to PDF | /excel-to-pdf | Upload XLSX → download PDF → verify data |
-| PDF OCR | /pdf-ocr | Upload scanned PDF → download → open → Ctrl+F search for a word → verify searchable |
+### Positioning
+"The AI document workspace for small teams" — not a PDF utility site.
 
----
+### Target customer
+SMB professionals (accountants, paralegals, HR, real estate agents) who process 10–50 PDFs/day. Willingness to pay: $12–$39/month. Current alternative: Smallpdf Pro (no AI) or Adobe Acrobat ($25+, enterprise-heavy).
 
-## 5. AI TOOLS (Pro required)
-
-Sign in with admin account before testing these.
-
-| Tool | URL | Test |
-|------|-----|------|
-| Extract Invoice Data | /extract-invoice-data | Upload invoice PDF → verify fields extracted → download Excel |
-| Chat with PDF | /chat-with-pdf | Upload PDF → ask a question → verify relevant answer |
-| AI Summarizer | /ai-summarizer | Upload PDF → verify summary generated |
-| AI Questions | /ai-questions | Upload PDF → verify questions generated |
-| Compare PDFs | /compare-pdf | Upload 2 versions of a doc → verify diff report shows changes |
-| Contract Reviewer | /review-contract | Upload NDA → verify risk level, clauses, dates all populate |
+### Moat
+1. PDF ↔ Excel bridge (own both domains — no competitor does this at this price)
+2. AI tools at SMB pricing (Smallpdf has none, Adobe is enterprise)
+3. Privacy-first (files deleted in 1hr, no training on documents, GDPR compliant)
+4. Batch processing at $12/mo (competitors charge 2–3x)
+5. Developer API tier live — passive revenue ready
+6. Referral flywheel — automatic Stripe coupon reward drives viral growth
 
 ---
 
-## 6. BATCH PROCESSING (Pro required)
+## Completed implementation
 
-| Test | Steps | Expected |
-|------|-------|----------|
-| Batch compress | Upload 3 PDFs, select Compress | Downloads ZIP with 3 compressed files |
-| Batch merge | Not applicable | Merge uses separate endpoint |
-| Error handling | Upload 1 valid + 1 invalid file | ZIP downloads with valid file + batch_errors.txt |
-| File limit | Try uploading 21 files | Error: maximum 20 files |
+### ✅ Session 1–2 (March 2026) — Architecture & Core Features
+- Refactored 4 TODO endpoints (Organize, Sign, Edit, Annotate) to Strategy/Factory pattern
+- Resolved circular dependency: complex strategies moved to `Infrastructure/Strategies/`
+- Pro raised from $9.99 → $19/month (later corrected to $12/mo), $79 → $99/year
+- Price IDs moved from hardcoded Blazor → server config → `/api/subscription/plans` endpoint
+- My Documents dashboard built (Account.razor)
+- Batch processing (`/batch`, `api/pdf/batch`)
+- PDF Compare (`/compare-pdf`, `api/pdf/compare`, `ComparePdfProcessor`)
+- AI Contract Reviewer (`/review-contract`)
+- AI Invoice Data Extractor (`/extract-invoice-data`)
+- JpgToPdf, PdfToJpg, PdfToExcel processors
+- Security hardening (rate limiting, magic byte validation)
+- SEO meta descriptions for all tool pages
+- New logo, favicons, profile dropdown, theme switcher
+- Cloud storage: Google Drive ✅, Dropbox ✅, OneDrive ❌ (token_failed — pending)
 
----
+### ✅ Session 3 (April 2026) — Compliance, Security & Growth
 
-## 7. ACCOUNT DASHBOARD
+#### Legal & Compliance
+- **GDPR data deletion flow** — full stack: SQL rows, Azure blobs, Stripe subscription cancel, Auth0 account delete
+- **Cookie consent** — banner updated, only essential cookies, no decline button needed
+- **Privacy policy** — rewritten accurately (removed false ad/analytics claims, added Auth0/Stripe/Azure/Anthropic/Resend disclosures, data residency, GDPR rights)
+- **Account deletion page** — `/account/delete` with two-step confirmation
+- **Data residency disclosure** — Azure West US 2 disclosed in Privacy Policy section 5
 
-| Test | Steps | Expected |
-|------|-------|----------|
-| Stats cards | Process a tool then visit /account | Document count increments |
-| History list | Process 3 tools | Recent documents list shows all 3 with correct tool name |
-| Relative timestamps | Check history items | Shows "2m ago", "1h ago" not raw dates |
-| Tool color icons | Check history items | Each tool type has correct color icon |
-| Pro subscription card | View subscription section | Shows teal Pro card, renews April 2036 |
-| Manage Billing | Click Manage Billing | Redirects to Stripe portal (requires real subscription) |
-| Quick links | Click each quick link | All 5 navigate correctly |
-| Empty state | Sign in with fresh account | Shows empty state with Browse Tools button |
-| Browse Tools button | Click Browse Tools | Navigates to / |
+#### Security
+- **Content Security Policy** — header covering all known origins (Stripe, Auth0, Anthropic, Azure, Clarity, CDNs)
+- **Per-user rate limiting** — authenticated users tracked by userId, anonymous by IP, OPTIONS preflights never counted
+- **Audit logging** — `AuditLoggingMiddleware` logs Tool, UserId, FileSize, Duration, StatusCode with `[AUDIT]` prefix
+- **Secrets rotated** — Anthropic, Stripe, OneDrive, Resend all rotated
+- **`appsettings.Development.json` added to `.gitignore`**
+- **Security/trust page** — `/security` modeled after smallpdf/ilovepdf
 
----
+#### Growth & Monetization
+- **Contextual upsell modal** — `ProUpsellModal` + `SessionUsageService` fires after 3 tool completions per session
+- **Teams tier** — Stripe product wired, pricing page complete, $29/mo for 5 seats
+- **Developer API tier** — API key generation (SHA-256 hashed, `pts_live_` prefix), per-key monthly usage tracking, `/account/api-keys` dashboard
+- **Referral program** — unique codes, click tracking, Stripe 100% coupon reward on conversion, stats in Account page
+- **Microsoft Clarity** — analytics installed (heatmaps + session recordings)
+- **SEO** — `sitemap.xml`, `robots.txt`, JSON-LD structured data, Open Graph + Twitter Card tags
 
-## 8. PRICING PAGE
-
-| Test | Steps | Expected |
-|------|-------|----------|
-| Three tiers display | Visit /pricing | Free, Pro, Teams cards all render |
-| Pro subscribe button | Click Subscribe on Pro | Redirects to Stripe checkout |
-| Feature comparison | Scroll to comparison table | Table shows all features correctly |
-| Audience section | Scroll to professionals section | 4 cards show: Accountants, Paralegals, Real Estate, HR |
-| FAQ section | Scroll to FAQ | Questions expand/collapse or display correctly |
-
----
-
-## 9. BLOG
-
-| Test | Steps | Expected |
-|------|-------|----------|
-| Blog index | Visit /blog | 6 article cards render |
-| Article 1 | Click "How to Extract Invoice Data" | Article loads, related links work |
-| Article 2 | Click "Best PDF Tools for Accountants" | Article loads, all tool links work |
-| Article 3 | Click "How to Compress PDF for Email" | Article loads |
-| Article 4 | Click "How to Review Contract with AI" | Article loads |
-| Article 5 | Click "PDF Tools for Paralegals" | Article loads |
-| Article 6 | Click "How to Make Scanned PDF Searchable" | Article loads |
-| CTA links | Click CTA button in each article | Links to correct tool page |
-| Back link | Click ← Back to Blog | Returns to /blog |
-| Related links | Click related article links | Navigate correctly |
+#### Bug Fixes
+- **Sign PDF** — JS interop ordering fixed (capture canvas data before state change), blank canvas on ProcessFile resolved
+- **Nav logo** — light mode color fixed (Pdf dark, Tool blue, stack dark)
+- **Rate limiter** — OPTIONS preflight no longer counts against limit
 
 ---
 
-## 10. EMAIL (Resend)
+## Revenue path
 
-| Test | Steps | Expected |
-|------|-------|----------|
-| Contact form | Visit /contact → submit form | You receive email at hello@pdftoolstack.com |
-| Waitlist form | Visit a Coming Soon page → submit email | User receives waitlist confirmation email |
-| Pro welcome | Complete Stripe checkout (test mode) | User receives Pro welcome email |
+### $0 → $1K MRR (immediate focus)
+Don't rely on SEO yet — it takes 6–12 months to compound.
 
----
+**Actions:**
+1. Fix remaining bugs and deploy to production
+2. Post "Show HN: I built an AI PDF tool for small teams" on Hacker News
+3. Post on Indie Hackers with batch + AI contract reviewer as the hook
+4. Cold outreach to 50 small accounting firms — free 30-day Pro trial
+5. Post in r/freelance, r/legaladvice, r/accounting with AI data extractor as hook
+6. Submit to: AlternativeTo, SaaSHub, Capterra (free listings)
+7. Offer annual billing at $99/yr — cash upfront, customer saves $45
+8. Activate referral program — existing users become growth channel
 
-## 11. SECURITY
+**Target:** 84 Pro subscribers @ $12/mo = $1,008 MRR
 
-| Test | Steps | Expected |
-|------|-------|----------|
-| Swagger on staging | Visit staging-api-url/swagger | Returns 404 |
-| Security headers | DevTools → Network → any API response → Response Headers | X-Content-Type-Options, X-Frame-Options, CSP all present |
-| AI rate limiting | Call /api/ai/extract 21 times quickly | 21st request returns 429 with Retry-After: 3600 |
-| PDF rate limiting | Call /api/pdf/process 11 times quickly | 11th request returns 429 |
-| File validation | Upload a .txt renamed as .pdf | Returns 400 with error message |
-| Pro gate | Visit /extract-invoice-data signed out | Shows upgrade card, not the tool |
-| Pro gate signed in free | Visit /review-contract on free account | Shows upgrade card |
+### $1K → $10K MRR
+SEO + referral flywheel + word of mouth compounds.
 
----
+**Actions:**
+1. Build 5 intent-based landing pages (see SEO table)
+2. Launch Teams tier outreach — one 5-seat team = $29/mo
+3. Activate Developer API tier pricing at $49/mo
+4. Write 10 long-form SEO articles targeting high-intent queries
+5. Submit sitemap to Google Search Console (post production deployment)
+6. Set up Azure Application Insights for per-tool conversion tracking
 
-## 12. NAVIGATION & FOOTER
+**Target:** ~600 Pro + 15 Teams + 5 API accounts
 
-| Test | Steps | Expected |
-|------|-------|----------|
-| Logo | Click logo | Navigates to / |
-| NavMenu links | Click each nav item | Correct page loads |
-| Mobile menu | Resize to mobile → click hamburger | Menu opens with all items |
-| Footer logo | Check footer | New SVG logo renders with "Tool" in blue |
-| Social sign-in icons | Check footer | 5 icon circles render (Google, GitHub, Microsoft, Facebook, LinkedIn) |
-| Footer links | Click each footer link | Correct page loads |
-| Trust badges | Check footer | 5 badges: SSL, Auto Delete, Privacy First, No Data Mining, AI Powered |
-| Dark mode | Toggle dark mode | All pages render correctly in dark mode |
-
----
-
-## 13. MOBILE RESPONSIVENESS
-
-Test on mobile or using Chrome DevTools device emulation (375px width).
-
-| Test | Expected |
-|------|----------|
-| Homepage hero | Stats row wraps to 2x2 grid |
-| Tool cards grid | Single column layout |
-| Account dashboard | Panels stack vertically |
-| Pricing page | Cards stack vertically |
-| Blog grid | Single column |
-| Navbar | Hamburger menu shows |
-| Profile dropdown | Dropdown fits on screen |
+### $10K → $100K MRR
+- API tier passive revenue ($49/mo → scale to $99/mo at volume)
+- Mid-size business customers (20–50 seats)
+- ExcelToolStack.com launch as funnel into PdfToolStack Pro
+- SOC 2 Type II certification — unlocks enterprise and government sales
 
 ---
 
-## PRE-LAUNCH CHECKLIST
+## Next build priorities (in order)
 
-- [ ] All core PDF tools pass test
-- [ ] All AI tools pass test (with admin account)
-- [ ] Contract Reviewer renders full report
-- [ ] PDF OCR produces searchable output
-- [ ] Email sending confirmed (contact form)
-- [ ] Staging Swagger returns 404
-- [ ] Security headers present on staging
-- [ ] Rate limiting returns 429
-- [ ] Blog all 6 articles load
-- [ ] Mobile layout verified
-- [ ] Dark mode verified on all key pages
-- [ ] Admin bypass working (Pro shows for admin user)
-- [ ] Stripe checkout flow working in test mode
-- [ ] All footer links work
-- [ ] No console errors on homepage
-- [ ] Azure App Service config has all production keys
+| Priority | Feature | Why |
+|---|---|---|
+| 1 | Fix Sign PDF Y-coordinate | Core tool broken — must fix before launch |
+| 2 | Fix OneDrive token_failed | Cloud storage incomplete |
+| 3 | Set Stripe webhook secret in Azure | Subscriptions won't verify in production |
+| 4 | Deploy to production | Nothing else matters until live |
+| 5 | Submit sitemap to Google Search Console | SEO clock starts on go-live |
+| 6 | Intent-based SEO slug pages | Foundation for all organic traffic |
+| 7 | Azure Application Insights | Per-tool usage charts and error monitoring |
+| 8 | Show HN + Indie Hackers launch post | First traffic spike |
+| 9 | Cold outreach to 50 accounting firms | First paid users |
+| 10 | ExcelToolStack.com — companion product | PDF↔Excel bridge, second funnel |
 
 ---
 
-## TEST FILES NEEDED
+## What NOT to build yet
 
-- `sample_invoice.pdf` — a real invoice with vendor, amounts, line items
-- `sample_contract.pdf` — an NDA or service agreement
-- `scanned_document.pdf` — an image-based PDF (no selectable text)
-- `sample_form.pdf` — a PDF with fillable form fields
-- `sample_presentation.pptx` — a PowerPoint file
-- `sample_spreadsheet.xlsx` — an Excel file
-- `sample_word.docx` — a Word document
-- `sample_image.jpg` — a JPG photo
-- `protected_document.pdf` — a password-protected PDF
+- Mobile app
+- More standard PDF tools (have 35+ — enough)
+- Blog / content marketing (week 5+ activity — SEO takes time)
+- SOC 2 certification (pursue at $50K+ ARR)
+- Paid advertising (organic first until $5K MRR)
+
+---
+
+## SEO target pages
+
+| URL slug | Target query | Est. monthly searches |
+|---|---|---|
+| `/compress-for-email` | "compress PDF for email" | 450K |
+| `/sign-contract` | "sign PDF contract online" | 200K |
+| `/extract-invoice-data` | "extract data from PDF invoice" | 90K |
+| `/compare-contracts` | "compare two PDF documents" | 60K |
+| `/merge-pdfs-for-tax` | "merge PDFs for tax filing" | 40K |
+
+---
+
+## Pre-launch checklist
+
+- [ ] Fix Sign PDF Y-coordinate placement
+- [ ] Fix OneDrive token_failed
+- [ ] Set Stripe webhook secret in Azure App Service
+- [ ] Confirm all Azure env vars are set (no empty secrets)
+- [ ] Run EF migrations against production DB
+- [ ] Test checkout flow end-to-end in production
+- [ ] Test GDPR deletion flow end-to-end
+- [ ] Verify Clarity tracking fires on production
+- [ ] Submit sitemap to Google Search Console
+- [ ] Verify domain in Google Search Console via Namecheap DNS TXT record
+- [ ] Test all 35+ tools in production environment
+- [ ] Confirm CORS is locked to pdftoolstack.com (not localhost)
+
+---
+
+## Session log
+
+### Session 1 (March 2026)
+- Full codebase analysis of PdfToolStack.zip
+- Growth strategy developed across 7 dimensions
+- Identified: circular dependency risk, pricing undercut, AI tools buried, no B2B motion
+
+### Session 2 (March 2026)
+- Refactored 4 TODO endpoints → Strategy/Factory pattern
+- Fixed circular dependency (strategies moved to Infrastructure layer)
+- Restored `StripeOptions.SectionName` and `FileLimit` class
+- Raised Pro price to $19/$150
+- Built `/api/subscription/plans` endpoint + rewrote `Pricing.razor`
+- Built My Documents dashboard (Account.razor)
+- Built batch processing (`/batch`, `api/pdf/batch`)
+- Built PDF Compare (`/compare-pdf`, `api/pdf/compare`, `ComparePdfProcessor`)
+- AI Contract Reviewer, AI Invoice Extractor, JpgToPdf, PdfToJpg, PdfToExcel
+- Cloud storage integrations (Google Drive ✅, Dropbox ✅, OneDrive ❌)
+- Security hardening, SEO meta, new logo, profile dropdown, footer
+
+### Session 3 (April 11, 2026)
+- Full compliance + security overhaul (GDPR, CSP, rate limiting, audit logging)
+- Privacy policy rewritten, cookie consent fixed, security page built
+- Secrets rotated (Anthropic, Stripe, OneDrive, Resend)
+- Contextual upsell modal (SessionUsageService + ProUpsellModal)
+- Teams tier Stripe wired, Developer API tier built end-to-end
+- Referral program built (codes, tracking, Stripe coupon reward)
+- Microsoft Clarity installed
+- SEO infrastructure (sitemap, robots.txt, JSON-LD, OG tags)
+- Sign PDF JS interop ordering fixed
+- Nav logo light mode color fixed
+- Pro price corrected to $12/mo, $99/yr across all pages
+- Updated PROJECT_CONTEXT.md and this file
+- Committed all changes to staging branch
+
+---
+
+*Last updated: April 11, 2026*

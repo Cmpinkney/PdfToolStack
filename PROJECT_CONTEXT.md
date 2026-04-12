@@ -8,8 +8,8 @@ PdfToolStack is a SaaS web application that provides AI-powered PDF tools (compr
 
 The goal is to monetize through:
 - Subscription (primary — Pro and Teams tiers)
-- Ads (secondary, Free tier only)
-- API access (future — post $10K MRR)
+- API access (Developer tier — live)
+- Referral program (live — 1 free month per conversion)
 
 ---
 
@@ -32,7 +32,7 @@ Each tool is mapped to:
 - A high-intent search query
 - A conversion opportunity
 
-**Primary target audience:** SMB professionals who touch documents daily — accountants, paralegals, real estate agents, insurance adjusters, HR coordinators. They process 10–50 PDFs per day and will pay $19–39/month for a tool that also extracts data, summarizes contracts, and answers questions about their documents.
+**Primary target audience:** SMB professionals who touch documents daily — accountants, paralegals, real estate agents, insurance adjusters, HR coordinators. They process 10–50 PDFs per day and will pay $12–39/month for a tool that also extracts data, summarizes contracts, and answers questions about their documents.
 
 **Secondary target:** Solo freelancers and VA contractors who work in both PDF and Excel. ExcelToolStack.com (also owned) bridges this gap.
 
@@ -45,32 +45,37 @@ Each tool is mapped to:
 - All 35+ standard tools
 - Files deleted within 1 hour
 - No signup required
-- Ads enabled
 - No AI tools
 - No download history
 
-### Pro — $19/month or $150/year
-- Unlimited file size
+### Pro — $12/month or $99/year
+- Unlimited file size (500MB)
 - No ads
 - Priority processing
 - Download history (30 days)
-- All AI tools
+- All AI tools (200 uses/month)
 - Batch processing (up to 20 files, ZIP output)
 - PDF compare / diff viewer
 - PDF OCR access
+- Cloud storage (Google Drive, OneDrive, Dropbox)
+- Cancel anytime
 
-### Teams — $39/seat/month (3–10 seats) — PLANNED
+### Teams — $29/month (5 seats included, $6/mo per additional seat)
 - Everything in Pro
-- Shared document workspace
-- Admin dashboard
-- Invoice + PO billing
-- AI data extractor (invoice/form → Excel)
-- AI contract reviewer
+- 5 seats included
+- 500 AI uses/month (shared)
+- Shared team workspace
+- Admin usage dashboard
+- Invoice & PO billing
 - Priority support
+- Onboarding call included
 
-### API — $99/month — PLANNED (post $10K MRR)
-- REST API access, documented, rate-limited
-- For developers integrating PDF processing into their own products
+### Developer API — $49/month (planned pricing)
+- 1,000 API calls/month
+- REST API access via API key
+- Key management at /account/api-keys
+- Per-key usage tracking and monthly reset
+- Keys prefixed `pts_live_`
 
 ---
 
@@ -85,11 +90,11 @@ All tools follow this flow:
    - Free (manual or limited)
 4. Process file
 5. Deliver result
-6. Upsell (subscription or upgrade)
+6. Upsell (subscription or upgrade — contextual modal fires after 3 completions)
 
 ---
 
-## 🧰 Core Tools (Current — 33 implemented)
+## 🧰 Core Tools (Current — 35+ implemented)
 
 ### Compress & Convert
 - Fix PDF too large for email (Compress)
@@ -98,11 +103,14 @@ All tools follow this flow:
 - Convert images to PDF
 - Word/PPT/Excel to PDF
 - PDF to JPG
+- PDF to Excel
+- JPG to PDF
 
 ### Edit & Annotate
 - Edit PDF content
-- Add annotations
+- Add annotations (PDF Annotator)
 - Fill & sign forms
+- Sign PDF (electronic signature — draw or type)
 - Flatten PDF
 - Watermark PDF
 - Number pages
@@ -129,6 +137,10 @@ All tools follow this flow:
 - AI Summarizer
 - AI Questions Generator
 - AI PDF Assist
+- AI Contract Reviewer (`/review-contract`)
+- AI Invoice Data Extractor (`/extract-invoice-data`)
+- AI Rewrite
+- Translate PDF
 
 ### Batch Processing ⭐ (Pro only)
 - Apply any tool to up to 20 PDFs at once
@@ -136,53 +148,28 @@ All tools follow this flow:
 
 ---
 
-## 🚧 Planned Features
+## 🏗️ Architecture
 
-### High priority (next sprint)
-- **Intent-based URL slugs** — `/compress-for-email`, `/extract-invoice-data`, `/sign-contract` with proper meta descriptions
-- **AI data extractor** — invoice/form → structured JSON → Excel/CSV export (flagship feature)
-- **AI contract reviewer** — highlight risky clauses, key dates, obligations
+### Tech Stack
 
-### Medium priority
-- **Teams tier** — shared workspace, admin dashboard, seat management
-- **Cloud integrations** — Google Drive, Dropbox
-- **PDF Repair** — fix corrupted files
+**Frontend:** Blazor WebAssembly (.NET 9)
+**Backend:** ASP.NET Core API (.NET 9)
+**Storage:** Azure Blob Storage (West US 2)
+**Database:** Azure SQL (EF Core, Code First migrations)
+**Payments:** Stripe
+**Auth:** Auth0 (Google, GitHub, Microsoft, Facebook, LinkedIn)
+**Hosting:** Azure App Service + Azure Static Web Apps
+**DNS:** Namecheap (ALIAS + CNAME)
+**CI/CD:** GitHub Actions
+**Analytics:** Microsoft Clarity (heatmaps + session recordings)
+**Logging:** Serilog → structured audit logs with `[AUDIT]` prefix
+**Email:** Resend
 
-### Future (post $10K MRR)
-- **API tier** — REST API for developers, $99/month
-- **ExcelToolStack** — companion product at exceltoolstack.com
+### Local Ports
+- API: `https://localhost:7100`
+- Web: `https://localhost:7025`
 
----
-
-## 🧱 Tech Stack
-
-### Frontend
-- Blazor WebAssembly (.NET 9)
-
-### Backend
-- ASP.NET Core API (.NET 9 Linux)
-
-### Storage
-- Azure Blob Storage
-
-### Database
-- Azure SQL (EF Core, Code First migrations)
-
-### Payments
-- Stripe (PaymentController + SubscriptionController implemented)
-- Price IDs stored in Azure App Service environment variables (never hardcoded)
-
-### Auth
-- OAuth (GitHub)
-
-### Hosting
-- Azure App Service (B1) + Azure Static Web Apps
-- DNS via Namecheap (ALIAS + CNAME)
-- GitHub Actions CI/CD
-
----
-
-## 📁 Project Structure
+### Project Structure
 
 ```
 PdfToolStack.Web            → Blazor WASM frontend
@@ -196,91 +183,159 @@ PdfToolStack.Infrastructure → Processors, Strategies, Repositories, Storage, M
 - **Strategy pattern** — `IProcessingStrategy` implemented across Application + Infrastructure
 - **Factory pattern** — `PdfProcessorFactory` dispatches by `ToolType`
 - **Background service** — `JobCleanupService` (auto-deletes old blobs)
-- **Rate limiting** — `RateLimitingMiddleware`
+- **Rate limiting** — `RateLimitingMiddleware` (per-user when authenticated, per-IP when anonymous, OPTIONS preflights never counted)
+- **Audit logging** — `AuditLoggingMiddleware` logs every tool use with `[AUDIT]` prefix
 - **Error handling** — `ErrorHandlingMiddleware`
-- **Logging** — `ILogger<T>` throughout
-- **Security headers** — middleware registered
-- **CORS** — locked to pdftoolstack.com
+- **Logging** — Serilog throughout
+- **Security headers** — CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy
+- **CORS** — locked to pdftoolstack.com in production, localhost in development
 
 ### Critical architecture rule
 `Application` references `Domain` only. Infrastructure types (processors, iTextSharp, etc.) must NOT be used in `Application` layer — this creates a circular dependency. The four strategies for Organize, Sign, Edit, and Annotate live in `PdfToolStack.Infrastructure/Strategies/` for this reason.
 
 ### Stripe config
 - Price IDs served from `/api/subscription/plans` endpoint — never hardcoded in Blazor pages
-- Azure env vars use double-underscore notation: `Stripe__ProMonthlyPriceIdV2`, `Stripe__ProYearlyPriceIdV2`
+- Azure env vars use double-underscore notation: `Stripe__ProMonthlyPriceIdV2`, `Stripe__ProYearlyPriceIdV2`, `Stripe__TeamsMonthlyPriceId`
 - Legacy price IDs (`ProMonthlyPriceId`, `ProYearlyPriceId`) kept in config for existing subscribers
 - `StripeOptions` and `FileLimit` class both live in `PdfToolStack.API/Configuration/StripeOptions.cs`
 
 ### JS interop
 - `downloadFile(fileName, base64Data)` exists in `wwwroot/index.html` — use for ALL file downloads
 - Supports: pdf, docx, zip (mime type resolved from extension)
+- `scrollToTop()` — smooth scroll to top of page
+- `signPdfGetLastSig()` — returns last drawn signature data URL
+- `signPdfGetCanvasInternalHeight()` — returns overlay canvas internal pixel height
+- `signPdfRenderPage(base64, pageNum)` — renders PDF page onto sign canvas
+- `signPdfInitDrag(dotNetRef)` — initializes drag-to-place signature overlay
+
+### Rate limiting config
+- Anonymous (IP-based): 20 PDF requests/hour, 5 AI requests/hour
+- Authenticated (user-based): 200 PDF requests/hour, 50 AI requests/hour
+- Dev environment: 500/100 (never hit during testing)
+- OPTIONS preflights: never counted
 
 ---
 
-## ✅ Completed Work (March 2026)
+## ✅ Completed Work
 
-### Architecture cleanup
+### March 2026
 - Refactored 4 TODO endpoints (Organize, Sign, Edit, Annotate) to Strategy/Factory pattern
-- Four new strategies in `PdfToolStack.Infrastructure/Strategies/`: `OrganizeStrategy`, `SignStrategy`, `EditStrategy`, `AnnotateStrategy`
-- `ProcessRequest` extended with: `PageOperations`, `SignatureBytes` + placement fields, `Annotations`, `Highlights`, `PageOperationDto`
-- `ParseColor` moved from controller into the strategies that need it
+- My Documents dashboard in Account.razor
+- Batch processing (`/batch`)
+- PDF Compare (`/compare-pdf`)
+- AI Contract Reviewer (`/review-contract`)
+- AI Invoice Data Extractor (`/extract-invoice-data`)
+- JpgToPdf, PdfToJpg, PdfToExcel processors
+- Security hardening (rate limiting, CSP/HSTS, magic byte validation)
+- SEO meta descriptions for all tool pages
+- New logo, favicons, profile dropdown, theme switcher
+- Footer with social icons
+- Cloud storage: Google Drive, Dropbox (working), OneDrive (token_failed — pending fix)
+- Pricing page with Teams tier UI
 
-### Monetization
-- Pro raised $9.99 → $19/month, $79 → $150/year
-- `/api/subscription/plans` endpoint added — Blazor pricing page fetches price IDs from server
-- `Pricing.razor` rewritten — no hardcoded price IDs, updated feature list, privacy FAQ added
-- `StripeOptions` updated with V2 price ID properties + `SectionName` constant restored
-- `FileLimit` class restored in `StripeOptions.cs`
-
-### My Documents dashboard
-- `Account.razor` rewritten — live subscription status, renewal date, manage billing
-- Download history table with file name, tool, size, timestamp
-- Pro upsell nudge for free users
-- `TrackDownloadAsync` wired into `PdfController.Process` (fire-and-forget, auth-gated)
-
-### Batch processing
-- `POST api/pdf/batch` — up to 20 files, ZIP output, per-file error log
-- `BatchProcess.razor` at `/batch` — tool selector, per-file status indicators, Pro gate
-- `ApiService.BatchProcessAsync` added
-- Added to NavMenu desktop + mobile
-
-### PDF Compare
-- `ComparePdfProcessor` — LCS word diff via PdfPig extraction + iTextSharp report generation
-- `POST api/pdf/compare` — returns highlighted PDF diff report
-- `ComparePdf.razor` at `/compare-pdf` — two-panel upload, stats summary, Pro gate
-- `ApiService.ComparePdfsAsync` added
-- `ToolType.ComparePdf = 33` added to enum
-- Added to NavMenu search list
+### April 2026
+- **GDPR compliance:** Full data deletion flow — SQL, Azure blobs, Stripe cancel, Auth0 account delete
+- **Cookie consent:** Banner updated (no decline button, only essential cookies)
+- **Privacy policy:** Rewritten — accurate, no false ad/analytics claims, GDPR rights, data residency disclosure
+- **Content Security Policy:** Header added covering Stripe, Auth0, Anthropic, Azure, Clarity, CDNs
+- **Per-user rate limiting:** Authenticated users tracked by userId, anonymous by IP, OPTIONS never counted
+- **Audit logging:** `AuditLoggingMiddleware` — logs Tool, UserId, FileSize, Duration, StatusCode
+- **Security/trust page:** `/security`
+- **Account deletion page:** `/account/delete` — two-step confirmation, deletes all data
+- **Contextual upsell:** `ProUpsellModal` fires after 3 tool completions via `SessionUsageService`
+- **Teams tier:** Stripe product wired, pricing page complete
+- **Developer API tier:** API key generation, hashing, per-key usage tracking, `/account/api-keys` dashboard
+- **Referral program:** Unique codes, click tracking, Stripe coupon reward on conversion, stats in Account page
+- **Microsoft Clarity:** Analytics installed
+- **SEO:** `sitemap.xml`, `robots.txt`, JSON-LD structured data, Open Graph tags
+- **Secrets rotated:** Anthropic, Stripe, OneDrive, Resend
+- **`appsettings.Development.json` added to `.gitignore`**
+- **Nav logo fix:** Light mode color corrected (Pdf dark, Tool blue, stack dark)
+- **Sign PDF fixes:** JS interop ordering fixed, canvas state captured before state change
 
 ---
 
-## 🚨 Important Decisions (DO NOT CHANGE)
+## 🔐 Security Architecture
 
-- Problem-first UX is required
-- Free tier must always exist
-- Paid option must always be shown alongside free option
-- No hard paywalls without alternative path
-- AI tools are the headline — always position above utility tools
-- Privacy-first: files deleted within 1 hour, no training on user documents
-- Stripe price IDs must never be hardcoded in frontend
-- `Application` layer must never reference `Infrastructure` — circular dependency
-- Use existing `downloadFile(fileName, base64Data)` JS interop for all downloads
+### Headers (production)
+- `Content-Security-Policy` — covers all known origins
+- `Strict-Transport-Security` — HSTS with includeSubDomains
+- `X-Frame-Options: DENY`
+- `X-Content-Type-Options: nosniff`
+- `Referrer-Policy: strict-origin-when-cross-origin`
+- `Permissions-Policy` — camera, mic, geolocation, payment all blocked
+
+### Auth0 setup
+- M2M app required for GDPR deletion (`delete:users` permission)
+- Config keys: `Auth0__ManagementClientId`, `Auth0__ManagementClientSecret`
+
+### Secrets management
+- Never in `appsettings.json` or committed files
+- Local dev: `appsettings.Development.json` (gitignored)
+- Production: Azure App Service → Configuration → Application settings
+- Azure env var format: `Section__Key` (double underscore)
+
+---
+
+## 🗄️ Database Schema (Azure SQL)
+
+### Tables
+- `PdfJobs` — job tracking with blob URLs
+- `UserSubscriptions` — Stripe subscription data per userId
+- `DownloadHistory` — per-user tool usage history
+- `AiUsageLogs` — AI tool usage for limit enforcement
+- `ApiKeys` — developer API key hashes, prefixes, usage counts
+- `Referrals` — referral codes, status (Pending/Converted/Rewarded), Stripe discount IDs
+
+### Admin bypass
+`SubscriptionService.GetStatusAsync` reads `AdminUserIds` from config — comma-separated Auth0 user IDs that always return Pro status. Used for Chrystal's account during development.
+
+---
+
+## 🚧 Known Issues / Pending
+
+- **OneDrive OAuth** — `cloud_error=token_failed` at end of Authorization Code + PKCE flow — server-side OAuth implemented but token exchange still failing
+- **Sign PDF Y-coordinate** — signature placement is close but slightly off vertically — coordinate math needs one more calibration pass
+- **Stripe webhook secret** — currently empty in config — needs to be set in Azure for subscription webhooks to verify correctly
+- **Google Search Console** — sitemap not yet submitted (waiting for production deployment)
+- **Microsoft Clarity** — installed but not yet verified (waiting for production traffic)
+
+---
+
+## 🚀 Deployment
+
+- **Staging:** Push to `staging` branch → GitHub Actions auto-deploys frontend
+- **Production:** Push to `master` branch → GitHub Actions auto-deploys
+- **API:** Deployed manually via Visual Studio right-click publish (no GitHub Actions workflow yet)
+- **Pre-deployment checklist:**
+  - All secrets in Azure App Service Configuration (not in code)
+  - CORS locked to production origins
+  - Stripe webhook secret set
+  - `appsettings.Development.json` NOT committed
+  - Run all EF migrations against production DB
 
 ---
 
 ## 🎯 SEO Strategy
 
-**Next to build:**
+### Implemented
+- `sitemap.xml` — all 35+ tool pages, prioritized
+- `robots.txt` — blocks auth/account pages, allows all tools
+- JSON-LD structured data — WebApplication schema with offers
+- Open Graph + Twitter Card meta tags
+- Unique `<PageTitle>` and `<meta description>` on every tool page
+- Canonical URLs on all tool pages
+- Multiple URL slugs per tool (e.g. `/compress-pdf`, `/fix-pdf-too-large-for-email`, `/compress-for-email`)
 
-| URL slug | Target query | Tool |
+### Next to build
+
+| URL slug | Target query | Monthly searches |
 |---|---|---|
-| `/compress-for-email` | "compress PDF for email" | Compress |
-| `/extract-invoice-data` | "extract data from PDF invoice" | AI Extractor |
-| `/sign-contract` | "sign PDF contract online" | Sign |
-| `/compare-contracts` | "compare two PDF documents" | Compare |
-| `/merge-pdfs-for-tax` | "merge PDFs for tax filing" | Merge |
-
-Each page = problem-first copy + proper `<PageTitle>` + meta description + embedded tool.
+| `/compress-for-email` | "compress PDF for email" | 450K |
+| `/extract-invoice-data` | "extract data from PDF invoice" | 90K |
+| `/sign-contract` | "sign PDF contract online" | 200K |
+| `/compare-contracts` | "compare two PDF documents" | 60K |
+| `/merge-pdfs-for-tax` | "merge PDFs for tax filing" | 40K |
 
 ---
 
@@ -289,11 +344,13 @@ Each page = problem-first copy + proper `<PageTitle>` + meta description + embed
 1. **PDF ↔ Excel bridge** — own pdftoolstack.com + exceltoolstack.com. No competitor at this price has both.
 2. **AI-first at SMB price** — Adobe is $25+/month enterprise. Smallpdf has no meaningful AI.
 3. **Privacy-first** — "We don't train on your documents." Wedge for legal, healthcare, finance.
-4. **Batch at $19/mo** — competitors charge significantly more or don't offer it at this tier.
+4. **Batch at $12/mo** — competitors charge significantly more or don't offer it at this tier.
+5. **Developer API** — API key management live, ready to monetize at $49/month.
+6. **Referral flywheel** — automatic Stripe coupon reward drives viral growth.
 
 ---
 
-## 🧪 If working with AI (Claude context instructions)
+## 🧪 Working with Claude — Architecture Rules
 
 - Prioritize conversion over features
 - Optimize UX flows before adding new tools
@@ -307,31 +364,40 @@ Each page = problem-first copy + proper `<PageTitle>` + meta description + embed
 - All secrets → Azure App Service env vars with double-underscore notation
 - Never add `Infrastructure` as a reference in `Application.csproj`
 - Use `downloadFile(fileName, base64Data)` for all JS download interop
-- Suggest monetization and positioning improvements, not just technical solutions
+- `SubscriptionService` should be nullable throughout controllers (runs without DB locally)
+- CORS: open in development, locked to production origins in production
+- Rate limiter: always skip OPTIONS preflights
+- EF migrations: always run with `-Project PdfToolStack.Infrastructure -StartupProject PdfToolStack.API`
 
 ---
 
-## 💬 Continuation prompts for next session
+## 💬 Continuation Prompts for Next Session
 
-Paste the intro below + attach this file + attach PdfToolStack.zip to resume:
+Paste this intro + attach this file + attach PdfToolStack.zip to resume:
 
-> "I'm Chrystal, a full-stack .NET developer working on PdfToolStack.com — an AI-powered PDF SaaS built on ASP.NET Core + Blazor WebAssembly with Clean Architecture, deployed on Azure. I've uploaded my project context file. Please read it fully before we start. I want to continue building out the product."
+> "I'm Chrystal, building PdfToolStack.com — AI-powered PDF SaaS on .NET 9, Blazor WASM, Clean Architecture, Azure, Stripe, Auth0. I've uploaded my project context file. Please read it fully before we start."
+
+**To fix OneDrive token_failed:**
+> "Let's fix the OneDrive OAuth token_failed error in PdfToolStack. The server-side Authorization Code + PKCE flow is implemented but the token exchange is failing. Review the CloudStorageController and OneDriveService and diagnose the issue."
+
+**To fix Sign PDF Y-coordinate:**
+> "Let's fix the Sign PDF signature placement Y-coordinate offset in PdfToolStack. The signature lands slightly above where the user placed it. Current formula: `pdfY = (float)((canvasH - clampedY) / 1.2) - (sigH / 2)`. Need exact calibration."
+
+**To set up Stripe webhook secret:**
+> "Help me set up the Stripe webhook secret for PdfToolStack in production. I need to configure the webhook endpoint in Stripe dashboard and add the secret to Azure App Service."
 
 **To build intent-based SEO pages:**
 > "Let's build the intent-based URL slug pages for PdfToolStack. Start with /compress-for-email — problem-first copy, proper PageTitle and meta description, embedded compress tool."
 
-**To build the AI data extractor:**
-> "Let's build the AI data extractor for PdfToolStack at /extract-invoice-data. User uploads a PDF invoice or form. Claude extracts structured fields (vendor, amount, date, line items) as JSON. User downloads result as Excel or CSV. Create the Blazor page and API endpoint."
+**To add Azure Application Insights:**
+> "Let's add Azure Application Insights to PdfToolStack for per-tool usage charts and error rate monitoring. Show the full implementation."
 
-**To build the AI contract reviewer:**
-> "Let's build the AI contract reviewer for PdfToolStack at /review-contract. User uploads a PDF contract. Claude returns: risky clauses, key dates, obligations, missing elements. Output is a summary panel + downloadable flagged PDF report."
+**To set up Google Search Console:**
+> "PdfToolStack is now live in production. Help me submit the sitemap to Google Search Console and verify the domain via Namecheap DNS."
 
-**To build the Teams tier:**
-> "Let's build the Teams tier for PdfToolStack — $39/seat/month, 3–10 seats. Start with the DB schema for seat management, then the Stripe product setup."
-
-**To set up the launch:**
+**To write launch content:**
 > "Help me write a Show HN post for PdfToolStack and a cold outreach email targeting small accounting firms. Lead with batch processing and PDF compare as differentiators over Smallpdf."
 
 ---
 
-*Last updated: March 2026*
+*Last updated: April 11, 2026*
