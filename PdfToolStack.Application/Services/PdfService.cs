@@ -20,8 +20,8 @@ namespace PdfToolStack.Application.Services
         }
 
         public async Task<ProcessResponse> ProcessAsync(
-    ProcessRequest request,
-    CancellationToken cancellationToken = default)
+            ProcessRequest request,
+            CancellationToken cancellationToken = default)
         {
             var job = new PdfJob
             {

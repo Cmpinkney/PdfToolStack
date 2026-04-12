@@ -387,29 +387,31 @@ namespace PdfToolStack.Web.Services
             int pageNumber)
         {
             using var content = new MultipartFormDataContent();
-            content.Add(
-                new ByteArrayContent(fileBytes),
-                "file", fileName);
-            content.Add(
-                new ByteArrayContent(signatureBytes),
-                "signature", "signature.png");
+            content.Add(new ByteArrayContent(fileBytes), "file", fileName);
+            content.Add(new ByteArrayContent(signatureBytes), "signature", "signature.png");
             content.Add(new StringContent(
-                x.ToString()), "x");
+                x.ToString("F4", System.Globalization.CultureInfo.InvariantCulture)), "x");
             content.Add(new StringContent(
-                y.ToString()), "y");
+                y.ToString("F4", System.Globalization.CultureInfo.InvariantCulture)), "y");
             content.Add(new StringContent(
-                width.ToString()), "width");
+                width.ToString("F4", System.Globalization.CultureInfo.InvariantCulture)), "width");
             content.Add(new StringContent(
-                height.ToString()), "height");
+                height.ToString("F4", System.Globalization.CultureInfo.InvariantCulture)), "height");
             content.Add(new StringContent(
-                pageNumber.ToString()), "pageNumber");
+                pageNumber.ToString(System.Globalization.CultureInfo.InvariantCulture)), "pageNumber");
 
-            var response = await _httpClient.PostAsync(
-                "api/pdf/sign", content);
+            var response = await _httpClient.PostAsync("api/pdf/sign", content);
 
-            if (response.IsSuccessStatusCode)
-                return await response.Content.ReadAsByteArrayAsync();
-            return null;
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                _logger.LogWarning(
+                    "Sign API returned {Status}: {Error}",
+                    response.StatusCode, error);
+                return null;
+            }
+
+            return await response.Content.ReadAsByteArrayAsync();
         }
 
         public async Task<byte[]?> EditPdfAsync(
@@ -658,9 +660,9 @@ namespace PdfToolStack.Web.Services
         }
 
         public async Task<byte[]?> BatchProcessAsync(
-        List<(byte[] Bytes, string FileName)> files,
-        ToolType toolType,
-        CancellationToken cancellationToken = default)
+            List<(byte[] Bytes, string FileName)> files,
+            ToolType toolType,
+            CancellationToken cancellationToken = default)
         {
             try
             {
@@ -698,11 +700,18 @@ namespace PdfToolStack.Web.Services
             }
         }
 
+        public async Task<bool> DeleteAccountAsync()
+        {
+            var response = await _httpClient.DeleteAsync(
+                "api/user/delete-account");
+            return response.IsSuccessStatusCode;
+        }
+
         public async Task<(byte[]? Report, int Added, int Removed, int Pages)>
         ComparePdfsAsync(
-        byte[] originalBytes, string originalName,
-        byte[] revisedBytes, string revisedName,
-        CancellationToken cancellationToken = default)
+             byte[] originalBytes, string originalName,
+            byte[] revisedBytes, string revisedName,
+            CancellationToken cancellationToken = default)
         {
             try
             {
@@ -749,8 +758,8 @@ namespace PdfToolStack.Web.Services
         }
 
         public async Task<T?> PostMultipartAsync<T>(
-        string endpoint,
-        MultipartFormDataContent content)
+            string endpoint,
+            MultipartFormDataContent content)
         {
             try
             {
@@ -790,6 +799,43 @@ namespace PdfToolStack.Web.Services
                 _logger.LogError(ex, "PostMultipartBytes error: {Endpoint}", endpoint);
                 return null;
             }
+        }
+
+        public async Task<List<ApiKeyDto>?> GetApiKeysAsync()
+            => await GetAsync<List<ApiKeyDto>>("api/keys");
+
+        public async Task<CreateApiKeyResponseDto?> CreateApiKeyAsync(
+            string name)
+        {
+            var response = await _httpClient.PostAsJsonAsync(
+                "api/keys", new { name });
+            if (response.IsSuccessStatusCode)
+                return await response.Content
+                    .ReadFromJsonAsync<CreateApiKeyResponseDto>();
+            return null;
+        }
+
+        public async Task<bool> RevokeApiKeyAsync(int keyId)
+        {
+            var response = await _httpClient
+                .DeleteAsync($"api/keys/{keyId}");
+            return response.IsSuccessStatusCode;
+        }
+
+        public async Task<string?> GetReferralCodeAsync()
+        {
+            var result = await GetAsync<ReferralCodeDto>(
+                "api/referral/my-code");
+            return result?.Code;
+        }
+
+        public async Task<ReferralStatsDto?> GetReferralStatsAsync()
+            => await GetAsync<ReferralStatsDto>("api/referral/stats");
+
+        public async Task TrackReferralAsync(string code)
+        {
+            await _httpClient.PostAsJsonAsync(
+                "api/referral/track", new { code });
         }
     }
 }

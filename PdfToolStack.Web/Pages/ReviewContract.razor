@@ -5,6 +5,7 @@
 @inject AuthenticationStateProvider Auth
 @inject IJSRuntime JS
 @inject ToastService Toast
+@inject SessionUsageService SessionUsage
 @using Microsoft.AspNetCore.Components.Authorization
 @using System.Text.Json
 
@@ -417,6 +418,7 @@
             _review = ParseReview(response.Json);
             CurrentState = PageState.Complete;
             Toast.ShowSuccess("Contract review complete!");
+            SessionUsage.RecordToolCompletion("AI Contract Reviewer");
         }
         catch (Exception ex)
         {

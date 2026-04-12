@@ -4,6 +4,7 @@
 @inject PaymentService PaymentService
 @inject FileValidationService Validator
 @inject ToastService Toast
+@inject SessionUsageService SessionUsage
 
 <PageTitle>Extract PDF Pages Free Online — Pick Pages from PDF</PageTitle>
 
@@ -184,6 +185,7 @@
     {
         if (ResultBytes == null) return;
         await JS.InvokeVoidAsync("downloadFile", Path.GetFileNameWithoutExtension(SelectedFile?.Name ?? "document") + "_extracted.pdf", Convert.ToBase64String(ResultBytes));
+        SessionUsage.RecordToolCompletion("Tool Name");
     }
 
     private void Reset() { CurrentState = PageState.Upload; SelectedFile = null; UploadedBytes = null; ResultBytes = null; ErrorMessage = null; TotalPages = 0; SelectedPages.Clear(); }

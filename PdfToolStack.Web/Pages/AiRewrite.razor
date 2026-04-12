@@ -3,6 +3,7 @@
 @inject PdfToolStack.Web.Services.SubscriptionService SubService
 @inject AuthenticationStateProvider Auth
 @inject IJSRuntime JS
+@inject SessionUsageService SessionUsage
 @using Microsoft.AspNetCore.Components.Authorization
 
 <PageTitle>AI PDF Rewriter — Rewrite &amp; Edit PDF Content | PdfToolStack</PageTitle>
@@ -489,6 +490,7 @@
             {
                 var bytes = System.Text.Encoding.UTF8.GetBytes(_rewrittenText);
                 var base64 = Convert.ToBase64String(bytes);
+                SessionUsage.RecordToolCompletion("Tool Name");
                 await JS.InvokeVoidAsync("downloadFile", $"{outName}.txt", base64);
             }
             else

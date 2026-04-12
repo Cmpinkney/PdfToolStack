@@ -3,6 +3,7 @@
 @inject PdfToolStack.Web.Services.SubscriptionService SubService
 @inject AuthenticationStateProvider Auth
 @inject IJSRuntime JS
+@inject SessionUsageService SessionUsage
 @using Microsoft.AspNetCore.Components.Authorization
 
 <PageTitle>Chat with PDF — Ask Your Document Questions | PdfToolStack</PageTitle>
@@ -315,6 +316,7 @@
 
             var result = await ApiService.PostMultipartAsync<ChatResponse>(
                 "api/ai/chat", content);
+            SessionUsage.RecordToolCompletion("Chat with PDF");
 
             _messages.Add(new ChatMessage(
                 result?.Answer ?? "Sorry, I couldn't find an answer in this document.",

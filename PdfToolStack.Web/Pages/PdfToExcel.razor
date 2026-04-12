@@ -3,6 +3,7 @@
 @inject IJSRuntime JS
 @inject FileValidationService Validator
 @inject ToastService Toast
+@inject SessionUsageService SessionUsage
 
 <PageTitle>PDF to Excel Converter Free Online — Extract Tables from PDF</PageTitle>
 
@@ -223,6 +224,7 @@
 
         await JS.InvokeVoidAsync("downloadFile", fileName,
             Convert.ToBase64String(OutputBytes));
+        SessionUsage.RecordToolCompletion("Tool Name");
     }
 
     private void Reset()

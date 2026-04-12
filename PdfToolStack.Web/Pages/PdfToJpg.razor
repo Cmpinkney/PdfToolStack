@@ -4,6 +4,8 @@
 @inject PaymentService PaymentService
 @inject FileValidationService Validator
 @inject ToastService Toast
+@inject SessionUsageService SessionUsage
+
 
 <PageTitle>PDF to JPG Converter Free Online — Convert PDF Pages to Images</PageTitle>
 
@@ -231,6 +233,7 @@
 
         await JS.InvokeVoidAsync("downloadFile", fileName,
             Convert.ToBase64String(OutputBytes));
+        SessionUsage.RecordToolCompletion("Tool Name");
     }
 
     private void Reset()

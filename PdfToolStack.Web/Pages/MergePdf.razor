@@ -5,6 +5,7 @@
 @inject ApiService ApiService
 @inject IJSRuntime JS
 @inject PaymentService PaymentService
+@inject SessionUsageService SessionUsage
 
 <PageTitle>@(IsSubmissionMode ? "Merge PDFs for Submission — Combine Documents Online | PdfToolStack" : "Merge PDF Files Free Online — Combine PDFs Instantly")</PageTitle>
 
@@ -329,6 +330,7 @@
             "downloadFile",
             "merged.pdf",
             Convert.ToBase64String(MergedBytes));
+        SessionUsage.RecordToolCompletion("Sign PDF");
     }
 
     private bool IsSubmissionMode =>

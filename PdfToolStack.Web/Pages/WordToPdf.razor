@@ -4,6 +4,7 @@
 @inject PaymentService PaymentService
 @inject FileValidationService Validator
 @inject ToastService Toast
+@inject SessionUsageService SessionUsage
 
 <PageTitle>Word to PDF Converter Free Online — Convert DOCX to PDF</PageTitle>
 
@@ -257,6 +258,7 @@
         await JS.InvokeVoidAsync("downloadFile",
             fileName,
             Convert.ToBase64String(ResultBytes));
+        SessionUsage.RecordToolCompletion("Tool Name");
     }
 
     private void Reset()

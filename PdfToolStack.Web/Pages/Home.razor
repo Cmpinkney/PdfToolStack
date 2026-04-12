@@ -714,6 +714,8 @@
 
 @code {
     private string HeroSearch = string.Empty;
+    [Inject] NavigationManager Nav { get; set; } = default!;
+    [Inject] ApiService ApiService { get; set; } = default!;
 
     private record ToolInfo(string Name, string Description,
         string Url, string Color, string SvgIcon);
@@ -799,6 +801,22 @@
         new("Compress for Email", "Fix PDF too large for email", "/compress-for-email", "#E85D04",
             """<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>"""),
     };
+
+    protected override async Task OnInitializedAsync()
+    {
+        var uri = new Uri(Nav.Uri);
+        var query = System.Web.HttpUtility.ParseQueryString(
+            uri.Query);
+        var refCode = query["ref"];
+
+        if (!string.IsNullOrEmpty(refCode))
+        {
+            await ApiService.TrackReferralAsync(refCode);
+            // Store in session so we can associate after login
+            await JS.InvokeVoidAsync(
+                "sessionStorage.setItem", "ref", refCode);
+        }
+    }
 
     private IEnumerable<ToolInfo> SearchResults =>
         string.IsNullOrWhiteSpace(HeroSearch)

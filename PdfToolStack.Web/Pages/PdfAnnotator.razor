@@ -3,6 +3,7 @@
 @inject PaymentService PaymentService
 @inject FileValidationService Validator
 @inject ToastService Toast
+@inject SessionUsageService SessionUsage
 
 <PageTitle>PDF Annotator Free Online — Highlight and Mark Up PDFs | PdfToolStack</PageTitle>
 <HeadContent>
@@ -140,8 +141,10 @@
             await Task.Delay(100);
             await JS.InvokeVoidAsync("pdfEditor.init",
                 Convert.ToBase64String(bytes), file.Name, "pdf-annotator-container");
+            SessionUsage.RecordToolCompletion("Tool Name");
 
             Toast.ShowSuccess($"File ready — {Validator.FormatSize(file.Size)}");
+            SessionUsage.RecordToolCompletion("Annotate PDF");
         }
         catch (Exception ex)
         {

@@ -3,6 +3,7 @@
 @inject PdfToolStack.Web.Services.SubscriptionService SubService
 @inject AuthenticationStateProvider Auth
 @inject IJSRuntime JS
+@inject SessionUsageService SessionUsage
 @using Microsoft.AspNetCore.Components.Authorization
 
 <PageTitle>Translate PDF Online — 50+ Languages | PdfToolStack</PageTitle>
@@ -397,6 +398,7 @@
         if (string.IsNullOrEmpty(_translatedText)) return;
         var bytes = System.Text.Encoding.UTF8.GetBytes(_translatedText);
         var base64 = Convert.ToBase64String(bytes);
+        SessionUsage.RecordToolCompletion("Tool Name");
         var name = $"translated_{_selectedLang}_{Path.GetFileNameWithoutExtension(_fileName ?? "document")}.txt";
         await JS.InvokeVoidAsync("downloadFile", name, base64);
     }

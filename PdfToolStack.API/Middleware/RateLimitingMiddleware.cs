@@ -2,6 +2,7 @@
 using PdfToolStack.API.Configuration;
 using System.Collections.Concurrent;
 using System.Net;
+using System.Security.Claims;
 
 namespace PdfToolStack.API.Middleware
 {
@@ -11,13 +12,11 @@ namespace PdfToolStack.API.Middleware
         private readonly ProcessingOptions _options;
         private readonly ILogger<RateLimitingMiddleware> _logger;
 
-        // Separate buckets for PDF and AI endpoints
+        // Keyed by "user:{userId}" or "ip:{ipAddress}"
         private static readonly ConcurrentDictionary<string,
             (int Count, DateTime WindowStart)> _pdfCounts = new();
         private static readonly ConcurrentDictionary<string,
             (int Count, DateTime WindowStart)> _aiCounts = new();
-
-        // AI endpoints are much stricter — expensive Claude API calls
 
         public RateLimitingMiddleware(
             RequestDelegate next,
@@ -31,22 +30,45 @@ namespace PdfToolStack.API.Middleware
 
         public async Task InvokeAsync(HttpContext context)
         {
+            // Never rate-limit CORS preflight requests
+            if (HttpMethods.IsOptions(context.Request.Method))
+            {
+                await _next(context);
+                return;
+            }
+
             var path = context.Request.Path;
-            var ip = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+
+            // Build a stable key — prefer userId over IP
+            var userId = context.User?.FindFirst("sub")?.Value
+                ?? context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            var rateLimitKey = !string.IsNullOrEmpty(userId)
+                ? $"user:{userId}"
+                : $"ip:{context.Connection.RemoteIpAddress ?? IPAddress.Loopback}";
+
+            // Authenticated users get higher limits
+            bool isAuthenticated = !string.IsNullOrEmpty(userId);
+            int pdfLimit = isAuthenticated
+                ? _options.AuthenticatedMaxRequestsPerHour
+                : _options.MaxRequestsPerHour;
+            int aiLimit = isAuthenticated
+                ? _options.AuthenticatedAiMaxRequestsPerHour
+                : _options.AiMaxRequestsPerHour;
 
             if (path.StartsWithSegments("/api/pdf"))
             {
-                if (IsRateLimited(_pdfCounts, ip, _options.MaxRequestsPerHour))
+                if (IsRateLimited(_pdfCounts, rateLimitKey, pdfLimit))
                 {
-                    await TooManyRequests(context, ip, "PDF");
+                    await TooManyRequests(context, rateLimitKey, "PDF");
                     return;
                 }
             }
             else if (path.StartsWithSegments("/api/ai"))
             {
-                if (IsRateLimited(_aiCounts, ip, _options.AiMaxRequestsPerHour))
+                if (IsRateLimited(_aiCounts, rateLimitKey, aiLimit))
                 {
-                    await TooManyRequests(context, ip, "AI");
+                    await TooManyRequests(context, rateLimitKey, "AI");
                     return;
                 }
             }
@@ -55,14 +77,15 @@ namespace PdfToolStack.API.Middleware
         }
 
         private static bool IsRateLimited(
-            ConcurrentDictionary<string, (int Count, DateTime WindowStart)> bucket,
-            string ip,
+            ConcurrentDictionary<string,
+                (int Count, DateTime WindowStart)> bucket,
+            string key,
             int maxPerHour)
         {
             var now = DateTime.UtcNow;
 
             bucket.AddOrUpdate(
-                ip,
+                key,
                 (1, now),
                 (_, existing) =>
                 {
@@ -71,16 +94,18 @@ namespace PdfToolStack.API.Middleware
                     return (existing.Count + 1, existing.WindowStart);
                 });
 
-            return bucket[ip].Count > maxPerHour;
+            return bucket[key].Count > maxPerHour;
         }
 
         private async Task TooManyRequests(
-            HttpContext context, string ip, string endpoint)
+            HttpContext context, string key, string endpoint)
         {
             _logger.LogWarning(
-                "Rate limit exceeded for IP {Ip} on {Endpoint} endpoint", ip, endpoint);
+                "Rate limit exceeded for {Key} on {Endpoint} endpoint",
+                key, endpoint);
 
-            context.Response.StatusCode = (int)HttpStatusCode.TooManyRequests;
+            context.Response.StatusCode =
+                (int)HttpStatusCode.TooManyRequests;
             context.Response.Headers.Append("Retry-After", "3600");
 
             await context.Response.WriteAsJsonAsync(new

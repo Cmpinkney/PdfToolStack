@@ -124,6 +124,17 @@ try
         builder.Services.AddScoped<IAiUsageService, NullAiUsageService>();
     }
 
+    if (hasDatabase)
+    {
+        builder.Services.AddScoped<IApiKeyService, ApiKeyService>();
+    }
+
+    if (hasDatabase)
+    {
+        builder.Services.AddScoped<IReferralService,
+            ReferralService>();
+    }
+
     builder.Services.AddScoped<IDeletePagesProcessor, DeletePagesProcessor>();
     builder.Services.AddScoped<IExtractPagesProcessor, ExtractPagesProcessor>();
     builder.Services.AddScoped<IFileValidationService, FileValidationService>();
@@ -233,6 +244,16 @@ try
         builder.Configuration.GetSection(EmailOptions.SectionName));
     builder.Services.AddHttpClient<IEmailService, EmailService>();
 
+    // GDPR deletion services ---------------------------------------------------
+    builder.Services.AddHttpClient<IAuth0ManagementService,
+        Auth0ManagementService>();
+
+    if (hasDatabase)
+    {
+        builder.Services.AddScoped<IUserDeletionService,
+            UserDeletionService>();
+    }
+
     // ── AI Service ────────────────────────────────────────────────────────────
     builder.Services.AddHttpClient();
     builder.Services.AddScoped<AiService>(sp =>
@@ -324,6 +345,7 @@ try
 
     // ── Middleware Pipeline ───────────────────────────────────────────────
     app.UseMiddleware<ErrorHandlingMiddleware>();
+    app.UseMiddleware<AuditLoggingMiddleware>();
     app.UseMiddleware<RateLimitingMiddleware>();
 
     if (app.Environment.IsDevelopment())
@@ -341,6 +363,32 @@ try
         context.Response.Headers.Append("X-XSS-Protection", "1; mode=block");
         context.Response.Headers.Append("Permissions-Policy",
             "camera=(), microphone=(), geolocation=(), payment=()");
+
+        context.Response.Headers.Append("Content-Security-Policy",
+        "default-src 'self'; " +
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' " +
+            "https://js.stripe.com " +
+            "https://cdn.jsdelivr.net " +
+            "https://cdnjs.cloudflare.com; " +
+            "https://www.clarity.ms; " +
+        "style-src 'self' 'unsafe-inline' " +
+            "https://fonts.googleapis.com; " +
+        "font-src 'self' " +
+            "https://fonts.gstatic.com; " +
+        "img-src 'self' data: blob: " +
+            "https://*.stripe.com; " +
+        "frame-src 'self' " +
+            "https://js.stripe.com " +
+            "https://hooks.stripe.com; " +
+        "connect-src 'self' " +
+            "https://localhost:7100 " +
+            "https://pdftoolstack-api-grcxhqergtgcd0g7.westus2-01.azurewebsites.net " +
+            "https://dev-62zkpqjtgw3x0j7a.us.auth0.com " +
+            "https://api.anthropic.com; " +
+            "https://*.clarity.ms; " +
+        "object-src 'none'; " +
+        "base-uri 'self';"
+        );
 
         // HSTS — only in production
         if (!app.Environment.IsDevelopment())

@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Components.Web;
-using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using PdfToolStack.Web;
 using PdfToolStack.Web.Services;
@@ -24,8 +23,6 @@ builder.Services.AddOidcAuthentication(options =>
     options.ProviderOptions.DefaultScopes.Add("openid");
     options.ProviderOptions.DefaultScopes.Add("profile");
     options.ProviderOptions.DefaultScopes.Add("email");
-
-    // Fix Auth0 logout redirect
     options.ProviderOptions.AdditionalProviderParameters
         .Add("post_logout_redirect_uri",
             builder.HostEnvironment.BaseAddress);
@@ -36,6 +33,7 @@ builder.Services.AddScoped<FileValidationService>();
 builder.Services.AddScoped<ToastService>();
 builder.Services.AddScoped<CookieConsentService>();
 builder.Services.AddScoped<SubscriptionService>();
+builder.Services.AddScoped<SessionUsageService>();
 
 builder.Services.AddHttpClient<CloudPickerService>(
     client => client.BaseAddress = new Uri(apiBaseUrl));

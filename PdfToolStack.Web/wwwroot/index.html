@@ -13,6 +13,61 @@
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="_content/Microsoft.AspNetCore.Components.WebAssembly.Authentication/AuthenticationService.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <!-- Microsoft Clarity — privacy-friendly analytics -->
+    <script type="text/javascript">
+        (function (c, l, a, r, i, t, y) {
+            c[a] = c[a] || function () { (c[a].q = c[a].q || []).push(arguments) };
+            t = l.createElement(r); t.async = 1; t.src = "https://www.clarity.ms/tag/" + i;
+            y = l.getElementsByTagName(r)[0]; y.parentNode.insertBefore(t, y);
+        })(window, document, "clarity", "script", "waaajvmrdv");
+    </script>
+    <!-- Tells Google what PdfToolStack is -->
+    <script type="application/ld+json">
+        {
+          "@context": "https://schema.org",
+          "@type": "WebApplication",
+          "name": "PdfToolStack",
+          "url": "https://pdftoolstack.com",
+          "description": "AI-powered PDF tools — compress, merge, split, sign, convert and edit PDF files free online.",
+          "applicationCategory": "BusinessApplication",
+          "operatingSystem": "Web",
+          "offers": [
+            {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD",
+              "description": "Free plan — 35+ PDF tools, up to 25MB"
+            },
+            {
+              "@type": "Offer",
+              "price": "12",
+              "priceCurrency": "USD",
+              "description": "Pro plan — unlimited files, AI tools, batch processing"
+            }
+          ],
+          "featureList": [
+            "Compress PDF",
+            "Merge PDF",
+            "Split PDF",
+            "Sign PDF",
+            "PDF to Word",
+            "Word to PDF",
+            "AI Contract Reviewer",
+            "AI Invoice Extractor"
+          ]
+        }
+    </script>
+    <!-- Open Graph — social sharing -->
+    <meta property="og:title" content="PdfToolStack — AI-Powered PDF Tools" />
+    <meta property="og:description" content="35+ free PDF tools powered by AI. Compress, merge, split, sign, convert and edit PDFs online. No signup required." />
+    <meta property="og:url" content="https://pdftoolstack.com" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="PdfToolStack" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="PdfToolStack — AI-Powered PDF Tools" />
+    <meta name="twitter:description" content="35+ free PDF tools powered by AI. No signup required." />
 </head>
 <body>
     <script>
@@ -263,18 +318,31 @@
                 const r = canvas.getBoundingClientRect();
                 ctx.strokeStyle = signColor;
                 ctx.beginPath();
-                ctx.moveTo((e.clientX - r.left) * (canvas.width / r.width),
+                ctx.moveTo(
+                    (e.clientX - r.left) * (canvas.width / r.width),
                     (e.clientY - r.top) * (canvas.height / r.height));
             });
+
             canvas.addEventListener('mousemove', (e) => {
                 if (!isSignDrawing) return;
                 const r = canvas.getBoundingClientRect();
-                ctx.lineTo((e.clientX - r.left) * (canvas.width / r.width),
+                ctx.lineTo(
+                    (e.clientX - r.left) * (canvas.width / r.width),
                     (e.clientY - r.top) * (canvas.height / r.height));
                 ctx.stroke();
             });
-            canvas.addEventListener('mouseup', () => { isSignDrawing = false; });
-            canvas.addEventListener('mouseleave', () => { isSignDrawing = false; });
+
+            canvas.addEventListener('mouseup', () => {
+                isSignDrawing = false;
+                // Update _lastSigData after each stroke so drag preview works
+                window._lastSigData = canvas.toDataURL('image/png');
+            });
+
+            canvas.addEventListener('mouseleave', () => {
+                isSignDrawing = false;
+                window._lastSigData = canvas.toDataURL('image/png');
+            });
+
             canvas.addEventListener('touchstart', (e) => {
                 e.preventDefault();
                 isSignDrawing = true;
@@ -282,19 +350,26 @@
                 const t = e.touches[0];
                 ctx.strokeStyle = signColor;
                 ctx.beginPath();
-                ctx.moveTo((t.clientX - r.left) * (canvas.width / r.width),
+                ctx.moveTo(
+                    (t.clientX - r.left) * (canvas.width / r.width),
                     (t.clientY - r.top) * (canvas.height / r.height));
             }, { passive: false });
+
             canvas.addEventListener('touchmove', (e) => {
                 e.preventDefault();
                 if (!isSignDrawing) return;
                 const r = canvas.getBoundingClientRect();
                 const t = e.touches[0];
-                ctx.lineTo((t.clientX - r.left) * (canvas.width / r.width),
+                ctx.lineTo(
+                    (t.clientX - r.left) * (canvas.width / r.width),
                     (t.clientY - r.top) * (canvas.height / r.height));
                 ctx.stroke();
             }, { passive: false });
-            canvas.addEventListener('touchend', () => { isSignDrawing = false; });
+
+            canvas.addEventListener('touchend', () => {
+                isSignDrawing = false;
+                window._lastSigData = canvas.toDataURL('image/png');
+            });
         }
 
         window.clearSignaturePad = () => {
@@ -348,45 +423,80 @@
             const overlay = document.getElementById('signOverlayCanvas');
             if (!overlay) return;
 
-            // Always reset drag binding
             const newOverlay = overlay.cloneNode(true);
             overlay.parentNode.replaceChild(newOverlay, overlay);
             const o = document.getElementById('signOverlayCanvas');
 
             let dragging = false;
-            let offsetX = 0, offsetY = 0;
 
-            o.addEventListener('mousedown', (e) => {
-                if (!window._lastSigData) return;
+            o.addEventListener('mousedown', async (e) => {
+                // Grab fresh signature data at drag start
+                let sigData = window._lastSigData;
+                if (!sigData || sigData === 'data:,') return;
                 dragging = true;
-                const coords = getOverlayCoords(o, e.clientX, e.clientY);
-                offsetX = coords[0] - (window._lastSigX || 0);
-                offsetY = coords[1] - (window._lastSigY || 0);
                 e.preventDefault();
+                const coords = getOverlayCoords(o, e.clientX, e.clientY);
+                window._lastSigX = coords[0] - 100;
+                window._lastSigY = coords[1] - 40;
+                _drawSigPreview(o, sigData, window._lastSigX, window._lastSigY);
             });
 
-            window.addEventListener('mousemove', (e) => {
+            o.addEventListener('mousemove', (e) => {
                 if (!dragging || !window._lastSigData) return;
                 const coords = getOverlayCoords(o, e.clientX, e.clientY);
-                const x = coords[0] - offsetX;
-                const y = coords[1] - offsetY;
-                window._lastSigX = x;
-                window._lastSigY = y;
-                _drawSigPreview(o, window._lastSigData, x, y);
+                window._lastSigX = coords[0] - 100;
+                window._lastSigY = coords[1] - 40;
+                _drawSigPreview(o, window._lastSigData, window._lastSigX, window._lastSigY);
             });
 
-            window.addEventListener('mouseup', (e) => {
+            o.addEventListener('mouseup', () => {
                 if (!dragging) return;
                 dragging = false;
-                const x = window._lastSigX || 0;
-                const y = window._lastSigY || 0;
-                dotNetRef.invokeMethodAsync('OnSignaturePlaced', x, y);
+                dotNetRef.invokeMethodAsync('OnSignaturePlaced',
+                    window._lastSigX || 0,
+                    window._lastSigY || 0);
             });
+
+            o.addEventListener('mouseleave', () => {
+                if (!dragging) return;
+                dragging = false;
+                dotNetRef.invokeMethodAsync('OnSignaturePlaced',
+                    window._lastSigX || 0,
+                    window._lastSigY || 0);
+            });
+        };
+
+        window.signPdfGetScale = () => {
+            const pdfCanvas = document.getElementById('signPdfCanvas');
+            if (!pdfCanvas) return [1, 1];
+            // pdfCanvas.width is viewport pixels at 1.2 scale
+            // To get PDF points: divide by 1.2 (undo render scale), 
+            // then divide by pdfCanvas.width to get points-per-pixel ratio
+            // But we need absolute points, so just return the divisor per pixel:
+            // PDF point width = pdfCanvas.width / 1.2
+            // So: pdfPoints = canvasPixels * (pdfPointWidth / canvasPixelWidth)
+            //              = canvasPixels * (pdfCanvas.width/1.2) / pdfCanvas.width
+            //              = canvasPixels / 1.2
+            return [1 / 1.2, 1 / 1.2];
+        };
+
+        window.signPdfGetCanvasInternalHeight = () => {
+            const overlay = document.getElementById('signOverlayCanvas');
+            return overlay ? overlay.height : 0;
+        };
+
+        window.signPdfGetCanvasHeightPx = () => {
+            const canvas = document.getElementById('signOverlayCanvas');
+            return canvas ? canvas.getBoundingClientRect().height : 0;
         };
 
         window.signPdfSetLastSig = (sigData) => {
             window._lastSigData = sigData;
         };
+
+        window.signPdfGetLastSig = () => window._lastSigData || '';
+
+        window.scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
         function getOverlayCoords(overlay, clientX, clientY) {
             const rect = overlay.getBoundingClientRect();

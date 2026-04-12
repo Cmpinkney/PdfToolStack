@@ -1,14 +1,17 @@
 ﻿@inherits LayoutComponentBase
-@using PdfToolStack.Web.Components
-
-<a href="#main-content" class="skip-link">Skip to main content</a>
+@inject SessionUsageService SessionUsage
+@inject SubscriptionService SubscriptionService
+@inject AuthenticationStateProvider AuthProvider
 
 <NavMenu />
-
-<main id="main-content" tabindex="-1">
+<main>
     @Body
 </main>
-
 <Footer />
-<ToastContainer />
 <CookieBanner />
+<ToastContainer />
+<ProUpsellModal @ref="_upsellModal" />
+
+@code {
+    private ProUpsellModal? _upsellModal;
+}

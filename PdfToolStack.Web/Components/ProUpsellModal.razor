@@ -1,0 +1,99 @@
+﻿@inject NavigationManager Navigation
+@inject SessionUsageService SessionUsage
+
+@if (_visible)
+{
+    <div class="upsell-overlay" @onclick="Dismiss">
+        <div class="upsell-modal" @onclick:stopPropagation="true">
+
+            <button class="upsell-close" @onclick="Dismiss">✕</button>
+
+            <div class="upsell-icon">⚡</div>
+
+            <h2 class="upsell-title">@Title</h2>
+            <p class="upsell-subtitle">@Subtitle</p>
+
+            <div class="upsell-features">
+                <div class="upsell-feature">
+                    <span class="upsell-check">✓</span>
+                    <span>Files up to 500MB</span>
+                </div>
+                <div class="upsell-feature">
+                    <span class="upsell-check">✓</span>
+                    <span>200 AI uses per month</span>
+                </div>
+                <div class="upsell-feature">
+                    <span class="upsell-check">✓</span>
+                    <span>Batch process up to 20 files</span>
+                </div>
+                <div class="upsell-feature">
+                    <span class="upsell-check">✓</span>
+                    <span>Download history — 30 days</span>
+                </div>
+                <div class="upsell-feature">
+                    <span class="upsell-check">✓</span>
+                    <span>No ads. Cancel anytime.</span>
+                </div>
+            </div>
+
+            <div class="upsell-price">
+                <span class="upsell-amount">$12</span>
+                <span class="upsell-period">/month</span>
+                <span class="upsell-save">or $99/year — save $45</span>
+            </div>
+
+            <button class="process-button upsell-cta"
+                    @onclick="GoToPricing">
+                Upgrade to Pro
+            </button>
+
+            <button class="upsell-dismiss" @onclick="Dismiss">
+                No thanks, continue for free
+            </button>
+
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public string Title { get; set; } =
+        "You're getting things done!";
+    [Parameter]
+    public string Subtitle { get; set; } =
+        "You've used 3 tools this session. Pro users get unlimited file sizes, 200 AI uses, and batch processing.";
+    [Parameter] public bool ShowOnMount { get; set; } = false;
+
+    private bool _visible = false;
+
+    protected override void OnInitialized()
+    {
+        if (ShowOnMount)
+            _visible = true;
+
+        SessionUsage.OnUpsellTriggered += Show;
+    }
+
+    public void Show()
+    {
+        _visible = true;
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dismiss()
+    {
+        _visible = false;
+        StateHasChanged();
+    }
+
+    private void GoToPricing()
+    {
+        var returnUrl = Uri.EscapeDataString(Navigation.Uri);
+        Navigation.NavigateTo($"/pricing?from={returnUrl}");
+    }
+
+    public void Dispose()
+    {
+        SessionUsage.OnUpsellTriggered -= Show;
+    }
+}

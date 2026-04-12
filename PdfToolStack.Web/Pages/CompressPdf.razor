@@ -8,6 +8,7 @@
 @inject FileValidationService Validator
 @inject ToastService Toast
 @inject NavigationManager Navigation
+@inject SessionUsageService SessionUsage
 
 <PageTitle>Compress PDF Online Free — Reduce PDF Size Instantly</PageTitle>
 
@@ -372,6 +373,9 @@
             "downloadFile",
             fileName,
             Convert.ToBase64String(ProcessedBytes));
+
+        // Track session usage — triggers upsell after 3 completions
+        SessionUsage.RecordToolCompletion("Sign PDF");
     }
 
     private Task ResetToFreeMode()

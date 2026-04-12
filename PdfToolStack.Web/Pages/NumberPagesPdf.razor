@@ -4,6 +4,7 @@
 @inject PaymentService PaymentService
 @inject FileValidationService Validator
 @inject ToastService Toast
+@inject SessionUsageService SessionUsage
 
 
 <PageTitle>Number PDF Pages Free Online — Add Page Numbers to PDF</PageTitle>
@@ -256,6 +257,7 @@
         await JS.InvokeVoidAsync("downloadFile",
             fileName,
             Convert.ToBase64String(ResultBytes));
+        SessionUsage.RecordToolCompletion("Tool Name");
     }
 
     private void Reset()

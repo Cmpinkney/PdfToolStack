@@ -4,6 +4,7 @@
 @inject PaymentService PaymentService
 @inject FileValidationService Validator
 @inject ToastService Toast
+@inject SessionUsageService SessionUsage
 
 <PageTitle>Fill PDF Form Online Free — Fill Out PDF Forms Instantly</PageTitle>
 
@@ -421,6 +422,7 @@
             "downloadFile",
             fileName,
             Convert.ToBase64String(FilledBytes));
+        SessionUsage.RecordToolCompletion("Tool Name");
     }
 
     private void Reset()

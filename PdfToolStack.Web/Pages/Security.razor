@@ -1,0 +1,251 @@
+﻿@page "/security"
+
+<PageTitle>Security & Privacy — PdfToolStack</PageTitle>
+<HeadContent>
+    <meta name="description" content="How PdfToolStack keeps your documents safe. No permanent storage, encrypted transfers, automatic deletion, and enterprise-grade Azure infrastructure." />
+</HeadContent>
+
+<div class="legal-page">
+    <div class="legal-container" style="max-width:860px;">
+
+        <div class="legal-header" style="text-align:center;padding-bottom:2rem;">
+            <div style="font-size:3rem;margin-bottom:1rem;">🔒</div>
+            <h1>Your documents are safe with us</h1>
+            <p style="color:var(--text-secondary);font-size:1.1rem;max-width:600px;margin:0 auto;">
+                We built PdfToolStack with privacy as the default —
+                not an afterthought. Here's exactly how we protect
+                your files and data.
+            </p>
+        </div>
+
+        <!-- Trust badges row -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.5rem;margin-bottom:3rem;">
+
+            <div class="sign-card" style="text-align:center;padding:1.5rem;">
+                <div style="font-size:2rem;margin-bottom:0.75rem;">⏱️</div>
+                <h3 style="font-size:1rem;margin-bottom:0.5rem;">Auto-deleted in 1 hour</h3>
+                <p style="font-size:0.875rem;color:var(--text-secondary);">
+                    Every file you upload is permanently deleted
+                    within 1 hour. No exceptions.
+                </p>
+            </div>
+
+            <div class="sign-card" style="text-align:center;padding:1.5rem;">
+                <div style="font-size:2rem;margin-bottom:0.75rem;">🔐</div>
+                <h3 style="font-size:1rem;margin-bottom:0.5rem;">Encrypted in transit</h3>
+                <p style="font-size:0.875rem;color:var(--text-secondary);">
+                    All file transfers use TLS 1.2+ encryption.
+                    Your documents are never sent unencrypted.
+                </p>
+            </div>
+
+            <div class="sign-card" style="text-align:center;padding:1.5rem;">
+                <div style="font-size:2rem;margin-bottom:0.75rem;">🚫</div>
+                <h3 style="font-size:1rem;margin-bottom:0.5rem;">No ads. No tracking.</h3>
+                <p style="font-size:0.875rem;color:var(--text-secondary);">
+                    We don't run ads or use tracking cookies.
+                    Your usage stays private.
+                </p>
+            </div>
+
+            <div class="sign-card" style="text-align:center;padding:1.5rem;">
+                <div style="font-size:2rem;margin-bottom:0.75rem;">🏢</div>
+                <h3 style="font-size:1rem;margin-bottom:0.5rem;">Enterprise infrastructure</h3>
+                <p style="font-size:0.875rem;color:var(--text-secondary);">
+                    Hosted on Microsoft Azure — the same
+                    infrastructure trusted by Fortune 500 companies.
+                </p>
+            </div>
+
+        </div>
+
+        <div class="legal-content">
+
+            <section class="legal-section">
+                <h2>🗂️ File handling</h2>
+                <ul>
+                    <li>
+                        Files are uploaded over an encrypted
+                        HTTPS connection directly to our
+                        servers — they never touch a third-party
+                        storage service during processing.
+                    </li>
+                    <li>
+                        After processing, your output file is
+                        temporarily stored on Microsoft Azure
+                        Blob Storage so you can download it.
+                    </li>
+                    <li>
+                        All files are automatically and
+                        permanently deleted within
+                        <strong>1 hour</strong> of upload,
+                        regardless of whether you downloaded
+                        them.
+                    </li>
+                    <li>
+                        Our staff cannot access your uploaded
+                        files. File processing is fully
+                        automated with no human review.
+                    </li>
+                    <li>
+                        We do not read, analyze, index, or
+                        train AI models on the contents of
+                        your documents.
+                    </li>
+                </ul>
+            </section>
+
+            <section class="legal-section">
+                <h2>🤖 AI tools and your documents</h2>
+                <p>
+                    When you use AI-powered tools such as the
+                    AI Contract Reviewer or Invoice Extractor,
+                    your document content is sent to
+                    Anthropic's Claude API for processing.
+                </p>
+                <ul>
+                    <li>
+                        Anthropic does not store or train on
+                        API-submitted content per their
+                        <a href="https://www.anthropic.com/privacy"
+                           target="_blank" rel="noopener">
+                            API data usage policy
+                        </a>.
+                    </li>
+                    <li>
+                        We log only the tool used, token count,
+                        and timestamp — never the document
+                        content itself.
+                    </li>
+                    <li>
+                        We recommend not uploading documents
+                        containing highly sensitive personal
+                        data (e.g. passports, medical records)
+                        to AI tools.
+                    </li>
+                </ul>
+            </section>
+
+            <section class="legal-section">
+                <h2>🔑 Authentication and accounts</h2>
+                <ul>
+                    <li>
+                        Authentication is handled by
+                        <strong>Auth0</strong>, an
+                        industry-leading identity platform
+                        trusted by thousands of companies.
+                        We never store your password.
+                    </li>
+                    <li>
+                        You can sign in with Google, GitHub,
+                        Microsoft, Facebook, or LinkedIn —
+                        your credentials stay with those
+                        providers.
+                    </li>
+                    <li>
+                        You can delete your account and all
+                        associated data at any time from your
+                        <a href="/account">Account page</a>.
+                    </li>
+                </ul>
+            </section>
+
+            <section class="legal-section">
+                <h2>💳 Payments</h2>
+                <ul>
+                    <li>
+                        Payments are processed by
+                        <strong>Stripe</strong>, a PCI DSS
+                        Level 1 certified payment processor.
+                    </li>
+                    <li>
+                        We never see, store, or have access
+                        to your credit card details.
+                    </li>
+                    <li>
+                        Your billing information is stored
+                        securely by Stripe under their
+                        <a href="https://stripe.com/privacy"
+                           target="_blank" rel="noopener">
+                            privacy policy
+                        </a>.
+                    </li>
+                </ul>
+            </section>
+
+            <section class="legal-section">
+                <h2>🏗️ Infrastructure</h2>
+                <ul>
+                    <li>
+                        PdfToolStack runs on
+                        <strong>Microsoft Azure</strong>
+                        in the West US 2 region.
+                    </li>
+                    <li>
+                        Our API enforces HTTPS-only connections
+                        with HSTS headers in production.
+                    </li>
+                    <li>
+                        We use rate limiting, magic byte
+                        validation on all uploads, and
+                        Content Security Policy headers to
+                        protect against common attacks.
+                    </li>
+                    <li>
+                        File size limits and type restrictions
+                        are enforced server-side — not just
+                        in the browser.
+                    </li>
+                </ul>
+            </section>
+
+            <section class="legal-section">
+                <h2>📋 Compliance</h2>
+                <ul>
+                    <li>
+                        <strong>GDPR</strong> — We support
+                        the right to erasure. You can delete
+                        all your data from your
+                        <a href="/account/delete">account settings</a>.
+                    </li>
+                    <li>
+                        <strong>CCPA</strong> — We do not
+                        sell personal information.
+                    </li>
+                    <li>
+                        <strong>Cookies</strong> — We use only
+                        essential cookies. No advertising or
+                        tracking cookies.
+                        <a href="/cookie-policy">Cookie Policy</a>
+                    </li>
+                </ul>
+            </section>
+
+            <section class="legal-section">
+                <h2>📬 Security contact</h2>
+                <p>
+                    Found a security vulnerability? Please
+                    report it responsibly to
+                    <a href="mailto:security@pdftoolstack.com">
+                        security@pdftoolstack.com
+                    </a>.
+                    We take all reports seriously and aim to
+                    respond within 48 hours.
+                </p>
+            </section>
+
+        </div>
+
+        <div style="text-align:center;margin-top:2rem;padding:2rem;background:var(--bg-secondary);border-radius:12px;">
+            <p style="font-size:0.9rem;color:var(--text-secondary);margin-bottom:1rem;">
+                Still have questions about how we handle your data?
+            </p>
+            <a href="mailto:privacy@pdftoolstack.com"
+               class="download-button"
+               style="text-decoration:none;display:inline-block;">
+                Contact us
+            </a>
+        </div>
+
+    </div>
+</div>

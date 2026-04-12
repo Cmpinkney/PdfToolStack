@@ -6,6 +6,7 @@
 @inject AuthenticationStateProvider Auth
 @inject IJSRuntime JS
 @inject ToastService Toast
+@inject SessionUsageService SessionUsage
 @using Microsoft.AspNetCore.Components.Authorization
 @using System.Text.Json
 
@@ -519,6 +520,7 @@
         if (_excelBytes == null) return;
         var name = $"extracted_{_type}_{DateTime.Now:yyyyMMdd}.xlsx";
         await JS.InvokeVoidAsync("downloadFile", name, Convert.ToBase64String(_excelBytes));
+        SessionUsage.RecordToolCompletion("Tool Name");
     }
 
     private void Reset()

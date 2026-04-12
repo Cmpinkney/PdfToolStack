@@ -5,6 +5,7 @@
 @inject PaymentService PaymentService
 @inject FileValidationService Validator
 @inject ToastService Toast
+@inject SessionUsageService SessionUsage
 
 <PageTitle>Redact PDF Free Online — Permanently Remove Sensitive Text</PageTitle>
 
@@ -492,6 +493,7 @@
             "downloadFile",
             fileName,
             Convert.ToBase64String(RedactedBytes));
+        SessionUsage.RecordToolCompletion("Tool Name");
     }
 
     private void Reset()

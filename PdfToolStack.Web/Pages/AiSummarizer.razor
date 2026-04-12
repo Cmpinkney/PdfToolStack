@@ -2,6 +2,7 @@
 @inject ApiService ApiService
 @inject PdfToolStack.Web.Services.SubscriptionService SubService
 @inject AuthenticationStateProvider Auth
+@inject SessionUsageService SessionUsage
 @using Microsoft.AspNetCore.Components.Authorization
 
 <PageTitle>AI PDF Summarizer — Summarize PDF Instantly | PdfToolStack</PageTitle>
@@ -238,6 +239,7 @@
 
             var result = await ApiService.PostMultipartAsync<SummarizeResponse>(
                 "api/ai/summarize", content);
+            SessionUsage.RecordToolCompletion("AI Summarizer");
 
             _step = 3; StateHasChanged();
 

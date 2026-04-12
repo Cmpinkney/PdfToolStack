@@ -3,6 +3,7 @@
 @inject IJSRuntime JS
 @inject FileValidationService Validator
 @inject ToastService Toast
+@inject SessionUsageService SessionUsage
 
 <PageTitle>PDF OCR Free Online — Make Scanned PDF Searchable | PdfToolStack</PageTitle>
 
@@ -332,6 +333,7 @@
             _fileName ?? "document") + "_searchable.pdf";
         await JS.InvokeVoidAsync("downloadFile", name,
             Convert.ToBase64String(_outputBytes));
+        SessionUsage.RecordToolCompletion("Tool Name");
     }
 
     private void Reset()

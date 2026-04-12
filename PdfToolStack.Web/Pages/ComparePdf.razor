@@ -6,6 +6,7 @@
 @inject AuthenticationStateProvider Auth
 @inject IJSRuntime JS
 @inject NavigationManager Navigation
+@inject SessionUsageService SessionUsage
 @using Microsoft.AspNetCore.Components.Authorization
 
 <PageTitle>@(IsContractMode ? "Compare Contracts Online — Find PDF Differences | PdfToolStack" : "Compare PDF Files — Find Differences | PdfToolStack")</PageTitle>
@@ -246,5 +247,6 @@
         await JS.InvokeVoidAsync("downloadFile",
             "comparison_report.pdf",
             Convert.ToBase64String(_reportBytes));
+        SessionUsage.RecordToolCompletion("Tool Name");
     }
 }

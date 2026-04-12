@@ -4,6 +4,7 @@
 @inject PaymentService PaymentService
 @inject FileValidationService Validator
 @inject ToastService Toast
+@inject SessionUsageService SessionUsage
 
 <PageTitle>Watermark PDF Free Online — Add Watermark to PDF</PageTitle>
 
@@ -292,6 +293,7 @@
         await JS.InvokeVoidAsync("downloadFile",
             fileName,
             Convert.ToBase64String(ResultBytes));
+        SessionUsage.RecordToolCompletion("Tool Name");
     }
 
     private void Reset()

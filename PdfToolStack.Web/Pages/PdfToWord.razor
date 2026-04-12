@@ -6,6 +6,7 @@
 @inject PaymentService PaymentService
 @inject FileValidationService Validator
 @inject ToastService Toast
+@inject SessionUsageService SessionUsage
 
 <PageTitle>@(IsEditMode ? "Convert PDF to Editable Word Document Free | PdfToolStack" : "PDF to Word Converter Free Online — Convert PDF to DOCX")</PageTitle>
 
@@ -293,6 +294,7 @@
             "downloadFile",
             fileName,
             Convert.ToBase64String(ProcessedBytes));
+        SessionUsage.RecordToolCompletion("Tool Name");
     }
 
     private bool IsEditMode =>

@@ -1,0 +1,203 @@
+﻿@page "/account/api-keys"
+@inject ApiService ApiService
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+@attribute [Authorize]
+
+<PageTitle>API Keys — PdfToolStack</PageTitle>
+
+<div class="tool-page">
+    <div class="tool-container" style="max-width:720px;margin:0 auto;">
+
+        <div class="ai-tool-header">
+            <div class="ai-tool-badge">🔑 Developer</div>
+            <h1>API Keys</h1>
+            <p class="tool-subtitle">
+                Use your API key to call PdfToolStack tools
+                programmatically. Each key gets 1,000 requests/month.
+            </p>
+        </div>
+
+        @if (_newKey != null)
+        {
+            <div class="sign-card"
+                 style="border:2px solid #10b981;margin-bottom:1.5rem;">
+                <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.75rem;">
+                    <span style="color:#10b981;font-size:1.25rem;">✓</span>
+                    <strong>API key created — copy it now</strong>
+                </div>
+                <p style="font-size:0.875rem;color:var(--text-secondary);margin-bottom:0.75rem;">
+                    This key will not be shown again. Store it securely.
+                </p>
+                <div style="display:flex;gap:0.5rem;align-items:center;">
+                    <code style="flex:1;background:var(--bg-secondary);
+                                     padding:0.75rem;border-radius:8px;
+                                     font-size:0.85rem;word-break:break-all;">
+                        @_newKey.RawKey
+                    </code>
+                    <button class="sign-action-btn"
+                            @onclick="CopyKey">
+                        Copy
+                    </button>
+                </div>
+            </div>
+        }
+
+        <!-- Create new key -->
+        <div class="sign-card" style="margin-bottom:1.5rem;">
+            <h3 style="margin-bottom:1rem;">Create new key</h3>
+            <div style="display:flex;gap:0.75rem;">
+                <input type="text"
+                       class="sign-type-input"
+                       placeholder="Key name (e.g. Production, My App)"
+                       @bind="_newKeyName"
+                       style="flex:1;" />
+                <button class="process-button"
+                        style="white-space:nowrap;"
+                        disabled="@(_creating || string.IsNullOrWhiteSpace(_newKeyName))"
+                        @onclick="CreateKey">
+                    @if (_creating)
+                    {
+                        <span>Creating...</span>
+                    }
+                    else
+                    {
+                        <span>Create key</span>
+                    }
+                </button>
+            </div>
+        </div>
+
+        <!-- Existing keys -->
+        <div class="sign-card" style="margin-bottom:1.5rem;">
+            <h3 style="margin-bottom:1rem;">Your keys</h3>
+
+            @if (_loading)
+            {
+                <div class="processing-container"
+                     style="padding:2rem;">
+                    <div class="spinner"></div>
+                </div>
+            }
+            else if (_keys == null || !_keys.Any())
+            {
+                <p style="color:var(--text-secondary);
+                               font-size:0.9rem;text-align:center;
+                               padding:2rem 0;">
+                    No API keys yet. Create one above.
+                </p>
+            }
+            else
+            {
+                @foreach (var key in _keys.Where(k => k.IsActive))
+                {
+                    <div style="display:flex;align-items:center;
+                                        gap:1rem;padding:0.875rem 0;
+                                        border-bottom:1px solid var(--border-color);">
+                        <div style="flex:1;">
+                            <div style="font-weight:500;
+                                                margin-bottom:0.25rem;">
+                                @key.Name
+                            </div>
+                            <div style="font-size:0.8rem;
+                                                color:var(--text-secondary);
+                                                font-family:monospace;">
+                                @key.KeyPrefix...
+                            </div>
+                            <div style="font-size:0.75rem;
+                                                color:var(--text-secondary);
+                                                margin-top:0.25rem;">
+                                @key.RequestsThisMonth /
+                                @key.MonthlyLimit requests this month
+                                @if (key.LastUsedAt.HasValue)
+                                {
+                                    <span> · Last used @key.LastUsedAt.Value.ToString("MMM d")</span>
+                                }
+                            </div>
+                        </div>
+                        <div style="width:80px;">
+                            <div style="height:4px;background:var(--bg-secondary);
+                                                border-radius:2px;overflow:hidden;">
+                                <div style="height:100%;
+                                                    background:#2250F4;
+                                                    width:@(Math.Min(100, key.RequestsThisMonth * 100 / key.MonthlyLimit))%;
+                                                    border-radius:2px;">
+                                </div>
+                            </div>
+                        </div>
+                        <button class="sign-action-btn"
+                                style="color:#DC2626;"
+                                @onclick="() => RevokeKey(key.Id)">
+                            Revoke
+                        </button>
+                    </div>
+                }
+            }
+        </div>
+
+        <!-- Quick start -->
+        <div class="sign-card">
+            <h3 style="margin-bottom:1rem;">Quick start</h3>
+            <p style="font-size:0.875rem;color:var(--text-secondary);
+                       margin-bottom:1rem;">
+                Pass your key in the
+                <code>X-Api-Key</code> header:
+            </p>
+            <pre style="background:var(--bg-secondary);
+                        padding:1rem;border-radius:8px;
+                        font-size:0.8rem;overflow-x:auto;
+                        white-space:pre-wrap;"><code>curl -X POST https://pdftoolstack.com/api/pdf/compress \
+  -H "X-Api-Key: pts_live_your_key_here" \
+  -F "file=@@document.pdf" \
+  --output compressed.pdf</code></pre>
+        </div>
+
+    </div>
+</div>
+
+@code {
+    private List<ApiKeyDto>? _keys;
+    private bool _loading = true;
+    private bool _creating = false;
+    private string _newKeyName = "";
+    private CreateApiKeyResponseDto? _newKey;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _keys = await ApiService.GetApiKeysAsync();
+        _loading = false;
+    }
+
+    private async Task CreateKey()
+    {
+        if (string.IsNullOrWhiteSpace(_newKeyName)) return;
+        _creating = true;
+        StateHasChanged();
+
+        _newKey = await ApiService.CreateApiKeyAsync(_newKeyName);
+        _keys = await ApiService.GetApiKeysAsync();
+        _newKeyName = "";
+        _creating = false;
+        StateHasChanged();
+    }
+
+    private async Task RevokeKey(int keyId)
+    {
+        var confirmed = await JS.InvokeAsync<bool>(
+            "confirm",
+            "Revoke this API key? Any apps using it will stop working.");
+
+        if (!confirmed) return;
+
+        await ApiService.RevokeApiKeyAsync(keyId);
+        _keys = await ApiService.GetApiKeysAsync();
+        StateHasChanged();
+    }
+
+    private async Task CopyKey()
+    {
+        if (_newKey == null) return;
+        await JS.InvokeVoidAsync(
+            "navigator.clipboard.writeText", _newKey.RawKey);
+    }
+}

@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using PdfToolStack.Application.DTOs;
 using PdfToolStack.Application.Interfaces;
 using PdfToolStack.Domain.Entities;
+using PdfToolStack.Domain.Interfaces;
 using PdfToolStack.Infrastructure.Data;
 using Stripe;
 using Stripe.Checkout;
@@ -14,15 +15,18 @@ namespace PdfToolStack.Infrastructure.Services
         private readonly AppDbContext _db;
         private readonly IConfiguration _config;
         private readonly IEmailService _emailService;
+        private readonly IServiceProvider _serviceProvider;
 
         public SubscriptionService(
-            AppDbContext db,
-            IConfiguration config,
-            IEmailService emailService)
+             AppDbContext db,
+             IConfiguration config,
+             IEmailService emailService,
+             IServiceProvider serviceProvider)
         {
             _db = db;
             _config = config;
             _emailService = emailService;
+            _serviceProvider = serviceProvider;
             StripeConfiguration.ApiKey =
                 _config["Stripe:SecretKey"];
         }
@@ -210,6 +214,16 @@ namespace PdfToolStack.Infrastructure.Services
             }
 
             await _db.SaveChangesAsync();
+
+            // After saving the subscription — trigger referral reward
+            var referralService = _serviceProvider
+                .GetService(typeof(IReferralService)) as IReferralService;
+            if (referralService != null)
+            {
+                await referralService.ConvertReferralAsync(
+                    userId,
+                    session.CustomerEmail ?? string.Empty);
+            }
 
             // Send Pro welcome email
             var customerEmail = session.CustomerEmail ?? string.Empty;

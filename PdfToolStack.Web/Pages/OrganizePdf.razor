@@ -4,6 +4,7 @@
 @inject PaymentService PaymentService
 @inject FileValidationService Validator
 @inject ToastService Toast
+@inject SessionUsageService SessionUsage
 
 <PageTitle>Organize PDF Free Online — Rearrange and Rotate Pages</PageTitle>
 
@@ -364,6 +365,7 @@
             SelectedFile?.Name ?? "document") + "_organized.pdf";
         await JS.InvokeVoidAsync("downloadFile",
             fileName, Convert.ToBase64String(ResultBytes));
+        SessionUsage.RecordToolCompletion("Tool Name");
     }
 
     private void Reset()

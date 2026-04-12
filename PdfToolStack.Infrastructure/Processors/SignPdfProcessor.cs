@@ -29,23 +29,20 @@ namespace PdfToolStack.Infrastructure.Processors
             {
                 using var reader = new PdfReader(inputBytes);
                 using var outputStream = new MemoryStream();
-                using var stamper = new PdfStamper(
-                    reader, outputStream);
+                using var stamper = new PdfStamper(reader, outputStream);
 
                 var canvas = stamper.GetOverContent(pageNumber);
-                var signatureImage = Image.GetInstance(
-                    signatureImageBytes);
+                var signatureImage = Image.GetInstance(signatureImageBytes);
                 signatureImage.SetAbsolutePosition(x, y);
                 signatureImage.ScaleToFit(width, height);
                 canvas.AddImage(signatureImage);
-                stamper.Close();
 
+                stamper.Close();
                 return Task.FromResult(outputStream.ToArray());
             }
             catch (Exception ex)
             {
-                throw new Exception(
-                    $"Sign PDF failed: {ex.Message}");
+                throw new Exception($"Sign PDF failed: {ex.Message}");
             }
         }
     }
