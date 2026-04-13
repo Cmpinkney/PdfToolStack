@@ -18,7 +18,7 @@
     --success-light: #CCFBF1;
     --success-dark: #134E4A;
     /* Backgrounds */
-    --bg: #F7F7FC;
+    --bg: #F5F7FF;
     --surface: #FFFFFF;
     --surface-2: #F1EFF8;
     /* Borders */
@@ -578,9 +578,9 @@ body {
 }
 
     .tool-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-        border-color: var(--primary);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 16px rgba(34,80,244,0.10);
+        border-color: #BFDBFE;
     }
 
         .tool-card:hover .tool-card-icon {
@@ -3771,20 +3771,25 @@ body {
 
 /* ── Tool icon tiles ─────────────────────────── */
 .tool-icon-tile {
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
     margin: 0 auto 0.75rem;
     flex-shrink: 0;
+    transition: transform 0.15s ease;
 }
 
     .tool-icon-tile svg {
-        width: 26px;
-        height: 26px;
+        width: 28px;
+        height: 28px;
     }
+
+.tool-card:hover .tool-icon-tile {
+    transform: scale(1.08);
+}
 
 /* Category color families */
 .tile-blue {
@@ -3899,7 +3904,20 @@ button,
 }
 
 .tool-card {
-    min-height: unset; /* cards handle their own height */
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem 1rem 1.25rem;
+    text-align: center;
+    text-decoration: none;
+    color: var(--text);
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .nav-brand {
