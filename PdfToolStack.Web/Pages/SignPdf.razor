@@ -116,47 +116,14 @@
                             <div class="sign-color-row">
                                 <span style="font-size:0.8rem;color:var(--text-secondary);">Ink color:</span>
                                 <div class="pdf-color-palette">
-                                    <button type="button"
-                                            class="pdf-color-swatch @(SignColor == "#000000" ? "active" : "")"
-                                            style="background:#000000"
-                                            @onclick='() => SetSignColor("#000000")'
-                                            @onclick:preventDefault="true"></button>
-                                    <button type="button"
-                                            class="pdf-color-swatch @(SignColor == "#FF0000" ? "active" : "")"
-                                            style="background:#FF0000"
-                                            @onclick='() => SetSignColor("#FF0000")'
-                                            @onclick:preventDefault="true"></button>
-                                    <button type="button"
-                                            class="pdf-color-swatch @(SignColor == "#FF8C00" ? "active" : "")"
-                                            style="background:#FF8C00"
-                                            @onclick='() => SetSignColor("#FF8C00")'
-                                            @onclick:preventDefault="true"></button>
-                                    <button type="button"
-                                            class="pdf-color-swatch @(SignColor == "#FFD700" ? "active" : "")"
-                                            style="background:#FFD700"
-                                            @onclick='() => SetSignColor("#FFD700")'
-                                            @onclick:preventDefault="true"></button>
-                                    <button type="button"
-                                            class="pdf-color-swatch @(SignColor == "#00C851" ? "active" : "")"
-                                            style="background:#00C851"
-                                            @onclick='() => SetSignColor("#00C851")'
-                                            @onclick:preventDefault="true"></button>
-                                    <button type="button"
-                                            class="pdf-color-swatch @(SignColor == "#2196F3" ? "active" : "")"
-                                            style="background:#2196F3"
-                                            @onclick='() => SetSignColor("#2196F3")'
-                                            @onclick:preventDefault="true"></button>
-                                    <button type="button"
-                                            class="pdf-color-swatch @(SignColor == "#9C27B0" ? "active" : "")"
-                                            style="background:#9C27B0"
-                                            @onclick='() => SetSignColor("#9C27B0")'
-                                            @onclick:preventDefault="true"></button>
-
-                                    <input type="color"
-                                           value="@SignColor"
-                                           class="pdf-color-custom"
-                                           title="Custom color"
-                                           @onchange="UpdateSignColor" />
+                                    <button type="button" class="pdf-color-swatch @(SignColor == "#000000" ? "active" : "")" style="background:#000000" @onclick='() => SetSignColor("#000000")' @onclick:preventDefault="true"></button>
+                                    <button type="button" class="pdf-color-swatch @(SignColor == "#FF0000" ? "active" : "")" style="background:#FF0000" @onclick='() => SetSignColor("#FF0000")' @onclick:preventDefault="true"></button>
+                                    <button type="button" class="pdf-color-swatch @(SignColor == "#FF8C00" ? "active" : "")" style="background:#FF8C00" @onclick='() => SetSignColor("#FF8C00")' @onclick:preventDefault="true"></button>
+                                    <button type="button" class="pdf-color-swatch @(SignColor == "#FFD700" ? "active" : "")" style="background:#FFD700" @onclick='() => SetSignColor("#FFD700")' @onclick:preventDefault="true"></button>
+                                    <button type="button" class="pdf-color-swatch @(SignColor == "#00C851" ? "active" : "")" style="background:#00C851" @onclick='() => SetSignColor("#00C851")' @onclick:preventDefault="true"></button>
+                                    <button type="button" class="pdf-color-swatch @(SignColor == "#2196F3" ? "active" : "")" style="background:#2196F3" @onclick='() => SetSignColor("#2196F3")' @onclick:preventDefault="true"></button>
+                                    <button type="button" class="pdf-color-swatch @(SignColor == "#9C27B0" ? "active" : "")" style="background:#9C27B0" @onclick='() => SetSignColor("#9C27B0")' @onclick:preventDefault="true"></button>
+                                    <input type="color" value="@SignColor" class="pdf-color-custom" title="Custom color" @onchange="UpdateSignColor" />
                                 </div>
                             </div>
                         </div>
@@ -174,47 +141,14 @@
                                 <div class="sign-color-row">
                                     <span style="font-size:0.8rem;color:var(--text-secondary);">Color:</span>
                                     <div class="pdf-color-palette">
-                                        <button type="button"
-                                                class="pdf-color-swatch @(SignColor == "#000000" ? "active" : "")"
-                                                style="background:#000000"
-                                                @onclick='() => SetSignColor("#000000")'
-                                                @onclick:preventDefault="true"></button>
-                                        <button type="button"
-                                                class="pdf-color-swatch @(SignColor == "#FF0000" ? "active" : "")"
-                                                style="background:#FF0000"
-                                                @onclick='() => SetSignColor("#FF0000")'
-                                                @onclick:preventDefault="true"></button>
-                                        <button type="button"
-                                                class="pdf-color-swatch @(SignColor == "#FF8C00" ? "active" : "")"
-                                                style="background:#FF8C00"
-                                                @onclick='() => SetSignColor("#FF8C00")'
-                                                @onclick:preventDefault="true"></button>
-                                        <button type="button"
-                                                class="pdf-color-swatch @(SignColor == "#FFD700" ? "active" : "")"
-                                                style="background:#FFD700"
-                                                @onclick='() => SetSignColor("#FFD700")'
-                                                @onclick:preventDefault="true"></button>
-                                        <button type="button"
-                                                class="pdf-color-swatch @(SignColor == "#00C851" ? "active" : "")"
-                                                style="background:#00C851"
-                                                @onclick='() => SetSignColor("#00C851")'
-                                                @onclick:preventDefault="true"></button>
-                                        <button type="button"
-                                                class="pdf-color-swatch @(SignColor == "#2196F3" ? "active" : "")"
-                                                style="background:#2196F3"
-                                                @onclick='() => SetSignColor("#2196F3")'
-                                                @onclick:preventDefault="true"></button>
-                                        <button type="button"
-                                                class="pdf-color-swatch @(SignColor == "#9C27B0" ? "active" : "")"
-                                                style="background:#9C27B0"
-                                                @onclick='() => SetSignColor("#9C27B0")'
-                                                @onclick:preventDefault="true"></button>
-
-                                        <input type="color"
-                                               value="@SignColor"
-                                               class="pdf-color-custom"
-                                               title="Custom color"
-                                               @onchange="UpdateSignColor" />
+                                        <button type="button" class="pdf-color-swatch @(SignColor == "#000000" ? "active" : "")" style="background:#000000" @onclick='() => SetSignColor("#000000")' @onclick:preventDefault="true"></button>
+                                        <button type="button" class="pdf-color-swatch @(SignColor == "#FF0000" ? "active" : "")" style="background:#FF0000" @onclick='() => SetSignColor("#FF0000")' @onclick:preventDefault="true"></button>
+                                        <button type="button" class="pdf-color-swatch @(SignColor == "#FF8C00" ? "active" : "")" style="background:#FF8C00" @onclick='() => SetSignColor("#FF8C00")' @onclick:preventDefault="true"></button>
+                                        <button type="button" class="pdf-color-swatch @(SignColor == "#FFD700" ? "active" : "")" style="background:#FFD700" @onclick='() => SetSignColor("#FFD700")' @onclick:preventDefault="true"></button>
+                                        <button type="button" class="pdf-color-swatch @(SignColor == "#00C851" ? "active" : "")" style="background:#00C851" @onclick='() => SetSignColor("#00C851")' @onclick:preventDefault="true"></button>
+                                        <button type="button" class="pdf-color-swatch @(SignColor == "#2196F3" ? "active" : "")" style="background:#2196F3" @onclick='() => SetSignColor("#2196F3")' @onclick:preventDefault="true"></button>
+                                        <button type="button" class="pdf-color-swatch @(SignColor == "#9C27B0" ? "active" : "")" style="background:#9C27B0" @onclick='() => SetSignColor("#9C27B0")' @onclick:preventDefault="true"></button>
+                                        <input type="color" value="@SignColor" class="pdf-color-custom" title="Custom color" @onchange="UpdateSignColor" />
                                     </div>
                                 </div>
                             </div>
@@ -230,23 +164,9 @@
 
                     <div class="sign-pdf-nav">
                         <div style="display:flex;align-items:center;gap:0.5rem;">
-                            <button type="button"
-                                    class="pdf-nav-btn"
-                                    @onclick="PrevPage"
-                                    @onclick:preventDefault="true"
-                                    disabled="@(CurrentPage <= 1)">
-                                ←
-                            </button>
-
+                            <button type="button" class="pdf-nav-btn" @onclick="PrevPage" @onclick:preventDefault="true" disabled="@(CurrentPage <= 1)">←</button>
                             <span style="font-size:0.875rem;color:var(--text-secondary);">Page @CurrentPage of @TotalPages</span>
-
-                            <button type="button"
-                                    class="pdf-nav-btn"
-                                    @onclick="NextPage"
-                                    @onclick:preventDefault="true"
-                                    disabled="@(CurrentPage >= TotalPages)">
-                                →
-                            </button>
+                            <button type="button" class="pdf-nav-btn" @onclick="NextPage" @onclick:preventDefault="true" disabled="@(CurrentPage >= TotalPages)">→</button>
                         </div>
 
                         @if (SignaturePlaced)
@@ -257,13 +177,7 @@
                                 </svg>
                                 Signature placed
                             </div>
-
-                            <button type="button"
-                                    class="sign-action-btn"
-                                    @onclick="ClearPlacement"
-                                    @onclick:preventDefault="true">
-                                Move it
-                            </button>
+                            <button type="button" class="sign-action-btn" @onclick="ClearPlacement" @onclick:preventDefault="true">Move it</button>
                         }
                         else
                         {
@@ -281,14 +195,6 @@
                         <canvas id="signOverlayCanvas" style="position:absolute;top:0;left:0;max-width:100%;"></canvas>
                     </div>
                 </div>
-
-                @* <p style="color:red;font-size:0.9rem;">
-                    SignaturePlaced=@SignaturePlaced |
-                    PlaceX=@PlaceX |
-                    PlaceY=@PlaceY |
-                    W=@PreviewCanvasWidth |
-                    H=@PreviewCanvasHeight
-                </p> *@
 
                 <button type="button"
                         class="process-button"
@@ -317,13 +223,14 @@
         {
             <AdSlot Size="rectangle" />
             <div class="result-container">
-                <span class="result-icon">✅</span>
+                <span class="result-icon">✍️</span>
                 <h2>PDF Signed!</h2>
                 <p style="color:var(--text-secondary);margin-bottom:1.5rem;">
                     Your signature has been applied successfully.
                 </p>
                 <button type="button"
                         class="download-button"
+                        style="background:var(--primary);"
                         @onclick="DownloadFile"
                         @onclick:preventDefault="true">
                     Download Signed PDF
