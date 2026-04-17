@@ -296,14 +296,25 @@
         let isSignDrawing = false;
         let signColor = '#000000';
 
+        window._signPdfState = {
+            pdfDoc: null,
+            renderTask: null,
+            renderVersion: 0,
+            dragBound: false,
+            dotNetRef: null
+        };
+
         window.initSignaturePad = (dotNet) => {
             signatureDotNet = dotNet;
-            setTimeout(() => setupSignaturePad(), 300);
+            setTimeout(() => setupSignaturePad(), 100);
         };
 
         function setupSignaturePad() {
             const canvas = document.getElementById('signatureCanvas');
-            if (!canvas) { setTimeout(setupSignaturePad, 200); return; }
+            if (!canvas) {
+                setTimeout(setupSignaturePad, 200);
+                return;
+            }
             if (canvas.dataset.bound === 'true') return;
             canvas.dataset.bound = 'true';
 
@@ -334,7 +345,6 @@
 
             canvas.addEventListener('mouseup', () => {
                 isSignDrawing = false;
-                // Update _lastSigData after each stroke so drag preview works
                 window._lastSigData = canvas.toDataURL('image/png');
             });
 
@@ -376,12 +386,40 @@
             const canvas = document.getElementById('signatureCanvas');
             if (!canvas) return;
             canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+            window._lastSigData = '';
         };
 
         window.getSignatureImage = () => {
             const canvas = document.getElementById('signatureCanvas');
-            if (!canvas) return null;
-            return canvas.toDataURL('image/png');
+
+            // Prefer the saved signature if we already captured one
+            if (window._lastSigData && window._lastSigData !== 'data:,') {
+                return window._lastSigData;
+            }
+
+            if (!canvas) return '';
+
+            const data = canvas.toDataURL('image/png');
+            if (!data || data === 'data:,') return '';
+
+            return data;
+        };
+
+        window.signPdfGetPlacementInfo = () => {
+            const overlay = document.getElementById('signOverlayCanvas');
+            const pdfCanvas = document.getElementById('signPdfCanvas');
+
+            const result = {
+                canvasWidth: (overlay && overlay.width) || (pdfCanvas && pdfCanvas.width) || 0,
+                canvasHeight: (overlay && overlay.height) || (pdfCanvas && pdfCanvas.height) || 0,
+                x: window._lastSigX || 0,
+                y: window._lastSigY || 0,
+                sigWidth: 200,
+                sigHeight: 80
+            };
+
+            console.log("signPdfGetPlacementInfo:", result);
+            return result;
         };
 
         window.setSignatureColor = (color) => {
@@ -393,91 +431,214 @@
         };
 
         // ── Sign PDF ──────────────────────────────────────────────────────
+        window._signPdfRenderTask = null;
+        window._signPdfDoc = null;
+        window._signPdfRenderVersion = 0;
+
         window.signPdfRenderPage = async (base64Data, pageNum) => {
             const canvas = document.getElementById('signPdfCanvas');
             const overlay = document.getElementById('signOverlayCanvas');
-            if (!canvas) return;
+            if (!canvas || !overlay) return;
 
-            const bytes = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
-            const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
-            const page = await pdf.getPage(pageNum);
-            const viewport = page.getViewport({ scale: 1.2 });
+            const renderVersion = ++window._signPdfRenderVersion;
 
-            canvas.width = viewport.width;
-            canvas.height = viewport.height;
-            canvas.style.width = '100%';
-            canvas.style.height = 'auto';
+            try {
+                if (window._signPdfRenderTask) {
+                    try {
+                        window._signPdfRenderTask.cancel();
+                        await window._signPdfRenderTask.promise;
+                    } catch (e) {
+                        // expected when cancelled
+                    } finally {
+                        window._signPdfRenderTask = null;
+                    }
+                }
 
-            if (overlay) {
-                overlay.width = viewport.width;
-                overlay.height = viewport.height;
+                if (!window._signPdfDoc) {
+                    const bytes = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+                    window._signPdfDoc = await pdfjsLib.getDocument({ data: bytes }).promise;
+                }
+
+                const page = await window._signPdfDoc.getPage(pageNum);
+
+                const parentWidth = canvas.parentElement?.clientWidth || 900;
+                const unscaledViewport = page.getViewport({ scale: 1 });
+                const scale = parentWidth / unscaledViewport.width;
+                const viewport = page.getViewport({ scale });
+
+                canvas.width = Math.floor(viewport.width);
+                canvas.height = Math.floor(viewport.height);
+                canvas.style.width = '100%';
+                canvas.style.height = 'auto';
+
+                overlay.width = canvas.width;
+                overlay.height = canvas.height;
                 overlay.style.width = '100%';
                 overlay.style.height = '100%';
-            }
 
-            const ctx = canvas.getContext('2d');
-            await page.render({ canvasContext: ctx, viewport }).promise;
+                const ctx = canvas.getContext('2d');
+                const overlayCtx = overlay.getContext('2d');
+
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                overlayCtx.clearRect(0, 0, overlay.width, overlay.height);
+
+                window._signPdfRenderTask = page.render({
+                    canvasContext: ctx,
+                    viewport: viewport
+                });
+
+                await window._signPdfRenderTask.promise;
+                window._signPdfRenderTask = null;
+
+                if (renderVersion !== window._signPdfRenderVersion) {
+                    return;
+                }
+
+                if (window._lastSigData &&
+                    window._lastSigData !== 'data:,' &&
+                    typeof window._lastSigX === 'number' &&
+                    typeof window._lastSigY === 'number') {
+                    _drawSigPreview(overlay, window._lastSigData, window._lastSigX, window._lastSigY);
+                }
+            } catch (err) {
+                if (err && err.name === 'RenderingCancelledException') {
+                    return;
+                }
+
+                console.error('signPdfRenderPage failed', err);
+                throw err;
+            }
+        };
+
+        window.signPdfResetState = () => {
+            window._lastSigData = '';
+            window._lastSigX = 0;
+            window._lastSigY = 0;
+
+            window._signPdfDoc = null;
+            window._signPdfRenderTask = null;
+            window._signPdfRenderVersion = 0;
+
+            const overlay = document.getElementById('signOverlayCanvas');
+            if (overlay) {
+                const ctx = overlay.getContext('2d');
+                ctx.clearRect(0, 0, overlay.width, overlay.height);
+            }
         };
 
         window.signPdfInitDrag = (dotNetRef) => {
+            const state = window._signPdfState;
             const overlay = document.getElementById('signOverlayCanvas');
             if (!overlay) return;
 
-            const newOverlay = overlay.cloneNode(true);
-            overlay.parentNode.replaceChild(newOverlay, overlay);
-            const o = document.getElementById('signOverlayCanvas');
+            state.dotNetRef = dotNetRef;
+
+            if (overlay.dataset.dragBound === 'true') {
+                return;
+            }
+
+            overlay.dataset.dragBound = 'true';
 
             let dragging = false;
 
-            o.addEventListener('mousedown', async (e) => {
-                // Grab fresh signature data at drag start
+            overlay.addEventListener('mousedown', (e) => {
                 let sigData = window._lastSigData;
                 if (!sigData || sigData === 'data:,') return;
+
                 dragging = true;
                 e.preventDefault();
-                const coords = getOverlayCoords(o, e.clientX, e.clientY);
+
+                const coords = getOverlayCoords(overlay, e.clientX, e.clientY);
                 window._lastSigX = coords[0] - 100;
                 window._lastSigY = coords[1] - 40;
-                _drawSigPreview(o, sigData, window._lastSigX, window._lastSigY);
+                _drawSigPreview(overlay, sigData, window._lastSigX, window._lastSigY);
             });
 
-            o.addEventListener('mousemove', (e) => {
+            overlay.addEventListener('mousemove', (e) => {
                 if (!dragging || !window._lastSigData) return;
-                const coords = getOverlayCoords(o, e.clientX, e.clientY);
+
+                const coords = getOverlayCoords(overlay, e.clientX, e.clientY);
                 window._lastSigX = coords[0] - 100;
                 window._lastSigY = coords[1] - 40;
-                _drawSigPreview(o, window._lastSigData, window._lastSigX, window._lastSigY);
+                _drawSigPreview(overlay, window._lastSigData, window._lastSigX, window._lastSigY);
             });
 
-            o.addEventListener('mouseup', () => {
+            overlay.addEventListener('mouseup', async () => {
                 if (!dragging) return;
                 dragging = false;
-                dotNetRef.invokeMethodAsync('OnSignaturePlaced',
-                    window._lastSigX || 0,
-                    window._lastSigY || 0);
+
+                if (state.dotNetRef) {
+                    await state.dotNetRef.invokeMethodAsync(
+                        'OnSignaturePlaced',
+                        window._lastSigX || 0,
+                        window._lastSigY || 0,
+                        overlay.width || 0,
+                        overlay.height || 0
+                    );
+                }
             });
 
-            o.addEventListener('mouseleave', () => {
+            overlay.addEventListener('mouseleave', async () => {
                 if (!dragging) return;
                 dragging = false;
-                dotNetRef.invokeMethodAsync('OnSignaturePlaced',
-                    window._lastSigX || 0,
-                    window._lastSigY || 0);
+
+                if (state.dotNetRef) {
+                    await state.dotNetRef.invokeMethodAsync(
+                        'OnSignaturePlaced',
+                        window._lastSigX || 0,
+                        window._lastSigY || 0
+                    );
+                }
             });
+
+            overlay.addEventListener('touchstart', (e) => {
+                let sigData = window._lastSigData;
+                if (!sigData || sigData === 'data:,') return;
+
+                dragging = true;
+                e.preventDefault();
+
+                const t = e.touches[0];
+                const coords = getOverlayCoords(overlay, t.clientX, t.clientY);
+                window._lastSigX = coords[0] - 100;
+                window._lastSigY = coords[1] - 40;
+                _drawSigPreview(overlay, sigData, window._lastSigX, window._lastSigY);
+            }, { passive: false });
+
+            overlay.addEventListener('touchmove', (e) => {
+                if (!dragging || !window._lastSigData) return;
+
+                e.preventDefault();
+                const t = e.touches[0];
+                const coords = getOverlayCoords(overlay, t.clientX, t.clientY);
+                window._lastSigX = coords[0] - 100;
+                window._lastSigY = coords[1] - 40;
+                _drawSigPreview(overlay, window._lastSigData, window._lastSigX, window._lastSigY);
+            }, { passive: false });
+
+            overlay.addEventListener('touchend', async (e) => {
+                if (!dragging) return;
+                dragging = false;
+                e.preventDefault();
+
+                if (state.dotNetRef) {
+                    await state.dotNetRef.invokeMethodAsync(
+                        'OnSignaturePlaced',
+                        window._lastSigX || 0,
+                        window._lastSigY || 0
+                    );
+                }
+            }, { passive: false });
         };
 
         window.signPdfGetScale = () => {
             const pdfCanvas = document.getElementById('signPdfCanvas');
             if (!pdfCanvas) return [1, 1];
-            // pdfCanvas.width is viewport pixels at 1.2 scale
-            // To get PDF points: divide by 1.2 (undo render scale), 
-            // then divide by pdfCanvas.width to get points-per-pixel ratio
-            // But we need absolute points, so just return the divisor per pixel:
-            // PDF point width = pdfCanvas.width / 1.2
-            // So: pdfPoints = canvasPixels * (pdfPointWidth / canvasPixelWidth)
-            //              = canvasPixels * (pdfCanvas.width/1.2) / pdfCanvas.width
-            //              = canvasPixels / 1.2
-            return [1 / 1.2, 1 / 1.2];
+
+            const xScale = 1 / ((pdfCanvas.width || 1) / ((pdfCanvas.width || 1)));
+            const yScale = 1 / ((pdfCanvas.height || 1) / ((pdfCanvas.height || 1)));
+
+            return [xScale / 1.0, yScale / 1.0];
         };
 
         window.signPdfGetCanvasInternalHeight = () => {
@@ -488,6 +649,11 @@
         window.signPdfGetCanvasHeightPx = () => {
             const canvas = document.getElementById('signOverlayCanvas');
             return canvas ? canvas.getBoundingClientRect().height : 0;
+        };
+
+        window.signPdfGetCanvasInternalWidth = () => {
+            const canvas = document.getElementById('signOverlayCanvas');
+            return canvas ? canvas.width : 0;
         };
 
         window.signPdfSetLastSig = (sigData) => {
@@ -509,6 +675,7 @@
         window.signPdfDrawPreview = (sigDataUrl, x, y) => {
             const overlay = document.getElementById('signOverlayCanvas');
             if (!overlay || !sigDataUrl || sigDataUrl === 'data:,') return;
+
             window._lastSigData = sigDataUrl;
             window._lastSigX = x;
             window._lastSigY = y;
@@ -518,6 +685,7 @@
         function _drawSigPreview(overlay, sigDataUrl, x, y) {
             const ctx = overlay.getContext('2d');
             ctx.clearRect(0, 0, overlay.width, overlay.height);
+
             const img = new Image();
             img.onload = () => {
                 ctx.drawImage(img, x, y, 200, 80);
@@ -533,20 +701,26 @@
         window.signPdfClearOverlay = () => {
             const overlay = document.getElementById('signOverlayCanvas');
             if (!overlay) return;
+
             overlay.getContext('2d').clearRect(0, 0, overlay.width, overlay.height);
+            window._lastSigX = 0;
+            window._lastSigY = 0;
         };
 
         window.signPdfGenerateTypedSig = (text, color) => {
             if (!text) return 'data:,';
+
             const canvas = document.createElement('canvas');
             canvas.width = 400;
             canvas.height = 120;
+
             const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = color || '#000000';
             ctx.font = "italic 52px 'Brush Script MT', cursive";
             ctx.textBaseline = 'middle';
             ctx.fillText(text, 10, 60);
+
             return canvas.toDataURL('image/png');
         };
 
@@ -817,23 +991,19 @@
                     }
                 });
 
-                activeSvg.addEventListener('mouseup', e => {
-                    if (!isDrawing) return;
-                    isDrawing = false;
-                    const rect = activeSvg.getBoundingClientRect();
-                    const x = e.clientX - rect.left;
-                    const y = e.clientY - rect.top;
-                    const color = container.querySelector('#pdf-color-pick').value;
+                overlay.addEventListener('mouseup', async () => {
+                    if (!dragging) return;
+                    dragging = false;
 
-                    if (currentTool === 'draw') {
-                        annotations.push({ type: 'ink', page: currentPage, points: [...currentPathPoints], color, scale });
-                        inkPath = null;
-                    } else if (currentTool === 'rect') {
-                        annotations.push({ type: 'rect', page: currentPage, x: Math.min(startX, x) / scale, y: Math.min(startY, y) / scale, width: Math.abs(x - startX) / scale, height: Math.abs(y - startY) / scale, color });
-                    } else if (currentTool === 'highlight') {
-                        annotations.push({ type: 'highlight', page: currentPage, x: Math.min(startX, x) / scale, y: startY / scale, width: Math.abs(x - startX) / scale, height: 20 / scale, color });
+                    if (state.dotNetRef) {
+                        await state.dotNetRef.invokeMethodAsync(
+                            'OnSignaturePlaced',
+                            window._lastSigX || 0,
+                            window._lastSigY || 0,
+                            overlay.width || 0,
+                            overlay.height || 0
+                        );
                     }
-                    redrawOverlay(container);
                 });
             }
 
