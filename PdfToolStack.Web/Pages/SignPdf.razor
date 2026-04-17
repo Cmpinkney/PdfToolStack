@@ -8,7 +8,6 @@
 @implements IDisposable
 @inject FileValidationService Validator
 @inject ToastService Toast
-@inject SessionUsageService SessionUsage
 
 <PageTitle>@(IsContractMode ? "Sign Contract Online Free — Electronic Signature | PdfToolStack" : "Sign PDF Free Online — Add Electronic Signature to PDF")</PageTitle>
 <HeadContent>
@@ -209,10 +208,10 @@
                         }
                     </div>
 
-                    <div class="sign-pdf-preview-wrap" style="position:relative;">
+                    <div class="sign-pdf-preview-wrap">
                         <canvas id="signPdfCanvas" style="display:block;max-width:100%;"></canvas>
                         <canvas id="signOverlayCanvas"
-                                style="position:absolute;top:0;left:0;width:100%;height:100%;">
+                                style="position:absolute;top:0;left:0;max-width:100%;">
                         </canvas>
                     </div>
                 </div>
@@ -303,6 +302,8 @@
     private DotNetObjectReference<SignPdf>? _dotNetRef;
     private string? _lastSigData;
 
+    private bool _pdfRendered = false;
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
@@ -313,6 +314,18 @@
         if (CurrentState == PageState.Upload && SelectedFile != null)
         {
             await JS.InvokeVoidAsync("initSignaturePad", _dotNetRef);
+
+            // Render PDF canvas once — guard prevents re-render loop
+            if (!_pdfRendered && UploadedBytes != null)
+            {
+                _pdfRendered = true;
+                await Task.Delay(300);
+                await RenderCurrentPage();
+            }
+        }
+        else
+        {
+            _pdfRendered = false;
         }
     }
 
@@ -397,7 +410,7 @@
             Toast.ShowSuccess($"File ready — {Validator.FormatSize(file.Size)}");
             StateHasChanged();
 
-            await Task.Delay(150);
+            await Task.Delay(300);
             await RenderCurrentPage();
         }
         catch (Exception ex)
@@ -459,51 +472,52 @@
     {
         if (UploadedBytes == null || !SignaturePlaced) return;
 
-        // ── Capture everything from JS BEFORE any state change ──
-        string signatureBase64 = SignMode == "draw"
-            ? await JS.InvokeAsync<string>("signPdfGetLastSig")
-            : await JS.InvokeAsync<string>("signPdfGenerateTypedSig", TypedSignature, SignColor);
-
-        if (string.IsNullOrEmpty(signatureBase64) || signatureBase64 == "data:,")
-        {
-            ErrorMessage = SignMode == "draw"
-                ? "Please draw your signature first."
-                : "Please type your name first.";
-            StateHasChanged();
-            return;
-        }
-
-        var canvasH = await JS.InvokeAsync<double>("signPdfGetCanvasInternalHeight");
-        // PlaceX/PlaceY are in internal canvas pixels at 1.2 render scale
-        // Clamp placement to keep signature within page bounds
-        double clampedY = Math.Max(0, Math.Min(PlaceY, canvasH - 80.0));
-        double clampedX = Math.Max(0, PlaceX);
-
-        float pageHeightPts = (float)(canvasH / 1.2);
-        float pdfX = (float)(clampedX / 1.2);
-        float sigW = (float)(200.0 / 1.2);
-        float sigH = (float)(80.0 / 1.2);
-        // PlaceY is top-left of sig box in canvas pixels
-        // iTextSharp needs bottom-left in PDF points
-        float pdfY = pageHeightPts - (float)(clampedY / 1.2) - sigH;
-
-        Console.WriteLine($"DEBUG: PlaceX={PlaceX} PlaceY={PlaceY} canvasH={canvasH} pdfX={pdfX} pdfY={pdfY} sigW={sigW} sigH={sigH}");
-
-        var sigBytes = Convert.FromBase64String(
-            signatureBase64.Replace("data:image/png;base64,", ""));
-
-        // ── Now safe to change state — all JS values captured ──
         CurrentState = PageState.Processing;
         StateHasChanged();
         await JS.InvokeVoidAsync("scrollToTop");
 
         try
         {
+            string signatureBase64 = SignMode == "draw"
+                ? await JS.InvokeAsync<string>("getSignatureImage")
+                : await JS.InvokeAsync<string>("signPdfGenerateTypedSig", TypedSignature, SignColor);
+
+            if (string.IsNullOrEmpty(signatureBase64) || signatureBase64 == "data:,")
+            {
+                ErrorMessage = SignMode == "draw"
+                    ? "Please draw your signature first."
+                    : "Please type your name first.";
+                CurrentState = PageState.Upload;
+                StateHasChanged();
+                return;
+            }
+
+            var sigBytes = Convert.FromBase64String(
+                signatureBase64.Replace("data:image/png;base64,", ""));
+
+            // Convert canvas pixel coordinates to PDF points
+            // Canvas rendered at 1.2x scale, so divide by 1.2
+            // PDF Y origin is bottom-left; canvas Y origin is top-left, so flip
+            const double renderScale = 1.2;
+            const double sigCanvasW = 200.0;
+            const double sigCanvasH = 80.0;
+
+            var canvasH = await JS.InvokeAsync<double>("signPdfGetCanvasInternalHeight");
+
+            float pdfX = (float)(PlaceX / renderScale);
+            float sigW = (float)(sigCanvasW / renderScale);
+            float sigH = (float)(sigCanvasH / renderScale);
+            float pdfY = (float)((canvasH - PlaceY - sigCanvasH) / renderScale);
+
+            Console.WriteLine($"DEBUG: PlaceX={PlaceX} PlaceY={PlaceY} canvasH={canvasH} pdfX={pdfX} pdfY={pdfY} sigW={sigW} sigH={sigH}");
+
             ResultBytes = await ApiService.SignPdfAsync(
                 UploadedBytes, SelectedFile!.Name, sigBytes,
                 pdfX, pdfY, sigW, sigH, CurrentPage);
 
             CurrentState = ResultBytes != null ? PageState.Complete : PageState.Error;
+            StateHasChanged();
+            await JS.InvokeVoidAsync("scrollToTop");
             if (ResultBytes == null) ErrorMessage = "Failed to sign PDF. Please try again.";
         }
         catch (Exception ex)
@@ -513,7 +527,6 @@
         }
 
         StateHasChanged();
-        await JS.InvokeVoidAsync("scrollToTop");
     }
 
     private async Task DownloadFile()
@@ -523,7 +536,6 @@
             SelectedFile?.Name ?? "document") + "_signed.pdf";
         await JS.InvokeVoidAsync("downloadFile", fileName,
             Convert.ToBase64String(ResultBytes));
-        SessionUsage.RecordToolCompletion("Tool Name");
     }
 
     private bool IsContractMode =>
@@ -542,5 +554,6 @@
         SignaturePlaced = false;
         TypedSignature = "";
         SignColor = "#000000";
+        _pdfRendered = false;
     }
 }
