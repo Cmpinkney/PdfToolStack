@@ -5,69 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>PdfToolStack — AI-Powered PDF Tools</title>
     <base href="/" />
-    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
-    <link rel="apple-touch-icon" href="apple-touch-icon.svg" />
+    <link rel="icon" type="image/svg+xml" href="/images/icons/favicon.svg" />
+    <link rel="apple-touch-icon" href="/images/icons/favicon.svg" />
     <link rel="stylesheet" href="css/app.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="_content/Microsoft.AspNetCore.Components.WebAssembly.Authentication/AuthenticationService.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
-    <!-- Microsoft Clarity — privacy-friendly analytics -->
-    <script type="text/javascript">
-        (function (c, l, a, r, i, t, y) {
-            c[a] = c[a] || function () { (c[a].q = c[a].q || []).push(arguments) };
-            t = l.createElement(r); t.async = 1; t.src = "https://www.clarity.ms/tag/" + i;
-            y = l.getElementsByTagName(r)[0]; y.parentNode.insertBefore(t, y);
-        })(window, document, "clarity", "script", "waaajvmrdv");
-    </script>
-    <!-- Tells Google what PdfToolStack is -->
-    <script type="application/ld+json">
-        {
-          "@context": "https://schema.org",
-          "@type": "WebApplication",
-          "name": "PdfToolStack",
-          "url": "https://pdftoolstack.com",
-          "description": "AI-powered PDF tools — compress, merge, split, sign, convert and edit PDF files free online.",
-          "applicationCategory": "BusinessApplication",
-          "operatingSystem": "Web",
-          "offers": [
-            {
-              "@type": "Offer",
-              "price": "0",
-              "priceCurrency": "USD",
-              "description": "Free plan — 35+ PDF tools, up to 25MB"
-            },
-            {
-              "@type": "Offer",
-              "price": "12",
-              "priceCurrency": "USD",
-              "description": "Pro plan — unlimited files, AI tools, batch processing"
-            }
-          ],
-          "featureList": [
-            "Compress PDF",
-            "Merge PDF",
-            "Split PDF",
-            "Sign PDF",
-            "PDF to Word",
-            "Word to PDF",
-            "AI Contract Reviewer",
-            "AI Invoice Extractor"
-          ]
-        }
-    </script>
-    <!-- Open Graph — social sharing -->
-    <meta property="og:title" content="PdfToolStack — AI-Powered PDF Tools" />
-    <meta property="og:description" content="35+ free PDF tools powered by AI. Compress, merge, split, sign, convert and edit PDFs online. No signup required." />
-    <meta property="og:url" content="https://pdftoolstack.com" />
-    <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="PdfToolStack" />
-
-    <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="PdfToolStack — AI-Powered PDF Tools" />
-    <meta name="twitter:description" content="35+ free PDF tools powered by AI. No signup required." />
 </head>
 <body>
     <script>
@@ -296,25 +241,14 @@
         let isSignDrawing = false;
         let signColor = '#000000';
 
-        window._signPdfState = {
-            pdfDoc: null,
-            renderTask: null,
-            renderVersion: 0,
-            dragBound: false,
-            dotNetRef: null
-        };
-
         window.initSignaturePad = (dotNet) => {
             signatureDotNet = dotNet;
-            setTimeout(() => setupSignaturePad(), 100);
+            setTimeout(() => setupSignaturePad(), 300);
         };
 
         function setupSignaturePad() {
             const canvas = document.getElementById('signatureCanvas');
-            if (!canvas) {
-                setTimeout(setupSignaturePad, 200);
-                return;
-            }
+            if (!canvas) { setTimeout(setupSignaturePad, 200); return; }
             if (canvas.dataset.bound === 'true') return;
             canvas.dataset.bound = 'true';
 
@@ -345,6 +279,7 @@
 
             canvas.addEventListener('mouseup', () => {
                 isSignDrawing = false;
+                // Update _lastSigData after each stroke so drag preview works
                 window._lastSigData = canvas.toDataURL('image/png');
             });
 
@@ -386,40 +321,12 @@
             const canvas = document.getElementById('signatureCanvas');
             if (!canvas) return;
             canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
-            window._lastSigData = '';
         };
 
         window.getSignatureImage = () => {
             const canvas = document.getElementById('signatureCanvas');
-
-            // Prefer the saved signature if we already captured one
-            if (window._lastSigData && window._lastSigData !== 'data:,') {
-                return window._lastSigData;
-            }
-
-            if (!canvas) return '';
-
-            const data = canvas.toDataURL('image/png');
-            if (!data || data === 'data:,') return '';
-
-            return data;
-        };
-
-        window.signPdfGetPlacementInfo = () => {
-            const overlay = document.getElementById('signOverlayCanvas');
-            const pdfCanvas = document.getElementById('signPdfCanvas');
-
-            const result = {
-                canvasWidth: (overlay && overlay.width) || (pdfCanvas && pdfCanvas.width) || 0,
-                canvasHeight: (overlay && overlay.height) || (pdfCanvas && pdfCanvas.height) || 0,
-                x: window._lastSigX || 0,
-                y: window._lastSigY || 0,
-                sigWidth: 200,
-                sigHeight: 80
-            };
-
-            console.log("signPdfGetPlacementInfo:", result);
-            return result;
+            if (!canvas) return null;
+            return canvas.toDataURL('image/png');
         };
 
         window.setSignatureColor = (color) => {
@@ -431,214 +338,91 @@
         };
 
         // ── Sign PDF ──────────────────────────────────────────────────────
-        window._signPdfRenderTask = null;
-        window._signPdfDoc = null;
-        window._signPdfRenderVersion = 0;
-
         window.signPdfRenderPage = async (base64Data, pageNum) => {
             const canvas = document.getElementById('signPdfCanvas');
             const overlay = document.getElementById('signOverlayCanvas');
-            if (!canvas || !overlay) return;
+            if (!canvas) return;
 
-            const renderVersion = ++window._signPdfRenderVersion;
+            const bytes = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+            const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
+            const page = await pdf.getPage(pageNum);
+            const viewport = page.getViewport({ scale: 1.2 });
 
-            try {
-                if (window._signPdfRenderTask) {
-                    try {
-                        window._signPdfRenderTask.cancel();
-                        await window._signPdfRenderTask.promise;
-                    } catch (e) {
-                        // expected when cancelled
-                    } finally {
-                        window._signPdfRenderTask = null;
-                    }
-                }
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            canvas.style.width = '100%';
+            canvas.style.height = 'auto';
 
-                if (!window._signPdfDoc) {
-                    const bytes = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
-                    window._signPdfDoc = await pdfjsLib.getDocument({ data: bytes }).promise;
-                }
-
-                const page = await window._signPdfDoc.getPage(pageNum);
-
-                const parentWidth = canvas.parentElement?.clientWidth || 900;
-                const unscaledViewport = page.getViewport({ scale: 1 });
-                const scale = parentWidth / unscaledViewport.width;
-                const viewport = page.getViewport({ scale });
-
-                canvas.width = Math.floor(viewport.width);
-                canvas.height = Math.floor(viewport.height);
-                canvas.style.width = '100%';
-                canvas.style.height = 'auto';
-
-                overlay.width = canvas.width;
-                overlay.height = canvas.height;
+            if (overlay) {
+                overlay.width = viewport.width;
+                overlay.height = viewport.height;
                 overlay.style.width = '100%';
                 overlay.style.height = '100%';
-
-                const ctx = canvas.getContext('2d');
-                const overlayCtx = overlay.getContext('2d');
-
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                overlayCtx.clearRect(0, 0, overlay.width, overlay.height);
-
-                window._signPdfRenderTask = page.render({
-                    canvasContext: ctx,
-                    viewport: viewport
-                });
-
-                await window._signPdfRenderTask.promise;
-                window._signPdfRenderTask = null;
-
-                if (renderVersion !== window._signPdfRenderVersion) {
-                    return;
-                }
-
-                if (window._lastSigData &&
-                    window._lastSigData !== 'data:,' &&
-                    typeof window._lastSigX === 'number' &&
-                    typeof window._lastSigY === 'number') {
-                    _drawSigPreview(overlay, window._lastSigData, window._lastSigX, window._lastSigY);
-                }
-            } catch (err) {
-                if (err && err.name === 'RenderingCancelledException') {
-                    return;
-                }
-
-                console.error('signPdfRenderPage failed', err);
-                throw err;
             }
-        };
 
-        window.signPdfResetState = () => {
-            window._lastSigData = '';
-            window._lastSigX = 0;
-            window._lastSigY = 0;
-
-            window._signPdfDoc = null;
-            window._signPdfRenderTask = null;
-            window._signPdfRenderVersion = 0;
-
-            const overlay = document.getElementById('signOverlayCanvas');
-            if (overlay) {
-                const ctx = overlay.getContext('2d');
-                ctx.clearRect(0, 0, overlay.width, overlay.height);
-            }
+            const ctx = canvas.getContext('2d');
+            await page.render({ canvasContext: ctx, viewport }).promise;
         };
 
         window.signPdfInitDrag = (dotNetRef) => {
-            const state = window._signPdfState;
             const overlay = document.getElementById('signOverlayCanvas');
             if (!overlay) return;
 
-            state.dotNetRef = dotNetRef;
-
-            if (overlay.dataset.dragBound === 'true') {
-                return;
-            }
-
-            overlay.dataset.dragBound = 'true';
+            const newOverlay = overlay.cloneNode(true);
+            overlay.parentNode.replaceChild(newOverlay, overlay);
+            const o = document.getElementById('signOverlayCanvas');
 
             let dragging = false;
 
-            overlay.addEventListener('mousedown', (e) => {
+            o.addEventListener('mousedown', async (e) => {
+                // Grab fresh signature data at drag start
                 let sigData = window._lastSigData;
                 if (!sigData || sigData === 'data:,') return;
-
                 dragging = true;
                 e.preventDefault();
-
-                const coords = getOverlayCoords(overlay, e.clientX, e.clientY);
+                const coords = getOverlayCoords(o, e.clientX, e.clientY);
                 window._lastSigX = coords[0] - 100;
                 window._lastSigY = coords[1] - 40;
-                _drawSigPreview(overlay, sigData, window._lastSigX, window._lastSigY);
+                _drawSigPreview(o, sigData, window._lastSigX, window._lastSigY);
             });
 
-            overlay.addEventListener('mousemove', (e) => {
+            o.addEventListener('mousemove', (e) => {
                 if (!dragging || !window._lastSigData) return;
-
-                const coords = getOverlayCoords(overlay, e.clientX, e.clientY);
+                const coords = getOverlayCoords(o, e.clientX, e.clientY);
                 window._lastSigX = coords[0] - 100;
                 window._lastSigY = coords[1] - 40;
-                _drawSigPreview(overlay, window._lastSigData, window._lastSigX, window._lastSigY);
+                _drawSigPreview(o, window._lastSigData, window._lastSigX, window._lastSigY);
             });
 
-            overlay.addEventListener('mouseup', async () => {
+            o.addEventListener('mouseup', () => {
                 if (!dragging) return;
                 dragging = false;
-
-                if (state.dotNetRef) {
-                    await state.dotNetRef.invokeMethodAsync(
-                        'OnSignaturePlaced',
-                        window._lastSigX || 0,
-                        window._lastSigY || 0,
-                        overlay.width || 0,
-                        overlay.height || 0
-                    );
-                }
+                dotNetRef.invokeMethodAsync('OnSignaturePlaced',
+                    window._lastSigX || 0,
+                    window._lastSigY || 0);
             });
 
-            overlay.addEventListener('mouseleave', async () => {
+            o.addEventListener('mouseleave', () => {
                 if (!dragging) return;
                 dragging = false;
-
-                if (state.dotNetRef) {
-                    await state.dotNetRef.invokeMethodAsync(
-                        'OnSignaturePlaced',
-                        window._lastSigX || 0,
-                        window._lastSigY || 0
-                    );
-                }
+                dotNetRef.invokeMethodAsync('OnSignaturePlaced',
+                    window._lastSigX || 0,
+                    window._lastSigY || 0);
             });
-
-            overlay.addEventListener('touchstart', (e) => {
-                let sigData = window._lastSigData;
-                if (!sigData || sigData === 'data:,') return;
-
-                dragging = true;
-                e.preventDefault();
-
-                const t = e.touches[0];
-                const coords = getOverlayCoords(overlay, t.clientX, t.clientY);
-                window._lastSigX = coords[0] - 100;
-                window._lastSigY = coords[1] - 40;
-                _drawSigPreview(overlay, sigData, window._lastSigX, window._lastSigY);
-            }, { passive: false });
-
-            overlay.addEventListener('touchmove', (e) => {
-                if (!dragging || !window._lastSigData) return;
-
-                e.preventDefault();
-                const t = e.touches[0];
-                const coords = getOverlayCoords(overlay, t.clientX, t.clientY);
-                window._lastSigX = coords[0] - 100;
-                window._lastSigY = coords[1] - 40;
-                _drawSigPreview(overlay, window._lastSigData, window._lastSigX, window._lastSigY);
-            }, { passive: false });
-
-            overlay.addEventListener('touchend', async (e) => {
-                if (!dragging) return;
-                dragging = false;
-                e.preventDefault();
-
-                if (state.dotNetRef) {
-                    await state.dotNetRef.invokeMethodAsync(
-                        'OnSignaturePlaced',
-                        window._lastSigX || 0,
-                        window._lastSigY || 0
-                    );
-                }
-            }, { passive: false });
         };
 
         window.signPdfGetScale = () => {
             const pdfCanvas = document.getElementById('signPdfCanvas');
             if (!pdfCanvas) return [1, 1];
-
-            const xScale = 1 / ((pdfCanvas.width || 1) / ((pdfCanvas.width || 1)));
-            const yScale = 1 / ((pdfCanvas.height || 1) / ((pdfCanvas.height || 1)));
-
-            return [xScale / 1.0, yScale / 1.0];
+            // pdfCanvas.width is viewport pixels at 1.2 scale
+            // To get PDF points: divide by 1.2 (undo render scale),
+            // then divide by pdfCanvas.width to get points-per-pixel ratio
+            // But we need absolute points, so just return the divisor per pixel:
+            // PDF point width = pdfCanvas.width / 1.2
+            // So: pdfPoints = canvasPixels * (pdfPointWidth / canvasPixelWidth)
+            //              = canvasPixels * (pdfCanvas.width/1.2) / pdfCanvas.width
+            //              = canvasPixels / 1.2
+            return [1 / 1.2, 1 / 1.2];
         };
 
         window.signPdfGetCanvasInternalHeight = () => {
@@ -651,16 +435,9 @@
             return canvas ? canvas.getBoundingClientRect().height : 0;
         };
 
-        window.signPdfGetCanvasInternalWidth = () => {
-            const canvas = document.getElementById('signOverlayCanvas');
-            return canvas ? canvas.width : 0;
-        };
-
         window.signPdfSetLastSig = (sigData) => {
             window._lastSigData = sigData;
         };
-
-        window.signPdfGetLastSig = () => window._lastSigData || '';
 
         window.scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
@@ -675,7 +452,6 @@
         window.signPdfDrawPreview = (sigDataUrl, x, y) => {
             const overlay = document.getElementById('signOverlayCanvas');
             if (!overlay || !sigDataUrl || sigDataUrl === 'data:,') return;
-
             window._lastSigData = sigDataUrl;
             window._lastSigX = x;
             window._lastSigY = y;
@@ -685,7 +461,6 @@
         function _drawSigPreview(overlay, sigDataUrl, x, y) {
             const ctx = overlay.getContext('2d');
             ctx.clearRect(0, 0, overlay.width, overlay.height);
-
             const img = new Image();
             img.onload = () => {
                 ctx.drawImage(img, x, y, 200, 80);
@@ -701,26 +476,20 @@
         window.signPdfClearOverlay = () => {
             const overlay = document.getElementById('signOverlayCanvas');
             if (!overlay) return;
-
             overlay.getContext('2d').clearRect(0, 0, overlay.width, overlay.height);
-            window._lastSigX = 0;
-            window._lastSigY = 0;
         };
 
         window.signPdfGenerateTypedSig = (text, color) => {
             if (!text) return 'data:,';
-
             const canvas = document.createElement('canvas');
             canvas.width = 400;
             canvas.height = 120;
-
             const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = color || '#000000';
             ctx.font = "italic 52px 'Brush Script MT', cursive";
             ctx.textBaseline = 'middle';
             ctx.fillText(text, 10, 60);
-
             return canvas.toDataURL('image/png');
         };
 
@@ -759,78 +528,78 @@
 
             function buildEditorHTML(fileName) {
                 return `
-                    <div class="pdf-editor-wrap">
-                      <div class="pdf-toolbar">
-                        <div class="pdf-toolbar-left">
-                          <button class="pdf-tool-btn" data-tool="null" title="Select">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3l14 9-7 1-4 7z"/></svg>
-                          </button>
-                          <button class="pdf-tool-btn" data-tool="text" title="Add Text">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h7"/></svg>
-                            Text
-                          </button>
-                          <button class="pdf-tool-btn" data-tool="highlight" title="Highlight">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg>
-                            Highlight
-                          </button>
-                          <button class="pdf-tool-btn" data-tool="draw" title="Draw">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg>
-                            Draw
-                          </button>
-                          <button class="pdf-tool-btn" data-tool="rect" title="Rectangle">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
-                            Shape
-                          </button>
-                          <div class="pdf-tool-divider"></div>
-                          <div class="pdf-color-palette" id="pdf-color-palette">
-                            <button class="pdf-color-swatch active" data-color="#000000" style="background:#000000"></button>
-                            <button class="pdf-color-swatch" data-color="#FF0000" style="background:#FF0000"></button>
-                            <button class="pdf-color-swatch" data-color="#FF8C00" style="background:#FF8C00"></button>
-                            <button class="pdf-color-swatch" data-color="#FFD700" style="background:#FFD700"></button>
-                            <button class="pdf-color-swatch" data-color="#00C851" style="background:#00C851"></button>
-                            <button class="pdf-color-swatch" data-color="#2196F3" style="background:#2196F3"></button>
-                            <button class="pdf-color-swatch" data-color="#9C27B0" style="background:#9C27B0"></button>
-                            <button class="pdf-color-swatch" data-color="#FFFFFF" style="background:#FFFFFF;border:1px solid #ccc"></button>
-                            <input type="color" id="pdf-color-pick" value="#000000" class="pdf-color-custom" title="Custom color" />
+                        <div class="pdf-editor-wrap">
+                          <div class="pdf-toolbar">
+                            <div class="pdf-toolbar-left">
+                              <button class="pdf-tool-btn" data-tool="null" title="Select">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3l14 9-7 1-4 7z"/></svg>
+                              </button>
+                              <button class="pdf-tool-btn" data-tool="text" title="Add Text">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h7"/></svg>
+                                Text
+                              </button>
+                              <button class="pdf-tool-btn" data-tool="highlight" title="Highlight">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg>
+                                Highlight
+                              </button>
+                              <button class="pdf-tool-btn" data-tool="draw" title="Draw">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg>
+                                Draw
+                              </button>
+                              <button class="pdf-tool-btn" data-tool="rect" title="Rectangle">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+                                Shape
+                              </button>
+                              <div class="pdf-tool-divider"></div>
+                              <div class="pdf-color-palette" id="pdf-color-palette">
+                                <button class="pdf-color-swatch active" data-color="#000000" style="background:#000000"></button>
+                                <button class="pdf-color-swatch" data-color="#FF0000" style="background:#FF0000"></button>
+                                <button class="pdf-color-swatch" data-color="#FF8C00" style="background:#FF8C00"></button>
+                                <button class="pdf-color-swatch" data-color="#FFD700" style="background:#FFD700"></button>
+                                <button class="pdf-color-swatch" data-color="#00C851" style="background:#00C851"></button>
+                                <button class="pdf-color-swatch" data-color="#2196F3" style="background:#2196F3"></button>
+                                <button class="pdf-color-swatch" data-color="#9C27B0" style="background:#9C27B0"></button>
+                                <button class="pdf-color-swatch" data-color="#FFFFFF" style="background:#FFFFFF;border:1px solid #ccc"></button>
+                                <input type="color" id="pdf-color-pick" value="#000000" class="pdf-color-custom" title="Custom color" />
+                              </div>
+                              <select id="pdf-font-size" class="pdf-select" title="Size">
+                                <option value="12">12</option>
+                                <option value="14" selected>14</option>
+                                <option value="16">16</option>
+                                <option value="18">18</option>
+                                <option value="24">24</option>
+                                <option value="32">32</option>
+                              </select>
+                            </div>
+                            <div class="pdf-toolbar-center">
+                              <button class="pdf-nav-btn" id="pdf-prev">&#8592;</button>
+                              <span>Page <span id="pdf-page-num">1</span> of <span id="pdf-page-count">?</span></span>
+                              <button class="pdf-nav-btn" id="pdf-next">&#8594;</button>
+                              <button class="pdf-nav-btn" id="pdf-zoom-out">&#8722;</button>
+                              <button class="pdf-nav-btn" id="pdf-zoom-in">&#43;</button>
+                            </div>
+                            <div class="pdf-toolbar-right">
+                              <button class="pdf-tool-btn" id="pdf-undo">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7v6h6"/><path d="M3 13A9 9 0 1 0 6 6.7"/></svg>
+                                Undo
+                              </button>
+                              <button class="pdf-save-btn" id="pdf-save">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                Download
+                              </button>
+                            </div>
                           </div>
-                          <select id="pdf-font-size" class="pdf-select" title="Size">
-                            <option value="12">12</option>
-                            <option value="14" selected>14</option>
-                            <option value="16">16</option>
-                            <option value="18">18</option>
-                            <option value="24">24</option>
-                            <option value="32">32</option>
-                          </select>
-                        </div>
-                        <div class="pdf-toolbar-center">
-                          <button class="pdf-nav-btn" id="pdf-prev">&#8592;</button>
-                          <span>Page <span id="pdf-page-num">1</span> of <span id="pdf-page-count">?</span></span>
-                          <button class="pdf-nav-btn" id="pdf-next">&#8594;</button>
-                          <button class="pdf-nav-btn" id="pdf-zoom-out">&#8722;</button>
-                          <button class="pdf-nav-btn" id="pdf-zoom-in">&#43;</button>
-                        </div>
-                        <div class="pdf-toolbar-right">
-                          <button class="pdf-tool-btn" id="pdf-undo">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7v6h6"/><path d="M3 13A9 9 0 1 0 6 6.7"/></svg>
-                            Undo
-                          </button>
-                          <button class="pdf-save-btn" id="pdf-save">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                            Download
-                          </button>
-                        </div>
-                      </div>
-                      <div class="pdf-canvas-area">
-                        <div class="pdf-loader" id="pdf-loader">
-                          <div class="pdf-spinner"></div>
-                          <p>Loading PDF...</p>
-                        </div>
-                        <div class="pdf-canvas-container" id="pdf-canvas-container" style="display:none;">
-                          <canvas id="pdf-canvas"></canvas>
-                          <svg id="pdf-svg-overlay" style="position:absolute;top:0;left:0;pointer-events:none;"></svg>
-                        </div>
-                      </div>
-                    </div>`;
+                          <div class="pdf-canvas-area">
+                            <div class="pdf-loader" id="pdf-loader">
+                              <div class="pdf-spinner"></div>
+                              <p>Loading PDF...</p>
+                            </div>
+                            <div class="pdf-canvas-container" id="pdf-canvas-container" style="display:none;">
+                              <canvas id="pdf-canvas"></canvas>
+                              <svg id="pdf-svg-overlay" style="position:absolute;top:0;left:0;pointer-events:none;"></svg>
+                            </div>
+                          </div>
+                        </div>`;
             }
 
             function bindToolbar(container) {
@@ -991,19 +760,23 @@
                     }
                 });
 
-                overlay.addEventListener('mouseup', async () => {
-                    if (!dragging) return;
-                    dragging = false;
+                activeSvg.addEventListener('mouseup', e => {
+                    if (!isDrawing) return;
+                    isDrawing = false;
+                    const rect = activeSvg.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    const color = container.querySelector('#pdf-color-pick').value;
 
-                    if (state.dotNetRef) {
-                        await state.dotNetRef.invokeMethodAsync(
-                            'OnSignaturePlaced',
-                            window._lastSigX || 0,
-                            window._lastSigY || 0,
-                            overlay.width || 0,
-                            overlay.height || 0
-                        );
+                    if (currentTool === 'draw') {
+                        annotations.push({ type: 'ink', page: currentPage, points: [...currentPathPoints], color, scale });
+                        inkPath = null;
+                    } else if (currentTool === 'rect') {
+                        annotations.push({ type: 'rect', page: currentPage, x: Math.min(startX, x) / scale, y: Math.min(startY, y) / scale, width: Math.abs(x - startX) / scale, height: Math.abs(y - startY) / scale, color });
+                    } else if (currentTool === 'highlight') {
+                        annotations.push({ type: 'highlight', page: currentPage, x: Math.min(startX, x) / scale, y: startY / scale, width: Math.abs(x - startX) / scale, height: 20 / scale, color });
                     }
+                    redrawOverlay(container);
                 });
             }
 
@@ -1213,12 +986,12 @@
                     const box = document.createElement('div');
                     box.style.cssText = 'background:#fff;border-radius:12px;padding:24px;width:500px;max-height:65vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3);font-family:system-ui,sans-serif';
                     box.innerHTML = `
-                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-                                <h3 style="margin:0;font-size:1rem;color:#1a1a2e;">Select a PDF from OneDrive</h3>
-                                <button id="od-close" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:#888;">×</button>
-                            </div>
-                            <p style="font-size:0.8rem;color:#999;margin:0 0 12px;">Showing PDF files from your OneDrive root folder</p>
-                            <div id="od-file-list"></div>`;
+                                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                                    <h3 style="margin:0;font-size:1rem;color:#1a1a2e;">Select a PDF from OneDrive</h3>
+                                    <button id="od-close" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:#888;">×</button>
+                                </div>
+                                <p style="font-size:0.8rem;color:#999;margin:0 0 12px;">Showing PDF files from your OneDrive root folder</p>
+                                <div id="od-file-list"></div>`;
 
                     const list = box.querySelector('#od-file-list');
                     files.forEach(file => {
@@ -1227,12 +1000,12 @@
                         const sizeKb = file.size ? Math.round(file.size / 1024) : 0;
                         const sizeStr = sizeKb > 1024 ? (sizeKb / 1024).toFixed(1) + ' MB' : sizeKb + ' KB';
                         btn.innerHTML = `
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#e74c3c" stroke-width="2" style="flex-shrink:0;">
-                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                                    <polyline points="14,2 14,8 20,8"/>
-                                </svg>
-                                <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${file.name}</span>
-                                <span style="color:#aaa;font-size:0.78rem;">${sizeStr}</span>`;
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#e74c3c" stroke-width="2" style="flex-shrink:0;">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                        <polyline points="14,2 14,8 20,8"/>
+                                    </svg>
+                                    <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${file.name}</span>
+                                    <span style="color:#aaa;font-size:0.78rem;">${sizeStr}</span>`;
                         btn.onmouseover = () => btn.style.background = '#f5f7ff';
                         btn.onmouseout = () => btn.style.background = '#fff';
                         btn.onclick = () => { overlay.remove(); resolve(file); };

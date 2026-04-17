@@ -4,33 +4,42 @@
 <nav class="navbar" id="mainNavbar">
 
     <a href="/" class="nav-brand" aria-label="PdfToolStack home">
-        <svg width="32" height="32" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="display:block; flex-shrink:0;">
-            <rect x="20" y="14" width="36" height="46" rx="6" fill="#C0C8FA" transform="rotate(-8 38 37)" />
-            <rect x="12" y="8" width="36" height="46" rx="6" fill="#8B9EF8" transform="rotate(-3 30 31)" />
-            <rect x="4" y="4" width="36" height="46" rx="5" fill="#2250F4" />
-            <line x1="12" y1="16" x2="32" y2="16" stroke="white" stroke-width="3" stroke-linecap="round" opacity="0.85" />
-            <line x1="12" y1="25" x2="28" y2="25" stroke="white" stroke-width="3" stroke-linecap="round" opacity="0.85" />
-            <line x1="12" y1="34" x2="30" y2="34" stroke="white" stroke-width="3" stroke-linecap="round" opacity="0.85" />
-            <polygon points="36,4 28,20 34,20 24,38 40,10 34,10" fill="#0D9488" />
-        </svg>
-        <span class="nav-brand-text">Pdf<span>Tool</span>stack</span>
+        <div class="nav-logo-wrap">
+            <!-- Icon: stacked docs + teal checkmark -->
+            <svg class="nav-logo-icon" width="32" height="38" viewBox="0 0 28 38" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <rect x="8" y="6" width="20" height="26" rx="3" fill="#4F46E5" opacity="0.35" />
+                <rect x="4" y="3" width="20" height="26" rx="3" fill="#2250F4" opacity="0.65" />
+                <rect x="0" y="0" width="20" height="26" rx="3" fill="#2250F4" />
+                <rect x="4" y="6" width="12" height="2.5" rx="1.2" fill="white" opacity="0.95" />
+                <rect x="4" y="11" width="10" height="2.5" rx="1.2" fill="white" opacity="0.6" />
+                <rect x="4" y="16" width="11" height="2.5" rx="1.2" fill="white" opacity="0.6" />
+                <circle cx="18" cy="30" r="8" fill="#0D9488" />
+                <polyline points="13,30 16.5,33.5 23,25" stroke="white" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <!-- Wordmark: pure HTML so font always renders -->
+            <div class="nav-logo-wordmark">
+                <div class="nav-logo-name">Pdf<span>Tool</span>Stack</div>
+                <div class="nav-logo-tagline">COMPRESS · SIGN · EXTRACT</div>
+            </div>
+        </div>
     </a>
 
     <a href="/ai-pdf-assist" class="nav-link nav-link-ai">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 2L9 9H2l6 4.5L5.5 21 12 16.5 18.5 21 16 13.5 22 9h-7z" />
-            <path d="M12 2v4M2 9h4M20 9h-4" stroke-width="1.5" opacity="0.5" />
+            <path d="M12 3c.5 1.5 1.5 2.5 3 3-1.5.5-2.5 1.5-3 3-.5-1.5-1.5-2.5-3-3 1.5-.5 2.5-1.5 3-3z" fill="currentColor" fill-opacity="0.3" />
+            <path d="M5 7c.3.8.8 1.4 1.5 1.5C5.8 8.8 5.3 9.4 5 10c-.3-.6-.8-1.2-1.5-1.5C4.2 8.2 4.7 7.6 5 7z" fill="currentColor" fill-opacity="0.7" />
+            <path d="M18 14c.3.8.8 1.4 1.5 1.5-.7.3-1.2.8-1.5 1.5-.3-.7-.8-1.2-1.5-1.5.7-.3 1.2-.8 1.5-1.5z" fill="currentColor" fill-opacity="0.7" />
         </svg>
         AI Tools
     </a>
-        <a href="/compress-pdf" class="nav-link">Compress</a>
-        <a href="/converter" class="nav-link">Convert</a>
-        <a href="/merge-pdf" class="nav-link">Merge</a>
-        <a href="/split-pdf" class="nav-link">Split</a>
-        <a href="/edit-pdf" class="nav-link">Edit</a>
-        <a href="/sign-pdf" class="nav-link">Sign</a>
-        <a href="/batch" class="nav-link">Batch</a>
-        <a href="/pricing" class="nav-link">Pricing</a>
+    <a href="/compress-pdf" class="nav-link">Compress</a>
+    <a href="/converter" class="nav-link">Convert</a>
+    <a href="/merge-pdf" class="nav-link">Merge</a>
+    <a href="/split-pdf" class="nav-link">Split</a>
+    <a href="/edit-pdf" class="nav-link">Edit</a>
+    <a href="/sign-pdf" class="nav-link">Sign</a>
+    <a href="/batch" class="nav-link">Batch</a>
+    <a href="/pricing" class="nav-link">Pricing</a>
 
     <div class="nav-search">
         <span class="nav-search-icon">
