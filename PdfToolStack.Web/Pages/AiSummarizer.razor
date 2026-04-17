@@ -2,7 +2,6 @@
 @inject ApiService ApiService
 @inject PdfToolStack.Web.Services.SubscriptionService SubService
 @inject AuthenticationStateProvider Auth
-@inject SessionUsageService SessionUsage
 @using Microsoft.AspNetCore.Components.Authorization
 
 <PageTitle>AI PDF Summarizer — Summarize PDF Instantly | PdfToolStack</PageTitle>
@@ -61,7 +60,7 @@
                 <div class="ai-upgrade-card">
                     <div class="ai-upgrade-icon">✨</div>
                     <h2>AI Summarizer — Pro Feature</h2>
-                    <p>Summarize any PDF instantly with Claude AI. Available on Pro — $19/month.</p>
+                    <p>Summarize any PDF instantly with Claude AI. Available on Pro — $12/month.</p>
                     <div class="ai-upgrade-features">
                         <div class="ai-upgrade-feat">✓ Summarize any PDF in seconds</div>
                         <div class="ai-upgrade-feat">✓ Key points and conclusions</div>
@@ -71,7 +70,7 @@
                     <div class="ai-upgrade-actions">
                         <a href="/pricing" class="download-button"
                            style="display:inline-block; text-decoration:none;">
-                            Upgrade to Pro — $19/mo
+                            Upgrade to Pro — $12/mo
                         </a>
                         <a href="authentication/login" class="reset-button"
                            style="display:inline-block; text-decoration:none;">
@@ -91,7 +90,7 @@
                         <div class="ai-upgrade-actions">
                             <a href="/pricing" class="download-button"
                                style="display:inline-block; text-decoration:none;">
-                                Upgrade to Pro — $19/mo
+                                Upgrade to Pro — $12/mo
                             </a>
                         </div>
                     </div>
@@ -239,7 +238,6 @@
 
             var result = await ApiService.PostMultipartAsync<SummarizeResponse>(
                 "api/ai/summarize", content);
-            SessionUsage.RecordToolCompletion("AI Summarizer");
 
             _step = 3; StateHasChanged();
 

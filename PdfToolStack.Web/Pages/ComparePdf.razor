@@ -6,7 +6,6 @@
 @inject AuthenticationStateProvider Auth
 @inject IJSRuntime JS
 @inject NavigationManager Navigation
-@inject SessionUsageService SessionUsage
 @using Microsoft.AspNetCore.Components.Authorization
 
 <PageTitle>@(IsContractMode ? "Compare Contracts Online — Find PDF Differences | PdfToolStack" : "Compare PDF Files — Find Differences | PdfToolStack")</PageTitle>
@@ -14,140 +13,194 @@
 <HeadContent>
     <meta name="description"
           content="@(IsContractMode
-                        ? "Compare two versions of a contract and see exactly what changed. AI-highlighted diff report. Perfect for legal teams and freelancers."
-                        : "Upload two versions of a document and get a highlighted report showing exactly what changed.")" />
+                                  ? "Compare two versions of a contract and see exactly what changed. AI-highlighted diff report. Perfect for legal teams and freelancers."
+                                  : "Upload two versions of a document and get a highlighted report showing exactly what changed.")" />
     <meta name="keywords" content="compare pdf, pdf diff, pdf comparison tool, find differences in pdf" />
     <link rel="canonical" href="https://pdftoolstack.com/compare-pdf" />
 </HeadContent>
 
 <div class="tool-page">
-    <div class="tool-hero">
-        <h1>@(IsContractMode ? "Compare Contracts Online" : "Compare PDF Files")</h1>
-        <p>
-            @(IsContractMode
-                        ? "Upload two versions of a contract and get a word-by-word diff report showing every addition and deletion. Essential for legal review."
-                        : "Upload two versions of a document and get a highlighted report showing exactly what changed.")
-        </p>
+    <div class="tool-container">
+
+        <div class="ai-tool-header">
+            <div class="ai-tool-badge">✨ AI-Powered</div>
+            <h1>@(IsContractMode ? "Compare Contracts Online" : "Compare PDF Files")</h1>
+            <p class="tool-subtitle">
+                @(IsContractMode
+                                ? "Upload two versions of a contract and get a word-by-word diff report showing every addition and deletion. Essential for legal review."
+                                : "Upload two versions of a document and get a highlighted report showing exactly what changed.")
+            </p>
+        </div>
+
+        <div class="how-it-works">
+            <div class="hiw-step">
+                <div class="hiw-num">1</div>
+                <div class="hiw-text">
+                    <strong>Upload two PDFs</strong>
+                    <span>Original and revised version</span>
+                </div>
+            </div>
+            <div class="hiw-arrow">→</div>
+            <div class="hiw-step">
+                <div class="hiw-num">2</div>
+                <div class="hiw-text">
+                    <strong>AI finds every change</strong>
+                    <span>Word-by-word diff</span>
+                </div>
+            </div>
+            <div class="hiw-arrow">→</div>
+            <div class="hiw-step">
+                <div class="hiw-num">3</div>
+                <div class="hiw-text">
+                    <strong>Get a diff report</strong>
+                    <span>Additions and deletions highlighted</span>
+                </div>
+            </div>
+        </div>
+
+        <AuthorizeView>
+            <NotAuthorized>
+                <div class="ai-upgrade-card">
+                    <div class="ai-upgrade-icon">🔐</div>
+                    <h2>PDF Compare — Pro Feature</h2>
+                    <p>Compare any two PDF documents word-by-word and get a highlighted diff report. Available with any Pro plan — starting at $12/month.</p>
+                    <div class="ai-upgrade-features">
+                        <div class="ai-upgrade-feat">✓ Word-by-word diff report</div>
+                        <div class="ai-upgrade-feat">✓ Highlights additions and deletions</div>
+                        <div class="ai-upgrade-feat">✓ Perfect for contract redlines</div>
+                        <div class="ai-upgrade-feat">✓ All 35+ PDF tools</div>
+                        <div class="ai-upgrade-feat">✓ Unlimited file size</div>
+                    </div>
+                    <div class="ai-upgrade-actions">
+                        <a href="/pricing" class="download-button" style="display:inline-block; text-decoration:none;">
+                            Upgrade to Pro — $12/mo
+                        </a>
+                        <a href="authentication/login" class="reset-button" style="display:inline-block; text-decoration:none;">
+                            Sign in if you have Pro
+                        </a>
+                    </div>
+                </div>
+            </NotAuthorized>
+            <Authorized>
+                @if (!_isPro)
+                {
+                    <div class="ai-upgrade-card">
+                        <div class="ai-upgrade-icon">⭐</div>
+                        <h2>Upgrade to Pro to unlock PDF Compare</h2>
+                        <p>Compare any two PDF documents word-by-word and get a highlighted diff report. Available with any Pro plan — starting at $12/month.</p>
+                        <div class="ai-upgrade-features">
+                            <div class="ai-upgrade-feat">✓ Word-by-word diff report</div>
+                            <div class="ai-upgrade-feat">✓ Highlights additions and deletions</div>
+                            <div class="ai-upgrade-feat">✓ Perfect for contract redlines</div>
+                            <div class="ai-upgrade-feat">✓ All 35+ PDF tools</div>
+                            <div class="ai-upgrade-feat">✓ Unlimited file size</div>
+                        </div>
+                        <div class="ai-upgrade-actions">
+                            <a href="/pricing" class="download-button" style="display:inline-block; text-decoration:none;">
+                                Upgrade to Pro — $12/mo
+                            </a>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="compare-grid">
+
+                        <!-- Original -->
+                        <div class="tool-card compare-drop">
+                            <div class="compare-drop-label">
+                                @(IsContractMode ? "Original contract" : "Original version")
+                            </div>
+                            <InputFile OnChange="e => OnFileSelected(e, true)"
+                                       accept=".pdf" class="file-input" />
+                            @if (_originalName != null)
+                            {
+                                <div class="compare-file-badge">
+                                    📄 @_originalName
+                                </div>
+                            }
+                        </div>
+
+                        <!-- Revised -->
+                        <div class="tool-card compare-drop">
+                            <div class="compare-drop-label">
+                                @(IsContractMode ? "Revised contract" : "Revised version")
+                            </div>
+                            <InputFile OnChange="e => OnFileSelected(e, false)"
+                                       accept=".pdf" class="file-input" />
+                            @if (_revisedName != null)
+                            {
+                                <div class="compare-file-badge">
+                                    📄 @_revisedName
+                                </div>
+                            }
+                    </div>
+
+                </div>
+
+                <div style="margin-top: 1.5rem;">
+                    <button class="process-button"
+                            style="max-width: 220px;"
+                            @onclick="RunCompare"
+                            disabled="@(_processing || _originalBytes == null || _revisedBytes == null)">
+                        @(_processing
+                                                ? "Comparing..."
+                                                : IsContractMode ? "Compare Contracts" : "Compare Documents")
+                    </button>
+                </div>
+
+                @if (_result != null)
+                    {
+                        <div class="tool-card result-card" style="margin-top: 1.5rem;">
+                            <h3>✅ Comparison complete</h3>
+
+                            <div class="compare-stats">
+                                <div class="compare-stat">
+                                    <span class="compare-stat-value added">
+                                        +@_result.Value.Added
+                                    </span>
+                                    <span class="compare-stat-label">words added</span>
+                                </div>
+                                <div class="compare-stat">
+                                    <span class="compare-stat-value removed">
+                                        -@_result.Value.Removed
+                                    </span>
+                                    <span class="compare-stat-label">words removed</span>
+                                </div>
+                                <div class="compare-stat">
+                                    <span class="compare-stat-value">
+                                        @_result.Value.Pages
+                                    </span>
+                                    <span class="compare-stat-label">pages compared</span>
+                                </div>
+                            </div>
+
+                            @if (_result.Value.Added == 0 && _result.Value.Removed == 0)
+                            {
+                                <p style="color: var(--success, #16a34a); font-weight: 500; margin-top: 0.75rem;">
+                                    ✓ @(IsContractMode ? "Contracts are identical — no differences found." : "Documents are identical — no differences found.")
+                                </p>
+                            }
+
+                            <button class="download-button"
+                                    @onclick="DownloadReport"
+                                    style="max-width: 260px; margin-top: 1rem;">
+                                ⬇ Download Comparison Report
+                            </button>
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(_error))
+                    {
+                        <div class="error-message" style="margin-top: 1rem;">
+                            @_error
+                        </div>
+                    }
+                }
+            </Authorized>
+        </AuthorizeView>
+
     </div>
-
-    <AuthorizeView>
-        <NotAuthorized>
-            <div class="upgrade-nudge">
-                <p>⭐ PDF Compare is a <strong>Pro feature</strong>.</p>
-                <a href="/pricing" class="process-button"
-                   style="display:inline-block; max-width:200px;">
-                    Upgrade to Pro — $19/mo
-                </a>
-            </div>
-        </NotAuthorized>
-        <Authorized>
-            @if (!_isPro)
-            {
-                <div class="upgrade-nudge">
-                    <p>⭐ PDF Compare is a <strong>Pro feature</strong>.</p>
-                    <a href="/pricing" class="process-button"
-                       style="display:inline-block; max-width:200px;">
-                        Upgrade to Pro — $19/mo
-                    </a>
-                </div>
-            }
-            else
-            {
-                <div class="compare-grid">
-
-                    <!-- Original -->
-                    <div class="tool-card compare-drop">
-                        <div class="compare-drop-label">
-                            @(IsContractMode ? "Original contract" : "Original version")
-                        </div>
-                        <InputFile OnChange="e => OnFileSelected(e, true)"
-                                   accept=".pdf" class="file-input" />
-                        @if (_originalName != null)
-                        {
-                            <div class="compare-file-badge">
-                                📄 @_originalName
-                            </div>
-                        }
-                    </div>
-
-                    <!-- Revised -->
-                    <div class="tool-card compare-drop">
-                        <div class="compare-drop-label">
-                            @(IsContractMode ? "Revised contract" : "Revised version")
-                        </div>
-                        <InputFile OnChange="e => OnFileSelected(e, false)"
-                                   accept=".pdf" class="file-input" />
-                        @if (_revisedName != null)
-                        {
-                            <div class="compare-file-badge">
-                                📄 @_revisedName
-                            </div>
-                        }
-                </div>
-
-            </div>
-
-            <div style="margin-top: 1.5rem;">
-                <button class="process-button"
-                        style="max-width: 220px;"
-                        @onclick="RunCompare"
-                        disabled="@(_processing || _originalBytes == null || _revisedBytes == null)">
-                    @(_processing
-                                        ? "Comparing..."
-                                        : IsContractMode ? "Compare Contracts" : "Compare Documents")
-                </button>
-            </div>
-
-            @if (_result != null)
-                {
-                    <div class="tool-card result-card" style="margin-top: 1.5rem;">
-                        <h3>✅ Comparison complete</h3>
-
-                        <div class="compare-stats">
-                            <div class="compare-stat">
-                                <span class="compare-stat-value added">
-                                    +@_result.Value.Added
-                                </span>
-                                <span class="compare-stat-label">words added</span>
-                            </div>
-                            <div class="compare-stat">
-                                <span class="compare-stat-value removed">
-                                    -@_result.Value.Removed
-                                </span>
-                                <span class="compare-stat-label">words removed</span>
-                            </div>
-                            <div class="compare-stat">
-                                <span class="compare-stat-value">
-                                    @_result.Value.Pages
-                                </span>
-                                <span class="compare-stat-label">pages compared</span>
-                            </div>
-                        </div>
-
-                        @if (_result.Value.Added == 0 && _result.Value.Removed == 0)
-                        {
-                            <p style="color: var(--success, #16a34a); font-weight: 500; margin-top: 0.75rem;">
-                                ✓ @(IsContractMode ? "Contracts are identical — no differences found." : "Documents are identical — no differences found.")
-                            </p>
-                        }
-
-                        <button class="download-button"
-                                @onclick="DownloadReport"
-                                style="max-width: 260px; margin-top: 1rem;">
-                            ⬇ Download Comparison Report
-                        </button>
-                    </div>
-                }
-
-                @if (!string.IsNullOrEmpty(_error))
-                {
-                    <div class="error-message" style="margin-top: 1rem;">
-                        @_error
-                    </div>
-                }
-            }
-        </Authorized>
-    </AuthorizeView>
 </div>
 
 @code {
@@ -247,6 +300,5 @@
         await JS.InvokeVoidAsync("downloadFile",
             "comparison_report.pdf",
             Convert.ToBase64String(_reportBytes));
-        SessionUsage.RecordToolCompletion("Tool Name");
     }
 }

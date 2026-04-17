@@ -8,7 +8,6 @@
 @inject FileValidationService Validator
 @inject ToastService Toast
 @inject NavigationManager Navigation
-@inject SessionUsageService SessionUsage
 
 <PageTitle>Compress PDF Online Free — Reduce PDF Size Instantly</PageTitle>
 
@@ -122,7 +121,7 @@
             <h3>Is this PDF compressor free?</h3>
             <p>
                 Yes — free processing is available for files up to 25MB.
-                For larger files up to 500MB, upgrade to Pro for $19/month
+                For larger files up to 500MB, upgrade to Pro for $12/month
                 with unlimited file size and all AI tools.
             </p>
         </div>
@@ -131,7 +130,7 @@
             <h3>What is the maximum file size?</h3>
             <p>
                 Free processing supports files up to 25MB.
-                Pro subscribers ($19/month) can process files up to 500MB
+                Pro subscribers ($12/month) can process files up to 500MB
                 with no restrictions.
             </p>
         </div>
@@ -373,9 +372,6 @@
             "downloadFile",
             fileName,
             Convert.ToBase64String(ProcessedBytes));
-
-        // Track session usage — triggers upsell after 3 completions
-        SessionUsage.RecordToolCompletion("Sign PDF");
     }
 
     private Task ResetToFreeMode()

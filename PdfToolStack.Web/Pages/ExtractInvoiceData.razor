@@ -6,7 +6,6 @@
 @inject AuthenticationStateProvider Auth
 @inject IJSRuntime JS
 @inject ToastService Toast
-@inject SessionUsageService SessionUsage
 @using Microsoft.AspNetCore.Components.Authorization
 @using System.Text.Json
 
@@ -70,7 +69,7 @@
                     <h2>AI Data Extraction — Pro Feature</h2>
                     <p>
                         This tool uses Claude AI to read and extract structured data from your documents.
-                        Available with any Pro plan — starting at $19/month.
+                        Available with any Pro plan — starting at $12/month.
                     </p>
                     <div class="ai-upgrade-features">
                         <div class="ai-upgrade-feat">✓ Invoice &amp; contract extraction</div>
@@ -81,7 +80,7 @@
                     </div>
                     <div class="ai-upgrade-actions">
                         <a href="/pricing" class="download-button" style="display:inline-block; text-decoration:none;">
-                            Upgrade to Pro — $19/mo
+                            Upgrade to Pro — $12/mo
                         </a>
                         <a href="authentication/login" class="reset-button" style="display:inline-block; text-decoration:none;">
                             Sign in if you have Pro
@@ -102,7 +101,7 @@
                         </p>
                         <div class="ai-upgrade-actions">
                             <a href="/pricing" class="download-button" style="display:inline-block; text-decoration:none;">
-                                Upgrade to Pro — $19/mo
+                                Upgrade to Pro — $12/mo
                             </a>
                         </div>
                     </div>
@@ -520,7 +519,6 @@
         if (_excelBytes == null) return;
         var name = $"extracted_{_type}_{DateTime.Now:yyyyMMdd}.xlsx";
         await JS.InvokeVoidAsync("downloadFile", name, Convert.ToBase64String(_excelBytes));
-        SessionUsage.RecordToolCompletion("Tool Name");
     }
 
     private void Reset()

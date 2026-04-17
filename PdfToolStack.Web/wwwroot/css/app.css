@@ -4409,12 +4409,16 @@ button,
         color: var(--success);
     }
 
-.ai-upgrade-actions {
-    display: flex;
-    gap: 0.75rem;
-    justify-content: center;
-    flex-wrap: wrap;
+/* AI upgrade card buttons — use primary blue not teal */
+.ai-upgrade-actions .download-button {
+    background: var(--primary);
+    box-shadow: none;
 }
+
+    .ai-upgrade-actions .download-button:hover {
+        background: var(--primary-dark);
+        box-shadow: 0 4px 12px rgba(34,80,244,0.25);
+    }
 
 /* ── Document type selector ───────────────────────────────── */
 .extract-type-section {
@@ -5956,6 +5960,18 @@ button,
         color: var(--text-secondary);
         margin-bottom: 1rem;
     }
+
+    .blog-cta-box .download-button {
+        background: var(--primary);
+        color: #fff !important;
+        box-shadow: none;
+    }
+
+        .blog-cta-box .download-button:hover {
+            background: var(--primary-dark);
+            color: #fff !important;
+            box-shadow: 0 4px 12px rgba(34,80,244,0.25);
+        }
 
 /* Related articles */
 .blog-related {
@@ -8713,4 +8729,19 @@ div.picker-dialog,
 
     .upsell-dismiss:hover {
         color: var(--text-primary);
+    }
+
+/*---Blog ---*/
+.blog-hero-image {
+    width: 100%;
+    max-width: 600px;
+    margin: 2rem auto;
+    text-align: center;
+}
+
+    .blog-hero-image img {
+        width: 100%;
+        height: auto;
+        max-height: 300px;
+        object-fit: contain;
     }
