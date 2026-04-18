@@ -1,0 +1,108 @@
+﻿@* 
+    AiUsageWarningBanner — shows inline on the Account page when the user
+    is approaching or has hit their AI usage limit.
+
+    Usage:
+        <AiUsageWarningBanner Usage="@_aiUsage" IsTeams="@_isTeams" OnContactSales="ShowEnterpriseModal" />
+
+    Shows nothing when Usage is null or below the warning threshold.
+*@
+
+@inject NavigationManager Navigation
+
+@if (_show && Usage != null)
+{
+    <div class="ai-warning-banner @BannerClass">
+        <div class="ai-warning-icon">
+            @if (_isAtCap)
+            {
+                <!-- At cap: blocked icon -->
+                <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="10" cy="10" r="8.5" stroke="currentColor" stroke-width="1.6" />
+                    <path d="M10 6v4M10 13.5v.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+                </svg>
+            }
+            else
+            {
+                <!-- Warning: approaching cap -->
+                <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M10 2.5L17.5 16H2.5L10 2.5z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
+                    <path d="M10 8v4M10 13.5v.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+                </svg>
+            }
+        </div>
+        <div class="ai-warning-body">
+            <p class="ai-warning-title">@TitleText</p>
+            <p class="ai-warning-desc">@DescText</p>
+        </div>
+        <div class="ai-warning-action">
+            @if (IsTeams)
+            {
+                <button class="ai-warning-btn ai-warning-btn-enterprise" @onclick="HandleEnterpriseCta">
+                    Contact Sales
+                </button>
+            }
+            else
+            {
+                <button class="ai-warning-btn ai-warning-btn-upgrade" @onclick="GoToPricing">
+                    Upgrade to Teams
+                </button>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public AiUsageDto? Usage { get; set; }
+
+    /// <summary>True if the user is on a Teams plan (500 limit) — shows Enterprise CTA instead of upgrade.</summary>
+    [Parameter] public bool IsTeams { get; set; }
+
+    /// <summary>Callback when the user clicks Contact Sales on a Teams plan.</summary>
+    [Parameter] public EventCallback OnContactSales { get; set; }
+
+    /// <summary>Warning threshold — show banner at this percentage (default 80%).</summary>
+    [Parameter] public double WarningThresholdPercent { get; set; } = 80.0;
+
+    private bool _show = false;
+    private bool _isAtCap = false;
+
+    private string BannerClass => _isAtCap ? "ai-warning-banner-cap" : "ai-warning-banner-warn";
+
+    private string TitleText => _isAtCap
+        ? $"You've reached your monthly AI limit ({Usage?.Limit} uses)"
+        : $"Approaching your AI limit — {Usage?.Remaining} uses remaining";
+
+    private string DescText => IsTeams
+        ? (_isAtCap
+            ? "AI tools are paused until your plan renews. Enterprise plans include unlimited uses with no monthly cap."
+            : "Your team is on track to exceed 500 AI uses this month. Consider an Enterprise plan before you're blocked.")
+        : (_isAtCap
+            ? "AI tools are paused until your plan renews. Teams plan gives 500 uses/month across your whole team."
+            : "You're approaching your Pro limit. Upgrade to Teams for 500 shared AI uses and team features.");
+
+    protected override void OnParametersSet()
+    {
+        if (Usage == null)
+        {
+            _show = false;
+            return;
+        }
+
+        _isAtCap = Usage.Percentage >= 100;
+        _show = _isAtCap || Usage.Percentage >= WarningThresholdPercent;
+    }
+
+    private async Task HandleEnterpriseCta()
+    {
+        if (OnContactSales.HasDelegate)
+            await OnContactSales.InvokeAsync();
+        else
+            Navigation.NavigateTo("/contact?subject=Enterprise+Inquiry&ref=ai-cap");
+    }
+
+    private void GoToPricing()
+    {
+        Navigation.NavigateTo("/pricing");
+    }
+}

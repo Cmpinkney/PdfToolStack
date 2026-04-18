@@ -3,7 +3,6 @@
 @inject PaymentService PaymentService
 @inject FileValidationService Validator
 @inject ToastService Toast
-@inject SessionUsageService SessionUsage
 
 <PageTitle>Edit PDF Free Online — Add Text, Highlight and Annotate PDF | PdfToolStack</PageTitle>
 <HeadContent>
@@ -54,6 +53,8 @@
                               ToolType="EditPdf" OnCancel="Reset" />
         }
 
+        <PdfLoadingOverlay IsVisible="@_isPdfLoading" Message="Loading your PDF..." SubMessage="Setting up the editor — just a moment" />
+
         @if (_editorVisible)
         {
             <div style="margin-bottom:1rem; display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap;">
@@ -102,6 +103,7 @@
     private IBrowserFile? SelectedFile;
     private string? ErrorMessage;
     private bool _editorVisible = false;
+    private bool _isPdfLoading = false;
 
     private async Task HandleFileSelected(IBrowserFile file)
     {
@@ -131,16 +133,17 @@
             if (!bytesVal.IsValid) { Toast.ShowError(bytesVal.Message!); return; }
 
             SelectedFile = file;
-            _editorVisible = true;
+            _isPdfLoading = true;
             await InvokeAsync(StateHasChanged);
 
             await Task.Delay(100);
             await JS.InvokeVoidAsync("pdfEditor.init",
             Convert.ToBase64String(bytes), file.Name, "pdf-editor-container");
-            SessionUsage.RecordToolCompletion("Tool Name");
 
+            _isPdfLoading = false;
+            _editorVisible = true;
+            await InvokeAsync(StateHasChanged);
             Toast.ShowSuccess($"File ready — {Validator.FormatSize(file.Size)}");
-            SessionUsage.RecordToolCompletion("Edit PDF");
         }
         catch (Exception ex)
         {

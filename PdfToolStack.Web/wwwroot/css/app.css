@@ -42,6 +42,7 @@
     /* Radius */
     --radius-sm: 6px;
     --radius: 10px;
+    --radius-md: 14px;
     --radius-lg: 14px;
     --radius-xl: 20px;
     --transition: all 0.18s ease;
@@ -89,6 +90,7 @@
     /* Radius — unchanged */
     --radius-sm: 6px;
     --radius: 10px;
+    --radius-md: 14px;
     --radius-lg: 14px;
     --radius-xl: 20px;
     --transition: all 0.18s ease;
@@ -9603,4 +9605,143 @@ body {
 
 [data-theme="dark"] .trust-bar {
     border-color: rgba(255,255,255,0.07) !important;
+}
+
+/* ── Pricing Audience Cards — modernized ─────────────────────────────────── */
+.audience-card {
+    background: rgba(255,255,255,0.82) !important;
+    backdrop-filter: blur(10px) !important;
+    border: 1px solid rgba(34,80,244,0.1) !important;
+    border-radius: 16px !important;
+    padding: 1.75rem 1.5rem !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease !important;
+}
+
+    .audience-card:hover {
+        transform: translateY(-4px) !important;
+        border-color: var(--primary) !important;
+        box-shadow: 0 8px 24px rgba(34,80,244,0.12) !important;
+    }
+
+    .audience-card h3 {
+        font-size: 1rem !important;
+        font-weight: 700 !important;
+        color: var(--text) !important;
+        margin: 0 0 0.5rem !important;
+    }
+
+    .audience-card p {
+        font-size: 0.875rem !important;
+        color: var(--text-secondary) !important;
+        line-height: 1.6 !important;
+        margin: 0 !important;
+    }
+
+/* Remove old emoji icon style */
+.audience-icon {
+    display: none !important;
+}
+
+[data-theme="dark"] .audience-card {
+    background: rgba(30,28,50,0.75) !important;
+    border-color: rgba(255,255,255,0.08) !important;
+}
+
+    [data-theme="dark"] .audience-card:hover {
+        border-color: rgba(34,80,244,0.5) !important;
+        box-shadow: 0 8px 24px rgba(34,80,244,0.18) !important;
+    }
+
+/* ── PDF Loading Overlay ──────────────────────────────────────────────────── */
+.pdf-loading-overlay {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1rem;
+    width: 100%;
+}
+
+.pdf-loading-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(34,80,244,0.12);
+    border-radius: 20px;
+    padding: 2.5rem 3rem;
+    text-align: center;
+    max-width: 340px;
+    width: 100%;
+}
+
+[data-theme="dark"] .pdf-loading-card {
+    background: rgba(28,25,41,0.85);
+    border-color: rgba(255,255,255,0.08);
+}
+
+.pdf-loading-icon {
+    width: 64px;
+    height: 64px;
+    background: #EFF6FF;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: pdf-loading-pulse 1.8s ease-in-out infinite;
+}
+
+[data-theme="dark"] .pdf-loading-icon {
+    background: rgba(34,80,244,0.15);
+}
+
+@keyframes pdf-loading-pulse {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    50% {
+        transform: scale(1.06);
+        opacity: 0.8;
+    }
+}
+
+.pdf-loading-spinner {
+    width: 36px;
+    height: 36px;
+    border: 3px solid rgba(34,80,244,0.15);
+    border-top-color: #2250F4;
+    border-radius: 50%;
+    animation: pdf-spin 0.8s linear infinite;
+}
+
+@keyframes pdf-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.pdf-loading-message {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 0;
+}
+
+.pdf-loading-sub {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+/* ── Remove trust bar border lines ───────────────────────────────────────── */
+.trust-bar {
+    border-top: none !important;
+    border-bottom: none !important;
+    padding: 1.25rem 2rem !important;
 }

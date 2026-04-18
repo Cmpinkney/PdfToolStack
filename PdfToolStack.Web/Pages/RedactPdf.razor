@@ -5,7 +5,6 @@
 @inject PaymentService PaymentService
 @inject FileValidationService Validator
 @inject ToastService Toast
-@inject SessionUsageService SessionUsage
 
 <PageTitle>Redact PDF Free Online — Permanently Remove Sensitive Text</PageTitle>
 
@@ -54,6 +53,8 @@
                               ToolType="RedactPdf"
                               OnCancel="Reset" />
         }
+
+        <PdfLoadingOverlay IsVisible="@_isPdfLoading" Message="Rendering your PDF..." SubMessage="Preparing the redaction canvas" />
 
         @if (CurrentState == PageState.Redact)
         {
@@ -214,6 +215,8 @@
 </div>
 
 @code {
+    private bool _isPdfLoading = false;
+
     private enum PageState
     {
         Upload, Redact, Processing, Complete, Error, LargeFile
@@ -336,6 +339,7 @@
                 UploadedBytes, SelectedFile!.Name);
 
             CurrentPage = 1;
+            _isPdfLoading = true;
             CurrentState = PageState.Redact;
             StateHasChanged();
 
@@ -343,6 +347,8 @@
                 "renderPdfPage",
                 Convert.ToBase64String(UploadedBytes),
                 CurrentPage);
+            _isPdfLoading = false;
+            await InvokeAsync(StateHasChanged);
         }
         catch (Exception ex)
         {
@@ -493,7 +499,6 @@
             "downloadFile",
             fileName,
             Convert.ToBase64String(RedactedBytes));
-        SessionUsage.RecordToolCompletion("Tool Name");
     }
 
     private void Reset()

@@ -26,14 +26,21 @@
                         @(GetInitials(context.User.Identity?.Name))
                     </div>
                 }
-                <div>
+                <div class="account-header-info">
                     <h1>@context.User.Identity?.Name</h1>
                     <p class="account-email">@context.User.FindFirst("email")?.Value</p>
                 </div>
-                @if (_subStatus?.HasPro == true)
-                {
-                    <div class="account-pro-badge">Pro</div>
-                }
+                <div class="account-header-right">
+                    @if (_subStatus?.HasPro == true)
+                    {
+                        <div class="account-pro-badge">
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+                                <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26 12,2" />
+                            </svg>
+                            Pro
+                        </div>
+                    }
+                </div>
             </div>
 
             <!-- Stats row -->

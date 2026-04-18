@@ -1,0 +1,114 @@
+﻿@inject NavigationManager Navigation
+
+@if (_visible)
+{
+    <div class="enterprise-overlay" @onclick="Dismiss">
+        <div class="enterprise-modal" @onclick:stopPropagation="true">
+
+            <button class="enterprise-close" @onclick="Dismiss" aria-label="Close">
+                <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+                </svg>
+            </button>
+
+            <!-- Header -->
+            <div class="enterprise-header">
+                <div class="enterprise-icon-wrap">
+                    <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="32" height="32" rx="10" fill="url(#ent-grad)" />
+                        <path d="M16 8l2.47 5.01L24 14.27l-4 3.9.94 5.5L16 21l-4.94 2.67.94-5.5-4-3.9 5.53-.8L16 8z"
+                              fill="white" fill-opacity="0.95" />
+                        <defs>
+                            <linearGradient id="ent-grad" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+                                <stop stop-color="#7C3AED" />
+                                <stop offset="1" stop-color="#2250F4" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <div class="enterprise-badge">Enterprise</div>
+            </div>
+
+            <!-- Title -->
+            <h2 class="enterprise-title">You've outgrown your plan</h2>
+            <p class="enterprise-subtitle">
+                Your team is processing a serious volume of AI requests.
+                Let's build a plan that scales with you.
+            </p>
+
+            <!-- Feature list -->
+            <div class="enterprise-features">
+                <div class="enterprise-feature">
+                    <span class="enterprise-chk">
+                        <svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" fill="#7C3AED" fill-opacity="0.12" /><path d="M5 8l2 2 4-4" stroke="#7C3AED" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                    </span>
+                    <div>
+                        <strong>Unlimited AI uses</strong>
+                        <span>No monthly caps — ever</span>
+                    </div>
+                </div>
+                <div class="enterprise-feature">
+                    <span class="enterprise-chk">
+                        <svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" fill="#7C3AED" fill-opacity="0.12" /><path d="M5 8l2 2 4-4" stroke="#7C3AED" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                    </span>
+                    <div>
+                        <strong>Custom seat count</strong>
+                        <span>Add as many users as your team needs</span>
+                    </div>
+                </div>
+                <div class="enterprise-feature">
+                    <span class="enterprise-chk">
+                        <svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" fill="#7C3AED" fill-opacity="0.12" /><path d="M5 8l2 2 4-4" stroke="#7C3AED" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                    </span>
+                    <div>
+                        <strong>Dedicated support</strong>
+                        <span>Priority email + optional onboarding</span>
+                    </div>
+                </div>
+                <div class="enterprise-feature">
+                    <span class="enterprise-chk">
+                        <svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" fill="#7C3AED" fill-opacity="0.12" /><path d="M5 8l2 2 4-4" stroke="#7C3AED" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                    </span>
+                    <div>
+                        <strong>Invoice &amp; PO billing</strong>
+                        <span>Volume pricing — pay quarterly or annually</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CTA -->
+            <button class="enterprise-cta" @onclick="GoToEnterprise">
+                <svg viewBox="0 0 16 16" fill="none" style="width:16px;height:16px;margin-right:0.4rem;">
+                    <path d="M2 8h12M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                Contact Sales
+            </button>
+
+            <button class="enterprise-dismiss" @onclick="Dismiss">
+                I'll continue with my current plan
+            </button>
+
+        </div>
+    </div>
+}
+
+@code {
+    private bool _visible = false;
+
+    public void Show()
+    {
+        _visible = true;
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dismiss()
+    {
+        _visible = false;
+        StateHasChanged();
+    }
+
+    private void GoToEnterprise()
+    {
+        Navigation.NavigateTo("/contact?subject=Enterprise+Inquiry&ref=ai-cap", forceLoad: false);
+    }
+}

@@ -66,7 +66,11 @@
                               OnCancel="Reset" />
         }
 
-        @if (CurrentState == PageState.Upload && SelectedFile != null)
+        <PdfLoadingOverlay IsVisible="@_isPdfLoading"
+                           Message="Rendering your PDF..."
+                           SubMessage="Preparing the signature canvas" />
+
+        @if (CurrentState == PageState.Upload && SelectedFile != null && !_isPdfLoading)
         {
             <div class="sign-workflow">
 
@@ -300,6 +304,7 @@
     private DotNetObjectReference<SignPdf>? _dotNetRef;
     private bool _pdfRendered = false;
     private bool _isProcessing = false;
+    private bool _isPdfLoading = false;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -308,7 +313,6 @@
             _dotNetRef = DotNetObjectReference.Create(this);
         }
 
-        // Re-init signature pad any time the signing UI is visible
         if (CurrentState == PageState.Upload && SelectedFile != null)
         {
             await JS.InvokeVoidAsync("initSignaturePad", _dotNetRef);
@@ -384,7 +388,6 @@
 
         try
         {
-            // Read the file IMMEDIATELY before changing component state
             using (var stream = file.OpenReadStream(maxAllowedSize: 524288000))
             using (var ms = new MemoryStream())
             {
@@ -422,9 +425,7 @@
         }
 
         if (validation.IsWarning)
-        {
             Toast.ShowWarning(validation.Message!);
-        }
 
         try
         {
@@ -450,15 +451,21 @@
             SelectedFile = file;
 
             Toast.ShowSuccess($"File ready — {Validator.FormatSize(file.Size)}");
+
+            _isPdfLoading = true;
             StateHasChanged();
 
             await Task.Delay(300);
             await RenderCurrentPage();
+
+            _isPdfLoading = false;
+            StateHasChanged();
         }
         catch (Exception ex)
         {
             Toast.ShowError($"Could not prepare file: {ex.Message}");
             UploadedBytes = null;
+            _isPdfLoading = false;
         }
     }
 
@@ -468,14 +475,11 @@
             return;
 
         var base64 = Convert.ToBase64String(UploadedBytes);
-
         await JS.InvokeVoidAsync("signPdfRenderPage", base64, CurrentPage);
         await JS.InvokeVoidAsync("signPdfInitDrag", _dotNetRef);
 
         if (SignaturePlaced)
-        {
             await UpdateSigPreview();
-        }
     }
 
     private async Task PrevPage()
@@ -484,11 +488,13 @@
         {
             CurrentPage--;
             SignaturePlaced = false;
-            PlaceX = 0;
-            PlaceY = 0;
-            PreviewCanvasWidth = 0;
-            PreviewCanvasHeight = 0;
+            PlaceX = 0; PlaceY = 0;
+            PreviewCanvasWidth = 0; PreviewCanvasHeight = 0;
+
+            _isPdfLoading = true;
+            await InvokeAsync(StateHasChanged);
             await RenderCurrentPage();
+            _isPdfLoading = false;
             await InvokeAsync(StateHasChanged);
         }
     }
@@ -499,11 +505,13 @@
         {
             CurrentPage++;
             SignaturePlaced = false;
-            PlaceX = 0;
-            PlaceY = 0;
-            PreviewCanvasWidth = 0;
-            PreviewCanvasHeight = 0;
+            PlaceX = 0; PlaceY = 0;
+            PreviewCanvasWidth = 0; PreviewCanvasHeight = 0;
+
+            _isPdfLoading = true;
+            await InvokeAsync(StateHasChanged);
             await RenderCurrentPage();
+            _isPdfLoading = false;
             await InvokeAsync(StateHasChanged);
         }
     }
@@ -511,10 +519,8 @@
     private async Task ClearPlacement()
     {
         SignaturePlaced = false;
-        PlaceX = 0;
-        PlaceY = 0;
-        PreviewCanvasWidth = 0;
-        PreviewCanvasHeight = 0;
+        PlaceX = 0; PlaceY = 0;
+        PreviewCanvasWidth = 0; PreviewCanvasHeight = 0;
         await JS.InvokeVoidAsync("signPdfClearOverlay");
         await InvokeAsync(StateHasChanged);
     }
@@ -523,10 +529,8 @@
     {
         await JS.InvokeVoidAsync("clearSignaturePad");
         SignaturePlaced = false;
-        PlaceX = 0;
-        PlaceY = 0;
-        PreviewCanvasWidth = 0;
-        PreviewCanvasHeight = 0;
+        PlaceX = 0; PlaceY = 0;
+        PreviewCanvasWidth = 0; PreviewCanvasHeight = 0;
         await JS.InvokeVoidAsync("signPdfClearOverlay");
         await InvokeAsync(StateHasChanged);
     }
@@ -538,19 +542,17 @@
         ResultBytes = null;
         ErrorMessage = null;
         SignaturePlaced = false;
-        PlaceX = 0;
-        PlaceY = 0;
-        PreviewCanvasWidth = 0;
-        PreviewCanvasHeight = 0;
+        PlaceX = 0; PlaceY = 0;
+        PreviewCanvasWidth = 0; PreviewCanvasHeight = 0;
         CurrentPage = 1;
         TotalPages = 1;
         _pdfRendered = false;
+        _isPdfLoading = false;
     }
 
     private async Task ProcessFile()
     {
-        if (_isProcessing)
-            return;
+        if (_isProcessing) return;
 
         if (UploadedBytes == null || SelectedFile == null)
         {
@@ -590,7 +592,6 @@
                 ErrorMessage = SignMode == "draw"
                     ? "Please draw your signature first."
                     : "Please type your name first.";
-
                 CurrentState = PageState.Error;
                 StateHasChanged();
                 return;
@@ -598,7 +599,6 @@
 
             CurrentState = PageState.Processing;
             StateHasChanged();
-
             await JS.InvokeVoidAsync("scrollToTop");
 
             var sigBytes = Convert.FromBase64String(
@@ -610,14 +610,8 @@
             float pdfY = (float)(PreviewCanvasHeight - PlaceY - sigH);
 
             ResultBytes = await ApiService.SignPdfAsync(
-                UploadedBytes,
-                SelectedFile.Name,
-                sigBytes,
-                pdfX,
-                pdfY,
-                sigW,
-                sigH,
-                CurrentPage);
+                UploadedBytes, SelectedFile.Name,
+                sigBytes, pdfX, pdfY, sigW, sigH, CurrentPage);
 
             if (ResultBytes == null || ResultBytes.Length == 0)
             {
@@ -629,7 +623,6 @@
 
             CurrentState = PageState.Complete;
             StateHasChanged();
-
             await JS.InvokeVoidAsync("scrollToTop");
         }
         catch (Exception ex)
@@ -646,11 +639,8 @@
 
     private async Task DownloadFile()
     {
-        if (ResultBytes == null)
-            return;
-
+        if (ResultBytes == null) return;
         var fileName = Path.GetFileNameWithoutExtension(SelectedFile?.Name ?? "document") + "_signed.pdf";
-
         await JS.InvokeVoidAsync("downloadFile", fileName, Convert.ToBase64String(ResultBytes));
     }
 
@@ -671,14 +661,13 @@
         TotalPages = 1;
         CurrentPage = 1;
         SignaturePlaced = false;
-        PlaceX = 0;
-        PlaceY = 0;
-        PreviewCanvasWidth = 0;
-        PreviewCanvasHeight = 0;
+        PlaceX = 0; PlaceY = 0;
+        PreviewCanvasWidth = 0; PreviewCanvasHeight = 0;
         TypedSignature = "";
         SignColor = "#000000";
         _pdfRendered = false;
         _isProcessing = false;
+        _isPdfLoading = false;
 
         await InvokeAsync(StateHasChanged);
     }
