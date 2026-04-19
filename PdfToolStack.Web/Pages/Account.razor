@@ -5,6 +5,7 @@
 @inject NavigationManager Navigation
 @using Microsoft.AspNetCore.Components.Authorization
 @using PdfToolStack.Application.DTOs
+@using PdfToolStack.Web.Components
 
 <PageTitle>My Account — PdfToolStack</PageTitle>
 
@@ -26,21 +27,14 @@
                         @(GetInitials(context.User.Identity?.Name))
                     </div>
                 }
-                <div class="account-header-info">
+                <div>
                     <h1>@context.User.Identity?.Name</h1>
                     <p class="account-email">@context.User.FindFirst("email")?.Value</p>
                 </div>
-                <div class="account-header-right">
-                    @if (_subStatus?.HasPro == true)
-                    {
-                        <div class="account-pro-badge">
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
-                                <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26 12,2" />
-                            </svg>
-                            Pro
-                        </div>
-                    }
-                </div>
+                @if (_subStatus?.HasPro == true)
+                {
+                    <div class="account-pro-badge">Pro</div>
+                }
             </div>
 
             <!-- Stats row -->
@@ -115,7 +109,29 @@
                                 <span class="ai-usage-remaining">
                                     @_aiUsage.Remaining requests remaining
                                 </span>
+
+                                @if (_purchasedCredits > 0)
+                                {
+                                    <div class="ai-credits-badge">
+                                        <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M8 2v5M5 5l3-3 3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 11h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" opacity="0.6"/></svg>
+                                        +@_purchasedCredits top-up credits available
+                                    </div>
+                                }
                             </div>
+
+                            @if (_aiUsage.Percentage >= 100)
+                            {
+                                <button class="topup-inline-btn" @onclick="ShowTopUp">
+                                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 2v5M5 5l3-3 3 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                    Buy more AI credits
+                                </button>
+                            }
+                            else if (_aiUsage.Percentage >= 80)
+                            {
+                                <button class="topup-inline-btn topup-inline-btn-warn" @onclick="ShowTopUp">
+                                    Running low — buy more credits
+                                </button>
+                            }
                         }
                     }
                     else
@@ -301,6 +317,17 @@
     </AuthorizeView>
 </div>
 
+@if (_showTopUpSuccess)
+{
+    <div class="topup-success-toast">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0D9488" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        <span><strong>@_topUpCreditsAdded AI credits added!</strong> Valid for 90 days. Start using AI tools now.</span>
+        <button @onclick='() => _showTopUpSuccess = false' style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:1rem;padding:0;margin-left:0.5rem;">✕</button>
+    </div>
+}
+
+<AiCreditTopUpModal @ref="_topUpModal" />
+
 @code {
     private string _userId = string.Empty;
     private string _baseUrl = string.Empty;
@@ -308,6 +335,10 @@
     private List<DownloadHistoryDto>? _history;
     private AiUsageDto? _aiUsage;
     private bool _historyLoading = true;
+    private int _purchasedCredits = 0;
+    private bool _showTopUpSuccess = false;
+    private int _topUpCreditsAdded = 0;
+    private AiCreditTopUpModal? _topUpModal;
 
     protected override async Task OnInitializedAsync()
     {
@@ -324,6 +355,45 @@
             LoadHistoryAsync(),
             LoadAiUsageAsync());
     }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        // Handle return from Stripe top-up checkout
+        var uri = new Uri(Navigation.Uri);
+        var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+        var topup = query["topup"];
+        var sessionId = query["session_id"];
+        var creditsStr = query["credits"];
+
+        if (topup == "success" && !string.IsNullOrEmpty(sessionId))
+        {
+            if (int.TryParse(creditsStr, out var credits))
+            {
+                // Confirm with API (records in DB idempotently)
+                try
+                {
+                    await ApiService.PostAsync<ConfirmTopUpRequest, object>(
+                        "api/subscription/topup-credits/confirm",
+                        new ConfirmTopUpRequest { SessionId = sessionId });
+
+                    _topUpCreditsAdded = credits;
+                    _showTopUpSuccess = true;
+
+                    // Reload usage to reflect new credits
+                    await LoadAiUsageAsync();
+                }
+                catch { /* Confirm failed — credits may still have been recorded by webhook */ }
+            }
+
+            // Clean URL
+            Navigation.NavigateTo("/account", replace: true);
+            StateHasChanged();
+        }
+    }
+
+    private void ShowTopUp() => _topUpModal?.Show();
 
     private async Task LoadSubscriptionAsync()
     {
@@ -356,12 +426,27 @@
         {
             _aiUsage = await ApiService
                 .GetAsync<AiUsageDto>($"api/ai/usage/{_userId}");
+
+            // Load purchased top-up credits
+            var creditsResult = await ApiService
+                .GetAsync<PurchasedCreditsDto>($"api/subscription/purchased-credits/{_userId}");
+            _purchasedCredits = creditsResult?.Remaining ?? 0;
         }
         catch
         {
             _aiUsage = null;
         }
         StateHasChanged();
+    }
+
+    private class PurchasedCreditsDto
+    {
+        public int Remaining { get; set; }
+    }
+
+    private class ConfirmTopUpRequest
+    {
+        public string SessionId { get; set; } = string.Empty;
     }
 
     private async Task ManageBilling()

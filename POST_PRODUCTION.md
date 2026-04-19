@@ -62,7 +62,7 @@ What I built:
 - AI Contract Reviewer — highlights risky clauses, key dates, obligations
 - AI Invoice Data Extractor — PDF invoice → structured Excel in seconds
 - Batch processing — apply any tool to 20 PDFs at once, ZIP output
-- $12/month Pro, no ads, files deleted in 1 hour
+- $19/month Pro, no ads, files deleted in 1 hour
 
 Tech: ASP.NET Core + Blazor WASM, Azure, Claude AI (Anthropic), Stripe, Auth0
 
@@ -139,7 +139,7 @@ https://pdftoolstack.com
 - Name: PdfToolStack
 - Category: PDF Software, Document Management
 - Alternatives to: Smallpdf, Adobe Acrobat, ilovepdf
-- Description: "AI-powered PDF tools for small teams. Compress, merge, split, sign, convert PDFs. AI contract reviewer and invoice data extractor. $12/month Pro, privacy-first, files deleted in 1 hour."
+- Description: "AI-powered PDF tools for small teams. Compress, merge, split, sign, convert PDFs. AI contract reviewer and invoice data extractor. $19/month Pro, privacy-first, files deleted in 1 hour."
 
 #### SaaSHub
 **URL:** saashub.com/add
@@ -422,7 +422,7 @@ In this video I show you how to [action] using PdfToolStack.
 
 Try it free: https://pdftoolstack.com/[tool-url]
 
-No signup required for basic use. Pro plan from $12/month.
+No signup required for basic use. Pro plan from $19/month.
 
 Timestamps:
 0:00 — Upload your file
@@ -457,7 +457,7 @@ I follow your content on [platform] — your [specific post] was exactly
 what my target customer reads.
 
 I run PdfToolStack.com — AI-powered PDF tools for accountants, 
-paralegals, and small business owners. $12/month Pro.
+paralegals, and small business owners. $19/month Pro.
 
 I'd love to offer you a 30% recurring commission on every customer 
 you refer. That's $3.60/month per Pro subscriber, forever.

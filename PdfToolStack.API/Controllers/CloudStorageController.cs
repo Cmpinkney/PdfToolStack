@@ -283,9 +283,10 @@ public sealed class CloudStorageController : ControllerBase
 
         var allowedHosts = new[]
         {
-        "localhost"
-        // later add production web host here, e.g. "pdftoolstack.com"
-    };
+            "localhost",
+            "pdftoolstack.com",
+            "www.pdftoolstack.com"
+        };
 
         return allowedHosts.Any(h =>
             uri.Host.Equals(h, StringComparison.OrdinalIgnoreCase));

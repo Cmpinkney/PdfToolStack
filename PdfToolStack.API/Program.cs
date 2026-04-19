@@ -104,6 +104,7 @@ try
     builder.Services.AddScoped<FlattenPdfProcessor>();
     builder.Services.AddScoped<RotatePdfProcessor>();
     builder.Services.AddScoped<WatermarkPdfProcessor>();
+    builder.Services.AddScoped<PdfToolStack.Domain.Interfaces.IWatermarkProcessor>(sp => sp.GetRequiredService<WatermarkPdfProcessor>());
     builder.Services.AddScoped<SplitPdfProcessor>();
     builder.Services.AddScoped<NumberPagesPdfProcessor>();
     builder.Services.AddScoped<UnlockPdfProcessor>();

@@ -16,6 +16,7 @@ namespace PdfToolStack.Infrastructure.Data
         public DbSet<AiUsageLog> AiUsageLogs => Set<AiUsageLog>();
         public DbSet<ApiKey> ApiKeys => Set<ApiKey>();
         public DbSet<Referral> Referrals => Set<Referral>();
+        public DbSet<AiCreditPurchase> AiCreditPurchases => Set<AiCreditPurchase>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -71,6 +72,18 @@ namespace PdfToolStack.Infrastructure.Data
                 entity.HasIndex(e => e.ReferralCode).IsUnique();
                 entity.HasIndex(e => e.ReferrerId);
                 entity.HasIndex(e => e.ReferredUserId);
+            });
+
+            modelBuilder.Entity<AiCreditPurchase>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.UserId)
+                    .IsRequired().HasMaxLength(256);
+                entity.Property(e => e.StripeSessionId)
+                    .IsRequired().HasMaxLength(256);
+                entity.HasIndex(e => e.UserId);
+                entity.HasIndex(e => e.StripeSessionId).IsUnique();
+                entity.HasIndex(e => e.ExpiresAt);
             });
         }
     }

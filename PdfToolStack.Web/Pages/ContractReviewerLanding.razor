@@ -1,0 +1,431 @@
+﻿@page "/ai-contract-review"
+@inject NavigationManager Navigation
+
+<PageTitle>AI Contract Reviewer — Catch Risky Clauses Before You Sign | PdfToolStack</PageTitle>
+
+<HeadContent>
+    <meta name="description" content="Upload any contract and AI instantly flags risky clauses, missing terms, key dates, and obligations. Powered by Claude AI. Free to try — no lawyer needed." />
+    <meta name="keywords" content="AI contract review, contract analyzer, risky clause detector, review contract online, NDA review, freelance contract review" />
+    <link rel="canonical" href="https://pdftoolstack.com/ai-contract-review" />
+    <meta property="og:title" content="AI Contract Reviewer — Catch Risky Clauses Before You Sign" />
+    <meta property="og:description" content="AI reads your contract and flags every risky clause, missing term, and key deadline in seconds. No lawyer needed for the first read." />
+    <meta property="og:type" content="website" />
+</HeadContent>
+
+<div class="crl-page">
+
+    <!-- ── HERO ─────────────────────────────────────────────── -->
+    <section class="crl-hero">
+        <div class="crl-hero-inner">
+            <div class="crl-hero-badge">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>
+                Powered by Claude AI
+            </div>
+            <h1 class="crl-hero-h1">
+                Don't sign a contract<br />
+                <span class="crl-hero-accent">you don't fully understand.</span>
+            </h1>
+            <p class="crl-hero-sub">
+                Upload any contract — NDA, service agreement, lease, employment offer.
+                AI flags every risky clause, missing term, and hidden obligation
+                in plain English. In seconds.
+            </p>
+
+            <div class="crl-hero-cta-row">
+                <a href="/review-contract" class="crl-btn-primary">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /></svg>
+                    Review My Contract Free
+                </a>
+                <a href="/pricing" class="crl-btn-secondary">See Pro pricing →</a>
+            </div>
+
+            <div class="crl-hero-trust">
+                <span>✓ No credit card required</span>
+                <span>✓ Files deleted in 1 hour</span>
+                <span>✓ Not legal advice — but a powerful first read</span>
+            </div>
+        </div>
+
+        <!-- Animated contract mockup -->
+        <div class="crl-hero-visual">
+            <div class="crl-contract-card">
+                <!-- Contract header -->
+                <div class="crl-contract-top">
+                    <div class="crl-contract-title-stub"></div>
+                    <div class="crl-contract-subtitle-stub"></div>
+                </div>
+
+                <!-- Contract body lines -->
+                <div class="crl-contract-body">
+                    <div class="crl-line crl-line-full"></div>
+                    <div class="crl-line crl-line-long"></div>
+                    <div class="crl-line crl-line-full"></div>
+
+                    <!-- Risk flag 1 - highlighted line -->
+                    <div class="crl-line-group crl-risk-group" style="animation-delay: 0.8s;">
+                        <div class="crl-line crl-line-full crl-line-risk"></div>
+                        <div class="crl-line crl-line-med crl-line-risk"></div>
+                        <div class="crl-risk-flag crl-risk-high" style="animation-delay: 1.2s;">
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" stroke="white" stroke-width="2" /><line x1="12" y1="17" x2="12.01" y2="17" stroke="white" stroke-width="2" /></svg>
+                            High Risk
+                        </div>
+                    </div>
+
+                    <div class="crl-line crl-line-full"></div>
+                    <div class="crl-line crl-line-short"></div>
+                    <div class="crl-line crl-line-full"></div>
+
+                    <!-- Risk flag 2 -->
+                    <div class="crl-line-group crl-risk-group" style="animation-delay: 1.6s;">
+                        <div class="crl-line crl-line-full crl-line-warn"></div>
+                        <div class="crl-risk-flag crl-risk-med" style="animation-delay: 2.0s;">
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" stroke="white" stroke-width="2" /><line x1="12" y1="17" x2="12.01" y2="17" stroke="white" stroke-width="2" /></svg>
+                            Review Needed
+                        </div>
+                    </div>
+
+                    <div class="crl-line crl-line-long"></div>
+                    <div class="crl-line crl-line-full"></div>
+
+                    <!-- Safe clause -->
+                    <div class="crl-line-group crl-risk-group" style="animation-delay: 2.4s;">
+                        <div class="crl-line crl-line-full crl-line-ok"></div>
+                        <div class="crl-risk-flag crl-risk-ok" style="animation-delay: 2.7s;">
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                            Standard
+                        </div>
+                    </div>
+
+                    <div class="crl-line crl-line-full"></div>
+                    <div class="crl-line crl-line-med"></div>
+                </div>
+
+                <!-- AI scan line -->
+                <div class="crl-scan-line"></div>
+            </div>
+
+            <!-- Results panel -->
+            <div class="crl-results-card">
+                <div class="crl-results-header">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /></svg>
+                    Review Summary
+                </div>
+
+                <div class="crl-result-row crl-result-high">
+                    <span class="crl-result-dot crl-dot-high"></span>
+                    <span class="crl-result-label">Unlimited liability clause</span>
+                    <span class="crl-result-sev">HIGH</span>
+                </div>
+                <div class="crl-result-row crl-result-med">
+                    <span class="crl-result-dot crl-dot-med"></span>
+                    <span class="crl-result-label">No termination notice period</span>
+                    <span class="crl-result-sev">MED</span>
+                </div>
+                <div class="crl-result-row crl-result-ok">
+                    <span class="crl-result-dot crl-dot-ok"></span>
+                    <span class="crl-result-label">Payment terms — 30 days</span>
+                    <span class="crl-result-sev">OK</span>
+                </div>
+                <div class="crl-result-row crl-result-high" style="animation-delay:0.15s;">
+                    <span class="crl-result-dot crl-dot-high"></span>
+                    <span class="crl-result-label">IP ownership not defined</span>
+                    <span class="crl-result-sev">HIGH</span>
+                </div>
+                <div class="crl-result-row crl-result-med" style="animation-delay:0.3s;">
+                    <span class="crl-result-dot crl-dot-med"></span>
+                    <span class="crl-result-label">Non-compete too broad</span>
+                    <span class="crl-result-sev">MED</span>
+                </div>
+
+                <div class="crl-risk-meter">
+                    <div class="crl-risk-meter-label">Overall risk</div>
+                    <div class="crl-risk-track">
+                        <div class="crl-risk-fill"></div>
+                        <div class="crl-risk-needle"></div>
+                    </div>
+                    <div class="crl-risk-labels">
+                        <span>Low</span><span>Med</span><span>High</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── PAIN POINTS ─────────────────────────────────────── -->
+    <section class="crl-section crl-pain">
+        <div class="crl-section-inner">
+            <h2 class="crl-section-h2">The contract signing problem</h2>
+            <div class="crl-pain-grid">
+                <div class="crl-pain-card">
+                    <div class="crl-pain-icon">💸</div>
+                    <h3>Lawyers are expensive</h3>
+                    <p>A contract attorney charges $200–$500/hour. A standard NDA review takes 1–2 hours. Most freelancers and small businesses skip it entirely — and get burned.</p>
+                </div>
+                <div class="crl-pain-card">
+                    <div class="crl-pain-icon">😰</div>
+                    <h3>Legal language is impenetrable</h3>
+                    <p>"Indemnification", "force majeure", "liquidated damages" — most people sign contracts they don't understand because they don't have a choice.</p>
+                </div>
+                <div class="crl-pain-card">
+                    <div class="crl-pain-icon">⏰</div>
+                    <h3>Signing deadlines create pressure</h3>
+                    <p>Clients send contracts with 24-hour windows. There's no time to get proper review. You sign, hope for the best, and find problems six months later.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── HOW IT WORKS ────────────────────────────────────── -->
+    <section class="crl-section crl-how">
+        <div class="crl-section-inner">
+            <div class="crl-section-label">How it works</div>
+            <h2 class="crl-section-h2">From upload to full review in under 30 seconds</h2>
+            <div class="crl-steps">
+                <div class="crl-step">
+                    <div class="crl-step-num">1</div>
+                    <div class="crl-step-content">
+                        <h3>Upload your contract PDF</h3>
+                        <p>NDA, service agreement, employment offer, lease, vendor contract — any standard format works.</p>
+                    </div>
+                </div>
+                <div class="crl-step-connector"></div>
+                <div class="crl-step">
+                    <div class="crl-step-num">2</div>
+                    <div class="crl-step-content">
+                        <h3>AI reviews every clause</h3>
+                        <p>Claude reads the full contract and identifies parties, key dates, obligations, risky clauses, and missing elements.</p>
+                    </div>
+                </div>
+                <div class="crl-step-connector"></div>
+                <div class="crl-step">
+                    <div class="crl-step-num">3</div>
+                    <div class="crl-step-content">
+                        <h3>Get a plain English report</h3>
+                        <p>Risk score, flagged clauses with explanations, key deadlines, and specific recommendations — all in language you can actually understand.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="crl-how-cta">
+                <a href="/review-contract" class="crl-btn-primary">Try it free — no signup</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── WHAT AI CATCHES ─────────────────────────────────── -->
+    <section class="crl-section crl-catches">
+        <div class="crl-section-inner">
+            <div class="crl-section-label">What AI catches</div>
+            <h2 class="crl-section-h2">The clauses that cost people the most</h2>
+            <div class="crl-catches-grid">
+                <div class="crl-catch-card crl-catch-high">
+                    <div class="crl-catch-severity">HIGH RISK</div>
+                    <h3>Unlimited liability</h3>
+                    <p>Clauses that make you responsible for damages with no cap — even beyond the contract value.</p>
+                </div>
+                <div class="crl-catch-card crl-catch-high">
+                    <div class="crl-catch-severity">HIGH RISK</div>
+                    <h3>IP ownership traps</h3>
+                    <p>Work-for-hire clauses that assign all intellectual property to the client — including future work.</p>
+                </div>
+                <div class="crl-catch-card crl-catch-high">
+                    <div class="crl-catch-severity">HIGH RISK</div>
+                    <h3>Unilateral change rights</h3>
+                    <p>Clauses that let the other party change contract terms without your consent or notice.</p>
+                </div>
+                <div class="crl-catch-card crl-catch-med">
+                    <div class="crl-catch-severity">MEDIUM RISK</div>
+                    <h3>Overly broad non-competes</h3>
+                    <p>Non-compete clauses with unreasonable geographic scope, duration, or industry restrictions.</p>
+                </div>
+                <div class="crl-catch-card crl-catch-med">
+                    <div class="crl-catch-severity">MEDIUM RISK</div>
+                    <h3>Auto-renewal traps</h3>
+                    <p>Contracts that auto-renew for long periods unless cancelled with very short notice windows.</p>
+                </div>
+                <div class="crl-catch-card crl-catch-med">
+                    <div class="crl-catch-severity">MEDIUM RISK</div>
+                    <h3>Vague payment terms</h3>
+                    <p>No net payment terms, no late fees, no dispute resolution — leaving you with no recourse for non-payment.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── WHO IT'S FOR ────────────────────────────────────── -->
+    <section class="crl-section crl-who">
+        <div class="crl-section-inner">
+            <div class="crl-section-label">Built for</div>
+            <h2 class="crl-section-h2">Anyone who signs contracts without a lawyer on speed dial</h2>
+            <div class="crl-who-grid">
+                <div class="crl-who-card">
+                    <div class="crl-who-icon" style="background:#F5F3FF;">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+                    </div>
+                    <h3>Freelancers &amp; Consultants</h3>
+                    <p>Review client contracts, service agreements, and NDAs before signing. Know exactly what you're agreeing to on IP, payment, and non-competes.</p>
+                    <div class="crl-who-stat">Avg. lawyer review: $300–600/contract</div>
+                </div>
+                <div class="crl-who-card">
+                    <div class="crl-who-icon" style="background:#EFF6FF;">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2250F4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" /><path d="M8 21h8M12 17v4" /></svg>
+                    </div>
+                    <h3>Small Business Owners</h3>
+                    <p>Review vendor agreements, supplier contracts, and SaaS subscriptions. Catch unfavorable terms before they're locked in.</p>
+                    <div class="crl-who-stat">Most small businesses sign without review</div>
+                </div>
+                <div class="crl-who-card">
+                    <div class="crl-who-icon" style="background:#F0FDF9;">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0D9488" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /></svg>
+                    </div>
+                    <h3>Paralegals &amp; Legal Teams</h3>
+                    <p>Use as a first-pass review to flag issues before attorney review. Dramatically reduce billable hours on routine contract screening.</p>
+                    <div class="crl-who-stat">First-pass review in &lt;30 seconds</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── ROI CALCULATOR ──────────────────────────────────── -->
+    <section class="crl-section crl-roi-section">
+        <div class="crl-section-inner crl-roi-inner">
+            <div class="crl-roi-left">
+                <div class="crl-section-label">Pricing</div>
+                <h2 class="crl-section-h2" style="margin-bottom:0.75rem;">Less than one minute of a lawyer's time</h2>
+                <p style="color:var(--text-secondary); font-size:0.9375rem; line-height:1.6; margin-bottom:1.75rem;">
+                    5 free AI reviews every month. Upgrade to Pro for unlimited contract reviews, invoice extraction, document summarization, and the full AI toolkit.
+                </p>
+                <div class="crl-pricing-tiers">
+                    <div class="crl-tier">
+                        <div class="crl-tier-name">Free</div>
+                        <div class="crl-tier-price">$0<span>/month</span></div>
+                        <div class="crl-tier-detail">5 AI reviews/month</div>
+                    </div>
+                    <div class="crl-tier crl-tier-featured">
+                        <div class="crl-tier-badge">Most Popular</div>
+                        <div class="crl-tier-name">Pro</div>
+                        <div class="crl-tier-price">$19<span>/month</span></div>
+                        <div class="crl-tier-detail">Unlimited reviews + all AI tools</div>
+                    </div>
+                    <div class="crl-tier">
+                        <div class="crl-tier-name">Teams</div>
+                        <div class="crl-tier-price">$29<span>/month</span></div>
+                        <div class="crl-tier-detail">5 seats · 500 AI uses · priority support</div>
+                    </div>
+                </div>
+                <div class="crl-pricing-actions">
+                    <a href="/review-contract" class="crl-btn-primary">Review a contract free</a>
+                    <a href="/pricing" class="crl-btn-secondary">Full pricing →</a>
+                </div>
+            </div>
+
+            <div class="crl-roi-right">
+                <div class="crl-roi-card">
+                    <div class="crl-roi-title">Compare the cost</div>
+
+                    <div class="crl-roi-compare-row">
+                        <div class="crl-roi-option crl-roi-lawyer">
+                            <div class="crl-roi-option-label">Attorney review</div>
+                            <div class="crl-roi-option-price">$300–$600</div>
+                            <div class="crl-roi-option-detail">per contract · 1–3 day turnaround</div>
+                        </div>
+                        <div class="crl-roi-vs">vs</div>
+                        <div class="crl-roi-option crl-roi-ai">
+                            <div class="crl-roi-option-label">AI first-pass review</div>
+                            <div class="crl-roi-option-price">$0</div>
+                            <div class="crl-roi-option-detail">free · under 30 seconds</div>
+                        </div>
+                    </div>
+
+                    <div class="crl-roi-divider"></div>
+
+                    <div class="crl-roi-title" style="margin-bottom:0.75rem;">Calculate your savings</div>
+                    <div class="crl-roi-row">
+                        <span>Contracts reviewed per month</span>
+                        <strong>@_contractsPerMonth</strong>
+                    </div>
+                    <input type="range" min="1" max="50" step="1"
+                           class="crl-roi-slider"
+                           value="@_contractsPerMonth"
+                           @oninput="UpdateROI" />
+                    <div class="crl-roi-divider"></div>
+                    <div class="crl-roi-result">
+                        <div class="crl-roi-result-label">Lawyer cost (at $400/contract)</div>
+                        <div class="crl-roi-result-num crl-roi-bad">@_lawyerCost</div>
+                    </div>
+                    <div class="crl-roi-result">
+                        <div class="crl-roi-result-label">PdfToolStack Pro cost</div>
+                        <div class="crl-roi-result-num crl-roi-good">$19/mo</div>
+                    </div>
+                    <div class="crl-roi-savings">
+                        You save <strong>@_savings</strong> per month
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── FAQ ────────────────────────────────────────────── -->
+    <section class="crl-section crl-faq">
+        <div class="crl-section-inner">
+            <h2 class="crl-section-h2">Common questions</h2>
+            <div class="crl-faq-grid">
+                <div class="crl-faq-item">
+                    <h3>Is this a replacement for a lawyer?</h3>
+                    <p>No — and we're clear about that. AI review is a powerful first read that helps you understand what you're signing and what to ask a lawyer about. It dramatically reduces the time (and cost) of professional review.</p>
+                </div>
+                <div class="crl-faq-item">
+                    <h3>What types of contracts does it review?</h3>
+                    <p>NDAs, service agreements, employment contracts, lease agreements, freelance contracts, vendor agreements, consulting agreements, software licenses, and most standard business contracts.</p>
+                </div>
+                <div class="crl-faq-item">
+                    <h3>Is my contract kept private?</h3>
+                    <p>Yes. Your PDF is processed in memory and permanently deleted within 1 hour. We never store contract contents, never share data with third parties, and never train AI models on your documents.</p>
+                </div>
+                <div class="crl-faq-item">
+                    <h3>How accurate is the AI?</h3>
+                    <p>Very accurate for standard clause identification and common risk patterns. Powered by Claude by Anthropic — one of the most capable AI models for legal document analysis. Complex jurisdiction-specific issues may need professional review.</p>
+                </div>
+                <div class="crl-faq-item">
+                    <h3>Can it review contracts in other languages?</h3>
+                    <p>Yes. Claude supports dozens of languages. Contracts in Spanish, French, German, Portuguese, and most European languages review accurately. The output report is always in English.</p>
+                </div>
+                <div class="crl-faq-item">
+                    <h3>What if I need to review contracts regularly?</h3>
+                    <p>Pro gives you unlimited AI uses for $19/month — far less than a single attorney review. Teams plan at $29/month includes 5 seats, making it perfect for small legal or operations teams.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── FINAL CTA ──────────────────────────────────────── -->
+    <section class="crl-final-cta">
+        <div class="crl-final-cta-inner">
+            <h2>Know what you're signing before you sign it.</h2>
+            <p>Upload your contract and get a full AI review in under 30 seconds — free.</p>
+            <a href="/review-contract" class="crl-btn-primary crl-btn-lg">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /></svg>
+                Review My Contract Free
+            </a>
+            <p class="crl-final-fine">No signup required · Not legal advice · Files deleted in 1 hour</p>
+        </div>
+    </section>
+
+</div>
+
+@code {
+    private int _contractsPerMonth = 5;
+    private string _lawyerCost = "$2,000";
+    private string _savings = "$1,981";
+
+    private void UpdateROI(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var val))
+        {
+            _contractsPerMonth = val;
+            var lawyer = val * 400;
+            _lawyerCost = lawyer >= 1000 ? $"${lawyer / 1000.0:F1}K" : $"${lawyer}";
+            var saved = lawyer - 19;
+            _savings = saved >= 1000 ? $"${saved / 1000.0:F1}K" : $"${saved}";
+        }
+    }
+}

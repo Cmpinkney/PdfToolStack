@@ -5,7 +5,7 @@ using PdfToolStack.Domain.Enums;
 
 namespace PdfToolStack.Infrastructure.Processors
 {
-    public class WatermarkPdfProcessor : IPdfProcessor
+    public class WatermarkPdfProcessor : IWatermarkProcessor
     {
         public ToolType ToolType => ToolType.WatermarkPdf;
 

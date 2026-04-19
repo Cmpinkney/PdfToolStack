@@ -1,0 +1,171 @@
+﻿@using PdfToolStack.Web.Services
+@inject NavigationManager Navigation
+@inject PdfToolStack.Web.Services.ApiService ApiService
+
+@if (_visible)
+{
+    <div class="topup-overlay" @onclick="Dismiss">
+        <div class="topup-modal" @onclick:stopPropagation="true">
+
+            <button class="topup-close" @onclick="Dismiss" aria-label="Close">
+                <svg viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" /></svg>
+            </button>
+
+            <!-- Header -->
+            <div class="topup-header">
+                <div class="topup-icon-wrap">
+                    <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="32" height="32" rx="10" fill="url(#topup-grad)" />
+                        <path d="M16 8v8M12 12l4-4 4 4" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        <path d="M9 20h14" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.6" />
+                        <defs>
+                            <linearGradient id="topup-grad" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+                                <stop stop-color="#2250F4" />
+                                <stop offset="1" stop-color="#7C3AED" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <div>
+                    <h2 class="topup-title">You've used all your AI credits</h2>
+                    <p class="topup-subtitle">Top up instantly — credits valid for 90 days.</p>
+                </div>
+            </div>
+
+            <!-- Packages -->
+            <div class="topup-packages">
+
+                <button class="topup-package @(_selected == "50" ? "topup-package-selected" : "")"
+                        @onclick='() => _selected = "50"'>
+                    <div class="topup-package-top">
+                        <span class="topup-package-credits">50 Credits</span>
+                        <span class="topup-package-price">$9.99</span>
+                    </div>
+                    <div class="topup-package-unit">$0.20 per AI use</div>
+                    <div class="topup-package-desc">Good for occasional overflow — invoice extractions, contract reviews, summaries.</div>
+                    @if (_selected == "50")
+                    {
+                        <div class="topup-package-check">
+                            <svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" fill="#2250F4" fill-opacity="0.12" /><path d="M5 8l2 2 4-4" stroke="#2250F4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                        </div>
+                    }
+                </button>
+
+                <button class="topup-package topup-package-best @(_selected == "200" ? "topup-package-selected" : "")"
+                        @onclick='() => _selected = "200"'>
+                    <div class="topup-package-badge">Best Value</div>
+                    <div class="topup-package-top">
+                        <span class="topup-package-credits">200 Credits</span>
+                        <span class="topup-package-price">$29.99</span>
+                    </div>
+                    <div class="topup-package-unit">$0.15 per AI use — save 25%</div>
+                    <div class="topup-package-desc">For heavy users — enough to cover a full month of extra processing without upgrading.</div>
+                    @if (_selected == "200")
+                    {
+                        <div class="topup-package-check">
+                            <svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" fill="#2250F4" fill-opacity="0.12" /><path d="M5 8l2 2 4-4" stroke="#2250F4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                        </div>
+                    }
+                </button>
+
+            </div>
+
+            <!-- What counts as 1 credit -->
+            <div class="topup-credit-note">
+                <strong>1 credit =</strong> 1 AI use — invoice extraction, contract review, PDF summarizer, translation, or chat message.
+            </div>
+
+            <!-- CTA -->
+            <button class="topup-cta" @onclick="Checkout" disabled="@_loading">
+                @if (_loading)
+                {
+                    <span class="topup-spinner"></span>
+                    <span>Redirecting to Stripe...</span>
+                }
+                else
+                {
+                    <svg viewBox="0 0 16 16" fill="none" style="width:16px;height:16px;"><rect x="1" y="4" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.6" /><path d="M1 7h14" stroke="currentColor" stroke-width="1.6" /></svg>
+                    <span>Buy @(_selected == "200" ? "200" : "50") Credits — @(_selected == "200" ? "$29.99" : "$9.99")</span>
+                }
+            </button>
+
+            @if (!string.IsNullOrEmpty(_error))
+            {
+                <p class="topup-error">@_error</p>
+            }
+
+            <!-- Upgrade nudge -->
+            <div class="topup-upgrade-nudge">
+                <span>Need more every month?</span>
+                <a href="/pricing" @onclick="Dismiss">Upgrade your plan →</a>
+            </div>
+
+        </div>
+    </div>
+}
+
+@code {
+    private bool _visible = false;
+    private string _selected = "50";
+    private bool _loading = false;
+    private string _error = string.Empty;
+
+    /// <summary>Call this from any page when AI usage hits the limit.</summary>
+    public void Show(string defaultPackage = "50")
+    {
+        _selected = defaultPackage;
+        _visible = true;
+        _error = string.Empty;
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dismiss()
+    {
+        _visible = false;
+        StateHasChanged();
+    }
+
+    private async Task Checkout()
+    {
+        _loading = true;
+        _error = string.Empty;
+        StateHasChanged();
+
+        try
+        {
+            var baseUrl = Navigation.BaseUri.TrimEnd('/');
+            var response = await ApiService.PostAsync<TopUpRequest, TopUpResponse>(
+                "api/subscription/topup-credits",
+                new TopUpRequest { Package = _selected, BaseUrl = baseUrl });
+
+            if (!string.IsNullOrEmpty(response?.Url))
+            {
+                Navigation.NavigateTo(response.Url, forceLoad: true);
+            }
+            else
+            {
+                _error = "Couldn't start checkout. Please try again.";
+            }
+        }
+        catch
+        {
+            _error = "Something went wrong. Please try again.";
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private class TopUpRequest
+    {
+        public string Package { get; set; } = "50";
+        public string BaseUrl { get; set; } = string.Empty;
+    }
+
+    private class TopUpResponse
+    {
+        public string Url { get; set; } = string.Empty;
+    }
+}

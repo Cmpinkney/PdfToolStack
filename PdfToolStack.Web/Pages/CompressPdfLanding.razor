@@ -1,0 +1,97 @@
+﻿@page "/compress-pdf/app"
+@inject NavigationManager Navigation
+
+<PageTitle>Compress PDF Online Free — Reduce PDF File Size Instantly | PdfToolStack</PageTitle>
+<HeadContent>
+    <meta name="description" content="Compress PDF files online free. Reduce a 45MB PDF to under 2MB in seconds — small enough for email without losing quality. No signup required." />
+    <link rel="canonical" href="https://pdftoolstack.com/compress-pdf" />
+</HeadContent>
+
+<div class="lp-page">
+    <section class="lp-hero lp-compress-hero">
+        <div class="lp-hero-inner">
+            <div class="lp-badge lp-badge-blue">Most Used Tool</div>
+            <h1 class="lp-h1">Your PDF is too large<br /><span class="lp-accent-blue">for email.</span></h1>
+            <p class="lp-sub">Gmail rejects files over 25MB. Outlook blocks 20MB+. Upload your PDF and watch it shrink to email-ready size in seconds — free, no signup.</p>
+            <div class="lp-cta-row">
+                <a href="/compress-for-email" class="lp-btn-primary lp-btn-blue">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 7 13 17 8 12" /><path d="M2 12h9" /></svg>
+                    Compress My PDF Free
+                </a>
+                <span class="lp-trust-inline">✓ Free · No signup · Files deleted in 1 hour</span>
+            </div>
+        </div>
+
+        <!-- Animated file size meter -->
+        <div class="lp-compress-visual">
+            <div class="lp-file-card">
+                <div class="lp-file-icon">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#2250F4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /></svg>
+                </div>
+                <div class="lp-file-name">quarterly_report.pdf</div>
+                <div class="lp-file-size-display">
+                    <span class="lp-size-num lp-size-animating">45.2 MB</span>
+                    <span class="lp-size-label">file size</span>
+                </div>
+                <div class="lp-compress-bar-wrap">
+                    <div class="lp-compress-bar"></div>
+                    <div class="lp-compress-bar-fill"></div>
+                </div>
+                <div class="lp-compress-status">
+                    <span class="lp-compress-pct">Compressing...</span>
+                </div>
+            </div>
+            <div class="lp-arrow-down">↓</div>
+            <div class="lp-file-card lp-file-card-result">
+                <div class="lp-file-icon">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#0D9488" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /></svg>
+                </div>
+                <div class="lp-file-name">quarterly_report_compressed.pdf</div>
+                <div class="lp-file-size-display">
+                    <span class="lp-size-num lp-size-result">1.8 MB</span>
+                    <span class="lp-size-label">compressed</span>
+                </div>
+                <div class="lp-email-badge">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                    Email ready ✓
+                </div>
+                <div class="lp-savings-badge">96% smaller</div>
+            </div>
+        </div>
+    </section>
+
+    <section class="lp-section lp-pain-section">
+        <div class="lp-section-inner">
+            <h2 class="lp-h2">The email attachment problem</h2>
+            <div class="lp-cards-3">
+                <div class="lp-card"><div class="lp-card-icon">📧</div><h3>Gmail rejects files over 25MB</h3><p>Send fails silently or bounces. You re-scan, re-save, re-try — all while the client waits.</p></div>
+                <div class="lp-card"><div class="lp-card-icon">🐢</div><h3>Large PDFs crash mobile email</h3><p>Recipients on phones can't open them. Your proposal sits unread in a "loading" state.</p></div>
+                <div class="lp-card"><div class="lp-card-icon">📤</div><h3>Upload portals have file limits</h3><p>Court filing systems, accounting software, HR portals — all reject files over 10–25MB.</p></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="lp-section lp-how-section">
+        <div class="lp-section-inner">
+            <div class="lp-label">How it works</div>
+            <h2 class="lp-h2">Three clicks. Done.</h2>
+            <div class="lp-steps-row">
+                <div class="lp-step"><div class="lp-step-num lp-num-blue">1</div><h3>Upload your PDF</h3><p>Any size up to 500MB with Pro, 25MB free.</p></div>
+                <div class="lp-step-line"></div>
+                <div class="lp-step"><div class="lp-step-num lp-num-blue">2</div><h3>We compress it</h3><p>Smart compression removes redundancy without visible quality loss.</p></div>
+                <div class="lp-step-line"></div>
+                <div class="lp-step"><div class="lp-step-num lp-num-blue">3</div><h3>Download &amp; send</h3><p>Email-ready in seconds. Original quality preserved.</p></div>
+            </div>
+            <div class="lp-center-cta"><a href="/compress-for-email" class="lp-btn-primary lp-btn-blue">Compress My PDF Free</a></div>
+        </div>
+    </section>
+
+    <section class="lp-final-cta-section">
+        <div class="lp-final-inner">
+            <h2>Stop fighting email file size limits.</h2>
+            <p>Compress any PDF in seconds — free, no signup required.</p>
+            <a href="/compress-for-email" class="lp-btn-primary lp-btn-blue lp-btn-lg">Compress PDF Free</a>
+            <p class="lp-fine">No signup · Files deleted in 1 hour · 25MB free · 500MB with Pro</p>
+        </div>
+    </section>
+</div>

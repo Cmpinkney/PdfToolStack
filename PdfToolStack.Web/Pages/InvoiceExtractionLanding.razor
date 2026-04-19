@@ -1,0 +1,423 @@
+﻿@page "/invoice-data-extraction"
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider Auth
+@inject PdfToolStack.Web.Services.SubscriptionService SubService
+@using Microsoft.AspNetCore.Components.Authorization
+
+<PageTitle>Extract Invoice Data from PDF to Excel — AI-Powered | PdfToolStack</PageTitle>
+
+<HeadContent>
+    <meta name="description" content="Stop typing invoice data by hand. Upload any PDF invoice and AI extracts vendor, amounts, line items, and dates directly to Excel in seconds. Free to try." />
+    <meta name="keywords" content="extract invoice data from PDF, PDF to Excel invoice, invoice data extraction, PDF invoice automation, invoice OCR" />
+    <link rel="canonical" href="https://pdftoolstack.com/invoice-data-extraction" />
+    <!-- Open Graph -->
+    <meta property="og:title" content="Extract Invoice Data from PDF to Excel — PdfToolStack" />
+    <meta property="og:description" content="AI reads your PDF invoices and exports every field to Excel automatically. No manual entry. 95%+ accuracy." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://pdftoolstack.com/invoice-data-extraction" />
+</HeadContent>
+
+<div class="iel-page">
+
+    <!-- ── HERO ─────────────────────────────────────────────────── -->
+    <section class="iel-hero">
+        <div class="iel-hero-inner">
+            <div class="iel-hero-badge">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>
+                Powered by Claude AI
+            </div>
+            <h1 class="iel-hero-h1">
+                Stop typing invoice data<br />
+                <span class="iel-hero-accent">by hand.</span>
+            </h1>
+            <p class="iel-hero-sub">
+                Upload any PDF invoice. AI reads every field — vendor, amounts, dates, line items —
+                and exports a clean Excel file in seconds. Works on any invoice format, any industry.
+            </p>
+
+            <div class="iel-hero-cta-row">
+                <a href="/extract-invoice-data" class="iel-btn-primary">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></svg>
+                    Extract Invoice Data Free
+                </a>
+                <a href="/pricing" class="iel-btn-secondary">
+                    See Pro pricing →
+                </a>
+            </div>
+
+            <div class="iel-hero-trust">
+                <span>✓ No credit card required</span>
+                <span>✓ 5 free extractions/month</span>
+                <span>✓ Files deleted in 1 hour</span>
+            </div>
+        </div>
+
+        <!-- Animated invoice mockup -->
+        <div class="iel-hero-visual">
+            <div class="iel-invoice-card">
+                <div class="iel-invoice-header">
+                    <div class="iel-invoice-logo-stub"></div>
+                    <div class="iel-invoice-meta">
+                        <div class="iel-invoice-label">INVOICE</div>
+                        <div class="iel-invoice-num">#INV-2024-0847</div>
+                    </div>
+                </div>
+                <div class="iel-invoice-row"><div class="iel-invoice-field-stub iel-stub-long"></div><div class="iel-invoice-field-stub iel-stub-med"></div></div>
+                <div class="iel-invoice-row"><div class="iel-invoice-field-stub iel-stub-med"></div><div class="iel-invoice-field-stub iel-stub-short"></div></div>
+                <div class="iel-invoice-row"><div class="iel-invoice-field-stub iel-stub-short"></div><div class="iel-invoice-field-stub iel-stub-med"></div></div>
+                <div class="iel-invoice-divider"></div>
+                <div class="iel-invoice-total-row">
+                    <div class="iel-invoice-field-stub iel-stub-short"></div>
+                    <div class="iel-invoice-total">$4,280.00</div>
+                </div>
+                <!-- AI scan overlay -->
+                <div class="iel-scan-line"></div>
+                <div class="iel-scan-dots">
+                    <div class="iel-scan-dot" style="top:28%; left:18%;"></div>
+                    <div class="iel-scan-dot" style="top:28%; right:12%; animation-delay:0.3s;"></div>
+                    <div class="iel-scan-dot" style="top:44%; left:14%; animation-delay:0.6s;"></div>
+                    <div class="iel-scan-dot" style="top:58%; right:18%; animation-delay:0.9s;"></div>
+                    <div class="iel-scan-dot" style="top:74%; left:60%; animation-delay:1.2s;"></div>
+                </div>
+            </div>
+
+            <!-- Arrow -->
+            <div class="iel-arrow-badge">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
+            </div>
+
+            <!-- Excel output mockup -->
+            <div class="iel-excel-card">
+                <div class="iel-excel-header">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0D9488" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="1" /><path d="M3 9h18" /><path d="M9 21V9" /></svg>
+                    extracted_invoice.xlsx
+                </div>
+                <div class="iel-excel-row iel-excel-head-row">
+                    <span>Field</span><span>Value</span>
+                </div>
+                @foreach (var row in _mockRows)
+                {
+                    <div class="iel-excel-row @(row.highlight ? "iel-excel-row-hl" : "")">
+                        <span class="iel-excel-key">@row.key</span>
+                        <span class="iel-excel-val">@row.val</span>
+                    </div>
+                }
+            </div>
+        </div>
+    </section>
+
+    <!-- ── PAIN POINTS ───────────────────────────────────────────── -->
+    <section class="iel-section iel-pain">
+        <div class="iel-section-inner">
+            <h2 class="iel-section-h2">Sound familiar?</h2>
+            <div class="iel-pain-grid">
+                <div class="iel-pain-card">
+                    <div class="iel-pain-icon">⏱️</div>
+                    <h3>Hours lost every week</h3>
+                    <p>Manually entering vendor names, invoice numbers, and amounts into spreadsheets. Accountants spend 4–6 hours per week on data entry alone.</p>
+                </div>
+                <div class="iel-pain-card">
+                    <div class="iel-pain-icon">❌</div>
+                    <h3>Typos cost real money</h3>
+                    <p>Manual entry means manual errors. A single transposed digit on an invoice can ripple through your books for months before anyone notices.</p>
+                </div>
+                <div class="iel-pain-card">
+                    <div class="iel-pain-icon">📥</div>
+                    <h3>Vendors send all formats</h3>
+                    <p>Every vendor has a different invoice layout. OCR tools choke on them. Your team ends up doing it by hand anyway.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── HOW IT WORKS ──────────────────────────────────────────── -->
+    <section class="iel-section iel-how">
+        <div class="iel-section-inner">
+            <div class="iel-section-label">How it works</div>
+            <h2 class="iel-section-h2">Three steps. Seconds, not hours.</h2>
+            <div class="iel-steps">
+                <div class="iel-step">
+                    <div class="iel-step-num">1</div>
+                    <div class="iel-step-content">
+                        <h3>Upload your invoice PDF</h3>
+                        <p>Any format, any vendor, any industry. Scanned or digital — Claude reads both.</p>
+                    </div>
+                </div>
+                <div class="iel-step-connector"></div>
+                <div class="iel-step">
+                    <div class="iel-step-num">2</div>
+                    <div class="iel-step-content">
+                        <h3>AI extracts every field</h3>
+                        <p>Vendor name, invoice number, date, due date, line items, subtotal, tax, and total — all captured automatically.</p>
+                    </div>
+                </div>
+                <div class="iel-step-connector"></div>
+                <div class="iel-step">
+                    <div class="iel-step-num">3</div>
+                    <div class="iel-step-content">
+                        <h3>Download structured Excel</h3>
+                        <p>Clean spreadsheet ready for QuickBooks, Xero, NetSuite, or your own accounting workflow.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="iel-how-cta">
+                <a href="/extract-invoice-data" class="iel-btn-primary">Try it free — no signup needed</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── WHAT GETS EXTRACTED ───────────────────────────────────── -->
+    <section class="iel-section iel-fields">
+        <div class="iel-section-inner">
+            <div class="iel-section-label">Extracted fields</div>
+            <h2 class="iel-section-h2">Every field, automatically captured</h2>
+            <p class="iel-section-sub">Claude AI identifies and extracts all standard invoice fields — even from invoices it has never seen before.</p>
+
+            <div class="iel-fields-grid">
+                <div class="iel-fields-col">
+                    <div class="iel-fields-col-title">Invoice Header</div>
+                    @foreach (var f in _headerFields)
+                    {
+                        <div class="iel-field-row">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0D9488" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                            @f
+                        </div>
+                    }
+                </div>
+                <div class="iel-fields-col">
+                    <div class="iel-fields-col-title">Line Items</div>
+                    @foreach (var f in _lineItemFields)
+                    {
+                        <div class="iel-field-row">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0D9488" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                            @f
+                        </div>
+                    }
+                </div>
+                <div class="iel-fields-col">
+                    <div class="iel-fields-col-title">Totals & Terms</div>
+                    @foreach (var f in _totalFields)
+                    {
+                        <div class="iel-field-row">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0D9488" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                            @f
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── WHO IT'S FOR ──────────────────────────────────────────── -->
+    <section class="iel-section iel-who">
+        <div class="iel-section-inner">
+            <div class="iel-section-label">Built for</div>
+            <h2 class="iel-section-h2">If you touch invoices, this saves you hours</h2>
+            <div class="iel-who-grid">
+                <div class="iel-who-card">
+                    <div class="iel-who-icon" style="background:#EFF6FF;">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2250F4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3" /><path d="M3 8.5H21" /><path d="M9 8.5V21" /></svg>
+                    </div>
+                    <h3>Accountants &amp; Bookkeepers</h3>
+                    <p>Process client invoices 10x faster. Export directly to Excel for QuickBooks import. Stop billing hours for data entry.</p>
+                    <div class="iel-who-stat">Saves ~5 hrs/week per client</div>
+                </div>
+                <div class="iel-who-card">
+                    <div class="iel-who-icon" style="background:#F0FDF9;">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0D9488" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9,22 9,12 15,12 15,22" /></svg>
+                    </div>
+                    <h3>Small Business Owners</h3>
+                    <p>Never manually enter a supplier invoice again. Keep your books up to date without hiring extra staff.</p>
+                    <div class="iel-who-stat">Eliminates manual AP data entry</div>
+                </div>
+                <div class="iel-who-card">
+                    <div class="iel-who-icon" style="background:#F5F3FF;">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+                    </div>
+                    <h3>Freelancers &amp; Consultants</h3>
+                    <p>Track client expenses and vendor invoices without dedicated accounting software. One upload, done.</p>
+                    <div class="iel-who-stat">No accounting software needed</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── PRICING CTA ───────────────────────────────────────────── -->
+    <section class="iel-section iel-pricing-cta">
+        <div class="iel-pricing-cta-inner">
+            <div class="iel-pricing-cta-left">
+                <div class="iel-section-label">Pricing</div>
+                <h2 class="iel-section-h2" style="margin-bottom:0.75rem;">Start free. Scale when you need to.</h2>
+                <p style="color:var(--text-secondary); font-size:0.9375rem; line-height:1.6; margin-bottom:1.75rem;">
+                    5 AI extractions free every month — no credit card, no signup required.
+                    Upgrade to Pro for unlimited extractions, batch processing, and the full AI toolkit.
+                </p>
+                <div class="iel-pricing-tiers">
+                    <div class="iel-pricing-tier">
+                        <div class="iel-tier-name">Free</div>
+                        <div class="iel-tier-price">$0<span>/month</span></div>
+                        <div class="iel-tier-detail">5 AI extractions/month</div>
+                    </div>
+                    <div class="iel-pricing-tier iel-pricing-tier-featured">
+                        <div class="iel-tier-badge">Most Popular</div>
+                        <div class="iel-tier-name">Pro</div>
+                        <div class="iel-tier-price">$19<span>/month</span></div>
+                        <div class="iel-tier-detail">200 AI uses · all tools · no ads</div>
+                    </div>
+                    <div class="iel-pricing-tier">
+                        <div class="iel-tier-name">Teams</div>
+                        <div class="iel-tier-price">$29<span>/month</span></div>
+                        <div class="iel-tier-detail">500 AI uses · 5 seats · priority support</div>
+                    </div>
+                </div>
+                <div class="iel-pricing-actions">
+                    <a href="/extract-invoice-data" class="iel-btn-primary">Try free — no signup</a>
+                    <a href="/pricing" class="iel-btn-secondary">Full pricing details →</a>
+                </div>
+            </div>
+            <div class="iel-pricing-cta-right">
+                <div class="iel-roi-card">
+                    <div class="iel-roi-title">Calculate your time savings</div>
+                    <div class="iel-roi-row">
+                        <span>Invoices per week</span>
+                        <strong>@_invoicesPerWeek</strong>
+                    </div>
+                    <input type="range" min="5" max="200" step="5"
+                           class="iel-roi-slider"
+                           value="@_invoicesPerWeek"
+                           @oninput="UpdateROI" />
+                    <div class="iel-roi-row">
+                        <span>Minutes saved per invoice</span>
+                        <strong>8 min</strong>
+                    </div>
+                    <div class="iel-roi-divider"></div>
+                    <div class="iel-roi-result">
+                        <div class="iel-roi-result-label">Hours saved per month</div>
+                        <div class="iel-roi-result-num">@_hoursSaved hrs</div>
+                    </div>
+                    <div class="iel-roi-result">
+                        <div class="iel-roi-result-label">Value at $75/hr</div>
+                        <div class="iel-roi-result-num iel-roi-money">@_valueSaved</div>
+                    </div>
+                    <div class="iel-roi-vs">
+                        vs Pro plan cost: <strong>$19/month</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── FAQ ──────────────────────────────────────────────────── -->
+    <section class="iel-section iel-faq">
+        <div class="iel-section-inner">
+            <h2 class="iel-section-h2">Common questions</h2>
+            <div class="iel-faq-grid">
+                <div class="iel-faq-item">
+                    <h3>Does it work on scanned invoices?</h3>
+                    <p>Yes. Claude AI can read both digital PDFs and scanned/photographed invoices. Accuracy is slightly higher on digital PDFs but scans work well for standard invoice layouts.</p>
+                </div>
+                <div class="iel-faq-item">
+                    <h3>What formats does the Excel export support?</h3>
+                    <p>Standard .xlsx format compatible with Microsoft Excel, Google Sheets, LibreOffice, QuickBooks import, and Xero. Each invoice gets its own clean structured layout.</p>
+                </div>
+                <div class="iel-faq-item">
+                    <h3>Is my invoice data private?</h3>
+                    <p>Yes. Your PDFs are processed in memory and never permanently stored. Files are automatically deleted within 1 hour. We never train AI models on your documents.</p>
+                </div>
+                <div class="iel-faq-item">
+                    <h3>Can it handle non-English invoices?</h3>
+                    <p>Claude supports dozens of languages. Invoices in Spanish, French, German, Portuguese, and most European languages extract accurately. Japanese and Chinese work on digital PDFs.</p>
+                </div>
+                <div class="iel-faq-item">
+                    <h3>What if the extraction misses a field?</h3>
+                    <p>The preview lets you review all extracted fields before downloading. For complex or unusual invoice formats, you can re-run with the "General Form" document type for broader extraction.</p>
+                </div>
+                <div class="iel-faq-item">
+                    <h3>Can I process multiple invoices at once?</h3>
+                    <p>Pro and Teams plans include batch processing — upload up to 20 invoices at once and extract all of them in a single job. Each invoice generates its own Excel file.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── FINAL CTA ─────────────────────────────────────────────── -->
+    <section class="iel-final-cta">
+        <div class="iel-final-cta-inner">
+            <h2>Stop entering invoice data manually.</h2>
+            <p>Upload your first invoice and see how fast it extracts — no signup required.</p>
+            <a href="/extract-invoice-data" class="iel-btn-primary iel-btn-lg">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></svg>
+                Extract Invoice Data Free
+            </a>
+            <p class="iel-final-fine">No credit card · 5 free extractions monthly · Files deleted in 1 hour</p>
+        </div>
+    </section>
+
+</div>
+
+@code {
+    private int _invoicesPerWeek = 20;
+    private string _hoursSaved = "10.7";
+    private string _valueSaved = "$800";
+
+    private record MockRow(string key, string val, bool highlight = false);
+
+    private List<MockRow> _mockRows = new()
+    {
+        new("Vendor Name",    "Acme Supplies LLC",   true),
+        new("Invoice #",      "INV-2024-0847",       true),
+        new("Invoice Date",   "April 2, 2024",       false),
+        new("Due Date",       "May 2, 2024",         false),
+        new("Subtotal",       "$3,800.00",           false),
+        new("Tax (12.6%)",    "$480.00",             false),
+        new("Total Due",      "$4,280.00",           true),
+    };
+
+    private List<string> _headerFields = new()
+    {
+        "Vendor name & address",
+        "Invoice number",
+        "Invoice date",
+        "Due date",
+        "Bill-to name & address",
+        "PO / reference number",
+        "Payment terms",
+    };
+
+    private List<string> _lineItemFields = new()
+    {
+        "Item description",
+        "Quantity",
+        "Unit price",
+        "Line total",
+        "Item SKU / code",
+        "Discount (if any)",
+        "Notes per line",
+    };
+
+    private List<string> _totalFields = new()
+    {
+        "Subtotal",
+        "Tax rate & amount",
+        "Shipping / handling",
+        "Discounts applied",
+        "Total due",
+        "Currency",
+        "Bank / payment details",
+    };
+
+    private void UpdateROI(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var val))
+        {
+            _invoicesPerWeek = val;
+            var minutesPerMonth = val * 4.33 * 8; // 4.33 weeks/month, 8 min saved each
+            var hours = minutesPerMonth / 60.0;
+            _hoursSaved = hours.ToString("F1");
+            var value = hours * 75;
+            _valueSaved = value >= 1000
+                ? $"${value / 1000:F1}K"
+                : $"${value:F0}";
+        }
+    }
+}

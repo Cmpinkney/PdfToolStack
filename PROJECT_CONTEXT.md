@@ -48,7 +48,7 @@ Each tool is mapped to:
 - No AI tools
 - No download history
 
-### Pro — $12/month or $99/year
+### Pro — $19/month or $152/year
 - Unlimited file size (500MB)
 - No ads
 - Priority processing

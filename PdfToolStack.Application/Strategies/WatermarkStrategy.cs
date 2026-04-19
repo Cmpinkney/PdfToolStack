@@ -8,9 +8,9 @@ namespace PdfToolStack.Application.Strategies
     public class WatermarkStrategy : IProcessingStrategy
     {
         public ToolType ToolType => ToolType.WatermarkPdf;
-        private readonly IPdfProcessor _processor;
+        private readonly IWatermarkProcessor _processor;
 
-        public WatermarkStrategy(IPdfProcessor processor)
+        public WatermarkStrategy(IWatermarkProcessor processor)
             => _processor = processor;
 
         public async Task<ProcessingResult> ExecuteAsync(
@@ -19,8 +19,17 @@ namespace PdfToolStack.Application.Strategies
         {
             try
             {
+                var text = string.IsNullOrWhiteSpace(request.WatermarkText)
+                    ? "CONFIDENTIAL"
+                    : request.WatermarkText;
+
                 var output = await _processor.ProcessAsync(
-                    request.FileBytes, cancellationToken);
+                    request.FileBytes,
+                    text,
+                    request.WatermarkOpacity,
+                    request.WatermarkFontSize,
+                    cancellationToken);
+
                 return ProcessingResult.Success(output, request.FileSizeBytes);
             }
             catch (Exception ex)

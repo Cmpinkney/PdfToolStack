@@ -8,7 +8,7 @@
 <PageTitle>Pricing — PdfToolStack AI Document Tools</PageTitle>
 
 <HeadContent>
-    <meta name="description" content="Simple pricing for PdfToolStack. Free forever for 35+ PDF tools. Pro at $12/month for AI tools, batch processing, and unlimited files. Teams at $29/month for 5 users." />
+    <meta name="description" content="Simple pricing for PdfToolStack. Free forever for 35+ PDF tools. Pro at $19/month for AI tools, batch processing, and unlimited files. Teams at $29/month for 5 users." />
     <link rel="canonical" href="https://pdftoolstack.com/pricing" />
 </HeadContent>
 
@@ -34,7 +34,7 @@
             </button>
             <span class="pricing-toggle-label @(_isAnnual ? "active" : "")">
                 Annual
-                <span class="pricing-save-badge">Save 31%</span>
+                <span class="pricing-save-badge">Save 33%</span>
             </span>
         </div>
     </div>
@@ -74,23 +74,23 @@
             <div class="pricing-price">
                 @if (_isAnnual)
                 {
-                    <span class="pricing-price-old">$12</span>
-                    <span class="pricing-price-main">$8</span>
+                    <span class="pricing-price-old">$19</span>
+                    <span class="pricing-price-main">$12.67</span>
                     <span>/month</span>
                 }
                 else
                 {
-                    <span class="pricing-price-main">$12</span>
+                    <span class="pricing-price-main">$19</span>
                     <span>/month</span>
                 }
             </div>
             @if (_isAnnual)
             {
-                <div class="pricing-billed-note">Billed $99/year — save $45</div>
+                <div class="pricing-billed-note">Billed $152/year — save $76</div>
             }
             else
             {
-                <div class="pricing-billed-note">Or $99/year and save $45</div>
+                <div class="pricing-billed-note">Or $152/year and save $76</div>
             }
             <div class="pricing-desc">
                 For professionals who work with PDFs daily.
@@ -117,11 +117,11 @@
                 }
                 else if (_isAnnual)
                 {
-                    <span>Start Pro — $99/year</span>
+                    <span>Start Pro — $152/year</span>
                 }
                 else
                 {
-                    <span>Start Pro — $12/month</span>
+                    <span>Start Pro — $19/month</span>
                 }
             </button>
             @if (!_isAnnual)
@@ -130,7 +130,7 @@
                     Or
                     <button class="pricing-link-btn"
                             @onclick='() => { _isAnnual = true; }'>
-                        save $45 with annual billing →
+                        save $76 with annual billing →
                     </button>
                 </div>
             }
@@ -189,7 +189,7 @@
                     <span class="pricing-vs-price-them">$15/mo</span>
                     <span class="pricing-vs-sep">vs</span>
                     <span class="pricing-vs-us">PdfToolStack Pro</span>
-                    <span class="pricing-vs-price-us">$12/mo</span>
+                    <span class="pricing-vs-price-us">$19/mo</span>
                     <span class="pricing-vs-badge">+ Claude AI</span>
                 </div>
                 <div class="pricing-vs-divider"></div>
@@ -432,7 +432,7 @@
             </div>
             <div class="faq-item">
                 <h3>Can I switch between monthly and yearly?</h3>
-                <p>Yes — upgrade to annual billing anytime from your account portal and save $45 immediately.</p>
+                <p>Yes — upgrade to annual billing anytime from your account portal and save $76 immediately.</p>
             </div>
             <div class="faq-item">
                 <h3>How does Teams billing work?</h3>
@@ -448,7 +448,7 @@
             </div>
             <div class="faq-item">
                 <h3>How does PdfToolStack compare to Smallpdf?</h3>
-                <p>PdfToolStack Pro is $12/month vs Smallpdf's $15/month, and is powered by Claude AI which produces noticeably better results for contract review and document analysis.</p>
+                <p>PdfToolStack Pro is $19/month vs Smallpdf's $15/month, and is powered by Claude AI which produces noticeably better results for contract review and document analysis.</p>
             </div>
         </div>
     </div>
