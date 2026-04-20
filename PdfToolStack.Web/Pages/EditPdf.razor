@@ -40,36 +40,30 @@
             </div>
         </div>
 
-        @if (!_editorVisible)
+        @if (CurrentState == PageState.LargeFile)
+        {
+            <LargeFileUpgrade FileSizeBytes="@_largeFileSize"
+                              FileName="@_largeFileName"
+                              ToolType="EditPdf"
+                              OnCancel="ResetAll" />
+        }
+        else if (!_viewerActive)
         {
             <FileUpload OnFileSelected="HandleFileSelected"
                         OnFileRemoved="HandleFileRemoved" />
         }
 
-        @if (CurrentState == PageState.LargeFile)
-        {
-            <LargeFileUpgrade FileSizeBytes="@(SelectedFile?.Size ?? 0)"
-                              FileName="@(SelectedFile?.Name ?? "")"
-                              ToolType="EditPdf" OnCancel="Reset" />
-        }
-
-        <PdfLoadingOverlay IsVisible="@_isPdfLoading" Message="Loading your PDF..." SubMessage="Setting up the editor — just a moment" />
-
-        @if (_editorVisible)
-        {
-            <div style="margin-bottom:1rem; display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap;">
-                <span style="font-size:0.875rem; color:var(--text-secondary);">📄 @SelectedFile?.Name</span>
-                <button class="reset-button" style="max-width:160px;" @onclick="Reset">Edit Another PDF</button>
-            </div>
-            <div id="pdf-editor-container"></div>
-        }
+        <SfPdfViewerShell @ref="_viewer"
+                          ResetLabel="Edit Another PDF"
+                          Height="85vh"
+                          OnReset="ResetAll" />
 
         @if (CurrentState == PageState.Error)
         {
             <div class="error-container" role="alert">
                 <span class="error-icon">❌</span>
-                <p class="error-message">@ErrorMessage</p>
-                <button class="reset-button" @onclick="Reset">Try Again</button>
+                <p class="error-message">@_errorMessage</p>
+                <button class="reset-button" @onclick="ResetAll">Try Again</button>
             </div>
         }
 
@@ -100,68 +94,64 @@
     private enum PageState { Upload, Error, LargeFile }
 
     private PageState CurrentState = PageState.Upload;
-    private IBrowserFile? SelectedFile;
-    private string? ErrorMessage;
-    private bool _editorVisible = false;
-    private bool _isPdfLoading = false;
+    private SfPdfViewerShell? _viewer;
+    private bool _viewerActive = false;
+    private string _errorMessage = string.Empty;
+    private long _largeFileSize;
+    private string _largeFileName = string.Empty;
 
     private async Task HandleFileSelected(IBrowserFile file)
     {
-        ErrorMessage = null;
-        SelectedFile = null;
-        _editorVisible = false;
+        CurrentState = PageState.Upload;
+        _errorMessage = string.Empty;
+
+        if (PaymentService.IsFileTooLargeForFree(file.Size))
+        {
+            _largeFileSize = file.Size;
+            _largeFileName = file.Name;
+            CurrentState = PageState.LargeFile;
+            StateHasChanged();
+            return;
+        }
 
         var validation = Validator.ValidatePdfFile(file);
         if (!validation.IsValid) { Toast.ShowError(validation.Message!); return; }
         if (validation.IsWarning) Toast.ShowWarning(validation.Message!);
 
+        // Read bytes BEFORE any StateHasChanged — IBrowserFile ref invalidated on re-render
+        byte[] bytes;
         try
         {
-            if (PaymentService.IsFileTooLargeForFree(file.Size))
-            {
-                CurrentState = PageState.LargeFile;
-                StateHasChanged();
-                return;
-            }
-
-            using var stream = file.OpenReadStream(maxAllowedSize: 524288000);
-            using var ms = new MemoryStream();
+            using var stream = file.OpenReadStream(maxAllowedSize: 524_288_000);
+            using var ms = new MemoryStream((int)Math.Min(file.Size, int.MaxValue));
             await stream.CopyToAsync(ms);
-            var bytes = ms.ToArray();
-
-            var bytesVal = Validator.ValidatePdfBytes(bytes);
-            if (!bytesVal.IsValid) { Toast.ShowError(bytesVal.Message!); return; }
-
-            SelectedFile = file;
-            _isPdfLoading = true;
-            await InvokeAsync(StateHasChanged);
-
-            await Task.Delay(100);
-            await JS.InvokeVoidAsync("pdfEditor.init",
-            Convert.ToBase64String(bytes), file.Name, "pdf-editor-container");
-
-            _isPdfLoading = false;
-            _editorVisible = true;
-            await InvokeAsync(StateHasChanged);
-            Toast.ShowSuccess($"File ready — {Validator.FormatSize(file.Size)}");
+            bytes = ms.ToArray();
         }
         catch (Exception ex)
         {
             Toast.ShowError($"Could not read file: {ex.Message}");
+            return;
+        }
+
+        // Hide upload, show shell
+        _viewerActive = true;
+        StateHasChanged();
+
+        var success = await _viewer!.LoadBytesAsync(file.Name, bytes);
+        if (!success)
+        {
+            _viewerActive = false;
+            StateHasChanged();
         }
     }
 
-    private void HandleFileRemoved()
-    {
-        _editorVisible = false;
-        SelectedFile = null;
-    }
+    private void HandleFileRemoved() { }
 
-    private void Reset()
+    private void ResetAll()
     {
+        _viewer?.Reset();
         CurrentState = PageState.Upload;
-        SelectedFile = null;
-        ErrorMessage = null;
-        _editorVisible = false;
+        _viewerActive = false;
+        _errorMessage = string.Empty;
     }
 }

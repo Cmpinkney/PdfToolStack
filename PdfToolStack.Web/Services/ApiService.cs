@@ -1,5 +1,6 @@
 ﻿using PdfToolStack.Application.DTOs;
 using PdfToolStack.Domain.Enums;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using static System.Net.WebRequestMethods;
 
@@ -84,6 +85,35 @@ namespace PdfToolStack.Web.Services
                     "Error calling API for {ToolType}", toolType);
                 return null;
             }
+        }
+
+        public async Task<TempPdfUploadResponse> UploadTempPdfAsync(IBrowserFile file, long maxAllowedSize = 524_288_000)
+        {
+            using var stream = file.OpenReadStream(maxAllowedSize);
+            using var streamContent = new StreamContent(stream);
+            streamContent.Headers.ContentType = new MediaTypeHeaderValue("application/pdf");
+
+            using var form = new MultipartFormDataContent();
+            form.Add(streamContent, "file", file.Name);
+
+            using var response = await _httpClient.PostAsync("api/temp-pdf/upload", form);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                throw new InvalidOperationException(
+                    string.IsNullOrWhiteSpace(error)
+                        ? "Could not upload PDF for preview."
+                        : error);
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<TempPdfUploadResponse>();
+            if (result is null || string.IsNullOrWhiteSpace(result.Url))
+            {
+                throw new InvalidOperationException("The API did not return a valid PDF preview URL.");
+            }
+
+            return result;
         }
 
         private byte[]? _lastMergedBytes;
@@ -837,5 +867,12 @@ namespace PdfToolStack.Web.Services
             await _httpClient.PostAsJsonAsync(
                 "api/referral/track", new { code });
         }
+    }
+
+    public sealed class TempPdfUploadResponse
+    {
+        public string Id { get; set; } = string.Empty;
+        public string FileName { get; set; } = string.Empty;
+        public string Url { get; set; } = string.Empty;
     }
 }

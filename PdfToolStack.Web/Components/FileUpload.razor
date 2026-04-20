@@ -141,7 +141,11 @@
     private async Task HandleFileSelected(InputFileChangeEventArgs e)
     {
         SelectedFile = e.File;
-        await OnFileSelected.InvokeAsync(SelectedFile);
+
+        if (SelectedFile != null)
+        {
+            await OnFileSelected.InvokeAsync(SelectedFile);
+        }
     }
 
     private void HandleDragOver() => IsDragging = true;

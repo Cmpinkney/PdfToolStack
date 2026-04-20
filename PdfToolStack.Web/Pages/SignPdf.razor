@@ -8,7 +8,6 @@
 @implements IDisposable
 @inject FileValidationService Validator
 @inject ToastService Toast
-@using PdfToolStack.Domain.ValueObjects
 
 <PageTitle>@(IsContractMode ? "Sign Contract Online Free — Electronic Signature | PdfToolStack" : "Sign PDF Free Online — Add Electronic Signature to PDF")</PageTitle>
 <HeadContent>
@@ -26,7 +25,7 @@
             <p class="tool-subtitle">
                 @(IsContractMode
                                 ? "Upload your contract and add a legally binding electronic signature. No account needed."
-                                : "Draw your signature and drag it anywhere on your PDF. Free, private, and instant.")
+                                : "Draw your signature and place it anywhere on your PDF. Free, private, and instant.")
             </p>
         </div>
 
@@ -38,227 +37,40 @@
             <div class="hiw-arrow">→</div>
             <div class="hiw-step">
                 <div class="hiw-num">2</div>
-                <div class="hiw-text"><strong>Draw signature</strong><span>Or type your name</span></div>
+                <div class="hiw-text"><strong>Use signature tool</strong><span>Draw or type in toolbar</span></div>
             </div>
             <div class="hiw-arrow">→</div>
             <div class="hiw-step">
                 <div class="hiw-num">3</div>
-                <div class="hiw-text"><strong>Drag to place</strong><span>Position anywhere</span></div>
-            </div>
-            <div class="hiw-arrow">→</div>
-            <div class="hiw-step">
-                <div class="hiw-num">4</div>
-                <div class="hiw-text"><strong>Download</strong><span>Signed PDF ready</span></div>
+                <div class="hiw-text"><strong>Place &amp; download</strong><span>Click to position anywhere</span></div>
             </div>
         </div>
 
-        @if (CurrentState == PageState.Upload && SelectedFile == null)
+        @if (CurrentState == PageState.LargeFile)
+        {
+            <LargeFileUpgrade FileSizeBytes="@_largeFileSize"
+                              FileName="@_largeFileName"
+                              ToolType="SignPdf"
+                              OnCancel="ResetAll" />
+        }
+        else if (!_viewerActive)
         {
             <FileUpload OnFileSelected="HandleFileSelected"
                         OnFileRemoved="HandleFileRemoved" />
         }
 
-        @if (CurrentState == PageState.LargeFile)
-        {
-            <LargeFileUpgrade FileSizeBytes="@(SelectedFile?.Size ?? 0)"
-                              FileName="@(SelectedFile?.Name ?? "")"
-                              ToolType="SignPdf"
-                              OnCancel="Reset" />
-        }
-
-        <PdfLoadingOverlay IsVisible="@_isPdfLoading"
-                           Message="Rendering your PDF..."
-                           SubMessage="Preparing the signature canvas" />
-
-        @if (CurrentState == PageState.Upload && SelectedFile != null && !_isPdfLoading)
-        {
-            <div class="sign-workflow">
-
-                <div class="sign-card">
-                    <div class="sign-card-header">
-                        <span class="sign-step-num">1</span>
-                        <h3>Create Your Signature</h3>
-                    </div>
-
-                    <div class="sign-tabs">
-                        <button type="button"
-                                class="sign-tab @(SignMode == "draw" ? "active" : "")"
-                                @onclick='() => SetSignMode("draw")'
-                                @onclick:preventDefault="true">
-                            ✏️ Draw
-                        </button>
-                        <button type="button"
-                                class="sign-tab @(SignMode == "type" ? "active" : "")"
-                                @onclick='() => SetSignMode("type")'
-                                @onclick:preventDefault="true">
-                            ⌨️ Type
-                        </button>
-                    </div>
-
-                    @if (SignMode == "draw")
-                    {
-                        <div class="sign-pad-container">
-                            <canvas id="signatureCanvas"
-                                    width="600"
-                                    height="160"
-                                    class="sign-canvas">
-                            </canvas>
-                            <div class="sign-pad-hint">Sign here</div>
-                        </div>
-
-                        <div class="sign-pad-actions">
-                            <button type="button"
-                                    class="sign-action-btn"
-                                    @onclick="ClearSignature"
-                                    @onclick:preventDefault="true">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M3 6h18M19 6l-1 14H6L5 6M8 6V4h8v2" />
-                                </svg>
-                                Clear
-                            </button>
-
-                            <div class="sign-color-row">
-                                <span style="font-size:0.8rem;color:var(--text-secondary);">Ink color:</span>
-                                <div class="pdf-color-palette">
-                                    <button type="button" class="pdf-color-swatch @(SignColor == "#000000" ? "active" : "")" style="background:#000000" @onclick='() => SetSignColor("#000000")' @onclick:preventDefault="true"></button>
-                                    <button type="button" class="pdf-color-swatch @(SignColor == "#FF0000" ? "active" : "")" style="background:#FF0000" @onclick='() => SetSignColor("#FF0000")' @onclick:preventDefault="true"></button>
-                                    <button type="button" class="pdf-color-swatch @(SignColor == "#FF8C00" ? "active" : "")" style="background:#FF8C00" @onclick='() => SetSignColor("#FF8C00")' @onclick:preventDefault="true"></button>
-                                    <button type="button" class="pdf-color-swatch @(SignColor == "#FFD700" ? "active" : "")" style="background:#FFD700" @onclick='() => SetSignColor("#FFD700")' @onclick:preventDefault="true"></button>
-                                    <button type="button" class="pdf-color-swatch @(SignColor == "#00C851" ? "active" : "")" style="background:#00C851" @onclick='() => SetSignColor("#00C851")' @onclick:preventDefault="true"></button>
-                                    <button type="button" class="pdf-color-swatch @(SignColor == "#2196F3" ? "active" : "")" style="background:#2196F3" @onclick='() => SetSignColor("#2196F3")' @onclick:preventDefault="true"></button>
-                                    <button type="button" class="pdf-color-swatch @(SignColor == "#9C27B0" ? "active" : "")" style="background:#9C27B0" @onclick='() => SetSignColor("#9C27B0")' @onclick:preventDefault="true"></button>
-                                    <input type="color" value="@SignColor" class="pdf-color-custom" title="Custom color" @onchange="UpdateSignColor" />
-                                </div>
-                            </div>
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="sign-type-container">
-                            <input type="text"
-                                   class="sign-type-input"
-                                   placeholder="Type your full name"
-                                   @bind="TypedSignature"
-                                   @oninput="OnTypedSignatureChanged" />
-
-                            <div class="sign-pad-actions">
-                                <div class="sign-color-row">
-                                    <span style="font-size:0.8rem;color:var(--text-secondary);">Color:</span>
-                                    <div class="pdf-color-palette">
-                                        <button type="button" class="pdf-color-swatch @(SignColor == "#000000" ? "active" : "")" style="background:#000000" @onclick='() => SetSignColor("#000000")' @onclick:preventDefault="true"></button>
-                                        <button type="button" class="pdf-color-swatch @(SignColor == "#FF0000" ? "active" : "")" style="background:#FF0000" @onclick='() => SetSignColor("#FF0000")' @onclick:preventDefault="true"></button>
-                                        <button type="button" class="pdf-color-swatch @(SignColor == "#FF8C00" ? "active" : "")" style="background:#FF8C00" @onclick='() => SetSignColor("#FF8C00")' @onclick:preventDefault="true"></button>
-                                        <button type="button" class="pdf-color-swatch @(SignColor == "#FFD700" ? "active" : "")" style="background:#FFD700" @onclick='() => SetSignColor("#FFD700")' @onclick:preventDefault="true"></button>
-                                        <button type="button" class="pdf-color-swatch @(SignColor == "#00C851" ? "active" : "")" style="background:#00C851" @onclick='() => SetSignColor("#00C851")' @onclick:preventDefault="true"></button>
-                                        <button type="button" class="pdf-color-swatch @(SignColor == "#2196F3" ? "active" : "")" style="background:#2196F3" @onclick='() => SetSignColor("#2196F3")' @onclick:preventDefault="true"></button>
-                                        <button type="button" class="pdf-color-swatch @(SignColor == "#9C27B0" ? "active" : "")" style="background:#9C27B0" @onclick='() => SetSignColor("#9C27B0")' @onclick:preventDefault="true"></button>
-                                        <input type="color" value="@SignColor" class="pdf-color-custom" title="Custom color" @onchange="UpdateSignColor" />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    }
-                </div>
-
-                <div class="sign-card">
-                    <div class="sign-card-header">
-                        <span class="sign-step-num">2</span>
-                        <h3>Drag Signature onto PDF</h3>
-                    </div>
-
-                    <div class="sign-pdf-nav">
-                        <div style="display:flex;align-items:center;gap:0.5rem;">
-                            <button type="button" class="pdf-nav-btn" @onclick="PrevPage" @onclick:preventDefault="true" disabled="@(CurrentPage <= 1)">←</button>
-                            <span style="font-size:0.875rem;color:var(--text-secondary);">Page @CurrentPage of @TotalPages</span>
-                            <button type="button" class="pdf-nav-btn" @onclick="NextPage" @onclick:preventDefault="true" disabled="@(CurrentPage >= TotalPages)">→</button>
-                        </div>
-
-                        @if (SignaturePlaced)
-                        {
-                            <div class="sign-placed-badge">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                                    <polyline points="20 6 9 17 4 12" />
-                                </svg>
-                                Signature placed
-                            </div>
-                            <button type="button" class="sign-action-btn" @onclick="ClearPlacement" @onclick:preventDefault="true">Move it</button>
-                        }
-                        else
-                        {
-                            <span class="sign-drag-hint">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M5 9l4-4 4 4M9 5v14M19 15l-4 4-4-4M15 19V5" />
-                                </svg>
-                                Drag your signature onto the PDF below
-                            </span>
-                        }
-                    </div>
-
-                    <div class="sign-pdf-preview-wrap">
-                        <canvas id="signPdfCanvas" style="display:block;max-width:100%;"></canvas>
-                        <canvas id="signOverlayCanvas" style="position:absolute;top:0;left:0;max-width:100%;"></canvas>
-                    </div>
-                </div>
-
-                <button type="button"
-                        class="process-button"
-                        @onclick="ProcessFile"
-                        @onclick:preventDefault="true"
-                        disabled="@(_isProcessing)">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                        <polyline points="7 10 12 15 17 10" />
-                        <line x1="12" y1="15" x2="12" y2="3" />
-                    </svg>
-                    Apply Signature &amp; Download
-                </button>
-            </div>
-        }
-
-        @if (CurrentState == PageState.Processing)
-        {
-            <div class="processing-container">
-                <div class="spinner"></div>
-                <p>Applying your signature...</p>
-            </div>
-        }
-
-        @if (CurrentState == PageState.Complete && ResultBytes != null)
-        {
-            <AdSlot Size="rectangle" />
-            <div class="result-container">
-                <span class="result-icon">✍️</span>
-                <h2>PDF Signed!</h2>
-                <p style="color:var(--text-secondary);margin-bottom:1.5rem;">
-                    Your signature has been applied successfully.
-                </p>
-                <button type="button"
-                        class="download-button"
-                        style="background:var(--primary);"
-                        @onclick="DownloadFile"
-                        @onclick:preventDefault="true">
-                    Download Signed PDF
-                </button>
-                <button type="button"
-                        class="reset-button"
-                        @onclick="Reset"
-                        @onclick:preventDefault="true">
-                    Sign Another PDF
-                </button>
-            </div>
-        }
+        <SfPdfViewerShell @ref="_viewer"
+                          ResetLabel="Sign Another PDF"
+                          Height="85vh"
+                          ToolbarItems="@_signToolbar"
+                          OnReset="ResetAll" />
 
         @if (CurrentState == PageState.Error)
         {
             <div class="error-container" role="alert">
                 <span class="error-icon">❌</span>
-                <p class="error-message">@ErrorMessage</p>
-                <button type="button"
-                        class="reset-button"
-                        @onclick="Reset"
-                        @onclick:preventDefault="true">
-                    Try Again
-                </button>
+                <p class="error-message">@_errorMessage</p>
+                <button class="reset-button" @onclick="ResetAll">Try Again</button>
             </div>
         }
 
@@ -271,8 +83,8 @@
             <p>Electronic signatures are legally recognized in most countries under laws like the US ESIGN Act and EU eIDAS regulation.</p>
         </div>
         <div class="faq-item">
-            <h3>Can I place my signature anywhere?</h3>
-            <p>Yes — drag your signature anywhere on the PDF preview to position it exactly where you want.</p>
+            <h3>How do I add my signature?</h3>
+            <p>Click the signature tool in the Syncfusion toolbar (pen icon), draw or type your signature, then click anywhere on the document to place it.</p>
         </div>
         <div class="faq-item">
             <h3>Is this tool free?</h3>
@@ -280,120 +92,64 @@
         </div>
         <div class="faq-item">
             <h3>Is my PDF stored on your servers?</h3>
-            <p>Your file is automatically deleted within 1 hour. We never store your documents permanently.</p>
+            <p>Your file is processed entirely in your browser. It never leaves your device.</p>
         </div>
     </div>
 </div>
 
 @code {
-    private enum PageState { Upload, Processing, Complete, Error, LargeFile }
+    private enum PageState { Upload, Error, LargeFile }
 
     private PageState CurrentState = PageState.Upload;
-    private IBrowserFile? SelectedFile;
-    private byte[]? UploadedBytes;
-    private byte[]? ResultBytes;
-    private string? ErrorMessage;
-    private int TotalPages = 1;
-    private int CurrentPage = 1;
-    private string SignMode = "draw";
-    private string TypedSignature = "";
-    private string SignColor = "#000000";
-    private bool SignaturePlaced = false;
-    private double PlaceX, PlaceY;
-    private double PreviewCanvasWidth, PreviewCanvasHeight;
-    private DotNetObjectReference<SignPdf>? _dotNetRef;
-    private bool _pdfRendered = false;
-    private bool _isProcessing = false;
-    private bool _isPdfLoading = false;
+    private SfPdfViewerShell? _viewer;
+    private bool _viewerActive = false;
+    private string _errorMessage = string.Empty;
+    private long _largeFileSize;
+    private string _largeFileName = string.Empty;
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    private bool IsContractMode =>
+        Navigation.Uri.Contains("/sign-contract", StringComparison.OrdinalIgnoreCase) ||
+        Navigation.Uri.Contains("/sign-pdf-document", StringComparison.OrdinalIgnoreCase);
+
+    // Restrict toolbar to signing-relevant tools only
+    // If build errors occur on any value, remove that line — names vary by SF version
+    private List<ToolbarItem> _signToolbar = new()
     {
-        if (firstRender)
-        {
-            _dotNetRef = DotNetObjectReference.Create(this);
-        }
-
-        if (CurrentState == PageState.Upload && SelectedFile != null)
-        {
-            await JS.InvokeVoidAsync("initSignaturePad", _dotNetRef);
-        }
-
-        if (CurrentState == PageState.Upload &&
-            SelectedFile != null &&
-            UploadedBytes != null &&
-            !_pdfRendered)
-        {
-            _pdfRendered = true;
-            await Task.Delay(100);
-            await RenderCurrentPage();
-        }
-    }
-
-    public void Dispose() => _dotNetRef?.Dispose();
-
-    private void SetSignMode(string mode)
-    {
-        SignMode = mode;
-        StateHasChanged();
-    }
-
-    private async Task SetSignColor(string color)
-    {
-        SignColor = color;
-        await JS.InvokeVoidAsync("setSignatureColor", color);
-        await UpdateSigPreview();
-    }
-
-    private async Task OnTypedSignatureChanged(ChangeEventArgs e)
-    {
-        TypedSignature = e.Value?.ToString() ?? "";
-        await UpdateSigPreview();
-    }
-
-    private async Task UpdateSigPreview()
-    {
-        if (!SignaturePlaced)
-            return;
-
-        string sigData = SignMode == "draw"
-            ? await JS.InvokeAsync<string>("signPdfGetLastSig")
-            : await JS.InvokeAsync<string>("signPdfGenerateTypedSig", TypedSignature, SignColor);
-
-        await JS.InvokeVoidAsync("signPdfSetLastSig", sigData);
-        await JS.InvokeVoidAsync("signPdfDrawPreview", sigData, PlaceX, PlaceY);
-    }
-
-    [JSInvokable]
-    public async Task OnSignaturePlaced(double x, double y, double canvasWidth, double canvasHeight)
-    {
-        PlaceX = x;
-        PlaceY = y;
-        PreviewCanvasWidth = canvasWidth;
-        PreviewCanvasHeight = canvasHeight;
-        SignaturePlaced = true;
-
-        await InvokeAsync(StateHasChanged);
-    }
-
-    private async Task UpdateSignColor(ChangeEventArgs e)
-    {
-        SignColor = e.Value?.ToString() ?? "#000000";
-        await JS.InvokeVoidAsync("setSignatureColor", SignColor);
-        await UpdateSigPreview();
-    }
+        ToolbarItem.PageNavigationTool,
+        ToolbarItem.MagnificationTool,
+        ToolbarItem.PanTool,
+        ToolbarItem.SelectionTool,
+        ToolbarItem.AnnotationEditTool,
+        ToolbarItem.DownloadOption,
+        ToolbarItem.PrintOption,
+    };
 
     private async Task HandleFileSelected(IBrowserFile file)
     {
-        byte[]? fileBytes = null;
+        CurrentState = PageState.Upload;
+        _errorMessage = string.Empty;
 
+        if (PaymentService.IsFileTooLargeForFree(file.Size))
+        {
+            _largeFileSize = file.Size;
+            _largeFileName = file.Name;
+            CurrentState = PageState.LargeFile;
+            StateHasChanged();
+            return;
+        }
+
+        var validation = Validator.ValidatePdfFile(file);
+        if (!validation.IsValid) { Toast.ShowError(validation.Message!); return; }
+        if (validation.IsWarning) Toast.ShowWarning(validation.Message!);
+
+        // Read bytes BEFORE any StateHasChanged
+        byte[] bytes;
         try
         {
-            using (var stream = file.OpenReadStream(maxAllowedSize: 524288000))
-            using (var ms = new MemoryStream())
-            {
-                await stream.CopyToAsync(ms);
-                fileBytes = ms.ToArray();
-            }
+            using var stream = file.OpenReadStream(maxAllowedSize: 524_288_000);
+            using var ms = new MemoryStream((int)Math.Min(file.Size, int.MaxValue));
+            await stream.CopyToAsync(ms);
+            bytes = ms.ToArray();
         }
         catch (Exception ex)
         {
@@ -401,274 +157,26 @@
             return;
         }
 
-        await JS.InvokeVoidAsync("signPdfResetState");
+        _viewerActive = true;
+        StateHasChanged();
 
+        var success = await _viewer!.LoadBytesAsync(file.Name, bytes);
+        if (!success)
+        {
+            _viewerActive = false;
+            StateHasChanged();
+        }
+    }
+
+    private void HandleFileRemoved() { }
+
+    private void ResetAll()
+    {
+        _viewer?.Reset();
         CurrentState = PageState.Upload;
-        SelectedFile = null;
-        UploadedBytes = null;
-        ResultBytes = null;
-        ErrorMessage = null;
-        SignaturePlaced = false;
-        PlaceX = 0;
-        PlaceY = 0;
-        PreviewCanvasWidth = 0;
-        PreviewCanvasHeight = 0;
-        CurrentPage = 1;
-        TotalPages = 1;
-        _pdfRendered = false;
-
-        var validation = Validator.ValidatePdfFile(file);
-        if (!validation.IsValid)
-        {
-            Toast.ShowError(validation.Message!);
-            return;
-        }
-
-        if (validation.IsWarning)
-            Toast.ShowWarning(validation.Message!);
-
-        try
-        {
-            if (PaymentService.IsFileTooLargeForFree(file.Size))
-            {
-                SelectedFile = file;
-                CurrentState = PageState.LargeFile;
-                StateHasChanged();
-                return;
-            }
-
-            UploadedBytes = fileBytes;
-
-            var bytesVal = Validator.ValidatePdfBytes(UploadedBytes);
-            if (!bytesVal.IsValid)
-            {
-                Toast.ShowError(bytesVal.Message!);
-                UploadedBytes = null;
-                return;
-            }
-
-            TotalPages = await ApiService.GetPageCountAsync(UploadedBytes, file.Name);
-            SelectedFile = file;
-
-            Toast.ShowSuccess($"File ready — {Validator.FormatSize(file.Size)}");
-
-            _isPdfLoading = true;
-            StateHasChanged();
-
-            await Task.Delay(300);
-            await RenderCurrentPage();
-
-            _isPdfLoading = false;
-            StateHasChanged();
-        }
-        catch (Exception ex)
-        {
-            Toast.ShowError($"Could not prepare file: {ex.Message}");
-            UploadedBytes = null;
-            _isPdfLoading = false;
-        }
+        _viewerActive = false;
+        _errorMessage = string.Empty;
     }
 
-    private async Task RenderCurrentPage()
-    {
-        if (UploadedBytes == null)
-            return;
-
-        var base64 = Convert.ToBase64String(UploadedBytes);
-        await JS.InvokeVoidAsync("signPdfRenderPage", base64, CurrentPage);
-        await JS.InvokeVoidAsync("signPdfInitDrag", _dotNetRef);
-
-        if (SignaturePlaced)
-            await UpdateSigPreview();
-    }
-
-    private async Task PrevPage()
-    {
-        if (CurrentPage > 1)
-        {
-            CurrentPage--;
-            SignaturePlaced = false;
-            PlaceX = 0; PlaceY = 0;
-            PreviewCanvasWidth = 0; PreviewCanvasHeight = 0;
-
-            _isPdfLoading = true;
-            await InvokeAsync(StateHasChanged);
-            await RenderCurrentPage();
-            _isPdfLoading = false;
-            await InvokeAsync(StateHasChanged);
-        }
-    }
-
-    private async Task NextPage()
-    {
-        if (CurrentPage < TotalPages)
-        {
-            CurrentPage++;
-            SignaturePlaced = false;
-            PlaceX = 0; PlaceY = 0;
-            PreviewCanvasWidth = 0; PreviewCanvasHeight = 0;
-
-            _isPdfLoading = true;
-            await InvokeAsync(StateHasChanged);
-            await RenderCurrentPage();
-            _isPdfLoading = false;
-            await InvokeAsync(StateHasChanged);
-        }
-    }
-
-    private async Task ClearPlacement()
-    {
-        SignaturePlaced = false;
-        PlaceX = 0; PlaceY = 0;
-        PreviewCanvasWidth = 0; PreviewCanvasHeight = 0;
-        await JS.InvokeVoidAsync("signPdfClearOverlay");
-        await InvokeAsync(StateHasChanged);
-    }
-
-    private async Task ClearSignature()
-    {
-        await JS.InvokeVoidAsync("clearSignaturePad");
-        SignaturePlaced = false;
-        PlaceX = 0; PlaceY = 0;
-        PreviewCanvasWidth = 0; PreviewCanvasHeight = 0;
-        await JS.InvokeVoidAsync("signPdfClearOverlay");
-        await InvokeAsync(StateHasChanged);
-    }
-
-    private void HandleFileRemoved()
-    {
-        SelectedFile = null;
-        UploadedBytes = null;
-        ResultBytes = null;
-        ErrorMessage = null;
-        SignaturePlaced = false;
-        PlaceX = 0; PlaceY = 0;
-        PreviewCanvasWidth = 0; PreviewCanvasHeight = 0;
-        CurrentPage = 1;
-        TotalPages = 1;
-        _pdfRendered = false;
-        _isPdfLoading = false;
-    }
-
-    private async Task ProcessFile()
-    {
-        if (_isProcessing) return;
-
-        if (UploadedBytes == null || SelectedFile == null)
-        {
-            ErrorMessage = "No PDF is loaded.";
-            CurrentState = PageState.Error;
-            StateHasChanged();
-            return;
-        }
-
-        if (!SignaturePlaced)
-        {
-            ErrorMessage = "Please place your signature on the PDF first.";
-            CurrentState = PageState.Error;
-            StateHasChanged();
-            return;
-        }
-
-        if (PreviewCanvasWidth <= 0 || PreviewCanvasHeight <= 0)
-        {
-            ErrorMessage = $"Invalid preview size. W={PreviewCanvasWidth}, H={PreviewCanvasHeight}";
-            CurrentState = PageState.Error;
-            StateHasChanged();
-            return;
-        }
-
-        _isProcessing = true;
-        ErrorMessage = null;
-
-        try
-        {
-            string signatureBase64 = SignMode == "draw"
-                ? await JS.InvokeAsync<string>("signPdfGetLastSig")
-                : await JS.InvokeAsync<string>("signPdfGenerateTypedSig", TypedSignature, SignColor);
-
-            if (string.IsNullOrWhiteSpace(signatureBase64) || signatureBase64 == "data:,")
-            {
-                ErrorMessage = SignMode == "draw"
-                    ? "Please draw your signature first."
-                    : "Please type your name first.";
-                CurrentState = PageState.Error;
-                StateHasChanged();
-                return;
-            }
-
-            CurrentState = PageState.Processing;
-            StateHasChanged();
-            await JS.InvokeVoidAsync("scrollToTop");
-
-            var sigBytes = Convert.FromBase64String(
-                signatureBase64.Replace("data:image/png;base64,", ""));
-
-            float pdfX = (float)PlaceX;
-            float sigW = 200f;
-            float sigH = 80f;
-            float pdfY = (float)(PreviewCanvasHeight - PlaceY - sigH);
-
-            ResultBytes = await ApiService.SignPdfAsync(
-                UploadedBytes, SelectedFile.Name,
-                sigBytes, pdfX, pdfY, sigW, sigH, CurrentPage);
-
-            if (ResultBytes == null || ResultBytes.Length == 0)
-            {
-                ErrorMessage = "Signing failed. The API returned an empty PDF.";
-                CurrentState = PageState.Error;
-                StateHasChanged();
-                return;
-            }
-
-            CurrentState = PageState.Complete;
-            StateHasChanged();
-            await JS.InvokeVoidAsync("scrollToTop");
-        }
-        catch (Exception ex)
-        {
-            ErrorMessage = $"Error signing PDF: {ex.Message}";
-            CurrentState = PageState.Error;
-            StateHasChanged();
-        }
-        finally
-        {
-            _isProcessing = false;
-        }
-    }
-
-    private async Task DownloadFile()
-    {
-        if (ResultBytes == null) return;
-        var fileName = Path.GetFileNameWithoutExtension(SelectedFile?.Name ?? "document") + "_signed.pdf";
-        await JS.InvokeVoidAsync("downloadFile", fileName, Convert.ToBase64String(ResultBytes));
-    }
-
-    private bool IsContractMode =>
-        Navigation.Uri.Contains("/sign-contract", StringComparison.OrdinalIgnoreCase) ||
-        Navigation.Uri.Contains("/sign-pdf-document", StringComparison.OrdinalIgnoreCase);
-
-    private async Task Reset()
-    {
-        await JS.InvokeVoidAsync("signPdfResetState");
-        await JS.InvokeVoidAsync("clearSignaturePad");
-
-        CurrentState = PageState.Upload;
-        SelectedFile = null;
-        UploadedBytes = null;
-        ResultBytes = null;
-        ErrorMessage = null;
-        TotalPages = 1;
-        CurrentPage = 1;
-        SignaturePlaced = false;
-        PlaceX = 0; PlaceY = 0;
-        PreviewCanvasWidth = 0; PreviewCanvasHeight = 0;
-        TypedSignature = "";
-        SignColor = "#000000";
-        _pdfRendered = false;
-        _isProcessing = false;
-        _isPdfLoading = false;
-
-        await InvokeAsync(StateHasChanged);
-    }
+    public void Dispose() { }
 }

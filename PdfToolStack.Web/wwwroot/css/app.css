@@ -14461,3 +14461,166 @@ html {
         flex-wrap: wrap;
     }
 }
+
+/* ══════════════════════════════════════════════════════════
+   PDF ANNOTATOR LOADING STYLES
+   Replace the entire "PDF annotate loading" section in app.css
+══════════════════════════════════════════════════════════ */
+
+/* ── Annotator shell fade-in ────────────────────────────── */
+.annotator-shell {
+    transition: opacity 180ms ease, transform 180ms ease;
+}
+
+    .annotator-shell.is-loading {
+        opacity: 0;
+        transform: translateY(4px);
+    }
+
+    .annotator-shell.is-ready {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+/* ── Viewer area — overlay scopes to this ───────────────── */
+.sf-viewer-area {
+    min-height: 500px;
+}
+
+/* ── PDF Loading Overlay — scoped to viewer area ────────── */
+.pdf-loading-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 200;
+    background: rgba(15, 12, 35, 0.52);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-lg);
+    animation: overlayFadeIn 0.2s ease;
+    min-height: 400px;
+}
+
+@keyframes overlayFadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.pdf-loading-card {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 20px;
+    padding: 2.5rem 3rem;
+    text-align: center;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.25);
+    min-width: 260px;
+    position: relative;
+    animation: cardSlideUp 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes cardSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(16px) scale(0.97);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.pdf-loading-spinner {
+    width: 52px;
+    height: 52px;
+    margin: 0 auto 1rem;
+    position: relative;
+}
+
+    .pdf-loading-spinner svg {
+        width: 52px;
+        height: 52px;
+    }
+
+.pdf-loading-icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -56%);
+}
+
+.pdf-loading-msg {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 0 0 0.4rem;
+    letter-spacing: -0.01em;
+}
+
+.pdf-loading-sub {
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+    margin: 0;
+    line-height: 1.4;
+    max-width: 220px;
+}
+
+/* ── Annotator toolbar row ──────────────────────────────── */
+.annotator-toolbar-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.875rem;
+    flex-wrap: wrap;
+}
+
+.annotator-filename {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 400px;
+}
+
+/* ── SfPdfViewerShell area ──────────────────────────────────
+   min-height keeps the overlay visible while _pdfData is null
+   (base64 conversion phase). Without it, sf-viewer-area
+   collapses to 0px and the absolute-positioned overlay
+   disappears.                                                 */
+.sf-viewer-area {
+    position: relative;
+    min-height: 500px;
+    border-radius: var(--radius-lg);
+}
+
+.sf-viewer-area-hidden {
+    display: none;
+    min-height: 0;
+}
+
+/* ── Viewer show/hide via opacity (not visibility) ──────────
+   SF canvas must remain in layout flow to measure correctly  */
+.sf-viewer-hidden {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.sf-viewer-visible {
+    opacity: 1;
+    pointer-events: all;
+    transition: opacity 0.3s ease;
+}

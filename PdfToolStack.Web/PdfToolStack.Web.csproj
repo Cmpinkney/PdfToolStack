@@ -13,6 +13,10 @@
 		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="9.0.11" PrivateAssets="all" />
 		<PackageReference Include="Microsoft.Extensions.Http" Version="9.0.0" />
 		<PackageReference Include="Stripe.net" Version="50.4.1" />
+		<PackageReference Include="Syncfusion.Blazor.Core" Version="29.2.11" />
+		<PackageReference Include="Syncfusion.Blazor.SfPdfViewer" Version="29.2.11" />
+		<PackageReference Include="Syncfusion.Blazor.Themes" Version="29.2.11" />
+		<PackageReference Include="SkiaSharp.Views.Blazor" Version="3.119.1" />
 	</ItemGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\PdfToolStack.Application\PdfToolStack.Application.csproj" />

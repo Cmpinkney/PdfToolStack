@@ -1,0 +1,129 @@
+﻿@using Syncfusion.Blazor.SfPdfViewer
+@inject IJSRuntime JS
+@inject FileValidationService Validator
+@inject ToastService Toast
+@implements IDisposable
+
+@if (!string.IsNullOrEmpty(_fileName))
+{
+    <div class="annotator-toolbar-row">
+        <span class="annotator-filename">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+            </svg>
+            @_fileName
+        </span>
+        <button class="reset-button" style="max-width:220px;" @onclick="HandleReset">
+            @ResetLabel
+        </button>
+    </div>
+}
+
+<div class="sf-viewer-area @(_showArea ? "" : "sf-viewer-area-hidden")" id="@_wrapperId">
+
+    <PdfLoadingOverlay IsVisible="@_isLoading"
+                       Message="@_loadingMessage"
+                       SubMessage="@_loadingSubMessage" />
+
+    @if (_pdfData != null)
+    {
+        <div class="sf-viewer-wrap @(_showViewer ? "sf-viewer-visible" : "sf-viewer-hidden")">
+            <SfPdfViewer2 DocumentPath="@_pdfData"
+                          Height="@Height"
+                          Width="100%">
+                @if (ToolbarItems != null)
+                {
+                    <PdfViewerToolbarSettings ToolbarItems="@ToolbarItems" />
+                }
+            </SfPdfViewer2>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public string ResetLabel { get; set; } = "Open Another PDF";
+    [Parameter] public string Height { get; set; } = "85vh";
+    [Parameter] public EventCallback OnReset { get; set; }
+    /// <summary>Optional toolbar restriction. Null = full default toolbar.</summary>
+    [Parameter] public List<ToolbarItem>? ToolbarItems { get; set; }
+
+    private string? _pdfData;
+    private string? _fileName;
+    private bool _isLoading = false;
+    private bool _showViewer = false;
+    private bool _showArea = false;
+
+    private string _loadingMessage = "Loading PDF...";
+    private string _loadingSubMessage = "Just a moment";
+
+    private readonly string _wrapperId = $"sfshell-{Guid.NewGuid():N}";
+    private DotNetObjectReference<SfPdfViewerShell>? _dotNetRef;
+
+    public async Task<bool> LoadBytesAsync(string fileName, byte[] bytes)
+    {
+        Reset();
+
+        var bytesVal = Validator.ValidatePdfBytes(bytes);
+        if (!bytesVal.IsValid) { Toast.ShowError(bytesVal.Message!); return false; }
+
+        // Show overlay immediately
+        _fileName = fileName;
+        _showArea = true;
+        _isLoading = true;
+        _loadingMessage = "Loading PDF...";
+        _loadingSubMessage = $"Preparing {fileName} ({Validator.FormatSize(bytes.Length)})";
+        StateHasChanged();
+
+        // Offload base64 conversion to thread pool
+        _pdfData = await Task.Run(() =>
+            $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}");
+
+        _loadingMessage = "Opening annotator...";
+        _loadingSubMessage = "Initializing PDF viewer";
+        await InvokeAsync(StateHasChanged);
+
+        // One frame for SfPdfViewer2 to mount
+        await Task.Delay(150);
+
+        _dotNetRef = DotNetObjectReference.Create(this);
+        await JS.InvokeVoidAsync("sfViewerObserver.start", _wrapperId, _dotNetRef);
+
+        return true;
+    }
+
+    [JSInvokable]
+    public async Task OnViewerReady()
+    {
+        _showViewer = true;
+        _isLoading = false;
+        await InvokeAsync(StateHasChanged);
+        Toast.ShowSuccess($"Ready — {_fileName}");
+    }
+
+    public void Reset()
+    {
+        try { JS.InvokeVoidAsync("sfViewerObserver.stop"); } catch { }
+        _dotNetRef?.Dispose();
+        _dotNetRef = null;
+        _pdfData = null;
+        _fileName = null;
+        _isLoading = false;
+        _showViewer = false;
+        _showArea = false;
+    }
+
+    private async Task HandleReset()
+    {
+        Reset();
+        await InvokeAsync(StateHasChanged);
+        await OnReset.InvokeAsync();
+    }
+
+    public void Dispose()
+    {
+        try { JS.InvokeVoidAsync("sfViewerObserver.stop"); } catch { }
+        _dotNetRef?.Dispose();
+    }
+}

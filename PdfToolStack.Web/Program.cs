@@ -2,7 +2,10 @@
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using PdfToolStack.Web;
 using PdfToolStack.Web.Services;
+using Syncfusion.Blazor;
+using Syncfusion.Licensing;
 
+SyncfusionLicenseProvider.RegisterLicense("Ngo9BigBOggjHTQxAR8/V1JHaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdlWXtfeXVSRmddWUF2WUtWYEo=");
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
@@ -28,6 +31,8 @@ builder.Services.AddOidcAuthentication(options =>
             builder.HostEnvironment.BaseAddress);
 });
 
+builder.Services.AddSyncfusionBlazor();
+builder.Services.AddMemoryCache();
 builder.Services.AddScoped<PaymentService>();
 builder.Services.AddScoped<FileValidationService>();
 builder.Services.AddScoped<ToastService>();
