@@ -3,7 +3,9 @@
 @inject AuthenticationStateProvider Auth
 @inject PdfToolStack.Web.Services.SubscriptionService SubService
 @inject PdfToolStack.Web.Services.ApiService ApiService
+@inject HttpClient Http
 @using Microsoft.AspNetCore.Components.Authorization
+@using System.Net.Http.Json
 
 <PageTitle>Pricing — PdfToolStack AI Document Tools</PageTitle>
 
@@ -177,6 +179,131 @@
             </div>
         </div>
 
+    </div>
+
+    <!-- Pay as you go -->
+    <div class="pricing-addons">
+        <h2>Pay as you go</h2>
+        <p class="pricing-addons-subtitle">
+            Need a one-time unlock instead of a subscription? Buy only what you need and keep moving.
+        </p>
+
+        <div class="addon-grid">
+
+            <div class="addon-card">
+                <div class="addon-badge">One-time</div>
+                <h3>Large File Unlock</h3>
+                <div class="addon-price">$1.99</div>
+                <p class="addon-description">
+                    Process one file up to 500MB without upgrading to Pro.
+                </p>
+                <ul class="addon-features">
+                    <li>One oversized file</li>
+                    <li>Up to 500MB</li>
+                    <li>Great for occasional use</li>
+                </ul>
+                <button class="pricing-btn-addon"
+                        @onclick='() => BuyAddon(_largeFilePriceId," large-file")'
+                        disabled="@(IsLoading || string.IsNullOrWhiteSpace(_largeFilePriceId))">
+                    @if (IsLoading && _checkoutTarget == "large-file")
+                    {
+                        <span>Loading...</span>
+                    }
+                    else
+                    {
+                        <span>Unlock for $1.99</span>
+                    }
+                </button>
+            </div>
+
+            <div class="addon-card">
+                <div class="addon-badge">One-time</div>
+                <h3>AI Day Pass</h3>
+                <div class="addon-price">$4.99</div>
+                <p class="addon-description">
+                    Get 20 AI uses valid for 24 hours. Perfect for a busy day of document work.
+                </p>
+                <ul class="addon-features">
+                    <li>20 AI uses</li>
+                    <li>Valid for 24 hours</li>
+                    <li>No subscription required</li>
+                </ul>
+                <button class="pricing-btn-addon"
+                        @onclick='() => BuyAddon(_aiDayPassPriceId," ai-day-pass")'
+                        disabled="@(IsLoading || string.IsNullOrWhiteSpace(_aiDayPassPriceId))">
+                    @if (IsLoading && _checkoutTarget == "ai-day-pass")
+                    {
+                        <span>Loading...</span>
+                    }
+                    else
+                    {
+                        <span>Buy for $4.99</span>
+                    }
+                </button>
+            </div>
+
+            <div class="addon-card">
+                <div class="addon-badge">Credits</div>
+                <h3>AI Credit Pack</h3>
+                <div class="addon-price">$9.99</div>
+                <p class="addon-description">
+                    Buy 50 AI credits that do not expire. Best for occasional AI-heavy workflows.
+                </p>
+                <ul class="addon-features">
+                    <li>50 AI credits</li>
+                    <li>Never expire</li>
+                    <li>Good for repeat use</li>
+                </ul>
+                <button class="pricing-btn-addon"
+                        @onclick='() => BuyAddon(_aiCredits50PriceId," ai-credits")'
+                        disabled="@(IsLoading || string.IsNullOrWhiteSpace(_aiCredits50PriceId))">
+                    @if (IsLoading && _checkoutTarget == "ai-credits")
+                    {
+                        <span>Loading...</span>
+                    }
+                    else
+                    {
+                        <span>Buy for $9.99</span>
+                    }
+                </button>
+            </div>
+
+            <div class="addon-card">
+                <div class="addon-badge">One-time</div>
+                <h3>Batch Unlock</h3>
+                <div class="addon-price">$4.99</div>
+                <p class="addon-description">
+                    Run one batch job for up to 20 files without subscribing to Pro.
+                </p>
+                <ul class="addon-features">
+                    <li>One batch job</li>
+                    <li>Up to 20 files</li>
+                    <li>Fast one-off workflow</li>
+                </ul>
+                <button class="pricing-btn-addon"
+                        @onclick='() => BuyAddon(_batchUnlockPriceId," batch-unlock")'
+                        disabled="@(IsLoading || string.IsNullOrWhiteSpace(_batchUnlockPriceId))">
+                    @if (IsLoading && _checkoutTarget == "batch-unlock")
+                    {
+                        <span>Loading...</span>
+                    }
+                    else
+                    {
+                        <span>Buy for $4.99</span>
+                    }
+                </button>
+            </div>
+
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(_addonError))
+        {
+            <div class="pricing-addon-error">@_addonError</div>
+        }
+
+        <div class="pricing-addons-note">
+            One-time purchases are ideal for occasional work. If you handle documents every week, Pro is usually the better value.
+        </div>
     </div>
 
     <!-- Competitor comparison -->
@@ -450,6 +577,10 @@
                 <h3>How does PdfToolStack compare to Smallpdf?</h3>
                 <p>PdfToolStack Pro is $19/month vs Smallpdf's $15/month, and is powered by Claude AI which produces noticeably better results for contract review and document analysis.</p>
             </div>
+            <div class="faq-item">
+                <h3>Do you offer one-time purchases?</h3>
+                <p>Yes. You can buy one-time unlocks for large files, AI usage, and batch processing if you do not need a full subscription.</p>
+            </div>
         </div>
     </div>
 
@@ -461,9 +592,17 @@
     private string _checkoutTarget = string.Empty;
     private string UserId = string.Empty;
     private string UserEmail = string.Empty;
+
     private string? _monthlyPriceId;
     private string? _yearlyPriceId;
     private string? _teamsPriceId;
+
+    private string? _largeFilePriceId;
+    private string? _aiDayPassPriceId;
+    private string? _aiCredits50PriceId;
+    private string? _batchUnlockPriceId;
+
+    private string? _addonError;
 
     protected override async Task OnInitializedAsync()
     {
@@ -473,6 +612,7 @@
         UserEmail = user.FindFirst("email")?.Value ?? string.Empty;
 
         await LoadPlansAsync();
+        await LoadAddonsAsync();
     }
 
     private void ToggleBilling() => _isAnnual = !_isAnnual;
@@ -481,8 +621,7 @@
     {
         try
         {
-            var plans = await ApiService
-                .GetAsync<PlansResponse>("api/subscription/plans");
+            var plans = await ApiService.GetAsync<PlansResponse>("api/subscription/plans");
 
             if (plans != null)
             {
@@ -494,6 +633,26 @@
         catch
         {
             // Buttons stay disabled if plans fail to load
+        }
+    }
+
+    private async Task LoadAddonsAsync()
+    {
+        try
+        {
+            var addons = await ApiService.GetAsync<AddonsResponse>("api/subscription/addons");
+
+            if (addons != null)
+            {
+                _largeFilePriceId = addons.LargeFile?.PriceId;
+                _aiDayPassPriceId = addons.AiDayPass?.PriceId;
+                _aiCredits50PriceId = addons.AiCredits50?.PriceId;
+                _batchUnlockPriceId = addons.BatchUnlock?.PriceId;
+            }
+        }
+        catch
+        {
+            // Add-on buttons stay disabled if endpoint is not wired yet
         }
     }
 
@@ -516,10 +675,67 @@
             priceId, UserId, UserEmail, baseUrl);
 
         if (!string.IsNullOrEmpty(url))
+        {
             Navigation.NavigateTo(url, true);
+            return;
+        }
 
         IsLoading = false;
         StateHasChanged();
+    }
+
+    private async Task BuyAddon(string? priceId, string target)
+    {
+        if (string.IsNullOrWhiteSpace(priceId))
+            return;
+
+        if (string.IsNullOrEmpty(UserId))
+        {
+            Navigation.NavigateTo("authentication/login");
+            return;
+        }
+
+        _addonError = null;
+        _checkoutTarget = target;
+        IsLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            var response = await Http.PostAsJsonAsync("api/subscription/create-addon-checkout", new AddonCheckoutRequest
+            {
+                PriceId = priceId
+            });
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorText = await response.Content.ReadAsStringAsync();
+                _addonError = string.IsNullOrWhiteSpace(errorText)
+                    ? "Could not start checkout. Please try again."
+                    : errorText;
+                return;
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<CheckoutResponseDto>();
+
+            if (result == null || string.IsNullOrWhiteSpace(result.Url))
+            {
+                _addonError = "Checkout URL was not returned.";
+                return;
+            }
+
+            Navigation.NavigateTo(result.Url, forceLoad: true);
+            return;
+        }
+        catch
+        {
+            _addonError = "Could not start checkout. Please try again.";
+        }
+        finally
+        {
+            IsLoading = false;
+            StateHasChanged();
+        }
     }
 
     private class PlansResponse
@@ -529,10 +745,35 @@
         public PlanInfo? Teams { get; set; }
     }
 
+    private class AddonsResponse
+    {
+        public AddonInfo? LargeFile { get; set; }
+        public AddonInfo? AiDayPass { get; set; }
+        public AddonInfo? AiCredits50 { get; set; }
+        public AddonInfo? BatchUnlock { get; set; }
+    }
+
     private class PlanInfo
     {
         public string PriceId { get; set; } = string.Empty;
         public int Amount { get; set; }
         public string Label { get; set; } = string.Empty;
+    }
+
+    private class AddonInfo
+    {
+        public string PriceId { get; set; } = string.Empty;
+        public int Amount { get; set; }
+        public string Label { get; set; } = string.Empty;
+    }
+
+    private class AddonCheckoutRequest
+    {
+        public string PriceId { get; set; } = string.Empty;
+    }
+
+    private class CheckoutResponseDto
+    {
+        public string Url { get; set; } = string.Empty;
     }
 }

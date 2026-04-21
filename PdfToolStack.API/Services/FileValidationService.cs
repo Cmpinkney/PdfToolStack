@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using PdfToolStack.API.Configuration;
+using PdfToolStack.Application.Interfaces;
 
 namespace PdfToolStack.API.Services
 {
@@ -8,11 +9,13 @@ namespace PdfToolStack.API.Services
     {
         Task<(bool IsValid, string? Error)> ValidatePdfAsync(
             IFormFile file,
+            string? userId = null,
             bool isPro = false,
             CancellationToken cancellationToken = default);
 
         Task<(bool IsValid, string? Error)> ValidateFileAsync(
             IFormFile file,
+            string? userId = null,
             bool isPro = false,
             CancellationToken cancellationToken = default);
     }
@@ -29,18 +32,23 @@ namespace PdfToolStack.API.Services
         ];
 
         private readonly FileLimit _limits;
+        private readonly IFeatureAccessService _featureAccessService;
 
-        public FileValidationService(IOptions<FileLimit> limits)
+        public FileValidationService(
+            IOptions<FileLimit> limits,
+            IFeatureAccessService featureAccessService)
         {
             _limits = limits.Value;
+            _featureAccessService = featureAccessService;
         }
 
         public async Task<(bool IsValid, string? Error)> ValidatePdfAsync(
             IFormFile file,
+            string? userId = null,
             bool isPro = false,
             CancellationToken cancellationToken = default)
         {
-            var sizeResult = ValidateSize(file, isPro);
+            var sizeResult = await ValidateSizeAsync(file, userId, isPro);
             if (!sizeResult.IsValid)
                 return sizeResult;
 
@@ -52,12 +60,16 @@ namespace PdfToolStack.API.Services
             if (string.IsNullOrWhiteSpace(extension) ||
                 !AllowedPdfExtensions.Contains(
                     extension, StringComparer.OrdinalIgnoreCase))
+            {
                 return (false, "Only PDF files are allowed.");
+            }
 
             if (!string.IsNullOrWhiteSpace(file.ContentType) &&
                 !AllowedPdfMimeTypes.Contains(
                     file.ContentType, StringComparer.OrdinalIgnoreCase))
+            {
                 return (false, "Invalid file type.");
+            }
 
             await using var stream = file.OpenReadStream();
             if (!stream.CanRead)
@@ -80,17 +92,18 @@ namespace PdfToolStack.API.Services
             return (true, null);
         }
 
-        public Task<(bool IsValid, string? Error)> ValidateFileAsync(
+        public async Task<(bool IsValid, string? Error)> ValidateFileAsync(
             IFormFile file,
+            string? userId = null,
             bool isPro = false,
             CancellationToken cancellationToken = default)
         {
-            var sizeResult = ValidateSize(file, isPro);
-            return Task.FromResult(sizeResult);
+            return await ValidateSizeAsync(file, userId, isPro);
         }
 
-        private (bool IsValid, string? Error) ValidateSize(
+        private async Task<(bool IsValid, string? Error)> ValidateSizeAsync(
             IFormFile file,
+            string? userId,
             bool isPro)
         {
             if (file is null)
@@ -99,17 +112,47 @@ namespace PdfToolStack.API.Services
             if (file.Length == 0)
                 return (false, "The uploaded file is empty.");
 
-            var maxBytes = isPro
-                ? _limits.PaidTierMaxBytes
-                : _limits.FreeTierMaxBytes;
+            var paidMaxBytes = _limits.PaidTierMaxBytes;
+            var freeMaxBytes = _limits.FreeTierMaxBytes;
 
-            if (file.Length > maxBytes)
+            // Pro users can use the paid tier size limit
+            if (isPro)
             {
-                var maxMb = maxBytes / 1024 / 1024;
-                var tier = isPro ? "" : " on the free plan";
+                if (file.Length > paidMaxBytes)
+                {
+                    var maxMb = paidMaxBytes / 1024 / 1024;
+                    return (false, $"File exceeds the {maxMb}MB Pro limit.");
+                }
+
+                return (true, null);
+            }
+
+            // Free-tier size check
+            if (file.Length > freeMaxBytes)
+            {
+                // Large file unlock allows a free user to process one oversized file
+                if (!string.IsNullOrWhiteSpace(userId))
+                {
+                    var hasLargeFileUnlock =
+                        await _featureAccessService.HasLargeFileUnlockAsync(userId);
+
+                    if (hasLargeFileUnlock)
+                    {
+                        if (file.Length > paidMaxBytes)
+                        {
+                            var maxMb = paidMaxBytes / 1024 / 1024;
+                            return (false,
+                                $"File exceeds the {maxMb}MB paid limit.");
+                        }
+
+                        return (true, null);
+                    }
+                }
+
+                var freeMb = freeMaxBytes / 1024 / 1024;
                 return (false,
-                    $"File exceeds the {maxMb}MB limit{tier}. " +
-                    (isPro ? "" : "Upgrade to Pro for files up to 500MB."));
+                    $"File exceeds the {freeMb}MB limit on the free plan. " +
+                    "Upgrade to Pro or use a one-time Large File Unlock for files up to 500MB.");
             }
 
             return (true, null);

@@ -311,7 +311,7 @@
     /// Adapts downloaded cloud file bytes to IBrowserFile so existing
     /// tool pages receive the same type regardless of upload source.
     /// </summary>
-    private sealed class CloudBrowserFile : IBrowserFile
+    public sealed class CloudBrowserFile : IBrowserFile
     {
         private readonly byte[] _bytes;
 

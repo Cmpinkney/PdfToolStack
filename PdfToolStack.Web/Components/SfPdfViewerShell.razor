@@ -46,7 +46,6 @@
     [Parameter] public string ResetLabel { get; set; } = "Open Another PDF";
     [Parameter] public string Height { get; set; } = "85vh";
     [Parameter] public EventCallback OnReset { get; set; }
-    /// <summary>Optional toolbar restriction. Null = full default toolbar.</summary>
     [Parameter] public List<ToolbarItem>? ToolbarItems { get; set; }
 
     private string? _pdfData;
@@ -60,58 +59,142 @@
 
     private readonly string _wrapperId = $"sfshell-{Guid.NewGuid():N}";
     private DotNetObjectReference<SfPdfViewerShell>? _dotNetRef;
+    private CancellationTokenSource? _loadingCts;
 
     public async Task<bool> LoadBytesAsync(string fileName, byte[] bytes)
     {
         Reset();
 
         var bytesVal = Validator.ValidatePdfBytes(bytes);
-        if (!bytesVal.IsValid) { Toast.ShowError(bytesVal.Message!); return false; }
+        if (!bytesVal.IsValid)
+        {
+            Toast.ShowError(bytesVal.Message!);
+            return false;
+        }
 
-        // Show overlay immediately
+        _loadingCts = new CancellationTokenSource();
+
         _fileName = fileName;
         _showArea = true;
+        _showViewer = false;
         _isLoading = true;
         _loadingMessage = "Loading PDF...";
         _loadingSubMessage = $"Preparing {fileName} ({Validator.FormatSize(bytes.Length)})";
-        StateHasChanged();
 
-        // Offload base64 conversion to thread pool
-        _pdfData = await Task.Run(() =>
-            $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}");
-
-        _loadingMessage = "Opening annotator...";
-        _loadingSubMessage = "Initializing PDF viewer";
+        // Let the overlay render before heavy work starts
         await InvokeAsync(StateHasChanged);
+        await Task.Delay(50);
 
-        // One frame for SfPdfViewer2 to mount
-        await Task.Delay(150);
+        _ = RunLoadingStagesAsync(_loadingCts.Token);
 
-        _dotNetRef = DotNetObjectReference.Create(this);
-        await JS.InvokeVoidAsync("sfViewerObserver.start", _wrapperId, _dotNetRef);
+        try
+        {
+            _loadingMessage = "Preparing viewer...";
+            _loadingSubMessage = "Converting document for display";
+            await InvokeAsync(StateHasChanged);
+            await Task.Delay(25);
 
-        return true;
+            // In Blazor WASM, giving the UI a chance to paint matters more than Task.Run here
+            var base64 = Convert.ToBase64String(bytes);
+
+            _pdfData = await JS.InvokeAsync<string>(
+                "pdfInterop.createBlobUrlFromBase64",
+                base64
+            );
+
+            _loadingMessage = "Opening annotator...";
+            _loadingSubMessage = "Initializing PDF viewer";
+            await InvokeAsync(StateHasChanged);
+
+            // Give the component one render cycle so SfPdfViewer2 mounts
+            await Task.Yield();
+            await InvokeAsync(StateHasChanged);
+            await Task.Delay(100);
+
+            _dotNetRef = DotNetObjectReference.Create(this);
+            await JS.InvokeVoidAsync("sfViewerObserver.start", _wrapperId, _dotNetRef);
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _loadingCts?.Cancel();
+            _isLoading = false;
+            _showViewer = false;
+            _showArea = false;
+            _pdfData = null;
+
+            await InvokeAsync(StateHasChanged);
+            Toast.ShowError($"Could not load PDF viewer: {ex.Message}");
+            return false;
+        }
+    }
+
+    private async Task RunLoadingStagesAsync(CancellationToken token)
+    {
+        try
+        {
+            await Task.Delay(1200, token);
+            if (token.IsCancellationRequested) return;
+
+            _loadingMessage = "Rendering PDF pages...";
+            _loadingSubMessage = "This can take a moment for large or scanned files";
+            await InvokeAsync(StateHasChanged);
+
+            await Task.Delay(3500, token);
+            if (token.IsCancellationRequested) return;
+
+            _loadingMessage = "Still working...";
+            _loadingSubMessage = "Large, image-heavy, or scanned PDFs can take longer to open";
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (TaskCanceledException)
+        {
+            // Expected on successful load/reset
+        }
     }
 
     [JSInvokable]
     public async Task OnViewerReady()
     {
+        _loadingCts?.Cancel();
+
         _showViewer = true;
         _isLoading = false;
+
         await InvokeAsync(StateHasChanged);
         Toast.ShowSuccess($"Ready — {_fileName}");
     }
 
     public void Reset()
     {
+        _loadingCts?.Cancel();
+        _loadingCts?.Dispose();
+        _loadingCts = null;
+
+        //  Revoke blob URL (fire-and-forget safe)
+        if (!string.IsNullOrEmpty(_pdfData))
+        {
+            try
+            {
+                _ = JS.InvokeVoidAsync("pdfInterop.revokeBlobUrl", _pdfData);
+            }
+            catch { }
+        }
+
         try { JS.InvokeVoidAsync("sfViewerObserver.stop"); } catch { }
+
         _dotNetRef?.Dispose();
         _dotNetRef = null;
+
         _pdfData = null;
         _fileName = null;
         _isLoading = false;
         _showViewer = false;
         _showArea = false;
+
+        _loadingMessage = "Loading PDF...";
+        _loadingSubMessage = "Just a moment";
     }
 
     private async Task HandleReset()
@@ -123,7 +206,11 @@
 
     public void Dispose()
     {
+        _loadingCts?.Cancel();
+        _loadingCts?.Dispose();
+
         try { JS.InvokeVoidAsync("sfViewerObserver.stop"); } catch { }
+
         _dotNetRef?.Dispose();
     }
 }

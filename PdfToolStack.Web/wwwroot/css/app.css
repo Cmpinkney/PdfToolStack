@@ -9692,26 +9692,28 @@ body {
 
 /* ── PDF Loading Overlay ──────────────────────────────────────────────────── */
 .pdf-loading-overlay {
+    position: absolute;
+    inset: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 3rem 1rem;
-    width: 100%;
+    background: rgba(107, 114, 128, 0.45);
+    backdrop-filter: blur(2px);
+    z-index: 20;
 }
 
 .pdf-loading-card {
+    width: min(340px, calc(100% - 2rem));
+    background: rgba(255, 255, 255, 0.96);
+    border-radius: 24px;
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.18);
+    padding: 2rem 1.5rem 1.5rem;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 1rem;
-    background: rgba(255,255,255,0.85);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(34,80,244,0.12);
-    border-radius: 20px;
-    padding: 2.5rem 3rem;
+    justify-content: center;
+    gap: 0.75rem;
     text-align: center;
-    max-width: 340px;
-    width: 100%;
 }
 
 [data-theme="dark"] .pdf-loading-card {
@@ -9747,13 +9749,14 @@ body {
 }
 
 .pdf-loading-spinner {
-    width: 36px;
-    height: 36px;
-    border: 3px solid rgba(34,80,244,0.15);
-    border-top-color: #2250F4;
-    border-radius: 50%;
-    animation: pdf-spin 0.8s linear infinite;
+    width: 56px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.25rem;
 }
+
 
 @keyframes pdf-spin {
     to {
@@ -14582,31 +14585,41 @@ html {
 }
 
     .pdf-loading-spinner svg {
-        width: 52px;
-        height: 52px;
+    width: 56px;
+    height: 56px;
+    display: block;
     }
 
 .pdf-loading-icon {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -56%);
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.9;
+    margin-bottom: 0.25rem;
+}
+
+.pdf-loading-icon svg {
+    width: 28px;
+    height: 28px;
+    display: block;
 }
 
 .pdf-loading-msg {
-    font-size: 1rem;
+    margin: 0;
+    font-size: 1.2rem;
     font-weight: 700;
-    color: var(--text);
-    margin: 0 0 0.4rem;
-    letter-spacing: -0.01em;
+    color: #1f2a6b;
+    line-height: 1.35;
 }
 
+
 .pdf-loading-sub {
-    font-size: 0.8125rem;
-    color: var(--text-muted);
     margin: 0;
-    line-height: 1.4;
-    max-width: 220px;
+    font-size: 0.96rem;
+    color: #6b7280;
+    line-height: 1.5;
 }
 
 /* ── Annotator toolbar row ──────────────────────────────── */
@@ -14645,7 +14658,6 @@ html {
 
 .sf-viewer-area-hidden {
     display: none;
-    min-height: 0;
 }
 
 /* ── Viewer show/hide via opacity (not visibility) ──────────
@@ -14653,13 +14665,11 @@ html {
 .sf-viewer-hidden {
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.3s ease;
 }
 
 .sf-viewer-visible {
     opacity: 1;
-    pointer-events: all;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.2s ease;
 }
 
 /* ── Compare PDF upload cards ─────────────────────────── */
@@ -14809,5 +14819,170 @@ html {
     font-size: 0.8125rem;
     color: var(--text-muted);
     margin-top: 0.5rem;
+    text-align: center;
+}
+
+.pricing-addons {
+    margin-top: 4rem;
+    padding: 2.5rem 0 1rem;
+}
+
+    .pricing-addons h2 {
+        text-align: center;
+        margin-bottom: 0.75rem;
+    }
+
+.pricing-addons-subtitle {
+    text-align: center;
+    color: var(--text-muted, #667085);
+    max-width: 760px;
+    margin: 0 auto 2rem;
+    line-height: 1.65;
+}
+
+.addon-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1.25rem;
+}
+
+.addon-card {
+    background: var(--card-bg, #fff);
+    border: 1px solid var(--border-color, #E5E7EB);
+    border-radius: 20px;
+    padding: 1.5rem;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+}
+
+.addon-badge {
+    display: inline-flex;
+    align-self: flex-start;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #2250F4;
+    background: #EEF4FF;
+    padding: 0.35rem 0.6rem;
+    border-radius: 999px;
+    margin-bottom: 0.9rem;
+}
+
+.addon-card h3 {
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+}
+
+.addon-price {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--heading-color, #101828);
+    margin-bottom: 0.85rem;
+}
+
+.addon-description {
+    color: var(--text-muted, #667085);
+    line-height: 1.6;
+    margin-bottom: 1rem;
+}
+
+.addon-features {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1.25rem 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    color: var(--text-color, #344054);
+    flex-grow: 1;
+}
+
+    .addon-features li::before {
+        content: "✓";
+        color: #12B76A;
+        font-weight: 700;
+        margin-right: 0.5rem;
+    }
+
+.pricing-btn-addon {
+    width: 100%;
+    border: none;
+    border-radius: 12px;
+    padding: 0.9rem 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    background: #0F172A;
+    color: white;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+
+    .pricing-btn-addon:hover:not(:disabled) {
+        transform: translateY(-1px);
+        box-shadow: 0 10px 20px rgba(15, 23, 42, 0.12);
+    }
+
+    .pricing-btn-addon:disabled {
+        opacity: 0.65;
+        cursor: not-allowed;
+    }
+
+.pricing-addons-note {
+    text-align: center;
+    color: var(--text-muted, #667085);
+    margin-top: 1rem;
+    line-height: 1.6;
+}
+
+.pricing-addon-error {
+    margin-top: 1rem;
+    text-align: center;
+    color: #B42318;
+    font-weight: 600;
+}
+
+@media (max-width: 1100px) {
+    .addon-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 640px) {
+    .addon-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.viewer-scroll-anchor {
+    scroll-margin-top: 90px;
+}
+
+.viewer-scroll-anchor {
+    scroll-margin-top: 90px;
+}
+
+/* Make the PDF loading overlay stay visible in the viewport */
+.pdf-loading-overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(107, 114, 128, 0.35);
+    backdrop-filter: blur(2px);
+    z-index: 999;
+}
+
+.pdf-loading-card {
+    width: min(340px, calc(100% - 2rem));
+    background: rgba(255, 255, 255, 0.97);
+    border-radius: 24px;
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.18);
+    padding: 2rem 1.5rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
     text-align: center;
 }

@@ -7,7 +7,6 @@
         public string PublishableKey { get; set; } = string.Empty;
         public string SecretKey { get; set; } = string.Empty;
         public string WebhookSecret { get; set; } = string.Empty;
-        public string LargeFilePriceId { get; set; } = string.Empty;
 
         // Legacy price IDs — kept for existing subscribers
         public string ProMonthlyPriceId { get; set; } = string.Empty;
@@ -24,6 +23,10 @@
         // Create these as one-time prices in Stripe (not recurring)
         public string AiCredits50PriceId { get; set; } = string.Empty;   // $9.99 = 50 credits
         public string AiCredits200PriceId { get; set; } = string.Empty;  // $29.99 = 200 credits
+        public string AiDayPassPriceId { get; set; } = string.Empty;  // $4.99 = AI day pass
+        public string BatchUnlockPriceId { get; set; } = string.Empty;  // $4.99 one time batch process
+        public string LargeFilePriceId { get; set; } = string.Empty; // large file $4.99
+
 
         public string Currency { get; set; } = "usd";
     }

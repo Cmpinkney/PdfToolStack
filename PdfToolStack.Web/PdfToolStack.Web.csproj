@@ -5,6 +5,7 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<RootNamespace>PdfToolStack.Web</RootNamespace>
 		<WasmEnableThreads>false</WasmEnableThreads>
+		<UserSecretsId>5cae3ed7-f5c2-4dc0-a6cb-20445099e997</UserSecretsId>
 	</PropertyGroup>
 	<ItemGroup>
 		<PackageReference Include="Microsoft.AspNetCore.Authorization" Version="9.0.11" />

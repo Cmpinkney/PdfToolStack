@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using PdfToolStack.API.Configuration;
 using PdfToolStack.Application.DTOs;
@@ -15,9 +16,9 @@ namespace PdfToolStack.API.Controllers
         private readonly ILogger<SubscriptionController> _logger;
 
         public SubscriptionController(
-    IOptions<StripeOptions> stripeOptions,
-    ILogger<SubscriptionController> logger,
-    SubscriptionService? service = null)
+            IOptions<StripeOptions> stripeOptions,
+            ILogger<SubscriptionController> logger,
+            SubscriptionService? service = null)
         {
             _service = service;
             _stripeOptions = stripeOptions.Value;
@@ -71,24 +72,6 @@ namespace PdfToolStack.API.Controllers
             }
         }
 
-        [HttpPost("webhook")]
-        public async Task<IActionResult> Webhook()
-        {
-            if (_service == null)
-                return StatusCode(503, new { error = "Database not configured." });
-            var json = await new StreamReader(HttpContext.Request.Body).ReadToEndAsync();
-            var signature = Request.Headers["Stripe-Signature"].ToString();
-            try
-            {
-                await _service.HandleWebhookAsync(json, signature);
-                return Ok();
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
-        }
-
         [HttpGet("history/{userId}")]
         public async Task<IActionResult> GetHistory(string userId)
         {
@@ -120,6 +103,61 @@ namespace PdfToolStack.API.Controllers
                     priceId = _stripeOptions.TeamsMonthlyPriceId,
                     amount = 2900,
                     label = "$29 / month"
+                }
+            });
+        }
+
+        [HttpPost("create-addon-checkout")]
+        public async Task<IActionResult> CreateAddonCheckout([FromBody] AddonCheckoutRequest request)
+        {
+            var userId = User.FindFirst("sub")?.Value;
+            var email = User.FindFirst("email")?.Value;
+
+            if (userId == null || email == null)
+                return Unauthorized();
+
+            var baseUrl = $"{Request.Scheme}://{Request.Host}";
+
+            var url = await _service.CreateOneTimeCheckoutAsync(
+                request.PriceId,
+                userId,
+                email,
+                baseUrl
+            );
+
+            return Ok(new { url });
+        }
+
+        [HttpGet("addons")]
+        public IActionResult GetAddons([FromServices] IOptions<StripeOptions> stripeOptions)
+        {
+            var options = stripeOptions.Value;
+
+            return Ok(new
+            {
+                largeFile = new
+                {
+                    priceId = options.LargeFilePriceId,
+                    amount = 199,
+                    label = "$1.99"
+                },
+                aiDayPass = new
+                {
+                    priceId = options.AiDayPassPriceId,
+                    amount = 499,
+                    label = "$4.99"
+                },
+                aiCredits50 = new
+                {
+                    priceId = options.AiCredits50PriceId,
+                    amount = 999,
+                    label = "$9.99"
+                },
+                batchUnlock = new
+                {
+                    priceId = options.BatchUnlockPriceId,
+                    amount = 499,
+                    label = "$4.99"
                 }
             });
         }

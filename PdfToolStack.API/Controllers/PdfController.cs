@@ -918,8 +918,10 @@ namespace PdfToolStack.API.Controllers
 
             var isPro = await ResolveIsProAsync();
 
+            var userId = User.FindFirst("sub")?.Value;
+
             var validation = await _fileValidationService
-                .ValidatePdfAsync(file, isPro, cancellationToken);
+                .ValidatePdfAsync(file, userId, isPro, cancellationToken);
 
             if (!validation.IsValid)
             {
@@ -949,16 +951,18 @@ namespace PdfToolStack.API.Controllers
         }
 
         private async Task<IActionResult?> ValidateRequiredFileAsync(
-    IFormFile? file,
-    CancellationToken cancellationToken)
+            IFormFile? file,
+            CancellationToken cancellationToken)
         {
             if (file == null || file.Length == 0)
                 return BadRequest(new { error = "No file provided." });
 
             var isPro = await ResolveIsProAsync();
 
+            var userId = User.FindFirst("sub")?.Value;
+
             var validation = await _fileValidationService
-                .ValidateFileAsync(file, isPro, cancellationToken);
+                .ValidatePdfAsync(file, userId, isPro, cancellationToken);
 
             if (!validation.IsValid)
             {

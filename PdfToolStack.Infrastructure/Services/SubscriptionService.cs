@@ -313,5 +313,33 @@ namespace PdfToolStack.Infrastructure.Services
                 })
                 .ToListAsync();
         }
+
+        public async Task<string> CreateOneTimeCheckoutAsync(string priceId, string userId, string email, string baseUrl)
+        {
+            var options = new SessionCreateOptions
+            {
+                Mode = "payment",
+                CustomerEmail = email,
+                SuccessUrl = $"{baseUrl}/account?checkout=success",
+                CancelUrl = $"{baseUrl}/pricing",
+                LineItems = new List<SessionLineItemOptions>
+            {
+                new SessionLineItemOptions
+                {
+                    Price = priceId,
+                    Quantity = 1
+                }
+            },
+                Metadata = new Dictionary<string, string>
+                {
+                    ["userId"] = userId
+                }
+            };
+
+            var service = new SessionService();
+            var session = await service.CreateAsync(options);
+
+            return session.Url;
+        }
     }
 }

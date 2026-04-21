@@ -1,6 +1,8 @@
 ﻿@inject PaymentService PaymentService
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
+@inject HttpClient Http
+@using System.Net.Http.Json
 @using PdfToolStack.Web.Services
 
 <div class="upgrade-banner">
@@ -41,6 +43,13 @@
             Unlock with <strong class="price-highlight">Pro — $19/month</strong>
         </p>
 
+        @if (!string.IsNullOrWhiteSpace(LargeFilePriceId))
+        {
+            <p class="upgrade-price one-time-unlock">
+                Or use a <strong class="price-highlight">$1.99 one-time large file unlock</strong>
+            </p>
+        }
+
         <div class="upgrade-features">
             <span>✅ Files up to 500MB</span>
             <span>✅ All 35+ PDF tools</span>
@@ -49,15 +58,32 @@
             <span>✅ No ads</span>
             <span>✅ Cancel anytime</span>
         </div>
+
+        @if (!string.IsNullOrWhiteSpace(_error))
+        {
+            <p class="upgrade-error">@_error</p>
+        }
     </div>
 
     <div class="upgrade-actions">
         <button class="process-button upgrade-btn"
-                @onclick="HandleUpgrade">
-            Upgrade to Pro
+                @onclick="HandleUpgrade"
+                disabled="@_isLoading">
+            @PrimaryButtonText
         </button>
+
+        @if (!string.IsNullOrWhiteSpace(LargeFilePriceId))
+        {
+            <button class="process-button one-time-btn"
+                    @onclick="UnlockLargeFile"
+                    disabled="@_isLoading">
+                @(_isLoading ? "Starting checkout..." : "Unlock this file for $1.99")
+            </button>
+        }
+
         <button class="reset-button"
-                @onclick="HandleSecondaryAction">
+                @onclick="HandleSecondaryAction"
+                disabled="@_isLoading">
             @SecondaryButtonText
         </button>
     </div>
@@ -73,10 +99,13 @@
     [Parameter] public string Message { get; set; } = "This file is above the free processing limit.";
     [Parameter] public string PrimaryButtonText { get; set; } = "Upgrade to Pro";
     [Parameter] public string SecondaryButtonText { get; set; } = "Return to upload";
+    [Parameter] public string LargeFilePriceId { get; set; } = string.Empty;
+
+    private bool _isLoading;
+    private string? _error;
 
     private void HandleUpgrade()
     {
-        // Pass return URL so user lands back on the tool after subscribing
         var returnUrl = Uri.EscapeDataString(Navigation.Uri);
         Navigation.NavigateTo($"/pricing?from={returnUrl}", forceLoad: false);
     }
@@ -85,5 +114,62 @@
     {
         if (OnCancel.HasDelegate)
             await OnCancel.InvokeAsync();
+    }
+
+    private async Task UnlockLargeFile()
+    {
+        try
+        {
+            _isLoading = true;
+            _error = null;
+
+            if (string.IsNullOrWhiteSpace(LargeFilePriceId))
+            {
+                _error = "Large file checkout is not configured yet.";
+                return;
+            }
+
+            var response = await Http.PostAsJsonAsync("api/subscription/create-addon-checkout", new AddonCheckoutRequest
+            {
+                PriceId = LargeFilePriceId
+            });
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorText = await response.Content.ReadAsStringAsync();
+                _error = string.IsNullOrWhiteSpace(errorText)
+                    ? "Could not start checkout. Please try again."
+                    : errorText;
+                return;
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<CheckoutResponseDto>();
+
+            if (result == null || string.IsNullOrWhiteSpace(result.Url))
+            {
+                _error = "Checkout URL was not returned.";
+                return;
+            }
+
+            Navigation.NavigateTo(result.Url, forceLoad: true);
+        }
+        catch (Exception ex)
+        {
+            _error = $"Could not start checkout: {ex.Message}";
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private sealed class AddonCheckoutRequest
+    {
+        public string PriceId { get; set; } = string.Empty;
+    }
+
+    private sealed class CheckoutResponseDto
+    {
+        public string Url { get; set; } = string.Empty;
     }
 }

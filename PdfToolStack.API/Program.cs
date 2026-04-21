@@ -49,6 +49,11 @@ try
     builder.Services.Configure<FileLimit>(
         builder.Configuration.GetSection(FileLimit.SectionName));
 
+    builder.Services.Configure<StripeOptions>(
+    builder.Configuration.GetSection("Stripe"));
+
+    builder.Services.AddScoped<IFeatureAccessService, FeatureAccessService>();
+
     // ── Config Values ─────────────────────────────────────────────────────
     var defaultConnection = builder.Configuration.GetConnectionString("DefaultConnection");
 

@@ -53,6 +53,8 @@
                         OnFileRemoved="HandleFileRemoved" />
         }
 
+        <div id="edit-pdf-viewer-anchor" class="viewer-scroll-anchor"></div>
+        
         <SfPdfViewerShell @ref="_viewer"
                           ResetLabel="Edit Another PDF"
                           Height="85vh"
@@ -115,33 +117,46 @@
         }
 
         var validation = Validator.ValidatePdfFile(file);
-        if (!validation.IsValid) { Toast.ShowError(validation.Message!); return; }
-        if (validation.IsWarning) Toast.ShowWarning(validation.Message!);
+        if (!validation.IsValid)
+        {
+            Toast.ShowError(validation.Message!);
+            return;
+        }
 
-        // Read bytes BEFORE any StateHasChanged — IBrowserFile ref invalidated on re-render
+        if (validation.IsWarning)
+        {
+            Toast.ShowWarning(validation.Message!);
+        }
+
+        // Important: do NOT re-render before OpenReadStream().
         byte[] bytes;
         try
         {
+            Toast.ShowInfo("Reading your PDF...");
+
             using var stream = file.OpenReadStream(maxAllowedSize: 524_288_000);
             using var ms = new MemoryStream((int)Math.Min(file.Size, int.MaxValue));
             await stream.CopyToAsync(ms);
             bytes = ms.ToArray();
-        }
-        catch (Exception ex)
-        {
-            Toast.ShowError($"Could not read file: {ex.Message}");
-            return;
-        }
+            }
+            catch (Exception ex)
+            {
+                Toast.ShowError($"Could not read file: {ex.Message}");
+                return;
+            }
 
-        // Hide upload, show shell
-        _viewerActive = true;
-        StateHasChanged();
+           _viewerActive = true;
+            await InvokeAsync(StateHasChanged);
 
-        var success = await _viewer!.LoadBytesAsync(file.Name, bytes);
+            await Task.Delay(50);
+            await JS.InvokeVoidAsync("scrollHelpers.scrollIntoViewById", "edit-pdf-viewer-anchor", false);
+            await Task.Delay(50);
+
+            var success = await _viewer!.LoadBytesAsync(file.Name, bytes);
         if (!success)
         {
             _viewerActive = false;
-            StateHasChanged();
+            await InvokeAsync(StateHasChanged);
         }
     }
 

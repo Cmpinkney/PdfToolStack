@@ -24,8 +24,8 @@
             <h1>@(IsContractMode ? "Sign Contract Online" : "Sign PDF Online")</h1>
             <p class="tool-subtitle">
                 @(IsContractMode
-                                ? "Upload your contract and add a legally binding electronic signature. No account needed."
-                                : "Draw your signature and place it anywhere on your PDF. Free, private, and instant.")
+                    ? "Upload your contract and add a legally binding electronic signature. No account needed."
+                    : "Draw your signature and place it anywhere on your PDF. Free, private, and instant.")
             </p>
         </div>
 
@@ -37,7 +37,7 @@
             <div class="hiw-arrow">→</div>
             <div class="hiw-step">
                 <div class="hiw-num">2</div>
-                <div class="hiw-text"><strong>Use signature tool</strong><span>Draw or type in toolbar</span></div>
+                <div class="hiw-text"><strong>Add your signature</strong><span>Use the signature tool in the toolbar</span></div>
             </div>
             <div class="hiw-arrow">→</div>
             <div class="hiw-step">
@@ -84,7 +84,7 @@
         </div>
         <div class="faq-item">
             <h3>How do I add my signature?</h3>
-            <p>Click the signature tool in the Syncfusion toolbar (pen icon), draw or type your signature, then click anywhere on the document to place it.</p>
+            <p>Click the signature tool in the Syncfusion toolbar, draw or type your signature, then click anywhere on the document to place it.</p>
         </div>
         <div class="faq-item">
             <h3>Is this tool free?</h3>
@@ -111,8 +111,6 @@
         Navigation.Uri.Contains("/sign-contract", StringComparison.OrdinalIgnoreCase) ||
         Navigation.Uri.Contains("/sign-pdf-document", StringComparison.OrdinalIgnoreCase);
 
-    // Restrict toolbar to signing-relevant tools only
-    // If build errors occur on any value, remove that line — names vary by SF version
     private List<ToolbarItem> _signToolbar = new()
     {
         ToolbarItem.PageNavigationTool,
@@ -142,7 +140,6 @@
         if (!validation.IsValid) { Toast.ShowError(validation.Message!); return; }
         if (validation.IsWarning) Toast.ShowWarning(validation.Message!);
 
-        // Read bytes BEFORE any StateHasChanged
         byte[] bytes;
         try
         {

@@ -1069,51 +1069,86 @@
     <script>
         // SF Viewer ready detection — MutationObserver watches for rendered pages
         window.sfViewerObserver = {
-            _obs: null,
-            _startTime: 0,
-            _minVisible: 1500, // overlay shows for at least 1.5s no matter how fast SF fires
+        _obs: null,
+        _startTime: 0,
+        _minVisible: 1500, // overlay shows for at least 1.5s no matter how fast SF fires
 
-            start: function (wrapId, dotNetRef) {
-                this._startTime = Date.now();
-                const wrap = document.getElementById(wrapId);
-                if (!wrap) {
-                    setTimeout(() => this.start(wrapId, dotNetRef), 250);
-                    return;
-                }
+        start: function (wrapId, dotNetRef) {
+            this._startTime = Date.now();
+            const wrap = document.getElementById(wrapId);
 
-                const fire = () => {
-                    const elapsed = Date.now() - this._startTime;
-                    const remaining = Math.max(0, this._minVisible - elapsed);
-                    setTimeout(() => {
-                        try { dotNetRef.invokeMethodAsync('OnViewerReady'); } catch { }
-                    }, remaining);
-                };
+            if (!wrap) {
+                setTimeout(() => this.start(wrapId, dotNetRef), 250);
+                return;
+            }
 
-                // Watch specifically for .e-pv-page-div — that's the real page content
-                // Syncfusion renders canvas elements early (for its toolbar/chrome),
-                // so we must NOT trigger on canvas alone
-                this._obs = new MutationObserver(() => {
-                    // e-pv-page-div is the page container — only exists when PDF is rendered
-                    if (wrap.querySelector('.e-pv-page-div')) {
-                        this._obs.disconnect();
-                        this._obs = null;
-                        fire();
-                    }
-                });
-                this._obs.observe(wrap, { childList: true, subtree: true });
+            const fire = () => {
+                const elapsed = Date.now() - this._startTime;
+                const remaining = Math.max(0, this._minVisible - elapsed);
 
-                // Hard fallback: 30s
                 setTimeout(() => {
-                    if (this._obs) {
-                        this._obs.disconnect();
-                        this._obs = null;
-                        fire();
-                    }
-                }, 30000);
-            },
+                    // Wait two animation frames so the browser has time to paint
+                    requestAnimationFrame(() => {
+                        requestAnimationFrame(() => {
+                            try {
+                                dotNetRef.invokeMethodAsync('OnViewerReady');
+                            } catch { }
+                        });
+                    });
+                }, remaining);
+            };
 
-            stop: function () {
-                if (this._obs) { this._obs.disconnect(); this._obs = null; }
+            this._obs = new MutationObserver(() => {
+                if (wrap.querySelector('.e-pv-page-div')) {
+                    this._obs.disconnect();
+                    this._obs = null;
+                    fire();
+                }
+            });
+
+            this._obs.observe(wrap, { childList: true, subtree: true });
+
+            // Hard fallback: 30s
+            setTimeout(() => {
+                if (this._obs) {
+                    this._obs.disconnect();
+                    this._obs = null;
+                    fire();
+                }
+            }, 30000);
+        },
+
+        stop: function () {
+            if (this._obs) {
+                this._obs.disconnect();
+                this._obs = null;
+            }
+        }
+    };
+    </script>
+    <script>
+    window.scrollHelpers = {
+        scrollIntoViewById: function (id) {
+            const el = document.getElementById(id);
+            if (!el) return;
+
+            el.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }
+    };
+    </script>
+    <script>
+        window.scrollHelpers = {
+            scrollIntoViewById: function (id, smooth) {
+                const el = document.getElementById(id);
+                if (!el) return;
+
+                el.scrollIntoView({
+                    behavior: smooth ? 'smooth' : 'auto',
+                    block: 'start'
+                });
             }
         };
     </script>

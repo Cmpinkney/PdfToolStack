@@ -149,6 +149,19 @@
 
     private void HandleFileRemoved() { }
 
+    private List<ToolbarItem> _annotateToolbar = new()
+    {
+        ToolbarItem.PageNavigationTool,
+        ToolbarItem.MagnificationTool,
+        ToolbarItem.PanTool,
+        ToolbarItem.SelectionTool,
+
+        // Annotation tools only
+        ToolbarItem.AnnotationEditTool,
+
+        ToolbarItem.DownloadOption,
+        ToolbarItem.PrintOption,
+    };
     private void ResetAll()
     {
         _viewer?.Reset();

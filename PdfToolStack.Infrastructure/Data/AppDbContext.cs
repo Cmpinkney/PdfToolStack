@@ -17,6 +17,7 @@ namespace PdfToolStack.Infrastructure.Data
         public DbSet<ApiKey> ApiKeys => Set<ApiKey>();
         public DbSet<Referral> Referrals => Set<Referral>();
         public DbSet<AiCreditPurchase> AiCreditPurchases => Set<AiCreditPurchase>();
+        public DbSet<OneTimePurchase> OneTimePurchases => Set<OneTimePurchase>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
