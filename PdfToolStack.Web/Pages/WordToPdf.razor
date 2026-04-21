@@ -5,6 +5,7 @@
 @inject FileValidationService Validator
 @inject ToastService Toast
 @inject SessionUsageService SessionUsage
+@inject CloudPickerService CloudPicker
 
 <PageTitle>Word to PDF Converter Free Online — Convert DOCX to PDF</PageTitle>
 
@@ -41,6 +42,25 @@
                                accept=".docx,.doc"
                                style="display:none" />
                 </label>
+                <div class="cloud-picker-row">
+                    <span class="cloud-picker-label">OR IMPORT FROM</span>
+                    <button class="cloud-picker-btn" @onclick="PickGoogleDrive" disabled="@_cloudLoading">
+                        <svg width="16" height="16" viewBox="0 0 87.3 78" xmlns="http://www.w3.org/2000/svg"><path d="m6.6 66.85 3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8h-27.5c0 1.55.4 3.1 1.2 4.5z" fill="#0066da" /><path d="m43.65 25-13.75-23.8c-1.35.8-2.5 1.9-3.3 3.3l-25.4 44a9.06 9.06 0 0 0 -1.2 4.5h27.5z" fill="#00ac47" /><path d="m73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5h-27.502l5.852 11.5z" fill="#ea4335" /><path d="m43.65 25 13.75-23.8c-1.35-.8-2.9-1.2-4.5-1.2h-18.5c-1.6 0-3.15.45-4.5 1.2z" fill="#00832d" /><path d="m59.8 53h-32.3l-13.75 23.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2z" fill="#2684fc" /><path d="m73.4 26.5-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3l-13.75 23.8 16.15 28h27.45c0-1.55-.4-3.1-1.2-4.5z" fill="#ffba00" /></svg>
+                        Google Drive
+                    </button>
+                    <button class="cloud-picker-btn" @onclick="PickDropbox" disabled="@_cloudLoading">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="#0061FF"><path d="M6 2L0 6l6 4-6 4 6 4 6-4-6-4 6-4L6 2zm12 0l-6 4 6 4-6 4 6 4 6-4-6-4 6-4-6-4zm-6 13l-6 4 6 4 6-4-6-4z" /></svg>
+                        Dropbox
+                    </button>
+                </div>
+                @if (_cloudLoading)
+                {
+                    <p class="cloud-loading-hint">⏳ Downloading from cloud...</p>
+                }
+                @if (!string.IsNullOrEmpty(_cloudError))
+                {
+                    <p class="error-message">@_cloudError</p>
+                }
                 <p class="upload-hint">
                     Supports .docx and .doc files up to 25MB
                 </p>
@@ -79,26 +99,17 @@
             </div>
         }
 
-        @if (CurrentState == PageState.Complete
-                && ResultBytes != null)
+        @if (CurrentState == PageState.Complete && ResultBytes != null)
         {
             <AdSlot Size="rectangle" />
             <div class="result-container">
                 <span class="result-icon">✅</span>
                 <h2>Conversion Complete!</h2>
-                <p style="color: var(--gray);
-                               margin-bottom: 1.5rem;">
-                    Your Word document has been converted
-                    to PDF successfully.
+                <p style="color: var(--gray); margin-bottom: 1.5rem;">
+                    Your Word document has been converted to PDF successfully.
                 </p>
-                <button class="download-button"
-                        @onclick="DownloadFile">
-                    Download PDF
-                </button>
-                <button class="reset-button"
-                        @onclick="Reset">
-                    Convert Another Document
-                </button>
+                <button class="download-button" @onclick="DownloadFile">Download PDF</button>
+                <button class="reset-button" @onclick="Reset">Convert Another Document</button>
             </div>
         }
 
@@ -107,9 +118,7 @@
             <div class="error-container">
                 <span class="error-icon">❌</span>
                 <p class="error-message">@ErrorMessage</p>
-                <button class="reset-button" @onclick="Reset">
-                    Try Again
-                </button>
+                <button class="reset-button" @onclick="Reset">Try Again</button>
             </div>
         }
     </div>
@@ -118,48 +127,31 @@
         <h2>Frequently Asked Questions</h2>
         <div class="faq-item">
             <h3>What Word formats are supported?</h3>
-            <p>
-                We support .docx and .doc formats created
-                by Microsoft Word, Google Docs, and
-                LibreOffice.
-            </p>
+            <p>We support .docx and .doc formats created by Microsoft Word, Google Docs, and LibreOffice.</p>
         </div>
         <div class="faq-item">
             <h3>Will the formatting be preserved?</h3>
-            <p>
-                Text, headings, and tables are preserved.
-                Complex layouts may require minor
-                adjustments.
-            </p>
+            <p>Text, headings, and tables are preserved. Complex layouts may require minor adjustments.</p>
         </div>
         <div class="faq-item">
             <h3>Is this tool free?</h3>
-            <p>
-                Yes — completely free up to 25MB with no
-                signup required.
-            </p>
+            <p>Yes — completely free up to 25MB with no signup required.</p>
         </div>
         <div class="faq-item">
             <h3>Is my document stored on your servers?</h3>
-            <p>
-                Your file is automatically deleted within
-                1 hour. We never store your documents
-                permanently.
-            </p>
+            <p>Your file is automatically deleted within 1 hour. We never store your documents permanently.</p>
         </div>
     </div>
 </div>
 
 @code {
-    private enum PageState
-    {
-        Upload, Processing, Complete, Error, LargeFile
-    }
+    private enum PageState { Upload, Processing, Complete, Error, LargeFile }
 
     private PageState CurrentState = PageState.Upload;
     private IBrowserFile? SelectedFile;
     private byte[]? UploadedBytes;
     private byte[]? ResultBytes;
+    private string? _cloudFileName;
     private string? ErrorMessage;
 
     [SupplyParameterFromQuery]
@@ -167,28 +159,21 @@
 
     protected override void OnInitialized()
     {
-        if (Paid == "true")
-            CurrentState = PageState.Upload;
+        if (Paid == "true") CurrentState = PageState.Upload;
     }
 
-    private async Task HandleFileSelected(
-    InputFileChangeEventArgs e)
+    private async Task HandleFileSelected(InputFileChangeEventArgs e)
     {
         SelectedFile = null;
         UploadedBytes = null;
         ErrorMessage = null;
 
         var validation = Validator.ValidateWordFile(e.File);
-        if (!validation.IsValid)
-        {
-            Toast.ShowError(validation.Message!);
-            return;
-        }
+        if (!validation.IsValid) { Toast.ShowError(validation.Message!); return; }
 
         try
         {
-            using var stream = e.File.OpenReadStream(
-                maxAllowedSize: 524288000);
+            using var stream = e.File.OpenReadStream(maxAllowedSize: 524288000);
             using var ms = new MemoryStream();
             await stream.CopyToAsync(ms);
             UploadedBytes = ms.ToArray();
@@ -197,8 +182,7 @@
             if (PaymentService.IsFileTooLargeForFree(e.File.Size))
                 CurrentState = PageState.LargeFile;
             else
-                Toast.ShowSuccess(
-                    $"File ready — {Validator.FormatSize(e.File.Size)}");
+                Toast.ShowSuccess($"File ready — {Validator.FormatSize(e.File.Size)}");
         }
         catch (Exception ex)
         {
@@ -215,8 +199,7 @@
         StateHasChanged();
         try
         {
-            ResultBytes = await ApiService.WordToPdfAsync(
-                UploadedBytes, SelectedFile.Name);
+            ResultBytes = await ApiService.WordToPdfAsync(UploadedBytes, SelectedFile.Name);
             if (ResultBytes != null)
             {
                 CurrentState = PageState.Complete;
@@ -253,11 +236,8 @@
     private async Task DownloadFile()
     {
         if (ResultBytes == null) return;
-        var fileName = Path.GetFileNameWithoutExtension(
-            SelectedFile?.Name ?? "document") + ".pdf";
-        await JS.InvokeVoidAsync("downloadFile",
-            fileName,
-            Convert.ToBase64String(ResultBytes));
+        var fileName = Path.GetFileNameWithoutExtension(SelectedFile?.Name ?? "document") + ".pdf";
+        await JS.InvokeVoidAsync("downloadFile", fileName, Convert.ToBase64String(ResultBytes));
         SessionUsage.RecordToolCompletion("Tool Name");
     }
 
@@ -268,5 +248,47 @@
         UploadedBytes = null;
         ResultBytes = null;
         ErrorMessage = null;
+    }
+
+    // ── Cloud pickers ──────────────────────────────────────────────────────
+    private bool _cloudLoading = false;
+    private string _cloudError = string.Empty;
+
+    private async Task PickGoogleDrive()
+    {
+        _cloudError = string.Empty;
+        _cloudLoading = true;
+        StateHasChanged();
+        try
+        {
+            var f = await CloudPicker.OpenGoogleDriveAsync();
+            if (f != null) await LoadCloudFile(f.Name, f.Url, f.AccessToken);
+        }
+        catch (Exception ex) { _cloudError = $"Google Drive: {ex.Message}"; }
+        finally { _cloudLoading = false; StateHasChanged(); }
+    }
+
+    private async Task PickDropbox()
+    {
+        _cloudError = string.Empty;
+        _cloudLoading = true;
+        StateHasChanged();
+        try
+        {
+            var f = await CloudPicker.OpenDropboxAsync();
+            if (f != null) await LoadCloudFile(f.Name, f.Url, f.AccessToken);
+        }
+        catch (Exception ex) { _cloudError = $"Dropbox: {ex.Message}"; }
+        finally { _cloudLoading = false; StateHasChanged(); }
+    }
+
+    private async Task LoadCloudFile(string name, string url, string? accessToken)
+    {
+        var bytes = await CloudPicker.DownloadFileAsync(url, accessToken);
+        if (bytes is null || bytes.Length == 0) { _cloudError = "Could not download file. Please try again."; return; }
+        UploadedBytes = bytes;
+        _cloudFileName = name;
+        Toast.ShowSuccess($"File ready — {Validator.FormatSize(bytes.LongLength)}");
+        StateHasChanged();
     }
 }

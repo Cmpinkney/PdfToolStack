@@ -1,5 +1,6 @@
 ﻿@page "/pdf-reader"
 @inject IJSRuntime JS
+@inject CloudPickerService CloudPicker
 
 <PageTitle>PDF Reader Free Online — View and Share PDFs</PageTitle>
 
@@ -11,7 +12,7 @@
                    instantly in your browser." />
     <meta name="keywords"
           content="pdf reader online, view pdf free,
-                   pdf viewer online, read pdf online,  read pdf browser" />
+                   pdf viewer online, read pdf online, read pdf browser" />
     <link rel="canonical"
           href="https://pdftoolstack.com/pdf-reader" />
 </HeadContent>
@@ -36,6 +37,25 @@
                                accept=".pdf"
                                style="display:none" />
                 </label>
+                <div class="cloud-picker-row">
+                    <span class="cloud-picker-label">OR IMPORT FROM</span>
+                    <button class="cloud-picker-btn" @onclick="PickGoogleDrive" disabled="@_cloudLoading">
+                        <svg width="16" height="16" viewBox="0 0 87.3 78" xmlns="http://www.w3.org/2000/svg"><path d="m6.6 66.85 3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8h-27.5c0 1.55.4 3.1 1.2 4.5z" fill="#0066da" /><path d="m43.65 25-13.75-23.8c-1.35.8-2.5 1.9-3.3 3.3l-25.4 44a9.06 9.06 0 0 0 -1.2 4.5h27.5z" fill="#00ac47" /><path d="m73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5h-27.502l5.852 11.5z" fill="#ea4335" /><path d="m43.65 25 13.75-23.8c-1.35-.8-2.9-1.2-4.5-1.2h-18.5c-1.6 0-3.15.45-4.5 1.2z" fill="#00832d" /><path d="m59.8 53h-32.3l-13.75 23.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2z" fill="#2684fc" /><path d="m73.4 26.5-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3l-13.75 23.8 16.15 28h27.45c0-1.55-.4-3.1-1.2-4.5z" fill="#ffba00" /></svg>
+                        Google Drive
+                    </button>
+                    <button class="cloud-picker-btn" @onclick="PickDropbox" disabled="@_cloudLoading">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="#0061FF"><path d="M6 2L0 6l6 4-6 4 6 4 6-4-6-4 6-4L6 2zm12 0l-6 4 6 4-6 4 6 4 6-4-6-4 6-4-6-4zm-6 13l-6 4 6 4 6-4-6-4z" /></svg>
+                        Dropbox
+                    </button>
+                </div>
+                @if (_cloudLoading)
+                {
+                    <p class="cloud-loading-hint">⏳ Downloading from cloud...</p>
+                }
+                @if (!string.IsNullOrEmpty(_cloudError))
+                {
+                    <p class="error-message">@_cloudError</p>
+                }
                 <p class="upload-hint">
                     Files are never uploaded to our servers —
                     everything stays in your browser
@@ -52,44 +72,21 @@
         {
             <div class="reader-toolbar">
                 <div class="page-controls">
-                    <button class="page-btn"
-                            @onclick="PreviousPage"
-                            disabled="@(CurrentPage <= 1)">
-                        ◀ Prev
-                    </button>
-                    <span class="page-info">
-                        Page @CurrentPage of @TotalPages
-                    </span>
-                    <button class="page-btn"
-                            @onclick="NextPage"
-                            disabled="@(CurrentPage >= TotalPages)">
-                        Next ▶
-                    </button>
+                    <button class="page-btn" @onclick="PreviousPage" disabled="@(CurrentPage <= 1)">◀ Prev</button>
+                    <span class="page-info">Page @CurrentPage of @TotalPages</span>
+                    <button class="page-btn" @onclick="NextPage" disabled="@(CurrentPage >= TotalPages)">Next ▶</button>
                 </div>
                 <div class="reader-actions">
-                    <button class="page-btn"
-                            @onclick="ZoomOut">
-                        🔍 −
-                    </button>
+                    <button class="page-btn" @onclick="ZoomOut">🔍 −</button>
                     <span class="zoom-level">@Scale%</span>
-                    <button class="page-btn"
-                            @onclick="ZoomIn">
-                        🔍 +
-                    </button>
-                    <button class="reset-button"
-                            style="padding: 0.4rem 1rem;"
-                            @onclick="Reset">
-                        Close
-                    </button>
+                    <button class="page-btn" @onclick="ZoomIn">🔍 +</button>
+                    <button class="reset-button" style="padding: 0.4rem 1rem;" @onclick="Reset">Close</button>
                 </div>
             </div>
 
             <div class="reader-canvas-wrapper">
                 <canvas id="pdfReaderCanvas"
-                        style="display: block;
-                                   max-width: 100%;
-                                   border-radius: 8px;
-                                   box-shadow: var(--shadow);">
+                        style="display: block; max-width: 100%; border-radius: 8px; box-shadow: var(--shadow);">
                 </canvas>
             </div>
 
@@ -103,27 +100,15 @@
         <h2>Frequently Asked Questions</h2>
         <div class="faq-item">
             <h3>Is my PDF uploaded to your servers?</h3>
-            <p>
-                No — this PDF reader works entirely in your
-                browser using PDF.js. Your file never leaves
-                your device.
-            </p>
+            <p>No — this PDF reader works entirely in your browser using PDF.js. Your file never leaves your device.</p>
         </div>
         <div class="faq-item">
             <h3>What PDF features are supported?</h3>
-            <p>
-                Page navigation, zoom in/out, and full text
-                rendering. All standard PDF content including
-                images and formatted text.
-            </p>
+            <p>Page navigation, zoom in/out, and full text rendering. All standard PDF content including images and formatted text.</p>
         </div>
         <div class="faq-item">
             <h3>Is this PDF reader free?</h3>
-            <p>
-                Yes — completely free with no signup required
-                and no file size limits since files stay
-                on your device.
-            </p>
+            <p>Yes — completely free with no signup required and no file size limits since files stay on your device.</p>
         </div>
     </div>
 </div>
@@ -137,85 +122,73 @@
     private string? ErrorMessage;
     private string? PdfBase64;
 
-    private async Task HandleFileSelected(
-        InputFileChangeEventArgs e)
+    private async Task HandleFileSelected(InputFileChangeEventArgs e)
     {
         ErrorMessage = null;
         FileName = e.File.Name;
-
         try
         {
-            using var stream = e.File.OpenReadStream(
-                maxAllowedSize: 524288000);
+            using var stream = e.File.OpenReadStream(maxAllowedSize: 524288000);
             using var ms = new MemoryStream();
             await stream.CopyToAsync(ms);
-            PdfBase64 = Convert.ToBase64String(
-                ms.ToArray());
-
-            TotalPages = await JS.InvokeAsync<int>(
-                "getPdfPageCount", PdfBase64);
-
-            CurrentPage = 1;
-            IsLoaded = true;
-            StateHasChanged();
-
-            await RenderPage();
+            await LoadPdfBytes(e.File.Name, ms.ToArray());
         }
-        catch (Exception ex)
-        {
-            ErrorMessage =
-                $"Could not open PDF: {ex.Message}";
-        }
-
+        catch (Exception ex) { ErrorMessage = $"Could not open PDF: {ex.Message}"; }
         StateHasChanged();
+    }
+
+    private async Task LoadPdfBytes(string name, byte[] bytes)
+    {
+        FileName = name;
+        PdfBase64 = Convert.ToBase64String(bytes);
+        TotalPages = await JS.InvokeAsync<int>("getPdfPageCount", PdfBase64);
+        CurrentPage = 1;
+        IsLoaded = true;
+        StateHasChanged();
+        await RenderPage();
     }
 
     private async Task RenderPage()
     {
         if (string.IsNullOrEmpty(PdfBase64)) return;
-        await JS.InvokeVoidAsync(
-            "renderPdfReaderPage",
-            PdfBase64,
-            CurrentPage,
-            Scale / 100.0);
+        await JS.InvokeVoidAsync("renderPdfReaderPage", PdfBase64, CurrentPage, Scale / 100.0);
     }
 
-    private async Task PreviousPage()
-    {
-        if (CurrentPage <= 1) return;
-        CurrentPage--;
-        await RenderPage();
-    }
-
-    private async Task NextPage()
-    {
-        if (CurrentPage >= TotalPages) return;
-        CurrentPage++;
-        await RenderPage();
-    }
-
-    private async Task ZoomIn()
-    {
-        if (Scale >= 200) return;
-        Scale += 25;
-        await RenderPage();
-    }
-
-    private async Task ZoomOut()
-    {
-        if (Scale <= 50) return;
-        Scale -= 25;
-        await RenderPage();
-    }
+    private async Task PreviousPage() { if (CurrentPage <= 1) return; CurrentPage--; await RenderPage(); }
+    private async Task NextPage() { if (CurrentPage >= TotalPages) return; CurrentPage++; await RenderPage(); }
+    private async Task ZoomIn() { if (Scale >= 200) return; Scale += 25; await RenderPage(); }
+    private async Task ZoomOut() { if (Scale <= 50) return; Scale -= 25; await RenderPage(); }
 
     private void Reset()
     {
-        IsLoaded = false;
-        CurrentPage = 1;
-        TotalPages = 1;
-        Scale = 100;
-        FileName = null;
-        PdfBase64 = null;
-        ErrorMessage = null;
+        IsLoaded = false; CurrentPage = 1; TotalPages = 1;
+        Scale = 100; FileName = null; PdfBase64 = null; ErrorMessage = null;
+    }
+
+    // ── Cloud pickers ──────────────────────────────────────────────────────
+    private bool _cloudLoading = false;
+    private string _cloudError = string.Empty;
+
+    private async Task PickGoogleDrive()
+    {
+        _cloudError = string.Empty; _cloudLoading = true; StateHasChanged();
+        try { var f = await CloudPicker.OpenGoogleDriveAsync(); if (f != null) await LoadFromCloud(f.Name, f.Url, f.AccessToken); }
+        catch (Exception ex) { _cloudError = $"Google Drive: {ex.Message}"; }
+        finally { _cloudLoading = false; StateHasChanged(); }
+    }
+
+    private async Task PickDropbox()
+    {
+        _cloudError = string.Empty; _cloudLoading = true; StateHasChanged();
+        try { var f = await CloudPicker.OpenDropboxAsync(); if (f != null) await LoadFromCloud(f.Name, f.Url, f.AccessToken); }
+        catch (Exception ex) { _cloudError = $"Dropbox: {ex.Message}"; }
+        finally { _cloudLoading = false; StateHasChanged(); }
+    }
+
+    private async Task LoadFromCloud(string name, string url, string? accessToken)
+    {
+        var bytes = await CloudPicker.DownloadFileAsync(url, accessToken);
+        if (bytes is null || bytes.Length == 0) { _cloudError = "Could not download file."; return; }
+        await LoadPdfBytes(name, bytes);
     }
 }

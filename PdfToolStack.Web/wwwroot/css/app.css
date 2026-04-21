@@ -5038,43 +5038,75 @@ button,
         color: #B91C1C;
     }
 
+/* ── Nav user chip — modern pill style ─────────────────────── */
 .nav-user-chip {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    text-decoration: none;
-    padding: 0.3rem 0.6rem;
-    border-radius: 20px;
-    border: 1px solid var(--border);
-    background: var(--surface);
-    transition: var(--transition);
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.4rem !important;
+    padding: 0.2rem 0.5rem 0.2rem 0.2rem !important;
+    height: 34px !important;
+    border-radius: 20px !important;
+    border: 1px solid var(--border) !important;
+    background: var(--surface) !important;
+    cursor: pointer !important;
+    font-family: inherit !important;
+    transition: all 0.15s ease !important;
+    white-space: nowrap !important;
+    max-width: 160px !important;
 }
 
     .nav-user-chip:hover {
-        border-color: var(--primary);
-        background: var(--primary-light);
+        border-color: var(--primary) !important;
+        background: var(--primary-light) !important;
+    }
+
+    /* Force avatar image to circle no matter what auth0 returns */
+    .nav-user-chip img,
+    .nav-user-chip .nav-user-avatar-img {
+        width: 26px !important;
+        height: 26px !important;
+        min-width: 26px !important;
+        min-height: 26px !important;
+        max-width: 26px !important;
+        max-height: 26px !important;
+        border-radius: 50% !important;
+        object-fit: cover !important;
+        flex-shrink: 0 !important;
+        display: block !important;
+        overflow: hidden !important;
     }
 
 .nav-user-avatar {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background: var(--primary);
-    color: white;
-    font-size: 0.65rem;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
+    width: 26px !important;
+    height: 26px !important;
+    min-width: 26px !important;
+    border-radius: 50% !important;
+    background: var(--primary) !important;
+    color: white !important;
+    font-size: 0.6rem !important;
+    font-weight: 700 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
 }
 
 .nav-user-name {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--text);
+    font-size: 0.8rem !important;
+    font-weight: 600 !important;
+    color: var(--text) !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 90px !important;
 }
 
+.nav-user-chevron-svg {
+    width: 10px !important;
+    height: 10px !important;
+    flex-shrink: 0 !important;
+    color: var(--text-muted) !important;
+    opacity: 0.7 !important;
+}
 .nav-signout-btn {
     font-size: 0.825rem;
     font-weight: 600;
@@ -5098,12 +5130,17 @@ button,
 }
 
 .nav-user-avatar-img {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
+    width: 22px !important;
+    height: 22px !important;
+    min-width: 22px;
+    min-height: 22px;
+    max-width: 22px;
+    max-height: 22px;
+    border-radius: 50% !important;
     object-fit: cover;
     flex-shrink: 0;
 }
+
 
 /* ── Contract Review Results ──────────────────────────────── */
 .contract-review-results {
@@ -14623,4 +14660,154 @@ html {
     opacity: 1;
     pointer-events: all;
     transition: opacity 0.3s ease;
+}
+
+/* ── Compare PDF upload cards ─────────────────────────── */
+.compare-grid {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 1rem;
+    align-items: center;
+}
+
+.compare-upload-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.625rem;
+    padding: 2.5rem 1.5rem;
+    border-radius: 16px;
+    border: 2px dashed var(--border);
+    background: var(--surface-2);
+    cursor: pointer;
+    transition: all 0.18s ease;
+    text-align: center;
+    min-height: 180px;
+}
+
+    .compare-upload-card:hover {
+        border-color: var(--primary);
+        background: var(--primary-light);
+    }
+
+.compare-card-filled {
+    border-color: #0D9488;
+    border-style: solid;
+    background: rgba(13,148,136,0.06);
+}
+
+.compare-card-label {
+    font-size: 0.9375rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.compare-card-filename {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--text);
+    word-break: break-all;
+}
+
+.compare-card-hint {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.file-input-hidden {
+    display: none;
+}
+
+.compare-vs-divider {
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: var(--text-muted);
+    background: var(--border);
+    border-radius: 20px;
+    padding: 0.3rem 0.6rem;
+    flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+    .compare-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .compare-vs-divider {
+        text-align: center;
+    }
+}
+/* ── Nav AI Tools icon fix ────────────────────────────── */
+.nav-link-ai {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 0.3rem;
+    color: var(--accent) !important;
+    font-weight: 600 !important;
+}
+
+    .nav-link-ai svg {
+        flex-shrink: 0;
+        color: var(--accent);
+    }
+
+    .nav-link-ai:hover {
+        background: var(--accent-light) !important;
+   
+     }
+
+/* ── Cloud picker row (converter pages) ─────────────────────── */
+.cloud-picker-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin: 0.75rem 0 0.25rem;
+}
+
+.cloud-picker-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    width: 100%;
+    text-align: center;
+    margin-bottom: 0.25rem;
+}
+
+.cloud-picker-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.875rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+    .cloud-picker-btn:hover:not(:disabled) {
+        border-color: var(--primary);
+        background: var(--primary-light);
+    }
+
+    .cloud-picker-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+.cloud-loading-hint {
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+    margin-top: 0.5rem;
+    text-align: center;
 }

@@ -106,35 +106,39 @@
                 {
                     <div class="compare-grid">
 
-                        <!-- Original -->
-                        <div class="tool-card compare-drop">
-                            <div class="compare-drop-label">
-                                @(IsContractMode ? "Original contract" : "Original version")
-                            </div>
-                            <InputFile OnChange="e => OnFileSelected(e, true)"
-                                       accept=".pdf" class="file-input" />
+                        <label class="compare-upload-card @(_originalName != null ? "compare-card-filled" : "")">
+                            <InputFile OnChange="e => OnFileSelected(e, true)" accept=".pdf" class="file-input-hidden" />
                             @if (_originalName != null)
                             {
-                                <div class="compare-file-badge">
-                                    📄 @_originalName
-                                </div>
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0D9488" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                                <span class="compare-card-filename">@_originalName</span>
+                                <span class="compare-card-hint">Click to change</span>
                             }
-                        </div>
+                            else
+                            {
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /></svg>
+                                <span class="compare-card-label">@(IsContractMode ? "Original contract" : "Original version")</span>
+                                <span class="compare-card-hint">Click or drag PDF here</span>
+                            }
+                        </label>
 
-                        <!-- Revised -->
-                        <div class="tool-card compare-drop">
-                            <div class="compare-drop-label">
-                                @(IsContractMode ? "Revised contract" : "Revised version")
-                            </div>
-                            <InputFile OnChange="e => OnFileSelected(e, false)"
-                                       accept=".pdf" class="file-input" />
+                        <div class="compare-vs-divider">VS</div>
+
+                        <label class="compare-upload-card @(_revisedName != null ? "compare-card-filled" : "")">
+                            <InputFile OnChange="e => OnFileSelected(e, false)" accept=".pdf" class="file-input-hidden" />
                             @if (_revisedName != null)
                             {
-                                <div class="compare-file-badge">
-                                    📄 @_revisedName
-                                </div>
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0D9488" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                                <span class="compare-card-filename">@_revisedName</span>
+                                <span class="compare-card-hint">Click to change</span>
                             }
-                    </div>
+                            else
+                            {
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /></svg>
+                                <span class="compare-card-label">@(IsContractMode ? "Revised contract" : "Revised version")</span>
+                                <span class="compare-card-hint">Click or drag PDF here</span>
+                            }
+                    </label>
 
                 </div>
 
