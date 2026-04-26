@@ -155,6 +155,33 @@ namespace PdfToolStack.Infrastructure.Services
                 replyTo: fromEmail);
         }
 
+        public async Task SendTeamInviteEmailAsync(
+            string toEmail, string teamName, string inviteUrl)
+        {
+            var subject = $"You've been invited to join {teamName} on PdfToolStack";
+            var html = $"""
+                <div style="font-family:sans-serif;max-width:600px;margin:0 auto;">
+                    <div style="background:#2250F4;padding:2rem;border-radius:12px 12px 0 0;text-align:center;">
+                        <h1 style="color:white;margin:0;font-size:1.5rem;">You're invited!</h1>
+                    </div>
+                    <div style="padding:2rem;background:#f9f9f9;border-radius:0 0 12px 12px;">
+                        <p style="color:#555;">You've been invited to join <strong>{teamName}</strong> on PdfToolStack.</p>
+                        <p style="color:#555;">Click below to accept your invitation and get access to Pro features including AI tools, batch processing, and more.</p>
+                        <a href="{inviteUrl}"
+                           style="display:inline-block;background:#2250F4;color:white;padding:0.75rem 1.5rem;border-radius:8px;text-decoration:none;font-weight:600;margin:1rem 0;">
+                            Accept Invitation →
+                        </a>
+                        <p style="color:#888;font-size:0.85rem;margin-top:2rem;">
+                            This invite expires in 7 days. If you didn't expect this email, you can ignore it.<br/>
+                            — The PdfToolStack Team
+                        </p>
+                    </div>
+                </div>
+                """;
+
+            await SendAsync(toEmail, subject, html);
+        }
+
         private async Task SendAsync(
             string toEmail,
             string subject,

@@ -816,25 +816,34 @@ namespace PdfToolStack.Web.Services
             }
         }
 
-        public async Task<T?> PostMultipartAsync<T>(
+        public async Task<ApiResult<T>> PostMultipartWithStatusAsync<T>(
             string endpoint,
             MultipartFormDataContent content)
         {
             try
             {
                 var response = await _httpClient.PostAsync(endpoint, content);
-                if (response.IsSuccessStatusCode)
-                    return await response.Content.ReadFromJsonAsync<T>();
 
-                var error = await response.Content.ReadAsStringAsync();
-                _logger.LogWarning("PostMultipart {Endpoint} failed: {Error}",
-                    endpoint, error);
-                return default;
+                if (response.IsSuccessStatusCode)
+                {
+                    var data = await response.Content.ReadFromJsonAsync<T>();
+                    return new ApiResult<T> { Data = data, IsSuccess = true };
+                }
+
+                var errorBody = await response.Content.ReadAsStringAsync();
+                var isRateLimit = (int)response.StatusCode == 429;
+
+                return new ApiResult<T>
+                {
+                    IsSuccess = false,
+                    IsRateLimit = isRateLimit,
+                    ErrorMessage = errorBody
+                };
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "PostMultipart error: {Endpoint}", endpoint);
-                return default;
+                return new ApiResult<T> { IsSuccess = false, ErrorMessage = ex.Message };
             }
         }
 
@@ -903,5 +912,13 @@ namespace PdfToolStack.Web.Services
         public string Id { get; set; } = string.Empty;
         public string FileName { get; set; } = string.Empty;
         public string Url { get; set; } = string.Empty;
+    }
+
+    public class ApiResult<T>
+    {
+        public T? Data { get; set; }
+        public bool IsSuccess { get; set; }
+        public bool IsRateLimit { get; set; }
+        public string ErrorMessage { get; set; } = string.Empty;
     }
 }

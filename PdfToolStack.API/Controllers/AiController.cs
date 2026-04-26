@@ -1,6 +1,7 @@
 ﻿using ClosedXML.Excel;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PdfToolStack.Application.Interfaces;
 using PdfToolStack.Infrastructure.Services;
@@ -404,6 +405,25 @@ namespace PdfToolStack.API.Controllers
             }
         }
 
+        // GET api/ai/usage (current user)
+        [HttpGet("usage")]
+        [Authorize]
+        public async Task<IActionResult> GetMyUsage()
+        {
+            var userId = User.FindFirst("sub")?.Value;
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized();
+
+            if (_subscriptionService != null)
+            {
+                var status = await _subscriptionService.GetStatusAsync(userId);
+                var (used, limit) = await _usageService.GetUsageAsync(userId, status.PlanType);
+                return Ok(new { used, limit });
+            }
+
+            return Ok(new { used = 0, limit = 5 });
+        }
+
         private static byte[] BuildDocx(string text, string title)
         {
             using var ms = new MemoryStream();
@@ -495,18 +515,41 @@ namespace PdfToolStack.API.Controllers
             });
         }
 
+        // POST api/ai/support
+        [HttpPost("support")]
+        [AllowAnonymous]
+        public async Task<IActionResult> Support(
+            [FromBody] SupportRequest request,
+            CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrWhiteSpace(request.Message))
+                return BadRequest(new { error = "Message is required." });
+
+            var answer = await _aiService.SupportChatAsync(
+                request.Message,
+                request.History,
+                cancellationToken);
+
+            return Ok(new { answer });
+        }
+
+        public record SupportRequest(
+            string Message,
+            List<SupportMessage>? History);
+
+        
+
         // ── Helpers ───────────────────────────────────────────
         private async Task<(bool Allowed, IActionResult? Response)>
-        CheckAiUsageAsync(string userId, string feature, string model)
+            CheckAiUsageAsync(string userId, string feature, string model)
         {
             try
             {
-                var planType = "monthly"; // default to Pro limits
-                if (_subscriptionService != null)
+                var planType = "free"; // default to free limits
+                if (_subscriptionService != null && userId != "anonymous")
                 {
-                    var status = await _subscriptionService
-                        .GetStatusAsync(userId);
-                    planType = status.PlanType;
+                    var status = await _subscriptionService.GetStatusAsync(userId);
+                    planType = status.IsActive ? status.PlanType : "free";
                 }
 
                 (bool allowed, int used, int limit) = await _usageService
@@ -515,18 +558,18 @@ namespace PdfToolStack.API.Controllers
                 if (!allowed)
                     return (false, StatusCode(429, new
                     {
-                        error = $"Monthly AI limit reached ({limit} requests). " +
-                                "Upgrade your plan for more.",
+                        error = $"You've used your {limit} free AI requests this month. " +
+                                "Upgrade to Pro for 200 requests/month.",
                         used,
-                        limit
+                        limit,
+                        upgradePath = "/pricing"
                     }));
 
                 return (true, null);
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex,
-                    "Usage check failed — allowing request");
+                _logger.LogWarning(ex, "Usage check failed — allowing request");
                 return (true, null);
             }
         }

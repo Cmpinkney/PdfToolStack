@@ -332,10 +332,10 @@ namespace PdfToolStack.Infrastructure.Services
         }
 
         public async Task<RewriteResult> RewriteAsync(
-    byte[] pdfBytes,
-    string instruction,
-    string tone,
-    CancellationToken cancellationToken = default)
+            byte[] pdfBytes,
+            string instruction,
+            string tone,
+            CancellationToken cancellationToken = default)
         {
             var text = ExtractText(pdfBytes);
 
@@ -390,6 +390,67 @@ namespace PdfToolStack.Infrastructure.Services
 
             return RewriteResult.Success(rewritten);
         }
+
+        public async Task<string> SupportChatAsync(
+            string userMessage,
+            List<SupportMessage>? history = null,
+            CancellationToken cancellationToken = default)
+        {
+            var systemPrompt = """
+            You are a friendly, helpful support assistant for PdfToolStack.com —
+            an AI-powered PDF tools platform for professionals.
+
+            You help users with:
+            - How to use any of the 35+ PDF tools (compress, merge, split, convert,
+              sign, edit, annotate, redact, protect, OCR, watermark, rotate, crop,
+              number pages, flatten, organize, extract pages, delete pages)
+            - AI tools: AI Summarizer, Chat with PDF, AI Contract Reviewer,
+              AI Invoice Data Extractor, AI Questions Generator, AI Rewriter,
+              PDF Translate
+            - Pricing: Free (25MB, all standard tools, no AI), Pro $19/month
+              (500MB, AI tools, batch, compare, OCR, cloud storage),
+              Teams $49/month (5 seats, shared workspace),
+              Developer API $49/month (1000 calls/month)
+            - File size limits: Free = 25MB, Pro = 500MB
+            - Cloud storage: Google Drive and Dropbox supported on Pro
+            - Batch processing: up to 20 files at once, ZIP output, Pro only
+            - PDF Compare: word-by-word diff report, Pro only
+            - Sign PDF: draw or type signature, place anywhere, free
+            - Privacy: files deleted within 1 hour, no data training, no ads on Pro
+            - Account: users can manage subscription at /account
+            - Billing: managed via Stripe, cancel anytime at /account
+
+            Rules:
+            - Be concise and friendly — 2-3 sentences max unless more detail is needed
+            - If asked about a specific tool, explain exactly how to use it
+            - If the question is about billing, account deletion, or a technical
+              error you cannot resolve, tell them to email support@pdftoolstack.com
+            - Never make up features that don't exist
+            - If unsure, say so and suggest support@pdftoolstack.com
+            - Do not discuss competitors
+            """;
+
+            var messages = new List<object>();
+
+            if (history != null)
+            {
+                foreach (var h in history.TakeLast(10))
+                    messages.Add(new { role = h.Role, content = h.Content });
+            }
+
+            messages.Add(new { role = "user", content = userMessage });
+
+            var requestBody = new
+            {
+                model = HaikuModel,
+                max_tokens = 512,
+                system = systemPrompt,
+                messages
+            };
+
+            return await CallApiAsync(requestBody, cancellationToken);
+        }
+
         private async Task<string> CallApiAsync(
             object requestBody,
             CancellationToken cancellationToken)
@@ -516,6 +577,7 @@ namespace PdfToolStack.Infrastructure.Services
         }
     }
 
+    public record SupportMessage(string Role, string Content);
     public class ExtractResult
     {
         public bool IsSuccess { get; private set; }

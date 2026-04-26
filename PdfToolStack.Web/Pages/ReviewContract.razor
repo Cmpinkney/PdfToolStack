@@ -34,7 +34,6 @@
             </p>
         </div>
 
-        <!-- How it works -->
         <div class="how-it-works">
             <div class="hiw-step">
                 <div class="hiw-num">1</div>
@@ -65,250 +64,237 @@
             <NotAuthorized>
                 <div class="ai-upgrade-card">
                     <div class="ai-upgrade-icon">⚖️</div>
-                    <h2>AI Contract Reviewer — Pro Feature</h2>
-                    <p>
-                        Review contracts instantly with Claude AI. Catch risky clauses
-                        before you sign. Available with any Pro plan.
-                    </p>
+                    <h2>Try AI Contract Reviewer — 5 free uses</h2>
+                    <p>Sign in to get 5 free AI uses per month. Review contracts and catch risky clauses instantly.</p>
                     <div class="ai-upgrade-features">
                         <div class="ai-upgrade-feat">✓ Risky clause detection</div>
                         <div class="ai-upgrade-feat">✓ Key dates &amp; deadlines</div>
                         <div class="ai-upgrade-feat">✓ Party obligations summary</div>
-                        <div class="ai-upgrade-feat">✓ Missing elements checklist</div>
                         <div class="ai-upgrade-feat">✓ Plain English recommendations</div>
                     </div>
                     <div class="ai-upgrade-actions">
-                        <a href="/pricing" class="download-button"
+                        <a href="authentication/login?screen_hint=signup" class="download-button"
                            style="display:inline-block; text-decoration:none;">
-                            Upgrade to Pro — $19/mo
+                            Sign up free — 5 AI uses included
                         </a>
                         <a href="authentication/login" class="reset-button"
                            style="display:inline-block; text-decoration:none;">
-                            Sign in if you have Pro
+                            Sign in
                         </a>
                     </div>
                 </div>
             </NotAuthorized>
 
             <Authorized>
-                @if (!_isPro)
+                @if (!_isPro && _aiUsed < 5)
                 {
-                    <div class="ai-upgrade-card">
-                        <div class="ai-upgrade-icon">⭐</div>
-                        <h2>Upgrade to Pro to unlock AI Contract Review</h2>
-                        <p>You're signed in but on the Free plan. Upgrade to access this and all AI tools.</p>
-                        <div class="ai-upgrade-actions">
-                            <a href="/pricing" class="download-button"
-                               style="display:inline-block; text-decoration:none;">
-                                Upgrade to Pro — $19/mo
-                            </a>
+                    <div class="free-uses-banner">
+                        <span>✨ @(5 - _aiUsed) of 5 free AI uses remaining this month</span>
+                        <a href="/pricing">Upgrade to Pro for 200/mo →</a>
+                    </div>
+                }
+
+                @if (CurrentState == PageState.Upload)
+                {
+                    <FileUpload OnFileSelected="HandleFileSelected"
+                                OnFileRemoved="HandleFileRemoved"
+                                HintText="Upload a contract PDF — NDA, service agreement, lease, employment contract" />
+
+                    @if (_fileBytes != null)
+                    {
+                        <button class="process-button" @onclick="RunReview">
+                            ⚖️ Review Contract with AI
+                        </button>
+                    }
+                }
+
+                @if (CurrentState == PageState.Processing)
+                {
+                    <div class="ai-processing-container">
+                        <div class="ai-processing-icon">⚖️</div>
+                        <h3>AI is reviewing your contract...</h3>
+                        <p>Analyzing clauses, dates, obligations and risks</p>
+                        <div class="ai-processing-steps">
+                            <div class="ai-processing-step @(_step >= 1 ? "done" : "")">Reading contract text</div>
+                            <div class="ai-processing-step @(_step >= 2 ? "done" : "")">Identifying parties &amp; dates</div>
+                            <div class="ai-processing-step @(_step >= 3 ? "done" : "")">Detecting risky clauses</div>
+                            <div class="ai-processing-step @(_step >= 4 ? "done" : "")">Generating recommendations</div>
                         </div>
                     </div>
                 }
-                else
+
+                @if (CurrentState == PageState.Complete && _review != null)
                 {
-                    @if (CurrentState == PageState.Upload)
-                    {
-                        <FileUpload OnFileSelected="HandleFileSelected"
-                                    OnFileRemoved="HandleFileRemoved"
-                                    HintText="Upload a contract PDF — NDA, service agreement, lease, employment contract" />
+                    <div class="contract-review-results">
 
-                        @if (_fileBytes != null)
+                        <div class="review-header">
+                            <div>
+                                <h2>Contract Review Complete</h2>
+                                <p style="color:var(--text-secondary); font-size:0.875rem;">
+                                    @_fileName
+                                </p>
+                            </div>
+                            <button class="reset-button"
+                                    style="max-width:180px;"
+                                    @onclick="Reset">
+                                Review Another
+                            </button>
+                        </div>
+
+                        <div class="risk-score-card risk-score-@_review.RiskLevel.ToLower()">
+                            <div class="risk-score-left">
+                                <div class="risk-score-meter">
+                                    <div class="risk-score-track">
+                                        <div class="risk-score-fill risk-fill-@_review.RiskLevel.ToLower()"></div>
+                                        <div class="risk-score-marker risk-marker-@_review.RiskLevel.ToLower()"></div>
+                                    </div>
+                                    <div class="risk-score-labels">
+                                        <span>Low</span>
+                                        <span>Medium</span>
+                                        <span>High</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="risk-score-right">
+                                <div class="risk-score-badge risk-badge-@_review.RiskLevel.ToLower()">
+                                    @GetRiskIcon(_review.RiskLevel)
+                                    @_review.RiskLevel.ToUpper() RISK
+                                </div>
+                                <p class="risk-score-desc">
+                                    @GetRiskDescription(_review.RiskLevel, _review.RiskyClauses?.Count ?? 0)
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="review-section">
+                            <h3>Summary</h3>
+                            <p class="review-summary">@_review.Summary</p>
+                        </div>
+
+                        @if (_review.Parties?.Any() == true)
                         {
-                            <button class="process-button" @onclick="RunReview">
-                                ⚖️ Review Contract with AI
-                            </button>
-                        }
-                    }
-
-                    @if (CurrentState == PageState.Processing)
-                    {
-                        <div class="ai-processing-container">
-                            <div class="ai-processing-icon">⚖️</div>
-                            <h3>AI is reviewing your contract...</h3>
-                            <p>Analyzing clauses, dates, obligations and risks</p>
-                            <div class="ai-processing-steps">
-                                <div class="ai-processing-step @(_step >= 1 ? "done" : "")">Reading contract text</div>
-                                <div class="ai-processing-step @(_step >= 2 ? "done" : "")">Identifying parties &amp; dates</div>
-                                <div class="ai-processing-step @(_step >= 3 ? "done" : "")">Detecting risky clauses</div>
-                                <div class="ai-processing-step @(_step >= 4 ? "done" : "")">Generating recommendations</div>
-                            </div>
-                        </div>
-                    }
-
-                    @if (CurrentState == PageState.Complete && _review != null)
-                    {
-                        <div class="contract-review-results">
-
-                            <!-- Header with risk badge -->
-                            <!-- Header with risk score -->
-                            <div class="review-header">
-                                <div>
-                                    <h2>Contract Review Complete</h2>
-                                    <p style="color:var(--text-secondary); font-size:0.875rem;">
-                                        @_fileName
-                                    </p>
-                                </div>
-                                <button class="reset-button"
-                                        style="max-width:180px;"
-                                        @onclick="Reset">
-                                    Review Another
-                                </button>
-                            </div>
-
-                            <!-- Risk score card -->
-                            <div class="risk-score-card risk-score-@_review.RiskLevel.ToLower()">
-                                <div class="risk-score-left">
-                                    <div class="risk-score-meter">
-                                        <div class="risk-score-track">
-                                            <div class="risk-score-fill risk-fill-@_review.RiskLevel.ToLower()"></div>
-                                            <div class="risk-score-marker risk-marker-@_review.RiskLevel.ToLower()"></div>
-                                        </div>
-                                        <div class="risk-score-labels">
-                                            <span>Low</span>
-                                            <span>Medium</span>
-                                            <span>High</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="risk-score-right">
-                                    <div class="risk-score-badge risk-badge-@_review.RiskLevel.ToLower()">
-                                        @GetRiskIcon(_review.RiskLevel)
-                                        @_review.RiskLevel.ToUpper() RISK
-                                    </div>
-                                    <p class="risk-score-desc">
-                                        @GetRiskDescription(_review.RiskLevel, _review.RiskyClauses?.Count ?? 0)
-                                    </p>
-                                </div>
-                            </div>
-
-                            <!-- Summary -->
                             <div class="review-section">
-                                <h3>Summary</h3>
-                                <p class="review-summary">@_review.Summary</p>
+                                <h3>Parties Involved</h3>
+                                <div class="review-tags">
+                                    @foreach (var party in _review.Parties)
+                                    {
+                                        <div class="review-tag">
+                                            <span class="review-tag-label">@party.Role</span>
+                                            <span class="review-tag-value">@party.Name</span>
+                                        </div>
+                                    }
+                                </div>
                             </div>
+                        }
 
-                            <!-- Parties -->
-                            @if (_review.Parties?.Any() == true)
-                            {
-                                <div class="review-section">
-                                    <h3>Parties Involved</h3>
-                                    <div class="review-tags">
-                                        @foreach (var party in _review.Parties)
-                                        {
-                                            <div class="review-tag">
-                                                <span class="review-tag-label">@party.Role</span>
-                                                <span class="review-tag-value">@party.Name</span>
-                                            </div>
-                                        }
-                                    </div>
+                        @if (_review.KeyDates?.Any() == true)
+                        {
+                            <div class="review-section">
+                                <h3>Key Dates &amp; Deadlines</h3>
+                                <div class="review-dates-grid">
+                                    @foreach (var date in _review.KeyDates)
+                                    {
+                                        <div class="review-date-card">
+                                            <span class="review-date-label">@date.Label</span>
+                                            <span class="review-date-value">@date.Date</span>
+                                            <span class="review-date-note">@date.Importance</span>
+                                        </div>
+                                    }
                                 </div>
-                            }
-
-                            <!-- Key dates -->
-                            @if (_review.KeyDates?.Any() == true)
-                            {
-                                <div class="review-section">
-                                    <h3>Key Dates &amp; Deadlines</h3>
-                                    <div class="review-dates-grid">
-                                        @foreach (var date in _review.KeyDates)
-                                        {
-                                            <div class="review-date-card">
-                                                <span class="review-date-label">@date.Label</span>
-                                                <span class="review-date-value">@date.Date</span>
-                                                <span class="review-date-note">@date.Importance</span>
-                                            </div>
-                                        }
-                                    </div>
-                                </div>
-                            }
-
-                            <!-- Risky clauses -->
-                            @if (_review.RiskyClauses?.Any() == true)
-                            {
-                                <div class="review-section">
-                                    <h3>⚠️ Risky Clauses</h3>
-                                    <div class="review-risks">
-                                        @foreach (var clause in _review.RiskyClauses)
-                                        {
-                                            <div class="review-risk-card severity-@clause.Severity.ToLower()">
-                                                <div class="review-risk-header">
-                                                    <span class="review-risk-title">@clause.Title</span>
-                                                    <span class="review-risk-severity">@clause.Severity.ToUpper()</span>
-                                                </div>
-                                                @if (!string.IsNullOrEmpty(clause.Excerpt))
-                                                {
-                                                    <blockquote class="review-risk-excerpt">@clause.Excerpt</blockquote>
-                                                }
-                                                <p class="review-risk-explanation">@clause.Risk</p>
-                                            </div>
-                                        }
-                                    </div>
-                                </div>
-                            }
-
-                            <!-- Obligations -->
-                            @if (_review.Obligations?.Any() == true)
-                            {
-                                <div class="review-section">
-                                    <h3>Key Obligations</h3>
-                                    <div class="review-obligations">
-                                        @foreach (var ob in _review.Obligations)
-                                        {
-                                            <div class="review-obligation @(ob.Critical ? "obligation-critical" : "")">
-                                                <span class="obligation-party">@ob.Party</span>
-                                                <span class="obligation-text">@ob.Description</span>
-                                                @if (ob.Critical)
-                                                {
-                                                    <span class="obligation-critical-badge">Critical</span>
-                                                }
-                                            </div>
-                                        }
-                                    </div>
-                                </div>
-                            }
-
-                            <!-- Missing elements -->
-                            @if (_review.MissingElements?.Any() == true)
-                            {
-                                <div class="review-section">
-                                    <h3>🔍 Missing Elements</h3>
-                                    <div class="review-missing">
-                                        @foreach (var item in _review.MissingElements)
-                                        {
-                                            <div class="review-missing-item">⚠️ @item</div>
-                                        }
-                                    </div>
-                                </div>
-                            }
-
-                            <!-- Recommendations -->
-                            @if (_review.Recommendations?.Any() == true)
-                            {
-                                <div class="review-section">
-                                    <h3>✅ Recommendations</h3>
-                                    <div class="review-recommendations">
-                                        @foreach (var rec in _review.Recommendations)
-                                        {
-                                            <div class="review-rec-item">@rec</div>
-                                        }
-                                    </div>
-                                </div>
-                            }
-
-                            <div class="review-disclaimer">
-                                <strong>Note:</strong> This AI review is for informational purposes only
-                                and does not constitute legal advice. Consult a qualified attorney for
-                                legally binding decisions.
                             </div>
+                        }
 
-                            <button class="reset-button" style="margin-top:1rem;" @onclick="Reset">
-                                Review Another Contract
-                            </button>
+                        @if (_review.RiskyClauses?.Any() == true)
+                        {
+                            <div class="review-section">
+                                <h3>⚠️ Risky Clauses</h3>
+                                <div class="review-risks">
+                                    @foreach (var clause in _review.RiskyClauses)
+                                    {
+                                        <div class="review-risk-card severity-@clause.Severity.ToLower()">
+                                            <div class="review-risk-header">
+                                                <span class="review-risk-title">@clause.Title</span>
+                                                <span class="review-risk-severity">@clause.Severity.ToUpper()</span>
+                                            </div>
+                                            @if (!string.IsNullOrEmpty(clause.Excerpt))
+                                            {
+                                                <blockquote class="review-risk-excerpt">@clause.Excerpt</blockquote>
+                                            }
+                                            <p class="review-risk-explanation">@clause.Risk</p>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+
+                        @if (_review.Obligations?.Any() == true)
+                        {
+                            <div class="review-section">
+                                <h3>Key Obligations</h3>
+                                <div class="review-obligations">
+                                    @foreach (var ob in _review.Obligations)
+                                    {
+                                        <div class="review-obligation @(ob.Critical ? "obligation-critical" : "")">
+                                            <span class="obligation-party">@ob.Party</span>
+                                            <span class="obligation-text">@ob.Description</span>
+                                            @if (ob.Critical)
+                                            {
+                                                <span class="obligation-critical-badge">Critical</span>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+
+                        @if (_review.MissingElements?.Any() == true)
+                        {
+                            <div class="review-section">
+                                <h3>🔍 Missing Elements</h3>
+                                <div class="review-missing">
+                                    @foreach (var item in _review.MissingElements)
+                                    {
+                                        <div class="review-missing-item">⚠️ @item</div>
+                                    }
+                                </div>
+                            </div>
+                        }
+
+                        @if (_review.Recommendations?.Any() == true)
+                        {
+                            <div class="review-section">
+                                <h3>✅ Recommendations</h3>
+                                <div class="review-recommendations">
+                                    @foreach (var rec in _review.Recommendations)
+                                    {
+                                        <div class="review-rec-item">@rec</div>
+                                    }
+                                </div>
+                            </div>
+                        }
+
+                        <div class="review-disclaimer">
+                            <strong>Note:</strong> This AI review is for informational purposes only
+                            and does not constitute legal advice. Consult a qualified attorney for
+                            legally binding decisions.
                         </div>
-                    }
 
-                    @if (CurrentState == PageState.Error)
+                        <button class="reset-button" style="margin-top:1rem;" @onclick="Reset">
+                            Review Another Contract
+                        </button>
+                    </div>
+                }
+
+                @if (CurrentState == PageState.Error)
+                {
+                    @if (_isRateLimit)
+                    {
+                        <AiLimitBanner IsVisible="true"
+                                       IsFreeLimit="@_isFreeLimit"
+                                       Limit="@(_isFreeLimit ? 5 : 200)" />
+                        <button class="reset-button" style="margin-top:1rem;" @onclick="Reset">Try Again</button>
+                    }
+                    else
                     {
                         <div class="error-container" role="alert">
                             <span class="error-icon" aria-hidden="true">❌</span>
@@ -348,8 +334,11 @@
     private byte[]? _fileBytes;
     private string? _fileName;
     private bool _isPro = false;
+    private int _aiUsed = 0;
     private int _step = 0;
     private string _error = string.Empty;
+    private bool _isRateLimit = false;
+    private bool _isFreeLimit = false;
     private ContractReview? _review;
 
     protected override async Task OnInitializedAsync()
@@ -361,6 +350,12 @@
             var userId = user.FindFirst("sub")?.Value ?? string.Empty;
             var status = await SubService.GetStatusAsync(userId);
             _isPro = status.HasPro;
+
+            if (!_isPro)
+            {
+                var usage = await ApiService.GetAsync<AiUsageResponse>("api/ai/usage");
+                _aiUsed = usage?.Used ?? 0;
+            }
         }
     }
 
@@ -401,20 +396,28 @@
             await Task.Delay(400);
             _step = 3; StateHasChanged();
 
-            var response = await ApiService.PostMultipartAsync<ReviewResponse>(
+            var response = await ApiService.PostMultipartWithStatusAsync<ReviewResponse>(
                 "api/ai/review", content);
 
             _step = 4; StateHasChanged();
             await Task.Delay(300);
 
-            if (response == null)
+            if (response.IsRateLimit)
+            {
+                _isRateLimit = true;
+                _isFreeLimit = !_isPro;
+                CurrentState = PageState.Error;
+                return;
+            }
+
+            if (!response.IsSuccess || response.Data == null)
             {
                 _error = "Review failed. Please try again.";
                 CurrentState = PageState.Error;
                 return;
             }
 
-            _review = ParseReview(response.Json);
+            _review = ParseReview(response.Data.Json);
             CurrentState = PageState.Complete;
             Toast.ShowSuccess("Contract review complete!");
         }
@@ -432,25 +435,19 @@
     {
         try
         {
-            var options = new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            };
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
             return JsonSerializer.Deserialize<ContractReview>(json, options);
         }
-        catch
-        {
-            return null;
-        }
+        catch { return null; }
     }
 
     private static string GetRiskDescription(string risk, int riskyCount) =>
-    risk.ToLower() switch
-    {
-        "high" => $"This contract has {riskyCount} high-risk clause{(riskyCount == 1 ? "" : "s")} that need immediate attention before signing.",
-        "medium" => $"This contract has {riskyCount} clause{(riskyCount == 1 ? "" : "s")} worth reviewing. Proceed with caution.",
-        _ => "This contract appears relatively standard. Review the details below before signing."
-    };
+        risk.ToLower() switch
+        {
+            "high" => $"This contract has {riskyCount} high-risk clause{(riskyCount == 1 ? "" : "s")} that need immediate attention before signing.",
+            "medium" => $"This contract has {riskyCount} clause{(riskyCount == 1 ? "" : "s")} worth reviewing. Proceed with caution.",
+            _ => "This contract appears relatively standard. Review the details below before signing."
+        };
 
     private void Reset()
     {
@@ -460,6 +457,8 @@
         _review = null;
         _error = string.Empty;
         _step = 0;
+        _isRateLimit = false;
+        _isFreeLimit = false;
     }
 
     private static string GetRiskIcon(string risk) => risk.ToLower() switch
@@ -469,7 +468,6 @@
         _ => "🟢"
     };
 
-    // Response shapes
     private class ReviewResponse
     {
         public string Json { get; set; } = string.Empty;
@@ -513,5 +511,11 @@
         public string Excerpt { get; set; } = string.Empty;
         public string Risk { get; set; } = string.Empty;
         public string Severity { get; set; } = "medium";
+    }
+
+    private class AiUsageResponse
+    {
+        public int Used { get; set; }
+        public int Limit { get; set; }
     }
 }

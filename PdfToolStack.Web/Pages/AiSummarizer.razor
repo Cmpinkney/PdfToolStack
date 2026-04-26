@@ -18,7 +18,6 @@
 <div class="tool-page">
     <div class="tool-container">
 
-        <!-- Header -->
         <div class="ai-tool-header">
             <div class="ai-tool-badge">✨ AI-Powered</div>
             <h1>AI PDF Summarizer</h1>
@@ -28,7 +27,6 @@
             </p>
         </div>
 
-        <!-- How it works -->
         <div class="how-it-works">
             <div class="hiw-step">
                 <div class="hiw-num">1</div>
@@ -59,8 +57,8 @@
             <NotAuthorized>
                 <div class="ai-upgrade-card">
                     <div class="ai-upgrade-icon">✨</div>
-                    <h2>AI Summarizer — Pro Feature</h2>
-                    <p>Summarize any PDF instantly with Claude AI. Available on Pro — $19/month.</p>
+                    <h2>Try AI Summarizer — 5 free uses</h2>
+                    <p>Sign in to get 5 free AI uses per month. Summarize any PDF instantly with Claude AI.</p>
                     <div class="ai-upgrade-features">
                         <div class="ai-upgrade-feat">✓ Summarize any PDF in seconds</div>
                         <div class="ai-upgrade-feat">✓ Key points and conclusions</div>
@@ -68,86 +66,87 @@
                         <div class="ai-upgrade-feat">✓ Up to 50MB per document</div>
                     </div>
                     <div class="ai-upgrade-actions">
-                        <a href="/pricing" class="download-button"
+                        <a href="authentication/login?screen_hint=signup" class="download-button"
                            style="display:inline-block; text-decoration:none;">
-                            Upgrade to Pro — $19/mo
+                            Sign up free — 5 AI uses included
                         </a>
                         <a href="authentication/login" class="reset-button"
                            style="display:inline-block; text-decoration:none;">
-                            Sign in if you have Pro
+                            Sign in
                         </a>
                     </div>
                 </div>
             </NotAuthorized>
 
             <Authorized>
-                @if (!_isPro)
+                @if (!_isPro && _aiUsed < 5)
                 {
-                    <div class="ai-upgrade-card">
-                        <div class="ai-upgrade-icon">✨</div>
-                        <h2>Upgrade to Pro to unlock AI Summarizer</h2>
-                        <p>You're signed in but on the Free plan. Upgrade to summarize any PDF instantly.</p>
-                        <div class="ai-upgrade-actions">
-                            <a href="/pricing" class="download-button"
-                               style="display:inline-block; text-decoration:none;">
-                                Upgrade to Pro — $19/mo
-                            </a>
+                    <div class="free-uses-banner">
+                        <span>✨ @(5 - _aiUsed) of 5 free AI uses remaining this month</span>
+                        <a href="/pricing">Upgrade to Pro for 200/mo →</a>
+                    </div>
+                }
+
+                @if (CurrentState == PageState.Upload)
+                {
+                    <FileUpload OnFileSelected="HandleFileSelected"
+                                OnFileRemoved="HandleFileRemoved"
+                                HintText="Upload a PDF document — up to 50MB" />
+
+                    @if (_fileBytes != null)
+                    {
+                        <button class="process-button" @onclick="RunSummarize">
+                            ✨ Summarize with AI
+                        </button>
+                    }
+                }
+
+                @if (CurrentState == PageState.Processing)
+                {
+                    <div class="ai-processing-container">
+                        <div class="ai-processing-icon">✨</div>
+                        <h3>AI is reading your document...</h3>
+                        <p>Extracting key points and main arguments</p>
+                        <div class="ai-processing-steps">
+                            <div class="ai-processing-step @(_step >= 1 ? "done" : "")">Reading PDF content</div>
+                            <div class="ai-processing-step @(_step >= 2 ? "done" : "")">Identifying key points</div>
+                            <div class="ai-processing-step @(_step >= 3 ? "done" : "")">Generating summary</div>
                         </div>
                     </div>
                 }
-                else
+
+                @if (CurrentState == PageState.Complete && !string.IsNullOrEmpty(_summary))
                 {
-                    @if (CurrentState == PageState.Upload)
-                    {
-                        <FileUpload OnFileSelected="HandleFileSelected"
-                                    OnFileRemoved="HandleFileRemoved"
-                                    HintText="Upload a PDF document — up to 50MB" />
-
-                        @if (_fileBytes != null)
-                        {
-                            <button class="process-button" @onclick="RunSummarize">
-                                ✨ Summarize with AI
+                    <div class="ai-result-card">
+                        <div class="ai-result-header">
+                            <div>
+                                <h2>Summary complete</h2>
+                                <p style="color:var(--text-secondary); font-size:0.875rem;">
+                                    @_fileName
+                                </p>
+                            </div>
+                            <button class="reset-button"
+                                    style="max-width:140px;"
+                                    @onclick="Reset">
+                                Summarize Another
                             </button>
-                        }
-                    }
-
-                    @if (CurrentState == PageState.Processing)
-                    {
-                        <div class="ai-processing-container">
-                            <div class="ai-processing-icon">✨</div>
-                            <h3>AI is reading your document...</h3>
-                            <p>Extracting key points and main arguments</p>
-                            <div class="ai-processing-steps">
-                                <div class="ai-processing-step @(_step >= 1 ? "done" : "")">Reading PDF content</div>
-                                <div class="ai-processing-step @(_step >= 2 ? "done" : "")">Identifying key points</div>
-                                <div class="ai-processing-step @(_step >= 3 ? "done" : "")">Generating summary</div>
-                            </div>
                         </div>
-                    }
-
-                    @if (CurrentState == PageState.Complete && !string.IsNullOrEmpty(_summary))
-                    {
-                        <div class="ai-result-card">
-                            <div class="ai-result-header">
-                                <div>
-                                    <h2>Summary complete</h2>
-                                    <p style="color:var(--text-secondary); font-size:0.875rem;">
-                                        @_fileName
-                                    </p>
-                                </div>
-                                <button class="reset-button"
-                                        style="max-width:140px;"
-                                        @onclick="Reset">
-                                    Summarize Another
-                                </button>
-                            </div>
-                            <div class="ai-summary-body">
-                                @_summary
-                            </div>
+                        <div class="ai-summary-body">
+                            @_summary
                         </div>
-                    }
+                    </div>
+                }
 
-                    @if (CurrentState == PageState.Error)
+                @if (CurrentState == PageState.Error)
+                {
+                    @if (_isRateLimit)
+                    {
+                        <AiLimitBanner IsVisible="true"
+                                       IsFreeLimit="@_isFreeLimit"
+                                       Limit="@(_isFreeLimit ? 5 : 200)" />
+                        <button class="reset-button" style="margin-top:1rem;" @onclick="Reset">Try Again</button>
+                    }
+                    else
                     {
                         <div class="error-container" role="alert">
                             <span class="error-icon" aria-hidden="true">❌</span>
@@ -185,9 +184,12 @@
     private byte[]? _fileBytes;
     private string? _fileName;
     private bool _isPro;
+    private int _aiUsed = 0;
     private int _step = 0;
     private string _summary = string.Empty;
     private string _error = string.Empty;
+    private bool _isRateLimit = false;
+    private bool _isFreeLimit = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -198,6 +200,12 @@
             var userId = user.FindFirst("sub")?.Value ?? string.Empty;
             var status = await SubService.GetStatusAsync(userId);
             _isPro = status.HasPro;
+
+            if (!_isPro)
+            {
+                var usage = await ApiService.GetAsync<AiUsageResponse>("api/ai/usage");
+                _aiUsed = usage?.Used ?? 0;
+            }
         }
     }
 
@@ -236,15 +244,21 @@
                 new System.Net.Http.Headers.MediaTypeHeaderValue("application/pdf");
             content.Add(fc, "file", _fileName ?? "document.pdf");
 
-            var result = await ApiService.PostMultipartAsync<SummarizeResponse>(
+            var result = await ApiService.PostMultipartWithStatusAsync<SummarizeResponse>(
                 "api/ai/summarize", content);
 
             _step = 3; StateHasChanged();
 
-            if (result?.Summary != null)
+            if (result.IsSuccess && result.Data?.Summary != null)
             {
-                _summary = result.Summary;
+                _summary = result.Data.Summary;
                 CurrentState = PageState.Complete;
+            }
+            else if (result.IsRateLimit)
+            {
+                _isRateLimit = true;
+                _isFreeLimit = !_isPro;
+                CurrentState = PageState.Error;
             }
             else
             {
@@ -269,10 +283,18 @@
         _summary = string.Empty;
         _error = string.Empty;
         _step = 0;
+        _isRateLimit = false;
+        _isFreeLimit = false;
     }
 
     private class SummarizeResponse
     {
         public string Summary { get; set; } = string.Empty;
+    }
+
+    private class AiUsageResponse
+    {
+        public int Used { get; set; }
+        public int Limit { get; set; }
     }
 }

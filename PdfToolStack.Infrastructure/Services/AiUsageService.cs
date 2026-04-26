@@ -8,6 +8,7 @@ namespace PdfToolStack.Infrastructure.Services
     public class AiUsageService : IAiUsageService
     {
         private readonly AppDbContext _db;
+        private const int FreeMonthlyLimit = 5;
         private const int ProMonthlyLimit = 200;
         private const int TeamsMonthlyLimit = 500;
 
@@ -16,7 +17,12 @@ namespace PdfToolStack.Infrastructure.Services
         public async Task<(bool Allowed, int Used, int Limit)>
             CheckAndLogAsync(string userId, string feature, string model, string planType)
         {
-            var limit = planType == "teams" ? TeamsMonthlyLimit : ProMonthlyLimit;
+            var limit = planType switch
+            {
+                "teams" => TeamsMonthlyLimit,
+                "monthly" or "yearly" => ProMonthlyLimit,
+                _ => FreeMonthlyLimit   
+            };
             var monthStart = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1);
             var used = await _db.AiUsageLogs
                 .CountAsync(l => l.UserId == userId && l.UsedAt >= monthStart);

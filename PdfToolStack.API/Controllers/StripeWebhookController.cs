@@ -115,8 +115,11 @@ namespace PdfToolStack.API.Controllers
             var subscriptionService = new Stripe.SubscriptionService();
             var stripeSubscription = await subscriptionService.GetAsync(session.SubscriptionId);
 
+            var priceId = stripeSubscription.Items.Data[0].Price.Id;
             var interval = stripeSubscription.Items.Data[0].Price.Recurring?.Interval;
-            var planType = interval == "month" ? "monthly" : "yearly";
+            var planType = priceId == _stripeOptions.TeamsMonthlyPriceId
+                ? "teams"
+                : interval == "month" ? "monthly" : "yearly";
 
             var existing = await _db.UserSubscriptions.FirstOrDefaultAsync(x => x.UserId == userId);
 

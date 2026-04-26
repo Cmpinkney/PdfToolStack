@@ -149,6 +149,12 @@ try
     builder.Services.AddMemoryCache();
     builder.Services.AddScoped<ICloudAuthStateStore, InMemoryCloudAuthStateStore>();
 
+    // ── Team Service ─────────────────────────────────────────────────────
+    if (hasDatabase)
+    {
+        builder.Services.AddScoped<ITeamService, TeamService>();
+    }
+
     // ── Strategies ────────────────────────────────────────────────────────
     builder.Services.AddScoped<IProcessingStrategy>(sp =>
         new CompressStrategy(

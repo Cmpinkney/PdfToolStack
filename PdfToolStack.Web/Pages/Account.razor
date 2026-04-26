@@ -31,7 +31,11 @@
                     <h1>@context.User.Identity?.Name</h1>
                     <p class="account-email">@context.User.FindFirst("email")?.Value</p>
                 </div>
-                @if (_subStatus?.HasPro == true)
+                @if (_subStatus?.HasTeams == true)
+                {
+                    <div class="account-pro-badge" style="background:var(--accent);">Teams</div>
+                }
+                else if (_subStatus?.HasPro == true)
                 {
                     <div class="account-pro-badge">Pro</div>
                 }
@@ -51,10 +55,9 @@
                     <span class="account-stat-num">@GetTotalSize()</span>
                     <span class="account-stat-label">Total processed</span>
                 </div>
-                <div class="account-stat-card">
-                    <span class="account-stat-num">@(_subStatus?.HasPro == true ? "Pro" : "Free")</span>
-                    <span class="account-stat-label">Current plan</span>
-                </div>
+                <span class="account-stat-num">
+                    @(_subStatus?.HasTeams == true ? "Teams" : _subStatus?.HasPro == true ? "Pro" : "Free")
+                </span>
             </div>
 
             <div class="account-grid">
@@ -223,6 +226,21 @@
                             Pricing
                         </a>
                     </div>
+                    @if (_subStatus?.HasTeams == true)
+                    {
+                        <div class="account-panel">
+                            <div class="account-panel-header">
+                                <h2>👥 Team</h2>
+                            </div>
+                            <p style="color:var(--text-muted);margin-bottom:1rem;">
+                                Manage your team members, invites, and shared usage.
+                            </p>
+                            <a href="/team" class="process-button"
+                               style="display:inline-block;text-decoration:none;text-align:center;">
+                                Open Team Dashboard →
+                            </a>
+                        </div>
+                    }
                 </div>
 
                 <!-- Right: Document History -->

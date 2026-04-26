@@ -1,0 +1,68 @@
+﻿@using PdfToolStack.Domain.Enums
+@inject NavigationManager Navigation
+
+@if (IsOpen)
+{
+    <div class="upgrade-overlay">
+        <div class="upgrade-modal">
+            <button class="upgrade-close" @onclick="Close">×</button>
+
+            <h2>@Title</h2>
+            <p>@Message</p>
+
+            <div class="upgrade-actions">
+                <button class="upgrade-primary" @onclick="GoToPricing">
+                    Upgrade Now
+                </button>
+
+                @if (Reason == PaywallReason.FileTooLarge)
+                {
+                    <button class="upgrade-secondary" @onclick="OneTimeUnlock">
+                        Unlock this file for $1.99
+                    </button>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public PaywallReason Reason { get; set; }
+    [Parameter] public string? CustomMessage { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private string Title => Reason switch
+    {
+        PaywallReason.FileTooLarge => "File too large for free processing",
+        PaywallReason.AiLimitReached => "AI limit reached",
+        PaywallReason.BatchRequiresPro => "Batch processing requires Pro",
+        PaywallReason.LoginRequired => "Sign in required",
+        _ => "Upgrade required"
+    };
+
+    private string Message => !string.IsNullOrWhiteSpace(CustomMessage)
+        ? CustomMessage
+        : Reason switch
+        {
+            PaywallReason.FileTooLarge => "Upgrade to process larger files, or unlock this file once.",
+            PaywallReason.AiLimitReached => "Upgrade to keep using AI tools.",
+            PaywallReason.BatchRequiresPro => "Upgrade to Pro to process multiple files at once.",
+            _ => "Upgrade to continue."
+        };
+
+    private void GoToPricing()
+    {
+        Navigation.NavigateTo("/pricing");
+    }
+
+    private void OneTimeUnlock()
+    {
+        Navigation.NavigateTo("/pricing?unlock=large-file");
+    }
+
+    private async Task Close()
+    {
+        await OnClose.InvokeAsync();
+    }
+}

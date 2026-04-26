@@ -232,11 +232,19 @@
 
                 @if (CurrentState == PageState.Error)
                 {
-                    <div class="error-container" role="alert">
-                        <span class="error-icon">❌</span>
-                        <p class="error-message">@_error</p>
-                        <button class="reset-button" @onclick="Reset">Try Again</button>
-                    </div>
+                    @if (_isRateLimit)
+                    {
+                        <AiLimitBanner IsVisible="true"
+                                       IsFreeLimit="@_isFreeLimit"
+                                       Limit="@(_isFreeLimit ? 5 : 200)" />
+                    }
+                    else
+                    {
+                        <div class="error-container" role="alert">
+                            <span class="error-icon">❌</span>
+                            <p class="error-message">@_error</p>
+                        </div>
+                    }
                 }
             </Authorized>
         </AuthorizeView>
@@ -291,6 +299,8 @@
     private int _step = 0;
     private string _translatedText = string.Empty;
     private string _error = string.Empty;
+    private bool _isRateLimit = false;
+    private bool _isFreeLimit = false;
 
     private record Language(string Code, string Name, string Flag);
 
@@ -368,15 +378,21 @@
             content.Add(new StringContent(_selectedLang), "targetLanguage");
             content.Add(new StringContent(langName), "languageName");
 
-            var result = await ApiService.PostMultipartAsync<TranslateResponse>(
+            var result = await ApiService.PostMultipartWithStatusAsync<TranslateResponse>(
                 "api/ai/translate", content);
 
             _step = 3; StateHasChanged();
 
-            if (result?.TranslatedText != null)
+            if (result.IsSuccess && result.Data?.TranslatedText != null)
             {
-                _translatedText = result.TranslatedText;
+                _translatedText = result.Data.TranslatedText;
                 CurrentState = PageState.Complete;
+            }
+            else if (result.IsRateLimit)
+            {
+                _isRateLimit = true;
+                _isFreeLimit = true;
+                CurrentState = PageState.Error;
             }
             else
             {

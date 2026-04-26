@@ -7,8 +7,9 @@
         public string Status { get; set; } = "none";
         public DateTime? CurrentPeriodEnd { get; set; }
         public bool CancelAtPeriodEnd { get; set; }
+        public bool HasTeams => IsActive && PlanType == "teams";
         public bool HasPro => IsActive &&
-            (PlanType == "monthly" || PlanType == "yearly");
+            (PlanType == "monthly" || PlanType == "yearly" || HasTeams);
     }
 
     public class CreateCheckoutDto

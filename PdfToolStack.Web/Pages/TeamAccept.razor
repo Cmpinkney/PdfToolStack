@@ -1,0 +1,93 @@
+﻿@page "/team/accept"
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@using System.Web
+
+<PageTitle>Accept Team Invite — PdfToolStack</PageTitle>
+
+<div class="tool-page" style="max-width:480px;margin:4rem auto;text-align:center;">
+
+    @if (_loading)
+    {
+        <div class="pdf-loading-spinner"></div>
+        <p style="color:var(--text-muted);margin-top:1rem;">Accepting your invite...</p>
+    }
+    else if (_success)
+    {
+        <div style="font-size:3rem;margin-bottom:1rem;">🎉</div>
+        <h1 style="font-size:1.5rem;margin-bottom:.5rem;">You're in!</h1>
+        <p style="color:var(--text-muted);">You've joined the team. You now have access to Pro features.</p>
+        <a href="/" class="process-button" style="display:inline-block;margin-top:1.5rem;text-decoration:none;">
+            Go to Dashboard →
+        </a>
+    }
+    else
+    {
+        <div style="font-size:3rem;margin-bottom:1rem;">❌</div>
+        <h1 style="font-size:1.5rem;margin-bottom:.5rem;">Invite failed</h1>
+        <p style="color:var(--text-muted);">@_error</p>
+        <a href="/" class="process-button" style="display:inline-block;margin-top:1.5rem;text-decoration:none;">
+            Go home
+        </a>
+    }
+
+</div>
+
+@code {
+    [CascadingParameter] private Task<AuthenticationState>? AuthState { get; set; }
+    [Inject] private HttpClient Http { get; set; } = default!;
+
+    private bool _loading = true;
+    private bool _success = false;
+    private string _error = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+        var token = query["token"];
+
+        if (string.IsNullOrWhiteSpace(token))
+
+        // Must be logged in
+        if (AuthState != null)
+        {
+            var auth = await AuthState;
+            if (auth.User.Identity?.IsAuthenticated != true)
+            {
+                // Redirect to login then back here
+                Navigation.NavigateTo(
+                    $"authentication/login?returnUrl={Uri.EscapeDataString(Navigation.Uri)}",
+                    forceLoad: true);
+                return;
+            }
+        }
+
+        try
+        {
+            var response = await Http.PostAsJsonAsync("api/team/accept", new { token });
+
+            if (response.IsSuccessStatusCode)
+            {
+                _success = true;
+            }
+            else
+            {
+                var err = await response.Content.ReadFromJsonAsync<ErrorResponse>();
+                _error = err?.Error ?? "Something went wrong. Please try again.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = $"Could not process invite: {ex.Message}";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private record ErrorResponse(string Error);
+}

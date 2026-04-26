@@ -6,5 +6,6 @@
         Task SendProWelcomeEmailAsync(string toEmail, string name);
         Task SendWaitlistConfirmationAsync(string toEmail, string toolName);
         Task SendContactFormEmailAsync(string fromEmail, string name, string message);
+        Task SendTeamInviteEmailAsync(string toEmail, string teamName, string inviteUrl);
     }
 }

@@ -1,0 +1,394 @@
+﻿@page "/team"
+@attribute [Authorize]
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+@using Microsoft.AspNetCore.Components.Authorization
+@using PdfToolStack.Application.DTOs
+
+<PageTitle>Team Dashboard — PdfToolStack</PageTitle>
+
+<div class="account-page">
+    <AuthorizeView>
+        <Authorized>
+
+            @if (_loading)
+            {
+                <div style="text-align:center;padding:4rem;">
+                    <div class="pdf-loading-spinner"></div>
+                    <p style="color:var(--text-muted);margin-top:1rem;">Loading team...</p>
+                </div>
+            }
+            else if (_notTeamsMember)
+            {
+                <div style="text-align:center;padding:4rem;">
+                    <div style="font-size:3rem;margin-bottom:1rem;">🔒</div>
+                    <h1 style="font-size:1.5rem;">Teams plan required</h1>
+                    <p style="color:var(--text-muted);margin:.75rem 0 1.5rem;">
+                        The team dashboard is available on the Teams plan.
+                    </p>
+                    <a href="/pricing" class="process-button"
+                       style="display:inline-block;text-decoration:none;">
+                        View Plans →
+                    </a>
+                </div>
+            }
+            else if (_team != null)
+            {
+                <!-- Header -->
+                <div class="account-header">
+                    <div class="account-avatar" style="background:var(--primary);">
+                        @_team.Name[0]
+                    </div>
+                    <div>
+                        @if (_renamingTeam)
+                        {
+                            <div style="display:flex;gap:.5rem;align-items:center;">
+                                <input class="form-input" @bind="_newTeamName"
+                                       style="font-size:1.2rem;font-weight:700;" />
+                                <button class="process-button"
+                                        style="padding:.35rem .85rem;font-size:.85rem;"
+                                        @onclick="SaveRename">
+                                    Save
+                                </button>
+                                <button class="reset-button"
+                                        style="padding:.35rem .85rem;font-size:.85rem;"
+                                        @onclick="() => _renamingTeam = false">
+                                    Cancel
+                                </button>
+                            </div>
+                        }
+                        else
+                        {
+                            <h1 style="font-size:1.4rem;font-weight:700;display:flex;align-items:center;gap:.5rem;">
+                                @_team.Name
+                                @if (_team.IsOwner)
+                                {
+                                    <button class="icon-btn" title="Rename team"
+                                            @onclick="StartRename">
+                                        ✏️
+                                    </button>
+                                }
+                            </h1>
+                        }
+                        <p style="color:var(--text-muted);font-size:.9rem;">
+                            @_team.MemberCount / @_team.MaxSeats seats used
+                        </p>
+                    </div>
+                </div>
+
+                <div class="account-grid">
+
+                    <!-- Invite panel (admin only) -->
+                    @if (_team.IsOwner)
+                    {
+                        <div class="account-panel">
+                            <div class="account-panel-header">
+                                <h2>Invite a member</h2>
+                            </div>
+
+                            @if (_team.MemberCount >= _team.MaxSeats)
+                            {
+                                <div class="ai-usage-warning" style="margin-bottom:1rem;">
+                                    All @_team.MaxSeats seats are filled.
+                                    <a href="/contact">Contact us</a> to add more seats.
+                                </div>
+                            }
+                            else
+                            {
+                                <div style="display:flex;gap:.5rem;">
+                                    <input class="form-input"
+                                           placeholder="colleague@company.com"
+                                           @bind="_inviteEmail"
+                                           style="flex:1;" />
+                                    <button class="process-button"
+                                            style="padding:.5rem 1rem;white-space:nowrap;"
+                                            @onclick="SendInvite"
+                                            disabled="@_inviting">
+                                        @(_inviting ? "Sending..." : "Send invite")
+                                    </button>
+                                </div>
+                                @if (!string.IsNullOrEmpty(_inviteMessage))
+                                {
+                                    <p class="@(_inviteError ? "error-msg" : "success-msg")"
+                                       style="margin-top:.5rem;">
+                                        @_inviteMessage
+                                    </p>
+                                }
+                            }
+
+                            <!-- Pending invites -->
+                            @if (_pendingInvites.Any())
+                            {
+                                <div style="margin-top:1.5rem;">
+                                    <h3 style="font-size:.85rem;color:var(--text-muted);
+                                                           text-transform:uppercase;letter-spacing:.05em;
+                                                           margin-bottom:.75rem;">
+                                        Pending invites
+                                    </h3>
+                                    @foreach (var invite in _pendingInvites)
+                                    {
+                                        <div class="team-member-row">
+                                            <span class="team-member-email">@invite.Email</span>
+                                            <span class="team-member-badge pending">
+                                                Expires @invite.ExpiresAt.ToString("MMM d")
+                                            </span>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
+
+                    <!-- Members + usage -->
+                    <div class="account-panel">
+                        <div class="account-panel-header">
+                            <h2>Team members</h2>
+                            <span class="account-panel-count">@_members.Count members</span>
+                        </div>
+
+                        @if (_membersLoading)
+                        {
+                            <p class="account-loading">Loading...</p>
+                        }
+                        else if (!_members.Any())
+                        {
+                            <p style="color:var(--text-muted);">
+                                No members yet. Send an invite above.
+                            </p>
+                        }
+                        else
+                        {
+                            <div class="team-members-table">
+                                <div class="team-members-header">
+                                    <span>Member</span>
+                                    <span>Role</span>
+                                    <span>AI this month</span>
+                                    <span>Docs this month</span>
+                                    @if (_team.IsOwner)
+                                    {
+                                        <span></span>
+                                    }
+                                </div>
+                                @foreach (var m in _members)
+                                {
+                                    <div class="team-member-row">
+                                        <div class="team-member-info">
+                                            <div class="team-member-avatar">
+                                                @(m.Name.Length > 0 ? m.Name[0].ToString().ToUpper() : "?")
+                                            </div>
+                                            <div>
+                                                <div class="team-member-name">@m.Name</div>
+                                                <div class="team-member-email">@m.Email</div>
+                                            </div>
+                                        </div>
+                                        <span class="team-member-badge @(m.Role == "admin" ? "admin" : "member")">
+                                            @m.Role
+                                        </span>
+                                        <span class="team-stat">@m.AiUsedThisMonth</span>
+                                        <span class="team-stat">@m.DocsThisMonth</span>
+                                        @if (_team.IsOwner && m.UserId != _team.OwnerUserId)
+                                        {
+                                            <button class="icon-btn danger"
+                                                    title="Remove member"
+                                                    @onclick="() => RemoveMember(m.UserId)">
+                                                ✕
+                                            </button>
+                                        }
+                                        else if (_team.IsOwner)
+                                        {
+                                            <span></span>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+
+                </div>
+            }
+
+        </Authorized>
+        <NotAuthorized>
+            <p>Please <a href="authentication/login">sign in</a> to view your team.</p>
+        </NotAuthorized>
+    </AuthorizeView>
+</div>
+
+@code {
+    private TeamDto? _team;
+    private List<TeamMemberUsageDto> _members = new();
+    private List<PendingInviteDto> _pendingInvites = new();
+
+    private bool _loading = true;
+    private bool _membersLoading = false;
+    private bool _notTeamsMember = false;
+
+    private string _inviteEmail = string.Empty;
+    private bool _inviting = false;
+    private string _inviteMessage = string.Empty;
+    private bool _inviteError = false;
+
+    private bool _renamingTeam = false;
+    private string _newTeamName = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTeam();
+    }
+
+    private async Task LoadTeam()
+    {
+        _loading = true;
+        try
+        {
+            // First initialize (gets or creates team for owner)
+            var initResponse = await Http.PostAsync("api/team/initialize", null);
+
+            if (initResponse.StatusCode == System.Net.HttpStatusCode.Unauthorized ||
+                initResponse.StatusCode == System.Net.HttpStatusCode.Forbidden)
+            {
+                _notTeamsMember = true;
+                return;
+            }
+
+            if (!initResponse.IsSuccessStatusCode)
+            {
+                // Not a Teams owner — check if member
+                var teamResponse = await Http.GetAsync("api/team");
+                if (!teamResponse.IsSuccessStatusCode)
+                {
+                    _notTeamsMember = true;
+                    return;
+                }
+                _team = await teamResponse.Content.ReadFromJsonAsync<TeamDto>();
+            }
+            else
+            {
+                _team = await initResponse.Content.ReadFromJsonAsync<TeamDto>();
+            }
+
+            if (_team == null) { _notTeamsMember = true; return; }
+
+            await LoadMembers();
+            if (_team.IsOwner)
+                await LoadInvites();
+        }
+        catch
+        {
+            _notTeamsMember = true;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task LoadMembers()
+    {
+        _membersLoading = true;
+        try
+        {
+            var response = await Http.GetAsync("api/team/members");
+            if (response.IsSuccessStatusCode)
+                _members = await response.Content
+                    .ReadFromJsonAsync<List<TeamMemberUsageDto>>() ?? new();
+        }
+        finally
+        {
+            _membersLoading = false;
+        }
+    }
+
+    private async Task LoadInvites()
+    {
+        var response = await Http.GetAsync("api/team/invites");
+        if (response.IsSuccessStatusCode)
+            _pendingInvites = await response.Content
+                .ReadFromJsonAsync<List<PendingInviteDto>>() ?? new();
+    }
+
+    private async Task SendInvite()
+    {
+        if (string.IsNullOrWhiteSpace(_inviteEmail)) return;
+
+        _inviting = true;
+        _inviteMessage = string.Empty;
+        StateHasChanged();
+
+        try
+        {
+            var response = await Http.PostAsJsonAsync(
+                "api/team/invite", new { email = _inviteEmail });
+
+            if (response.IsSuccessStatusCode)
+            {
+                _inviteMessage = $"Invite sent to {_inviteEmail}!";
+                _inviteError = false;
+                _inviteEmail = string.Empty;
+                await LoadInvites();
+            }
+            else
+            {
+                var err = await response.Content
+                    .ReadFromJsonAsync<ErrorResponse>();
+                _inviteMessage = err?.Error ?? "Failed to send invite.";
+                _inviteError = true;
+            }
+        }
+        finally
+        {
+            _inviting = false;
+        }
+    }
+
+    private async Task RemoveMember(string memberUserId)
+    {
+        var confirmed = await JS.InvokeAsync<bool>(
+            "confirm", "Remove this member from the team?");
+        if (!confirmed) return;
+
+        var response = await Http.DeleteAsync($"api/team/member/{memberUserId}");
+        if (response.IsSuccessStatusCode)
+            await LoadMembers();
+    }
+
+    private void StartRename()
+    {
+        _newTeamName = _team?.Name ?? string.Empty;
+        _renamingTeam = true;
+    }
+
+    private async Task SaveRename()
+    {
+        if (string.IsNullOrWhiteSpace(_newTeamName)) return;
+
+        var response = await Http.PutAsJsonAsync(
+            "api/team/rename", new { name = _newTeamName });
+
+        if (response.IsSuccessStatusCode && _team != null)
+        {
+            _team = _team with { Name = _newTeamName };
+            _renamingTeam = false;
+        }
+    }
+
+    // ── DTOs ──────────────────────────────────────────────────────────────────
+
+    private record TeamDto(
+        int Id,
+        string Name,
+        int MaxSeats,
+        string OwnerUserId,
+        bool IsOwner,
+        int MemberCount,
+        int PendingInvites);
+
+    private record PendingInviteDto(
+        int Id,
+        string Email,
+        DateTime ExpiresAt,
+        DateTime CreatedAt);
+
+    private record ErrorResponse(string Error);
+}

@@ -19,7 +19,6 @@
 <div class="tool-page">
     <div class="tool-container">
 
-        <!-- Header -->
         <div class="ai-tool-header">
             <div class="ai-tool-badge">✨ AI-Powered</div>
             <h1>AI Questions Generator</h1>
@@ -29,7 +28,6 @@
             </p>
         </div>
 
-        <!-- How it works -->
         <div class="how-it-works">
             <div class="hiw-step">
                 <div class="hiw-num">1</div>
@@ -60,8 +58,8 @@
             <NotAuthorized>
                 <div class="ai-upgrade-card">
                     <div class="ai-upgrade-icon">📝</div>
-                    <h2>AI Questions Generator — Pro Feature</h2>
-                    <p>Generate quiz questions from any PDF automatically. Available on Pro — $19/month.</p>
+                    <h2>Try AI Questions Generator — 5 free uses</h2>
+                    <p>Sign in to get 5 free AI uses per month. Generate quiz questions from any PDF automatically.</p>
                     <div class="ai-upgrade-features">
                         <div class="ai-upgrade-feat">✓ Generate up to 15 questions</div>
                         <div class="ai-upgrade-feat">✓ Works on any PDF document</div>
@@ -69,115 +67,115 @@
                         <div class="ai-upgrade-feat">✓ Perfect for studying and teaching</div>
                     </div>
                     <div class="ai-upgrade-actions">
-                        <a href="/pricing" class="download-button"
+                        <a href="authentication/login?screen_hint=signup" class="download-button"
                            style="display:inline-block; text-decoration:none;">
-                            Upgrade to Pro — $19/mo
+                            Sign up free — 5 AI uses included
                         </a>
                         <a href="authentication/login" class="reset-button"
                            style="display:inline-block; text-decoration:none;">
-                            Sign in if you have Pro
+                            Sign in
                         </a>
                     </div>
                 </div>
             </NotAuthorized>
 
             <Authorized>
-                @if (!_isPro)
+                @if (!_isPro && _aiUsed < 5)
                 {
-                    <div class="ai-upgrade-card">
-                        <div class="ai-upgrade-icon">📝</div>
-                        <h2>Upgrade to Pro to unlock AI Questions</h2>
-                        <p>You're signed in but on the Free plan. Upgrade to generate quiz questions from any PDF.</p>
-                        <div class="ai-upgrade-actions">
-                            <a href="/pricing" class="download-button"
-                               style="display:inline-block; text-decoration:none;">
-                                Upgrade to Pro — $19/mo
-                            </a>
-                        </div>
+                    <div class="free-uses-banner">
+                        <span>✨ @(5 - _aiUsed) of 5 free AI uses remaining this month</span>
+                        <a href="/pricing">Upgrade to Pro for 200/mo →</a>
                     </div>
                 }
-                else
+
+                @if (CurrentState == PageState.Upload)
                 {
-                    @if (CurrentState == PageState.Upload)
+                    <FileUpload OnFileSelected="HandleFileSelected"
+                                OnFileRemoved="HandleFileRemoved"
+                                HintText="Upload a PDF document — up to 50MB" />
+
+                    @if (_fileBytes != null)
                     {
-                        <FileUpload OnFileSelected="HandleFileSelected"
-                                    OnFileRemoved="HandleFileRemoved"
-                                    HintText="Upload a PDF document — up to 50MB" />
-
-                        @if (_fileBytes != null)
-                        {
-                            <!-- Question count selector -->
-                            <div class="questions-count-section">
-                                <p class="questions-count-label">How many questions?</p>
-                                <div class="questions-count-grid">
-                                    @foreach (var count in new[] { 3, 5, 8, 10, 15 })
-                                    {
-                                        <button class="questions-count-btn @(_questionCount == count ? "active" : "")"
-                                                @onclick="() => _questionCount = count">
-                                            @count
-                                        </button>
-                                    }
-                                </div>
-                            </div>
-
-                            <button class="process-button" @onclick="RunGenerate">
-                                📝 Generate @_questionCount Questions
-                            </button>
-                        }
-                    }
-
-                    @if (CurrentState == PageState.Processing)
-                    {
-                        <div class="ai-processing-container">
-                            <div class="ai-processing-icon">📝</div>
-                            <h3>AI is generating questions...</h3>
-                            <p>Reading your document and creating @_questionCount questions</p>
-                            <div class="ai-processing-steps">
-                                <div class="ai-processing-step @(_step >= 1 ? "done" : "")">Reading PDF content</div>
-                                <div class="ai-processing-step @(_step >= 2 ? "done" : "")">Identifying key concepts</div>
-                                <div class="ai-processing-step @(_step >= 3 ? "done" : "")">Generating questions</div>
-                            </div>
-                        </div>
-                    }
-
-                    @if (CurrentState == PageState.Complete && _questions.Any())
-                    {
-                        <div class="ai-result-card">
-                            <div class="ai-result-header">
-                                <div>
-                                    <h2>@_questions.Count questions generated</h2>
-                                    <p style="color:var(--text-secondary); font-size:0.875rem;">
-                                        @_fileName
-                                    </p>
-                                </div>
-                                <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
-                                    <button class="download-button"
-                                            style="max-width:160px; margin-top:0;"
-                                            @onclick="CopyQuestions">
-                                        @(_copied ? "✓ Copied!" : "📋 Copy All")
-                                    </button>
-                                    <button class="reset-button"
-                                            style="max-width:140px;"
-                                            @onclick="Reset">
-                                        Generate More
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div class="questions-result-list">
-                                @for (int i = 0; i < _questions.Count; i++)
+                        <div class="questions-count-section">
+                            <p class="questions-count-label">How many questions?</p>
+                            <div class="questions-count-grid">
+                                @foreach (var count in new[] { 3, 5, 8, 10, 15 })
                                 {
-                                    var index = i;
-                                    <div class="question-result-item">
-                                        <span class="question-result-num">@(index + 1)</span>
-                                        <span class="question-result-text">@_questions[index]</span>
-                                    </div>
+                                    <button class="questions-count-btn @(_questionCount == count ? "active" : "")"
+                                            @onclick="() => _questionCount = count">
+                                        @count
+                                    </button>
                                 }
                             </div>
                         </div>
-                    }
 
-                    @if (CurrentState == PageState.Error)
+                        <button class="process-button" @onclick="RunGenerate">
+                            📝 Generate @_questionCount Questions
+                        </button>
+                    }
+                }
+
+                @if (CurrentState == PageState.Processing)
+                {
+                    <div class="ai-processing-container">
+                        <div class="ai-processing-icon">📝</div>
+                        <h3>AI is generating questions...</h3>
+                        <p>Reading your document and creating @_questionCount questions</p>
+                        <div class="ai-processing-steps">
+                            <div class="ai-processing-step @(_step >= 1 ? "done" : "")">Reading PDF content</div>
+                            <div class="ai-processing-step @(_step >= 2 ? "done" : "")">Identifying key concepts</div>
+                            <div class="ai-processing-step @(_step >= 3 ? "done" : "")">Generating questions</div>
+                        </div>
+                    </div>
+                }
+
+                @if (CurrentState == PageState.Complete && _questions.Any())
+                {
+                    <div class="ai-result-card">
+                        <div class="ai-result-header">
+                            <div>
+                                <h2>@_questions.Count questions generated</h2>
+                                <p style="color:var(--text-secondary); font-size:0.875rem;">
+                                    @_fileName
+                                </p>
+                            </div>
+                            <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+                                <button class="download-button"
+                                        style="max-width:160px; margin-top:0;"
+                                        @onclick="CopyQuestions">
+                                    @(_copied ? "✓ Copied!" : "📋 Copy All")
+                                </button>
+                                <button class="reset-button"
+                                        style="max-width:140px;"
+                                        @onclick="Reset">
+                                    Generate More
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="questions-result-list">
+                            @for (int i = 0; i < _questions.Count; i++)
+                            {
+                                var index = i;
+                                <div class="question-result-item">
+                                    <span class="question-result-num">@(index + 1)</span>
+                                    <span class="question-result-text">@_questions[index]</span>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+
+                @if (CurrentState == PageState.Error)
+                {
+                    @if (_isRateLimit)
+                    {
+                        <AiLimitBanner IsVisible="true"
+                                       IsFreeLimit="@_isFreeLimit"
+                                       Limit="@(_isFreeLimit ? 5 : 200)" />
+                        <button class="reset-button" style="margin-top:1rem;" @onclick="Reset">Try Again</button>
+                    }
+                    else
                     {
                         <div class="error-container" role="alert">
                             <span class="error-icon" aria-hidden="true">❌</span>
@@ -215,11 +213,14 @@
     private byte[]? _fileBytes;
     private string? _fileName;
     private bool _isPro;
+    private int _aiUsed = 0;
     private bool _copied;
     private int _step = 0;
     private int _questionCount = 5;
     private List<string> _questions = new();
     private string _error = string.Empty;
+    private bool _isRateLimit = false;
+    private bool _isFreeLimit = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -230,6 +231,12 @@
             var userId = user.FindFirst("sub")?.Value ?? string.Empty;
             var status = await SubService.GetStatusAsync(userId);
             _isPro = status.HasPro;
+
+            if (!_isPro)
+            {
+                var usage = await ApiService.GetAsync<AiUsageResponse>("api/ai/usage");
+                _aiUsed = usage?.Used ?? 0;
+            }
         }
     }
 
@@ -270,15 +277,21 @@
             content.Add(fc, "file", _fileName ?? "document.pdf");
             content.Add(new StringContent(_questionCount.ToString()), "count");
 
-            var result = await ApiService.PostMultipartAsync<QuestionsResponse>(
+            var result = await ApiService.PostMultipartWithStatusAsync<QuestionsResponse>(
                 "api/ai/questions", content);
 
             _step = 3; StateHasChanged();
 
-            if (result?.Questions != null && result.Questions.Any())
+            if (result.IsSuccess && result.Data?.Questions != null && result.Data.Questions.Any())
             {
-                _questions = result.Questions;
+                _questions = result.Data.Questions;
                 CurrentState = PageState.Complete;
+            }
+            else if (result.IsRateLimit)
+            {
+                _isRateLimit = true;
+                _isFreeLimit = !_isPro;
+                CurrentState = PageState.Error;
             }
             else
             {
@@ -316,10 +329,18 @@
         _error = string.Empty;
         _step = 0;
         _copied = false;
+        _isRateLimit = false;
+        _isFreeLimit = false;
     }
 
     private class QuestionsResponse
     {
         public List<string> Questions { get; set; } = new();
+    }
+
+    private class AiUsageResponse
+    {
+        public int Used { get; set; }
+        public int Limit { get; set; }
     }
 }

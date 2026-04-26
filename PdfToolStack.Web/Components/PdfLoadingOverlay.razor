@@ -2,16 +2,7 @@
 {
     <div class="pdf-loading-overlay">
         <div class="pdf-loading-card">
-            <div class="pdf-loading-spinner">
-                <svg viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="25" cy="25" r="20" fill="none" stroke="var(--primary)" stroke-width="4"
-                            stroke-linecap="round" stroke-dasharray="31.4 94.2">
-                        <animateTransform attributeName="transform" type="rotate"
-                                          dur="0.8s" from="0 25 25" to="360 25 25"
-                                          repeatCount="indefinite" />
-                    </circle>
-                </svg>
-            </div>
+            <div class="pdf-loading-spinner"></div>
             <p class="pdf-loading-msg">@Message</p>
             @if (!string.IsNullOrEmpty(SubMessage))
             {
@@ -20,6 +11,25 @@
         </div>
     </div>
 }
+
+<style>
+    .pdf-loading-spinner {
+        width: 36px;
+        height: 36px;
+        border: 3.5px solid rgba(34, 80, 244, 0.15);
+        border-top-color: var(--primary, #2250F4);
+        border-radius: 50%;
+        animation: pts-spin 0.75s linear infinite;
+        margin: 0 auto 1.25rem;
+        will-change: transform;
+    }
+
+    @@keyframes pts-spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+</style>
 
 @code {
     [Parameter] public bool IsVisible { get; set; }

@@ -1,83 +1,46 @@
 ﻿@page "/pdf-scanner"
 
-<PageTitle>PDF Scanner Free Online — Scan Documents to PDF</PageTitle>
+<PageTitle>PDF Scanner — Coming Soon | PdfToolStack</PageTitle>
 
 <HeadContent>
     <meta name="description"
-          content="Scan documents and create PDFs free online.
-                   Use your mobile camera to create PDF scans.
-                   No signup required." />
-    <meta name="keywords"
-          content="pdf scanner, scan to pdf free,
-                   mobile pdf scanner, document scanner online" />
-    <link rel="canonical"
-          href="https://pdftoolstack.com/pdf-scanner" />
+          content="PDF Scanner is coming soon to PdfToolStack. Scan documents
+                   to PDF using your mobile camera. Auto edge detection,
+                   perspective correction, and multi-page scanning." />
+    <link rel="canonical" href="https://pdftoolstack.com/pdf-scanner" />
 </HeadContent>
 
 <div class="tool-page">
-    <div class="tool-container">
-        <h1>PDF Scanner</h1>
-        <p class="tool-subtitle">
-            Create professional PDF scans from your
-            mobile device camera.
+    <div class="tool-container" style="text-align:center; max-width:540px; margin:4rem auto;">
+
+        <div style="font-size:3.5rem; margin-bottom:1.5rem;">📱</div>
+
+        <h1 style="font-size:1.75rem; margin-bottom:.75rem;">PDF Scanner — Coming Soon</h1>
+
+        <p class="tool-subtitle" style="margin-bottom:2rem;">
+            We're building a mobile-optimized scanner that uses your camera to
+            capture documents and convert them to clean, professional PDFs.
+            Auto edge detection, perspective correction, and multi-page scanning included.
         </p>
-        <div class="coming-soon-banner">
-            <span class="coming-soon-icon">📱</span>
-            <div>
-                <h3>PDF Scanner Coming Soon</h3>
-                <p>
-                    We are building a mobile-optimized
-                    scanner that uses your camera to
-                    capture documents and convert them
-                    to clean, professional PDFs.
-                </p>
-                <p>
-                    Features will include auto edge
-                    detection, perspective correction,
-                    and multi-page scanning.
-                </p>
-            </div>
+
+        <div style="display:flex; gap:.75rem; justify-content:center; align-items:stretch; flex-wrap:wrap;">
+            <a href="/" class="process-button"
+               style="display:inline-flex; align-items:center; justify-content:center;
+              text-decoration:none; width:200px; height:44px;
+              white-space:nowrap; box-sizing:border-box; margin:0;">
+                Browse PDF Tools →
+            </a>
+            <a href="/jpg-to-pdf" class="reset-button"
+               style="display:inline-flex; align-items:center; justify-content:center;
+              text-decoration:none; width:200px; height:44px;
+              white-space:nowrap; box-sizing:border-box; margin:0;">
+                Try JPG to PDF
+            </a>
         </div>
-        <div class="notify-section">
-            <h3>Get notified when it launches</h3>
-            @if (NotifySubmitted)
-            {
-                <div class="contact-success">
-                    <span>✅</span>
-                    <p>
-                        We'll notify you when PDF Scanner
-                        launches!
-                    </p>
-                </div>
-            }
-            else
-            {
-                <div class="notify-form">
-                    <input type="email"
-                           class="field-input"
-                           style="max-width: 300px;"
-                           placeholder="your@email.com"
-                           @bind="NotifyEmail" />
-                    <button class="process-button"
-                            style="max-width: 160px;"
-                            @onclick="SubmitNotify">
-                        Notify Me
-                    </button>
-                </div>
-            }
-        </div>
+
+        <p style="color:var(--text-muted); font-size:.8rem; margin-top:2rem;">
+            In the meantime, JPG to PDF converts any photo or image to a PDF instantly.
+        </p>
+
     </div>
 </div>
-
-@code {
-    private string NotifyEmail = string.Empty;
-    private bool NotifySubmitted = false;
-    private async Task SubmitNotify()
-    {
-        if (string.IsNullOrWhiteSpace(NotifyEmail) ||
-            !NotifyEmail.Contains('@')) return;
-        await Task.Delay(500);
-        NotifySubmitted = true;
-        StateHasChanged();
-    }
-}
