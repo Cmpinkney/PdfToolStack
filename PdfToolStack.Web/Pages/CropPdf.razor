@@ -2,98 +2,377 @@
 @inject ApiService ApiService
 @inject IJSRuntime JS
 @inject PaymentService PaymentService
+@inject AuthenticationStateProvider Auth
+@inject PdfToolStack.Web.Services.SubscriptionService SubService
+@inject FileValidationService Validator
+@inject ToastService Toast
+@inject SessionUsageService SessionUsage
+@using Microsoft.AspNetCore.Components.Authorization
+@using PdfToolStack.Web.Services
 
 <PageTitle>Crop PDF Free Online — Crop and Trim PDF Pages</PageTitle>
 
 <HeadContent>
     <meta name="description"
-          content="Crop and trim your PDF pages free online.
-                   Remove margins and unwanted areas.
-                   No signup required." />
+          content="Crop and trim your PDF pages free online. Remove margins, white space, and unwanted areas from any PDF. No signup required." />
     <meta name="keywords"
-          content="crop pdf, trim pdf, pdf cropper free online,
-                   remove margins from pdf, resize pdf page, trim pdf margins" />
-    <link rel="canonical"
-          href="https://pdftoolstack.com/crop-pdf" />
+          content="crop pdf, trim pdf, pdf cropper free online, remove margins from pdf, resize pdf page, trim pdf margins" />
+    <link rel="canonical" href="https://pdftoolstack.com/crop-pdf" />
 </HeadContent>
 
 <div class="tool-page">
     <AdSlot Size="banner" />
     <div class="tool-container">
+
         <h1>Crop PDF Online</h1>
         <p class="tool-subtitle">
-            Crop and trim your PDF pages to remove
-            unwanted areas for free.
+            Remove white space and unwanted margins from your PDF pages.
+            Free, private, and instant.
         </p>
 
-        <div class="coming-soon-banner">
-            <span class="coming-soon-icon">✂️</span>
-            <div>
-                <h3>PDF Cropping Coming Soon</h3>
-                <p>We are building an interactive crop
-                   tool that lets you visually select
-                   the area to keep on each page.</p>
-                <p>In the meantime try our
-                   <a href="/organize-pdf">Organize PDF</a>
-                   tool to rearrange or delete pages.</p>
-            </div>
-        </div>
+        @if (CurrentState == PageState.Upload)
+        {
+            <FileUpload OnFileSelected="HandleFileSelected"
+                        Accept=".pdf"
+                        HintText="Up to 25MB free · 500MB with Pro" />
+        }
 
-        <div class="notify-section">
-            <h3>Get notified when it launches</h3>
-            @if (NotifySubmitted)
-            {
-                <div class="contact-success">
-                    <span>✅</span>
-                    <p>We'll notify you when Crop PDF
-                       launches!</p>
+        @if (CurrentState == PageState.LargeFile)
+        {
+            <LargeFileUpgrade FileSizeBytes="_largeFileSize"
+                              FileName="_largeFileName"
+                              ToolType="CropPdf"
+                              LargeFilePriceId="@_largeFilePriceId"
+                              ProMonthlyPriceId="@_proMonthlyPriceId"
+                              OnCancel="Reset" />
+        }
+
+        @if (CurrentState == PageState.Configure)
+        {
+            <div class="crop-config-panel">
+
+                <div class="crop-file-chip">
+                    <span class="crop-file-icon">📄</span>
+                    <span class="crop-file-name">@_fileName</span>
+                    <button class="crop-file-remove" @onclick="Reset" title="Remove file">✕</button>
                 </div>
-            }
-            else
-            {
-                <div class="notify-form">
-                    <input type="email"
-                           class="field-input"
-                           style="max-width: 300px;"
-                           placeholder="your@email.com"
-                           @bind="NotifyEmail" />
-                    <button class="process-button"
-                            style="max-width: 160px;"
-                            @onclick="SubmitNotify">
-                        Notify Me
-                    </button>
+
+                <!-- Unit toggle -->
+                <div class="crop-unit-row">
+                    <span class="crop-unit-label">Units:</span>
+                    <div class="crop-unit-toggle">
+                        <button class="@(_unit == "mm" ? "crop-unit-btn active" : "crop-unit-btn")"
+                                @onclick='() => SetUnit("mm")'>
+                            mm
+                        </button>
+                        <button class="@(_unit == "in" ? "crop-unit-btn active" : "crop-unit-btn")"
+                                @onclick='() => SetUnit("in")'>
+                            in
+                        </button>
+                        <button class="@(_unit == "pt" ? "crop-unit-btn active" : "crop-unit-btn")"
+                                @onclick='() => SetUnit("pt")'>
+                            pt
+                        </button>
+                    </div>
                 </div>
-            }
-        </div>
+
+                <!-- Margin inputs -->
+                <div class="crop-margins-grid">
+                    <div class="crop-margin-group crop-margin-top">
+                        <label>Top</label>
+                        <input type="number" class="crop-input" min="0" step="0.5"
+                               @bind="_marginTop" @bind:event="oninput" />
+                        <span class="crop-unit">@_unit</span>
+                    </div>
+                    <div class="crop-margin-group crop-margin-right">
+                        <label>Right</label>
+                        <input type="number" class="crop-input" min="0" step="0.5"
+                               @bind="_marginRight" @bind:event="oninput" />
+                        <span class="crop-unit">@_unit</span>
+                    </div>
+                    <div class="crop-margin-group crop-margin-bottom">
+                        <label>Bottom</label>
+                        <input type="number" class="crop-input" min="0" step="0.5"
+                               @bind="_marginBottom" @bind:event="oninput" />
+                        <span class="crop-unit">@_unit</span>
+                    </div>
+                    <div class="crop-margin-group crop-margin-left">
+                        <label>Left</label>
+                        <input type="number" class="crop-input" min="0" step="0.5"
+                               @bind="_marginLeft" @bind:event="oninput" />
+                        <span class="crop-unit">@_unit</span>
+                    </div>
+                </div>
+
+                <!-- Page scope -->
+                <div class="crop-scope-row">
+                    <label class="crop-scope-label">Apply to:</label>
+                    <div class="crop-scope-options">
+                        <label class="crop-radio-label">
+                            <input type="radio" name="cropScope" value="all"
+                                   checked="@(_scope == "all")"
+                                   @onchange='() => _scope = "all"' />
+                            All pages
+                        </label>
+                        <label class="crop-radio-label">
+                            <input type="radio" name="cropScope" value="range"
+                                   checked="@(_scope == "range")"
+                                   @onchange='() => _scope = "range"' />
+                            Specific pages
+                        </label>
+                    </div>
+                    @if (_scope == "range")
+                    {
+                        <div class="crop-pages-input-row">
+                            <input type="text" class="crop-input crop-pages-input"
+                                   placeholder="e.g. 1,3,5"
+                                   @bind="_pageNumbersInput" @bind:event="oninput" />
+                            <span class="crop-pages-hint">Separate with commas</span>
+                        </div>
+                    }
+                </div>
+
+                <button class="process-button crop-submit-btn"
+                        @onclick="ProcessFile"
+                        disabled="@(!CanProcess)">
+                    Crop PDF
+                </button>
+
+                @if (!string.IsNullOrEmpty(_errorMessage))
+                {
+                    <div class="error-container">
+                        <span class="error-icon">❌</span>
+                        <p class="error-message">@_errorMessage</p>
+                    </div>
+                }
+            </div>
+        }
+
+        @if (CurrentState == PageState.Processing)
+        {
+            <div class="processing-container">
+                <div class="spinner"></div>
+                <p>Cropping your PDF...</p>
+            </div>
+        }
+
+        @if (CurrentState == PageState.Complete)
+        {
+            <div class="success-container">
+                <span class="success-icon">✅</span>
+                <h2>PDF Cropped!</h2>
+                <p>Your margins have been trimmed. Download the result below.</p>
+                <button class="download-button" @onclick="DownloadFile">
+                    Download Cropped PDF
+                </button>
+                <button class="reset-button" @onclick="Reset">
+                    Crop Another PDF
+                </button>
+            </div>
+        }
+
+        @if (CurrentState == PageState.Error)
+        {
+            <div class="error-container">
+                <span class="error-icon">❌</span>
+                <p class="error-message">@_errorMessage</p>
+                <button class="reset-button" @onclick="Reset">Try Again</button>
+            </div>
+        }
+
     </div>
 
     <div class="faq-section">
         <h2>Frequently Asked Questions</h2>
         <div class="faq-item">
-            <h3>What is PDF cropping?</h3>
-            <p>Cropping a PDF removes the outer areas
-               of each page keeping only the content
-               within your selected region.</p>
+            <h3>What does cropping a PDF do?</h3>
+            <p>Cropping sets a visible boundary on each page, hiding content outside that boundary. It's perfect for removing scan borders, printer margins, or extra white space without altering the original content.</p>
+        </div>
+        <div class="faq-item">
+            <h3>Will cropping reduce the file size?</h3>
+            <p>Cropping changes the visible area but does not remove the underlying content or significantly reduce file size. To reduce file size, use our <a href="/compress-pdf">Compress PDF</a> tool.</p>
         </div>
         <div class="faq-item">
             <h3>Can I crop individual pages differently?</h3>
-            <p>Yes — the upcoming tool will let you
-               set different crop regions for
-               different pages.</p>
+            <p>Yes — select "Specific pages" and enter the page numbers you want to crop. All other pages remain untouched.</p>
+        </div>
+        <div class="faq-item">
+            <h3>What units can I use?</h3>
+            <p>You can enter margins in millimetres (mm), inches (in), or PDF points (pt). 1 inch = 72 pt = 25.4 mm.</p>
+        </div>
+        <div class="faq-item">
+            <h3>Is this tool free?</h3>
+            <p>Yes — completely free up to 25MB with no signup required. Pro handles files up to 500MB.</p>
         </div>
     </div>
 </div>
 
 @code {
-    private string NotifyEmail = string.Empty;
-    private bool NotifySubmitted = false;
+    private enum PageState { Upload, LargeFile, Configure, Processing, Complete, Error }
 
-    private async Task SubmitNotify()
+    private PageState CurrentState = PageState.Upload;
+    private byte[]? _uploadedBytes;
+    private byte[]? _resultBytes;
+    private string _fileName = string.Empty;
+    private string _errorMessage = string.Empty;
+    private long _largeFileSize;
+    private string _largeFileName = string.Empty;
+    private string? _largeFilePriceId;
+    private string? _proMonthlyPriceId;
+
+    // Crop settings
+    private string _unit = "mm";
+    private float _marginTop;
+    private float _marginRight;
+    private float _marginBottom;
+    private float _marginLeft;
+    private string _scope = "all";
+    private string _pageNumbersInput = string.Empty;
+
+    // Conversion factors to PDF points
+    private float ToPts(float value) => _unit switch
     {
-        if (string.IsNullOrWhiteSpace(NotifyEmail) ||
-            !NotifyEmail.Contains('@')) return;
-        await Task.Delay(500);
-        NotifySubmitted = true;
+        "mm" => value * 2.8346f,
+        "in" => value * 72f,
+        _ => value           // already pts
+    };
+
+    private bool CanProcess =>
+        _uploadedBytes != null &&
+        (_marginTop > 0 || _marginRight > 0 || _marginBottom > 0 || _marginLeft > 0);
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var addons = await ApiService.GetAsync<AddonsResponse>("api/subscription/addons");
+            _largeFilePriceId = addons?.LargeFile?.PriceId;
+
+            var plans = await ApiService.GetAsync<PlansResponse>("api/subscription/plans");
+            _proMonthlyPriceId = plans?.Monthly?.PriceId;
+        }
+        catch { /* buttons stay null — graceful degradation */ }
+    }
+
+    private void SetUnit(string unit)
+    {
+        _unit = unit;
+        // Reset inputs when switching unit — avoids confusing 72mm vs 72pt
+        _marginTop = _marginRight = _marginBottom = _marginLeft = 0;
+    }
+
+    private async Task HandleFileSelected(IBrowserFile file)
+    {
+        // Reset state without triggering re-render
+        CurrentState = PageState.Upload;
+        _uploadedBytes = null;
+        _resultBytes = null;
+        _fileName = string.Empty;
+        _errorMessage = string.Empty;
+
+        if (PaymentService.IsFileTooLargeForFree(file.Size))
+        {
+            _largeFileSize = file.Size;
+            _largeFileName = file.Name;
+            CurrentState = PageState.LargeFile;
+            StateHasChanged();
+            return;
+        }
+
+        var validation = Validator.ValidatePdfFile(file);
+        if (!validation.IsValid) { Toast.ShowError(validation.Message!); return; }
+        if (validation.IsWarning) Toast.ShowWarning(validation.Message!);
+
+        try
+        {
+            using var stream = file.OpenReadStream(maxAllowedSize: 524_288_000);
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            _uploadedBytes = ms.ToArray();
+            _fileName = file.Name;
+            CurrentState = PageState.Configure;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Toast.ShowError($"Could not read file: {ex.Message}");
+        }
+    }
+
+    private async Task ProcessFile()
+    {
+        if (_uploadedBytes == null) return;
+
+        CurrentState = PageState.Processing;
+        _errorMessage = string.Empty;
+        StateHasChanged();
+
+        try
+        {
+            // Convert UI units → PDF points for the API
+            var top = ToPts(_marginTop);
+            var right = ToPts(_marginRight);
+            var bottom = ToPts(_marginBottom);
+            var left = ToPts(_marginLeft);
+
+            string? pageNumbers = _scope == "range" && !string.IsNullOrWhiteSpace(_pageNumbersInput)
+                ? _pageNumbersInput.Trim()
+                : null;
+
+            _resultBytes = await ApiService.CropPdfAsync(
+                _uploadedBytes, _fileName,
+                top, right, bottom, left,
+                pageNumbers);
+
+            if (_resultBytes == null || _resultBytes.Length == 0)
+            {
+                _errorMessage = "Crop failed — please check your margin values and try again.";
+                CurrentState = PageState.Error;
+            }
+            else
+            {
+                CurrentState = PageState.Complete;
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Something went wrong: {ex.Message}";
+            CurrentState = PageState.Error;
+        }
+
         StateHasChanged();
     }
+
+    private async Task DownloadFile()
+    {
+        if (_resultBytes == null) return;
+
+        var base64 = Convert.ToBase64String(_resultBytes);
+        var outName = Path.GetFileNameWithoutExtension(_fileName) + "-cropped.pdf";
+        await JS.InvokeVoidAsync("downloadFile", outName, base64);
+    }
+
+    private void Reset()
+    {
+        CurrentState = PageState.Upload;
+        _uploadedBytes = null;
+        _resultBytes = null;
+        _fileName = string.Empty;
+        _errorMessage = string.Empty;
+        _marginTop = _marginRight = _marginBottom = _marginLeft = 0;
+        _scope = "all";
+        _pageNumbersInput = string.Empty;
+    }
+
+    // Local response classes for plan loading
+    private class PlansResponse
+    {
+        public PlanInfo? Monthly { get; set; }
+    }
+    private class AddonsResponse
+    {
+        public AddonInfo? LargeFile { get; set; }
+    }
+    private class PlanInfo { public string PriceId { get; set; } = string.Empty; }
+    private class AddonInfo { public string PriceId { get; set; } = string.Empty; }
 }

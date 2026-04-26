@@ -119,6 +119,7 @@ try
     builder.Services.AddScoped<ExcelToPdfProcessor>();
     builder.Services.AddScoped<PdfToJpgProcessor>();
     builder.Services.AddScoped<PdfToExcelProcessor>();
+    builder.Services.AddScoped<CropPdfProcessor>();
 
     if (hasDatabase)
     {
@@ -244,6 +245,10 @@ try
     builder.Services.AddScoped<IProcessingStrategy>(sp =>
         new PdfToolStack.Infrastructure.Strategies.PdfToExcelStrategy(
             sp.GetRequiredService<PdfToExcelProcessor>()));
+
+    builder.Services.AddScoped<IProcessingStrategy>(sp =>
+    new PdfToolStack.Infrastructure.Strategies.CropStrategy(
+        sp.GetRequiredService<CropPdfProcessor>()));
 
     // -- Email service ---------------------------------------------------------
     builder.Services.Configure<EmailOptions>(

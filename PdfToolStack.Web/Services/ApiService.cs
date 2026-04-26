@@ -595,6 +595,35 @@ namespace PdfToolStack.Web.Services
                 : null;
         }
 
+        public async Task<byte[]?> CropPdfAsync(
+            byte[] fileBytes,
+            string fileName,
+            float marginTop,
+            float marginRight,
+            float marginBottom,
+            float marginLeft,
+            string? pageNumbers = null)
+        {
+            using var content = new MultipartFormDataContent();
+            content.Add(new ByteArrayContent(fileBytes), "file", fileName);
+            content.Add(new StringContent(
+                marginTop.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)), "marginTop");
+            content.Add(new StringContent(
+                marginRight.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)), "marginRight");
+            content.Add(new StringContent(
+                marginBottom.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)), "marginBottom");
+            content.Add(new StringContent(
+                marginLeft.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)), "marginLeft");
+
+            if (!string.IsNullOrWhiteSpace(pageNumbers))
+                content.Add(new StringContent(pageNumbers), "pageNumbers");
+
+            var response = await _httpClient.PostAsync("api/pdf/crop", content);
+            return response.IsSuccessStatusCode
+                ? await response.Content.ReadAsByteArrayAsync()
+                : null;
+        }
+
         public async Task<byte[]?> JpgToPdfAsync(
             List<byte[]> imageFiles,
             List<string> fileNames)

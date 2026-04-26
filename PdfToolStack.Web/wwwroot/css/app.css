@@ -9690,18 +9690,6 @@ body {
         box-shadow: 0 8px 24px rgba(34,80,244,0.18) !important;
     }
 
-/* ── PDF Loading Overlay ──────────────────────────────────────────────────── */
-.pdf-loading-overlay {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(107, 114, 128, 0.45);
-    backdrop-filter: blur(2px);
-    z-index: 20;
-}
-
 .pdf-loading-card {
     width: min(340px, calc(100% - 2rem));
     background: rgba(255, 255, 255, 0.96);
@@ -14522,27 +14510,6 @@ html {
         transform: translateY(0);
     }
 
-/* ── Viewer area — overlay scopes to this ───────────────── */
-.sf-viewer-area {
-    min-height: 500px;
-}
-
-/* ── PDF Loading Overlay — scoped to viewer area ────────── */
-.pdf-loading-overlay {
-    position: absolute;
-    inset: 0;
-    z-index: 200;
-    background: rgba(15, 12, 35, 0.52);
-    backdrop-filter: blur(5px);
-    -webkit-backdrop-filter: blur(5px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: var(--radius-lg);
-    animation: overlayFadeIn 0.2s ease;
-    min-height: 400px;
-}
-
 @keyframes overlayFadeIn {
     from {
         opacity: 0;
@@ -14961,18 +14928,6 @@ html {
     scroll-margin-top: 90px;
 }
 
-/* Make the PDF loading overlay stay visible in the viewport */
-.pdf-loading-overlay {
-    position: fixed;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(107, 114, 128, 0.35);
-    backdrop-filter: blur(2px);
-    z-index: 999;
-}
-
 .pdf-loading-card {
     width: min(340px, calc(100% - 2rem));
     background: rgba(255, 255, 255, 0.97);
@@ -14985,4 +14940,555 @@ html {
     justify-content: center;
     gap: 0.75rem;
     text-align: center;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CROP PDF — append to app.css
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.crop-config-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    max-width: 480px;
+    margin: 0 auto;
+}
+
+/* File chip */
+.crop-file-chip {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.65rem 1rem;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+}
+
+.crop-file-icon {
+    font-size: 1.1rem;
+}
+
+.crop-file-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.crop-file-remove {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 0 0.25rem;
+    line-height: 1;
+    transition: color 0.15s;
+}
+
+    .crop-file-remove:hover {
+        color: var(--text-primary);
+    }
+
+/* Unit toggle */
+.crop-unit-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.crop-unit-label {
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.crop-unit-toggle {
+    display: flex;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.crop-unit-btn {
+    background: var(--surface);
+    border: none;
+    padding: 0.4rem 0.85rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+    .crop-unit-btn + .crop-unit-btn {
+        border-left: 1px solid var(--border);
+    }
+
+    .crop-unit-btn.active {
+        background: var(--primary);
+        color: #fff;
+        font-weight: 600;
+    }
+
+/* Margins grid — visual TRBL layout */
+.crop-margins-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.85rem;
+}
+
+.crop-margin-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+    .crop-margin-group label {
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+.crop-input {
+    width: 100%;
+    padding: 0.55rem 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    background: var(--surface);
+    transition: border-color 0.15s;
+    box-sizing: border-box;
+}
+
+    .crop-input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(34, 80, 244, 0.1);
+    }
+
+.crop-unit {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+}
+
+/* Page scope */
+.crop-scope-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.crop-scope-label {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.crop-scope-options {
+    display: flex;
+    gap: 1.5rem;
+}
+
+.crop-radio-label {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    cursor: pointer;
+}
+
+.crop-pages-input-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-top: 0.25rem;
+}
+
+.crop-pages-input {
+    max-width: 160px;
+}
+
+.crop-pages-hint {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+}
+
+/* Submit button */
+.crop-submit-btn {
+    width: 100%;
+    margin-top: 0.5rem;
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+    .crop-margins-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .crop-scope-options {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+}
+
+/* ── Fix: lock viewer area height during loading to prevent bounce ── */
+.sf-viewer-area.is-loading {
+    height: 85vh;
+    overflow: hidden;
+}
+
+.pdf-loading-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 200;
+    background: rgba(255, 255, 255, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-lg);
+    min-height: 400px;
+}
+
+.pdf-loading-card {
+    animation: none; /* remove cardSlideUp — it causes the bounce */
+}
+
+/* ── Blog hero image ─────────────────────────────────────── */
+.blog-hero-image {
+    width: 100%;
+    margin: 1.5rem 0;
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    max-height: 400px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+    .blog-hero-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        border-radius: 12px;
+    }
+
+/* ── Blog card image thumbnail ───────────────────────────── */
+.blog-card-image {
+    width: 100%;
+    height: 160px;
+    overflow: hidden;
+    border-radius: 8px 8px 0 0;
+    margin-bottom: 1rem;
+    background: var(--surface-alt, #f3f4f6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+    .blog-card-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+
+/* ── Blog hero image ─────────────────────────────────────── */
+.blog-hero-image {
+    width: 100%;
+    margin: 1.5rem 0;
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    max-height: 400px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+    .blog-hero-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        border-radius: 12px;
+    }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BLOG IMPROVEMENTS — append to app.css
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Edge-to-edge card images ────────────────────────────────────────────── */
+/* Override the existing blog-card padding so images bleed to the edges      */
+
+.blog-card {
+    padding: 0;
+    overflow: hidden;
+}
+
+.blog-card-image {
+    width: 100%;
+    height: 180px;
+    overflow: hidden;
+    border-radius: 0; /* remove inner radius — card clips it */
+    margin-bottom: 0;
+    flex-shrink: 0;
+}
+
+    .blog-card-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        transition: transform 0.3s ease;
+    }
+
+.blog-card:hover .blog-card-image img {
+    transform: scale(1.03); /* subtle zoom on hover */
+}
+
+/* Text content sits below the image with its own padding */
+.blog-card-content {
+    padding: 1.25rem 1.5rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    flex: 1;
+}
+
+/* ── Featured first card — full width ────────────────────────────────────── */
+.blog-grid .blog-card:first-child {
+    grid-column: 1 / -1; /* span all columns */
+    flex-direction: row; /* image left, content right */
+    max-height: 280px;
+}
+
+    .blog-grid .blog-card:first-child .blog-card-image {
+        width: 45%;
+        height: 100%;
+        flex-shrink: 0;
+        border-radius: 0;
+    }
+
+    .blog-grid .blog-card:first-child .blog-card-content {
+        justify-content: center;
+        padding: 2rem;
+    }
+
+    .blog-grid .blog-card:first-child h2 {
+        font-size: 1.25rem;
+    }
+
+    .blog-grid .blog-card:first-child p {
+        font-size: 0.925rem;
+        -webkit-line-clamp: 3;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+/* ── Read more link on cards ─────────────────────────────────────────────── */
+.blog-card-read-more {
+    font-size: 0.825rem;
+    font-weight: 600;
+    color: var(--primary);
+    margin-top: auto;
+    padding-top: 0.25rem;
+}
+
+/* ── Mobile: featured card goes back to column layout ────────────────────── */
+@media (max-width: 640px) {
+    .blog-grid .blog-card:first-child {
+        flex-direction: column;
+        max-height: none;
+    }
+
+        .blog-grid .blog-card:first-child .blog-card-image {
+            width: 100%;
+            height: 180px;
+        }
+
+        .blog-grid .blog-card:first-child .blog-card-content {
+            padding: 1.25rem 1.5rem 1.5rem;
+        }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ABOUT PAGE — append to app.css
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.about-page {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 3rem 1.5rem 5rem;
+}
+
+.about-container {
+    display: flex;
+    flex-direction: column;
+    gap: 3.5rem;
+}
+
+/* ── Hero ─────────────────────────────────────────────────── */
+.about-hero {
+    text-align: center;
+}
+
+.about-tag {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--primary);
+    background: var(--primary-light);
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    margin-bottom: 1rem;
+}
+
+.about-hero h1 {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1.25;
+    margin-bottom: 1rem;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.about-lead {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    max-width: 520px;
+    margin: 0 auto;
+}
+
+/* ── Story blocks ─────────────────────────────────────────── */
+.about-story {
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+}
+
+.about-story-block h2 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 0.75rem;
+}
+
+.about-story-block p {
+    font-size: 0.975rem;
+    color: var(--text-secondary);
+    line-height: 1.75;
+    margin-bottom: 0.75rem;
+}
+
+    .about-story-block p:last-child {
+        margin-bottom: 0;
+    }
+
+.about-story-block em {
+    color: var(--text);
+    font-style: italic;
+}
+
+/* ── Stats row ────────────────────────────────────────────── */
+.about-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 2rem 1.5rem;
+    text-align: center;
+}
+
+.about-stat-number {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--primary);
+    line-height: 1;
+    margin-bottom: 0.35rem;
+}
+
+.about-stat-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+/* ── Tech block ───────────────────────────────────────────── */
+.about-tech {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+}
+
+    .about-tech h2 {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--text);
+        margin-bottom: 0.75rem;
+    }
+
+    .about-tech p {
+        font-size: 0.925rem;
+        color: var(--text-secondary);
+        line-height: 1.7;
+        margin: 0;
+    }
+
+/* ── CTA ──────────────────────────────────────────────────── */
+.about-cta {
+    text-align: center;
+    border-top: 1px solid var(--border);
+    padding-top: 2.5rem;
+}
+
+    .about-cta h2 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text);
+        margin-bottom: 0.5rem;
+    }
+
+    .about-cta p {
+        font-size: 0.975rem;
+        color: var(--text-secondary);
+        margin-bottom: 1.5rem;
+    }
+
+/* ── Mobile ───────────────────────────────────────────────── */
+@media (max-width: 600px) {
+    .about-hero h1 {
+        font-size: 1.5rem;
+    }
+
+    .about-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .about-cta-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+        align-items: center;
+    }
 }

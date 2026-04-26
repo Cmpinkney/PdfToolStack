@@ -566,6 +566,44 @@ namespace PdfToolStack.API.Controllers
                 : UnprocessableEntity(new { error = response.ErrorMessage });
         }
 
+        [HttpPost("crop")]
+        [RequestSizeLimit(524288000)]
+        public async Task<IActionResult> CropPdf(
+            IFormFile file,
+            [FromForm] float marginTop = 0f,
+            [FromForm] float marginRight = 0f,
+            [FromForm] float marginBottom = 0f,
+            [FromForm] float marginLeft = 0f,
+            [FromForm] string? pageNumbers = null,
+            CancellationToken cancellationToken = default)
+        {
+            var validationResult = await ValidateRequiredPdfAsync(file, cancellationToken);
+            if (validationResult != null)
+                return validationResult;
+
+            var request = await BuildPdfRequestAsync(file!, ToolType.CropPdf, cancellationToken);
+
+            request.CropMarginTop = marginTop;
+            request.CropMarginRight = marginRight;
+            request.CropMarginBottom = marginBottom;
+            request.CropMarginLeft = marginLeft;
+
+            // Parse comma-separated page numbers if provided: "1,2,3"
+            if (!string.IsNullOrWhiteSpace(pageNumbers))
+            {
+                request.CropPageNumbers = pageNumbers
+                    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                    .Select(s => int.TryParse(s, out var n) ? n : 0)
+                    .Where(n => n > 0)
+                    .ToList();
+            }
+
+            var response = await _pdfService.ProcessAsync(request, cancellationToken);
+            return response.IsSuccess
+                ? File(response.OutputBytes!, "application/pdf", "cropped.pdf")
+                : UnprocessableEntity(new { error = response.ErrorMessage });
+        }
+
         // POST api/pdf/watermark
         [HttpPost("watermark")]
         [RequestSizeLimit(524288000)]
