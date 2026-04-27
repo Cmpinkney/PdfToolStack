@@ -1,5 +1,6 @@
-﻿@inject HttpClient Http
+﻿@inject ApiService ApiService
 @inject IJSRuntime JS
+
 
 <div class="support-chat-wrap">
 
@@ -122,7 +123,10 @@
     private void Toggle()
     {
         _open = !_open;
-        if (_open) _unread = 0;
+        if (_open)
+            _unread = 0;
+        else
+            _thinking = false;
     }
 
     private async Task OnKeyDown(KeyboardEventArgs e)
@@ -143,29 +147,21 @@
         StateHasChanged();
 
         await Task.Delay(50);
-        await JS.InvokeVoidAsync("scrollToBottom", "supportMessages");
+        try { await JS.InvokeVoidAsync("scrollToBottom", "supportMessages"); } catch { }
 
         try
         {
-            var response = await Http.PostAsJsonAsync("api/ai/support", new
-            {
-                message = msg,
-                history = _history.SkipLast(1)
-                    .Select(h => new { role = h.Role, content = h.Content })
-                    .ToList()
-            });
+            var result = await ApiService.PostAsync<object, SupportResponse>(
+                "api/ai/support", new
+                {
+                    message = msg,
+                    history = _history.SkipLast(1)
+                        .Select(h => new { role = h.Role, content = h.Content })
+                        .ToList()
+                });
 
-            string answer;
-            if (response.IsSuccessStatusCode)
-            {
-                var result = await response.Content
-                    .ReadFromJsonAsync<SupportResponse>();
-                answer = result?.Answer ?? "Sorry, I couldn't process that. Please try again.";
-            }
-            else
-            {
-                answer = "Something went wrong. Please email support@pdftoolstack.com for help.";
-            }
+            string answer = result?.Answer
+                ?? "Sorry, I couldn't process that. Please try again.";
 
             _messages.Add(new(answer, false));
             _history.Add(new("assistant", answer));
@@ -182,7 +178,7 @@
         {
             _thinking = false;
             StateHasChanged();
-            await JS.InvokeVoidAsync("scrollToBottom", "supportMessages");
+            try { await JS.InvokeVoidAsync("scrollToBottom", "supportMessages"); } catch { }
         }
     }
 

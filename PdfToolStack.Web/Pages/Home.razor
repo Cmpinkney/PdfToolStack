@@ -33,7 +33,7 @@
                 <div class="hero-stat-divider"></div>
                 <div class="hero-stat">
                     <span class="hero-stat-num">AI</span>
-                    <span class="hero-stat-label">Claude-powered</span>
+                    <span class="hero-stat-label">AI-powered</span>
                 </div>
                 <div class="hero-stat-divider"></div>
                 <div class="hero-stat">
@@ -47,35 +47,302 @@
                 </div>
             </div>
         </div>
+
         <div class="hero-split-illustration" aria-hidden="true">
-            <svg viewBox="0 0 320 220" width="100%" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect x="18" y="14" width="110" height="142" rx="8" fill="#EFF6FF" stroke="#2250F4" stroke-width="1.5" />
-                <rect x="30" y="34" width="66" height="7" rx="3.5" fill="#2250F4" fill-opacity="0.55" />
-                <rect x="30" y="48" width="88" height="4" rx="2" fill="#2250F4" fill-opacity="0.2" />
-                <rect x="30" y="58" width="78" height="4" rx="2" fill="#2250F4" fill-opacity="0.2" />
-                <rect x="30" y="68" width="82" height="4" rx="2" fill="#2250F4" fill-opacity="0.2" />
-                <rect x="30" y="86" width="66" height="7" rx="3.5" fill="#0D9488" fill-opacity="0.5" />
-                <rect x="30" y="100" width="88" height="4" rx="2" fill="#0D9488" fill-opacity="0.18" />
-                <rect x="30" y="110" width="72" height="4" rx="2" fill="#0D9488" fill-opacity="0.18" />
-                <rect x="30" y="120" width="80" height="4" rx="2" fill="#0D9488" fill-opacity="0.18" />
-                <rect x="58" y="36" width="110" height="142" rx="8" fill="#EEF2FF" stroke="#4F46E5" stroke-width="1.5" />
-                <rect x="70" y="56" width="66" height="7" rx="3.5" fill="#4F46E5" fill-opacity="0.55" />
-                <rect x="70" y="70" width="88" height="4" rx="2" fill="#4F46E5" fill-opacity="0.2" />
-                <rect x="70" y="80" width="78" height="4" rx="2" fill="#4F46E5" fill-opacity="0.2" />
-                <rect x="70" y="90" width="82" height="4" rx="2" fill="#4F46E5" fill-opacity="0.2" />
-                <rect x="70" y="108" width="66" height="7" rx="3.5" fill="#4F46E5" fill-opacity="0.35" />
-                <rect x="70" y="122" width="88" height="4" rx="2" fill="#4F46E5" fill-opacity="0.15" />
-                <rect x="70" y="132" width="72" height="4" rx="2" fill="#4F46E5" fill-opacity="0.15" />
-                <circle cx="232" cy="100" r="44" fill="#E1F5EE" stroke="#0D9488" stroke-width="1.5" />
-                <path d="M215 100l12 12 24-24" stroke="#0D9488" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
-                <path d="M170 100 L186 100" stroke="#2250F4" stroke-width="1.5" stroke-dasharray="4 3" />
-                <circle cx="170" cy="100" r="3.5" fill="#2250F4" />
-                <rect x="192" y="158" width="88" height="30" rx="7" fill="#2250F4" />
-                <text x="236" y="178" text-anchor="middle" fill="#fff" font-size="11" font-weight="600" font-family="system-ui, sans-serif">AI Processed ✓</text>
-                <rect x="240" y="38" width="68" height="22" rx="11" fill="#EEF2FF" stroke="#4F46E5" stroke-width="1" />
-                <text x="274" y="53" text-anchor="middle" fill="#4F46E5" font-size="10" font-weight="600" font-family="system-ui, sans-serif">Claude AI</text>
-                <rect x="10" y="168" width="76" height="22" rx="11" fill="#E1F5EE" stroke="#0D9488" stroke-width="1" />
-                <text x="48" y="183" text-anchor="middle" fill="#0D9488" font-size="10" font-weight="600" font-family="system-ui, sans-serif">No signup</text>
+            <svg width="100%" viewBox="0 0 780 480" role="img" xmlns="http://www.w3.org/2000/svg">
+                <title>PdfToolStack — all your PDF tools in one place</title>
+                <desc>PDF tools orbiting a central document hub</desc>
+
+                <defs>
+                    <marker id="ap" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+                        <path d="M2 2L8 5L2 8" fill="none" stroke="#7F77DD" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                    </marker>
+                    <pattern id="dot" width="28" height="28" patternUnits="userSpaceOnUse">
+                        <circle cx="14" cy="14" r="1" fill="#C8C6C0" opacity="0.45" />
+                    </pattern>
+                </defs>
+
+                <style>
+                    @@keyframes spin-cw {
+                        from {
+                            transform: rotate(0deg);
+                        }
+
+                        to {
+                            transform: rotate(360deg);
+                        }
+                    }
+
+                    @@keyframes spin-ccw {
+                        from {
+                            transform: rotate(0deg);
+                        }
+
+                        to {
+                            transform: rotate(-360deg);
+                        }
+                    }
+
+                    @@keyframes pulse {
+                        0%, 100% {
+                            opacity: .12;
+                        }
+
+                        50% {
+                            opacity: .22;
+                        }
+                    }
+
+                    @@keyframes fadein {
+                        from {
+                            opacity: 0;
+                            transform: translateY(5px);
+                        }
+
+                        to {
+                            opacity: 1;
+                            transform: translateY(0);
+                        }
+                    }
+
+                    @@keyframes ring-cw {
+                        from {
+                            stroke-dashoffset: 0;
+                        }
+
+                        to {
+                            stroke-dashoffset: -660;
+                        }
+                    }
+
+                    @@keyframes ring-ccw {
+                        from {
+                            stroke-dashoffset: 0;
+                        }
+
+                        to {
+                            stroke-dashoffset: 970;
+                        }
+                    }
+
+                    .inner-orbit {
+                        animation: spin-cw 11s linear infinite;
+                        transform-origin: 340px 190px;
+                    }
+
+                    .inner-card {
+                        animation: spin-ccw 11s linear infinite;
+                        transform-origin: 0px 0px;
+                    }
+
+                    .outer-orbit {
+                        animation: spin-ccw 18s linear infinite;
+                        transform-origin: 340px 190px;
+                    }
+
+                    .outer-card {
+                        animation: spin-cw 18s linear infinite;
+                        transform-origin: 0px 0px;
+                    }
+
+                    .ring-a {
+                        animation: ring-cw 22s linear infinite;
+                        transform-origin: 340px 190px;
+                    }
+
+                    .ring-b {
+                        animation: ring-ccw 34s linear infinite;
+                        transform-origin: 340px 190px;
+                    }
+
+                    .glow {
+                        animation: pulse 3.2s ease-in-out infinite;
+                    }
+
+                    .badge {
+                        animation: fadein .5s ease-out both;
+                    }
+
+                    .b1 {
+                        animation-delay: .05s;
+                    }
+
+                    .b2 {
+                        animation-delay: .15s;
+                    }
+
+                    .b3 {
+                        animation-delay: .28s;
+                    }
+
+                    .b4 {
+                        animation-delay: .42s;
+                    }
+                </style>
+
+                <!-- Background dot grid -->
+                <rect width="680" height="400" fill="url(#dot)" />
+                <line x1="0" y1="60" x2="680" y2="60" stroke="#E0EEF8" stroke-width="0.4" />
+                <line x1="0" y1="340" x2="680" y2="340" stroke="#E0EEF8" stroke-width="0.4" />
+                <line x1="100" y1="0" x2="100" y2="400" stroke="#E0EEF8" stroke-width="0.4" />
+                <line x1="580" y1="0" x2="580" y2="400" stroke="#E0EEF8" stroke-width="0.4" />
+
+                <!-- Glow rings -->
+                <circle class="glow" cx="340" cy="190" r="170" fill="#534AB7" opacity="0.07" />
+                <circle class="glow" cx="340" cy="190" r="115" fill="#185FA5" opacity="0.09" style="animation-delay:.9s" />
+                <circle class="glow" cx="340" cy="190" r="68" fill="#534AB7" opacity="0.11" style="animation-delay:1.8s" />
+
+                <!-- Spinning dashed rings -->
+                <circle class="ring-a" cx="340" cy="190" r="105" fill="none" stroke="#85B7EB" stroke-width="1" stroke-dasharray="4 10" stroke-linecap="round" />
+                <circle class="ring-b" cx="340" cy="190" r="154" fill="none" stroke="#AFA9EC" stroke-width="1" stroke-dasharray="4 14" stroke-linecap="round" />
+                <!-- Static reference circles -->
+                <circle cx="340" cy="190" r="105" fill="none" stroke="#D3D1C7" stroke-width="0.35" />
+                <circle cx="340" cy="190" r="154" fill="none" stroke="#D3D1C7" stroke-width="0.35" />
+
+                <!-- ═══════════════════════════════════════
+                     INNER ORBIT — Compress · Sign · Merge
+                     r=105, CW 11s, cards counter-rotate CCW
+                     Compress (340, 85) · Sign (431,243) · Merge (249,243)
+                ═══════════════════════════════════════ -->
+                <g class="inner-orbit">
+
+                    <!-- Compress -->
+                    <g transform="translate(340,85)">
+                        <g class="inner-card">
+                            <rect x="-34" y="-28" width="68" height="56" rx="13" fill="white" stroke="#B5D4F4" stroke-width="1.5" />
+                            <g stroke="#378ADD" stroke-width="1.8" stroke-linecap="round" fill="none">
+                                <line x1="-13" y1="-11" x2="-5" y2="-4" />
+                                <line x1=" 13" y1="-11" x2=" 5" y2="-4" />
+                                <line x1="-13" y1=" 11" x2="-5" y2=" 4" />
+                                <line x1=" 13" y1=" 11" x2=" 5" y2=" 4" />
+                            </g>
+                            <polygon points="-15,-14 -7,-14 -15,-6" fill="#378ADD" />
+                            <polygon points=" 15,-14  7,-14  15,-6" fill="#378ADD" />
+                            <polygon points="-15, 14 -7, 14 -15, 6" fill="#378ADD" />
+                            <polygon points=" 15, 14  7, 14  15, 6" fill="#378ADD" />
+                            <text x="0" y="24" font-family="system-ui,sans-serif" font-size="9.5" font-weight="600" fill="#185FA5" text-anchor="middle">Compress</text>
+                        </g>
+                    </g>
+
+                    <!-- Sign -->
+                    <g transform="translate(431,243)">
+                        <g class="inner-card">
+                            <rect x="-34" y="-28" width="68" height="56" rx="13" fill="white" stroke="#FAC775" stroke-width="1.5" />
+                            <path d="M-16,4 Q-6,-10 2,4 Q10,16 18,4" stroke="#EF9F27" stroke-width="2.2" fill="none" stroke-linecap="round" />
+                            <line x1="-18" y1="12" x2="18" y2="12" stroke="#FAC775" stroke-width="1.2" />
+                            <text x="0" y="24" font-family="system-ui,sans-serif" font-size="9.5" font-weight="600" fill="#854F0B" text-anchor="middle">Sign</text>
+                        </g>
+                    </g>
+
+                    <!-- Merge -->
+                    <g transform="translate(249,243)">
+                        <g class="inner-card">
+                            <rect x="-34" y="-28" width="68" height="56" rx="13" fill="white" stroke="#9FE1CB" stroke-width="1.5" />
+                            <rect x="-18" y="-14" width="13" height="18" rx="3" fill="#9FE1CB" />
+                            <rect x="-5" y="-14" width="13" height="18" rx="3" fill="#5DCAA5" />
+                            <path d="M-11,4 L0,12 L11,4" stroke="#1D9E75" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+                            <rect x="-7" y="11" width="14" height="4" rx="2" fill="#1D9E75" />
+                            <text x="0" y="24" font-family="system-ui,sans-serif" font-size="9.5" font-weight="600" fill="#0F6E56" text-anchor="middle">Merge</text>
+                        </g>
+                    </g>
+
+                </g>
+
+                <!-- ═══════════════════════════════════════
+                     OUTER ORBIT — AI Review · Convert · Extract · Split
+                     r=154, CCW 18s, cards counter-rotate CW
+                     Top(340,36) · Right(494,190) · Bottom(340,344) · Left(186,190)
+                ═══════════════════════════════════════ -->
+                <g class="outer-orbit">
+
+                    <!-- AI Review -->
+                    <g transform="translate(340,36)">
+                        <g class="outer-card">
+                            <rect x="-36" y="-27" width="72" height="54" rx="13" fill="white" stroke="#C0DD97" stroke-width="1.5" />
+                            <circle cx="-4" cy="-5" r="10" fill="none" stroke="#639922" stroke-width="1.8" />
+                            <line x1="4" y1="3" x2="12" y2="10" stroke="#639922" stroke-width="2.2" stroke-linecap="round" />
+                            <circle cx="7" cy="-15" r="2.5" fill="#EF9F27" />
+                            <circle cx="12" cy="-10" r="1.5" fill="#EF9F27" opacity=".6" />
+                            <text x="0" y="23" font-family="system-ui,sans-serif" font-size="9.5" font-weight="600" fill="#3B6D11" text-anchor="middle">AI review</text>
+                        </g>
+                    </g>
+
+                    <!-- Convert -->
+                    <g transform="translate(494,190)">
+                        <g class="outer-card">
+                            <rect x="-36" y="-27" width="72" height="54" rx="13" fill="white" stroke="#CECBF6" stroke-width="1.5" />
+                            <path d="M-10,-10 A13,13 0 0,1 13,3" stroke="#7F77DD" stroke-width="1.8" fill="none" stroke-linecap="round" marker-end="url(#ap)" />
+                            <path d="M10,10  A13,13 0 0,1 -13,-3" stroke="#7F77DD" stroke-width="1.8" fill="none" stroke-linecap="round" marker-end="url(#ap)" />
+                            <text x="0" y="23" font-family="system-ui,sans-serif" font-size="9.5" font-weight="600" fill="#3C3489" text-anchor="middle">Convert</text>
+                        </g>
+                    </g>
+
+                    <!-- Extract -->
+                    <g transform="translate(340,344)">
+                        <g class="outer-card">
+                            <rect x="-36" y="-27" width="72" height="54" rx="13" fill="white" stroke="#F5C4B3" stroke-width="1.5" />
+                            <rect x="-18" y="-16" width="36" height="24" rx="3" fill="#FAECE7" stroke="#F0997B" stroke-width="1" />
+                            <line x1="-18" y1="-8" x2="18" y2="-8" stroke="#F0997B" stroke-width="0.8" />
+                            <line x1="-18" y1="0" x2="18" y2="0" stroke="#F0997B" stroke-width="0.8" />
+                            <line x1="0" y1="-16" x2="0" y2="8" stroke="#F0997B" stroke-width="0.8" />
+                            <text x="0" y="23" font-family="system-ui,sans-serif" font-size="9.5" font-weight="600" fill="#993C1D" text-anchor="middle">Extract</text>
+                        </g>
+                    </g>
+
+                    <!-- Split -->
+                    <g transform="translate(186,190)">
+                        <g class="outer-card">
+                            <rect x="-36" y="-27" width="72" height="54" rx="13" fill="white" stroke="#B5D4F4" stroke-width="1.5" />
+                            <rect x="-8" y="-16" width="16" height="20" rx="3" fill="#85B7EB" />
+                            <path d="M0,4 L-14,14 M0,4 L14,14" stroke="#378ADD" stroke-width="1.8" fill="none" stroke-linecap="round" />
+                            <rect x="-20" y="13" width="14" height="10" rx="2" fill="#B5D4F4" />
+                            <rect x="6" y="13" width="14" height="10" rx="2" fill="#B5D4F4" />
+                            <text x="0" y="23" font-family="system-ui,sans-serif" font-size="9.5" font-weight="600" fill="#185FA5" text-anchor="middle">Split</text>
+                        </g>
+                    </g>
+
+                </g>
+
+                <!-- Center hub -->
+                <circle cx="340" cy="190" r="62" fill="#F0EFFE" stroke="#AFA9EC" stroke-width="1.5" />
+                <circle cx="340" cy="190" r="55" fill="white" stroke="#CECBF6" stroke-width="1" />
+                <rect x="316" y="162" width="36" height="46" rx="6" fill="white" stroke="#AFA9EC" stroke-width="1.2" />
+                <path d="M316,162 L316,174 L328,174 L328,162 Z" fill="#7F77DD" />
+                <path d="M340,162 L340,174 L328,174 Z" fill="#534AB7" opacity=".5" />
+                <rect x="322" y="179" width="24" height="3" rx="1.5" fill="#AFA9EC" />
+                <rect x="322" y="186" width="20" height="3" rx="1.5" fill="#D3D1C7" />
+                <rect x="322" y="193" width="22" height="3" rx="1.5" fill="#D3D1C7" />
+                <rect x="322" y="200" width="16" height="3" rx="1.5" fill="#D3D1C7" />
+                <text x="340" y="222" font-family="system-ui,sans-serif" font-size="10" font-weight="600" fill="#534AB7" text-anchor="middle">your docs</text>
+
+                <!-- Corner badges -->
+                <g class="badge b1">
+                    <rect x="18" y="18" width="132" height="30" rx="15" fill="white" stroke="#B5D4F4" stroke-width="1.2" />
+                    <circle cx="38" cy="33" r="9" fill="#E6F1FB" />
+                    <rect x="33" y="30" width="10" height="2.5" rx="1.2" fill="#378ADD" />
+                    <rect x="33" y="34.5" width="7" height="2.5" rx="1.2" fill="#85B7EB" />
+                    <text x="54" y="38" font-family="system-ui,sans-serif" font-size="10.5" font-weight="600" fill="#185FA5">35+ PDF tools</text>
+                </g>
+                <g class="badge b2">
+                    <rect x="530" y="18" width="132" height="30" rx="15" fill="white" stroke="#C0DD97" stroke-width="1.2" />
+                    <circle cx="550" cy="33" r="9" fill="#EAF3DE" />
+                    <path d="M545,33 L549,37 L556,28" stroke="#639922" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+                    <text x="566" y="38" font-family="system-ui,sans-serif" font-size="10.5" font-weight="600" fill="#3B6D11">Privacy-first</text>
+                </g>
+                <g class="badge b3">
+                    <rect x="18" y="352" width="148" height="30" rx="15" fill="white" stroke="#9FE1CB" stroke-width="1.2" />
+                    <circle cx="38" cy="367" r="9" fill="#E1F5EE" />
+                    <path d="M33,367 L38,362 L43,367" stroke="#1D9E75" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+                    <text x="54" y="372" font-family="system-ui,sans-serif" font-size="10.5" font-weight="600" fill="#0F6E56">No signup needed</text>
+                </g>
+                <g class="badge b4">
+                    <rect x="514" y="352" width="148" height="30" rx="15" fill="white" stroke="#FAC775" stroke-width="1.2" />
+                    <circle cx="534" cy="367" r="9" fill="#FAEEDA" />
+                    <rect x="529" y="363" width="10" height="8" rx="2" fill="none" stroke="#EF9F27" stroke-width="1.4" />
+                    <line x1="529" y1="367" x2="539" y2="367" stroke="#EF9F27" stroke-width="0.9" />
+                    <text x="550" y="372" font-family="system-ui,sans-serif" font-size="10.5" font-weight="600" fill="#854F0B">Deleted in 1hr</text>
+                </g>
+
             </svg>
         </div>
     </div>
@@ -124,7 +391,7 @@
                 do something simple with a PDF. No free trials, no forced signups — just tools that
                 work, for professionals who have actual work to do."
             </blockquote>
-            <p class="founder-attr">— Shannon, PdfToolStack</p>
+            <p class="founder-attr">— Chrystal, PdfToolStack</p>
         </div>
     </div>
 
@@ -297,83 +564,20 @@
                     </div>
                 </div>
             </div>
+
             <!-- Compress & Convert -->
             <div class="tools-category">
                 <div class="tools-category-title">Compress &amp; Convert</div>
                 <div class="tools-grid">
-
-                    <a href="/compress-pdf/app" class="tool-card">
-                        <div class="tool-icon-tile" style="background:#EFF6FF;">
-                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke="#2250F4" stroke-width="2.5" stroke-linecap="round" /><path d="M12 3V15M7 10L12 15L17 10" stroke="#2250F4" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" /></svg>
-                        </div>
-                        <h3>Compress PDF</h3>
-                        <p>Reduce file size</p>
-                    </a>
-
-                    <a href="/pdf-to-word" class="tool-card">
-                        <div class="tool-icon-tile" style="background:#EFF6FF;">
-                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" fill="#2250F4" fill-opacity="0.2" stroke="#2250F4" stroke-width="1.5" /><polyline points="14,2 14,8 20,8" stroke="#2250F4" stroke-width="1.5" fill="none" /><path d="M9 13l1.5 4L12 14l1.5 3L15 13" stroke="#2250F4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
-                        </div>
-                        <h3>PDF to Word</h3>
-                        <p>Convert to DOCX</p>
-                    </a>
-
-                    <a href="/word-to-pdf" class="tool-card">
-                        <div class="tool-icon-tile" style="background:#EFF6FF;">
-                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" fill="#2250F4" fill-opacity="0.2" stroke="#2250F4" stroke-width="1.5" /><polyline points="14,2 14,8 20,8" stroke="#2250F4" stroke-width="1.5" fill="none" /><path d="M12 12V18M9 15L12 18L15 15" stroke="#2250F4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
-                        </div>
-                        <h3>Word to PDF</h3>
-                        <p>DOCX to PDF</p>
-                    </a>
-
-                    <a href="/ppt-to-pdf" class="tool-card">
-                        <div class="tool-icon-tile" style="background:#EFF6FF;">
-                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="3" width="20" height="14" rx="2" fill="#2250F4" fill-opacity="0.2" stroke="#2250F4" stroke-width="1.5" /><line x1="8" y1="21" x2="16" y2="21" stroke="#2250F4" stroke-width="2.5" stroke-linecap="round" /><line x1="12" y1="17" x2="12" y2="21" stroke="#2250F4" stroke-width="2.5" stroke-linecap="round" /></svg>
-                        </div>
-                        <h3>PPT to PDF</h3>
-                        <p>Presentation to PDF</p>
-                    </a>
-
-                    <a href="/excel-to-pdf" class="tool-card">
-                        <div class="tool-icon-tile" style="background:#EFF6FF;">
-                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="2" fill="#2250F4" fill-opacity="0.2" stroke="#2250F4" stroke-width="1.5" /><path d="M3 9H21" stroke="#2250F4" stroke-width="1.5" /><path d="M9 9V21" stroke="#2250F4" stroke-width="1.5" /></svg>
-                        </div>
-                        <h3>Excel to PDF</h3>
-                        <p>Spreadsheet to PDF</p>
-                    </a>
-
-                    <a href="/jpg-to-pdf" class="tool-card">
-                        <div class="tool-icon-tile" style="background:#EFF6FF;">
-                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="2" fill="#2250F4" fill-opacity="0.2" stroke="#2250F4" stroke-width="1.5" /><circle cx="8.5" cy="8.5" r="1.5" fill="#2250F4" /><polyline points="21,15 16,10 5,21" stroke="#2250F4" stroke-width="1.5" fill="none" /></svg>
-                        </div>
-                        <h3>JPG to PDF</h3>
-                        <p>Images to PDF</p>
-                    </a>
-
-                    <a href="/pdf-to-jpg" class="tool-card">
-                        <div class="tool-icon-tile" style="background:#EFF6FF;">
-                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" fill="#2250F4" fill-opacity="0.2" stroke="#2250F4" stroke-width="1.5" /><polyline points="14,2 14,8 20,8" stroke="#2250F4" stroke-width="1.5" fill="none" /><circle cx="10" cy="14" r="2" fill="#2250F4" fill-opacity="0.6" stroke="#2250F4" stroke-width="1" /><path d="M20 17l-3-3-2 2-1-1-3 3" stroke="#2250F4" stroke-width="1.5" fill="none" /></svg>
-                        </div>
-                        <h3>PDF to JPG</h3>
-                        <p>Pages to images</p>
-                    </a>
-
-                    <a href="/pdf-to-excel-converter" class="tool-card">
-                        <div class="tool-icon-tile" style="background:#EFF6FF;">
-                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" fill="#2250F4" fill-opacity="0.2" stroke="#2250F4" stroke-width="1.5" /><polyline points="14,2 14,8 20,8" stroke="#2250F4" stroke-width="1.5" fill="none" /><path d="M8 13l2.5 4L13 13l2.5 4" stroke="#2250F4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
-                        </div>
-                        <h3>PDF to Excel</h3>
-                        <p>Tables to XLSX</p>
-                    </a>
-
-                    <a href="/converter" class="tool-card">
-                        <div class="tool-icon-tile" style="background:#EFF6FF;">
-                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><polyline points="17,1 21,5 17,9" stroke="#2250F4" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" /><path d="M3 11V9a4 4 0 0 1 4-4h14" stroke="#2250F4" stroke-width="2.5" stroke-linecap="round" /><polyline points="7,23 3,19 7,15" stroke="#2250F4" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" /><path d="M21 13v2a4 4 0 0 1-4 4H3" stroke="#2250F4" stroke-width="2.5" stroke-linecap="round" /></svg>
-                        </div>
-                        <h3>All Converters</h3>
-                        <p>View all options</p>
-                    </a>
-
+                    <a href="/compress-pdf/app" class="tool-card"><div class="tool-icon-tile" style="background:#EFF6FF;"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke="#2250F4" stroke-width="2.5" stroke-linecap="round" /><path d="M12 3V15M7 10L12 15L17 10" stroke="#2250F4" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" /></svg></div><h3>Compress PDF</h3><p>Reduce file size</p></a>
+                    <a href="/pdf-to-word" class="tool-card"><div class="tool-icon-tile" style="background:#EFF6FF;"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" fill="#2250F4" fill-opacity="0.2" stroke="#2250F4" stroke-width="1.5" /><polyline points="14,2 14,8 20,8" stroke="#2250F4" stroke-width="1.5" fill="none" /><path d="M9 13l1.5 4L12 14l1.5 3L15 13" stroke="#2250F4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg></div><h3>PDF to Word</h3><p>Convert to DOCX</p></a>
+                    <a href="/word-to-pdf" class="tool-card"><div class="tool-icon-tile" style="background:#EFF6FF;"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" fill="#2250F4" fill-opacity="0.2" stroke="#2250F4" stroke-width="1.5" /><polyline points="14,2 14,8 20,8" stroke="#2250F4" stroke-width="1.5" fill="none" /><path d="M12 12V18M9 15L12 18L15 15" stroke="#2250F4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg></div><h3>Word to PDF</h3><p>DOCX to PDF</p></a>
+                    <a href="/ppt-to-pdf" class="tool-card"><div class="tool-icon-tile" style="background:#EFF6FF;"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="3" width="20" height="14" rx="2" fill="#2250F4" fill-opacity="0.2" stroke="#2250F4" stroke-width="1.5" /><line x1="8" y1="21" x2="16" y2="21" stroke="#2250F4" stroke-width="2.5" stroke-linecap="round" /><line x1="12" y1="17" x2="12" y2="21" stroke="#2250F4" stroke-width="2.5" stroke-linecap="round" /></svg></div><h3>PPT to PDF</h3><p>Presentation to PDF</p></a>
+                    <a href="/excel-to-pdf" class="tool-card"><div class="tool-icon-tile" style="background:#EFF6FF;"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="2" fill="#2250F4" fill-opacity="0.2" stroke="#2250F4" stroke-width="1.5" /><path d="M3 9H21" stroke="#2250F4" stroke-width="1.5" /><path d="M9 9V21" stroke="#2250F4" stroke-width="1.5" /></svg></div><h3>Excel to PDF</h3><p>Spreadsheet to PDF</p></a>
+                    <a href="/jpg-to-pdf" class="tool-card"><div class="tool-icon-tile" style="background:#EFF6FF;"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="2" fill="#2250F4" fill-opacity="0.2" stroke="#2250F4" stroke-width="1.5" /><circle cx="8.5" cy="8.5" r="1.5" fill="#2250F4" /><polyline points="21,15 16,10 5,21" stroke="#2250F4" stroke-width="1.5" fill="none" /></svg></div><h3>JPG to PDF</h3><p>Images to PDF</p></a>
+                    <a href="/pdf-to-jpg" class="tool-card"><div class="tool-icon-tile" style="background:#EFF6FF;"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" fill="#2250F4" fill-opacity="0.2" stroke="#2250F4" stroke-width="1.5" /><polyline points="14,2 14,8 20,8" stroke="#2250F4" stroke-width="1.5" fill="none" /><circle cx="10" cy="14" r="2" fill="#2250F4" fill-opacity="0.6" stroke="#2250F4" stroke-width="1" /><path d="M20 17l-3-3-2 2-1-1-3 3" stroke="#2250F4" stroke-width="1.5" fill="none" /></svg></div><h3>PDF to JPG</h3><p>Pages to images</p></a>
+                    <a href="/pdf-to-excel-converter" class="tool-card"><div class="tool-icon-tile" style="background:#EFF6FF;"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" fill="#2250F4" fill-opacity="0.2" stroke="#2250F4" stroke-width="1.5" /><polyline points="14,2 14,8 20,8" stroke="#2250F4" stroke-width="1.5" fill="none" /><path d="M8 13l2.5 4L13 13l2.5 4" stroke="#2250F4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg></div><h3>PDF to Excel</h3><p>Tables to XLSX</p></a>
+                    <a href="/converter" class="tool-card"><div class="tool-icon-tile" style="background:#EFF6FF;"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><polyline points="17,1 21,5 17,9" stroke="#2250F4" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" /><path d="M3 11V9a4 4 0 0 1 4-4h14" stroke="#2250F4" stroke-width="2.5" stroke-linecap="round" /><polyline points="7,23 3,19 7,15" stroke="#2250F4" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" /><path d="M21 13v2a4 4 0 0 1-4 4H3" stroke="#2250F4" stroke-width="2.5" stroke-linecap="round" /></svg></div><h3>All Converters</h3><p>View all options</p></a>
                 </div>
             </div>
 
@@ -381,71 +585,14 @@
             <div class="tools-category">
                 <div class="tools-category-title">Edit &amp; Annotate</div>
                 <div class="tools-grid">
-
-                    <a href="/edit-pdf" class="tool-card">
-                        <div class="tool-icon-tile" style="background:#F5F3FF;">
-                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" fill="#7C3AED" fill-opacity="0.9" /><path d="M12 20h9" stroke="#7C3AED" stroke-width="2" stroke-linecap="round" /></svg>
-                        </div>
-                        <h3>Edit PDF</h3>
-                        <p>Add text and shapes</p>
-                    </a>
-
-                    <a href="/pdf-annotator" class="tool-card">
-                        <div class="tool-icon-tile" style="background:#F5F3FF;">
-                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="#7C3AED" stroke-width="1.5" stroke-linecap="round" /><rect x="9" y="9" width="12" height="3" rx="1" fill="#7C3AED" fill-opacity="0.8" /><rect x="9" y="15" width="8" height="3" rx="1" fill="#7C3AED" fill-opacity="0.5" /></svg>
-                        </div>
-                        <h3>PDF Annotator</h3>
-                        <p>Highlight and markup</p>
-                    </a>
-
-                    <a href="/sign-pdf" class="tool-card">
-                        <div class="tool-icon-tile" style="background:#F5F3FF;">
-                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 17c3-3 3-7 6-7s3 4 6 4 3-3 6-3" stroke="#7C3AED" stroke-width="2.5" stroke-linecap="round" /><line x1="3" y1="21" x2="21" y2="21" stroke="#7C3AED" stroke-width="2.5" stroke-linecap="round" /></svg>
-                        </div>
-                        <h3>Sign PDF</h3>
-                        <p>Electronic signature</p>
-                    </a>
-
-                    <a href="/fill-pdf-form" class="tool-card">
-                        <div class="tool-icon-tile" style="background:#F5F3FF;">
-                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="2" fill="#7C3AED" fill-opacity="0.2" stroke="#7C3AED" stroke-width="1.5" /><path d="M3 9H21M3 15H21M9 3V21" stroke="#7C3AED" stroke-width="1.5" /></svg>
-                        </div>
-                        <h3>Fill PDF Form</h3>
-                        <p>Complete form fields</p>
-                    </a>
-
-                    <a href="/watermark-pdf" class="tool-card">
-                        <div class="tool-icon-tile" style="background:#F5F3FF;">
-                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L2 7l10 5 10-5-10-5z" fill="#7C3AED" fill-opacity="0.9" /><path d="M2 17l10 5 10-5" stroke="#7C3AED" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /><path d="M2 12l10 5 10-5" stroke="#7C3AED" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
-                        </div>
-                        <h3>Watermark PDF</h3>
-                        <p>Add watermark text</p>
-                    </a>
-
-                    <a href="/number-pages" class="tool-card">
-                        <div class="tool-icon-tile" style="background:#F5F3FF;">
-                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" fill="#7C3AED" fill-opacity="0.2" stroke="#7C3AED" stroke-width="1.5" /><polyline points="14,2 14,8 20,8" stroke="#7C3AED" stroke-width="1.5" fill="none" /><path d="M8 17H16" stroke="#7C3AED" stroke-width="2" stroke-linecap="round" /><path d="M10 11h1v3" stroke="#7C3AED" stroke-width="1.5" stroke-linecap="round" /><path d="M13 11h2v1.5l-2 1.5h2" stroke="#7C3AED" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" /></svg>
-                        </div>
-                        <h3>Number Pages</h3>
-                        <p>Add page numbers</p>
-                    </a>
-
-                    <a href="/redact-pdf" class="tool-card">
-                        <div class="tool-icon-tile" style="background:#F5F3FF;">
-                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" fill="#7C3AED" fill-opacity="0.2" stroke="#7C3AED" stroke-width="1.5" /><polyline points="14,2 14,8 20,8" stroke="#7C3AED" stroke-width="1.5" fill="none" /><rect x="6" y="11.5" width="12" height="3.5" rx="1" fill="#7C3AED" /><path d="M6 18H10" stroke="#7C3AED" stroke-width="2" stroke-linecap="round" /></svg>
-                        </div>
-                        <h3>Redact PDF</h3>
-                        <p>Remove sensitive info</p>
-                    </a>
-
-                    <a href="/crop-pdf" class="tool-card">
-                        <div class="tool-icon-tile" style="background:#F5F3FF;">
-                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><line x1="6" y1="2" x2="6" y2="16" stroke="#7C3AED" stroke-width="2.5" stroke-linecap="round" /><line x1="2" y1="6" x2="16" y2="6" stroke="#7C3AED" stroke-width="2.5" stroke-linecap="round" /><rect x="6" y="6" width="14" height="14" rx="2" fill="#7C3AED" fill-opacity="0.3" stroke="#7C3AED" stroke-width="1.5" /></svg>
-                        </div>
-                        <h3>Crop PDF</h3>
-                        <p>Trim page areas</p>
-                    </a>
-
+                    <a href="/edit-pdf" class="tool-card"><div class="tool-icon-tile" style="background:#F5F3FF;"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" fill="#7C3AED" fill-opacity="0.9" /><path d="M12 20h9" stroke="#7C3AED" stroke-width="2" stroke-linecap="round" /></svg></div><h3>Edit PDF</h3><p>Add text and shapes</p></a>
+                    <a href="/pdf-annotator" class="tool-card"><div class="tool-icon-tile" style="background:#F5F3FF;"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="#7C3AED" stroke-width="1.5" stroke-linecap="round" /><rect x="9" y="9" width="12" height="3" rx="1" fill="#7C3AED" fill-opacity="0.8" /><rect x="9" y="15" width="8" height="3" rx="1" fill="#7C3AED" fill-opacity="0.5" /></svg></div><h3>PDF Annotator</h3><p>Highlight and markup</p></a>
+                    <a href="/sign-pdf" class="tool-card"><div class="tool-icon-tile" style="background:#F5F3FF;"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 17c3-3 3-7 6-7s3 4 6 4 3-3 6-3" stroke="#7C3AED" stroke-width="2.5" stroke-linecap="round" /><line x1="3" y1="21" x2="21" y2="21" stroke="#7C3AED" stroke-width="2.5" stroke-linecap="round" /></svg></div><h3>Sign PDF</h3><p>Electronic signature</p></a>
+                    <a href="/fill-pdf-form" class="tool-card"><div class="tool-icon-tile" style="background:#F5F3FF;"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="2" fill="#7C3AED" fill-opacity="0.2" stroke="#7C3AED" stroke-width="1.5" /><path d="M3 9H21M3 15H21M9 3V21" stroke="#7C3AED" stroke-width="1.5" /></svg></div><h3>Fill PDF Form</h3><p>Complete form fields</p></a>
+                    <a href="/watermark-pdf" class="tool-card"><div class="tool-icon-tile" style="background:#F5F3FF;"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L2 7l10 5 10-5-10-5z" fill="#7C3AED" fill-opacity="0.9" /><path d="M2 17l10 5 10-5" stroke="#7C3AED" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /><path d="M2 12l10 5 10-5" stroke="#7C3AED" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg></div><h3>Watermark PDF</h3><p>Add watermark text</p></a>
+                    <a href="/number-pages" class="tool-card"><div class="tool-icon-tile" style="background:#F5F3FF;"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" fill="#7C3AED" fill-opacity="0.2" stroke="#7C3AED" stroke-width="1.5" /><polyline points="14,2 14,8 20,8" stroke="#7C3AED" stroke-width="1.5" fill="none" /><path d="M8 17H16" stroke="#7C3AED" stroke-width="2" stroke-linecap="round" /><path d="M10 11h1v3" stroke="#7C3AED" stroke-width="1.5" stroke-linecap="round" /><path d="M13 11h2v1.5l-2 1.5h2" stroke="#7C3AED" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" /></svg></div><h3>Number Pages</h3><p>Add page numbers</p></a>
+                    <a href="/redact-pdf" class="tool-card"><div class="tool-icon-tile" style="background:#F5F3FF;"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" fill="#7C3AED" fill-opacity="0.2" stroke="#7C3AED" stroke-width="1.5" /><polyline points="14,2 14,8 20,8" stroke="#7C3AED" stroke-width="1.5" fill="none" /><rect x="6" y="11.5" width="12" height="3.5" rx="1" fill="#7C3AED" /><path d="M6 18H10" stroke="#7C3AED" stroke-width="2" stroke-linecap="round" /></svg></div><h3>Redact PDF</h3><p>Remove sensitive info</p></a>
+                    <a href="/crop-pdf" class="tool-card"><div class="tool-icon-tile" style="background:#F5F3FF;"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><line x1="6" y1="2" x2="6" y2="16" stroke="#7C3AED" stroke-width="2.5" stroke-linecap="round" /><line x1="2" y1="6" x2="16" y2="6" stroke="#7C3AED" stroke-width="2.5" stroke-linecap="round" /><rect x="6" y="6" width="14" height="14" rx="2" fill="#7C3AED" fill-opacity="0.3" stroke="#7C3AED" stroke-width="1.5" /></svg></div><h3>Crop PDF</h3><p>Trim page areas</p></a>
                 </div>
             </div>
 
@@ -453,63 +600,13 @@
             <div class="tools-category">
                 <div class="tools-category-title">Organize</div>
                 <div class="tools-grid">
-
-                    <a href="/merge-pdf/app" class="tool-card">
-                        <div class="tool-icon-tile" style="background:#F0FDF9;">
-                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 3H5a2 2 0 0 0-2 2v3m16 0V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3m8 0h3a2 2 0 0 0 2-2v-3" stroke="#0D9488" stroke-width="2.5" stroke-linecap="round" /><path d="M12 8V16M8 12H16" stroke="#0D9488" stroke-width="2.5" stroke-linecap="round" /></svg>
-                        </div>
-                        <h3>Merge PDF</h3>
-                        <p>Combine PDFs</p>
-                    </a>
-
-                    <a href="/split-pdf" class="tool-card">
-                        <div class="tool-icon-tile" style="background:#F0FDF9;">
-                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 3H5a2 2 0 0 0-2 2v3m16 0V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3m8 0h3a2 2 0 0 0 2-2v-3" stroke="#0D9488" stroke-width="2.5" stroke-linecap="round" /><path d="M8 12H16" stroke="#0D9488" stroke-width="2.5" stroke-linecap="round" /></svg>
-                        </div>
-                        <h3>Split PDF</h3>
-                        <p>Separate pages</p>
-                    </a>
-
-                    <a href="/organize-pdf" class="tool-card">
-                        <div class="tool-icon-tile" style="background:#F0FDF9;">
-                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="3" width="9" height="10" rx="1.5" fill="#0D9488" fill-opacity="0.7" /><rect x="13" y="3" width="9" height="6" rx="1.5" fill="#0D9488" fill-opacity="0.9" /><rect x="13" y="13" width="9" height="8" rx="1.5" fill="#0D9488" fill-opacity="0.5" /><rect x="2" y="17" width="9" height="4" rx="1.5" fill="#0D9488" fill-opacity="0.4" /></svg>
-                        </div>
-                        <h3>Organize PDF</h3>
-                        <p>Reorder pages</p>
-                    </a>
-
-                    <a href="/delete-pdf-pages" class="tool-card">
-                        <div class="tool-icon-tile" style="background:#F0FDF9;">
-                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><polyline points="3,6 5,6 21,6" stroke="#0D9488" stroke-width="2.5" stroke-linecap="round" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" stroke="#0D9488" stroke-width="2" stroke-linecap="round" /><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" stroke="#0D9488" stroke-width="2" stroke-linecap="round" /><line x1="10" y1="11" x2="10" y2="17" stroke="#0D9488" stroke-width="2" stroke-linecap="round" /><line x1="14" y1="11" x2="14" y2="17" stroke="#0D9488" stroke-width="2" stroke-linecap="round" /></svg>
-                        </div>
-                        <h3>Delete Pages</h3>
-                        <p>Remove pages</p>
-                    </a>
-
-                    <a href="/extract-pdf-pages" class="tool-card">
-                        <div class="tool-icon-tile" style="background:#F0FDF9;">
-                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="9" y="9" width="13" height="13" rx="2" fill="#0D9488" fill-opacity="0.7" stroke="#0D9488" stroke-width="1.5" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" stroke="#0D9488" stroke-width="1.5" stroke-linecap="round" /></svg>
-                        </div>
-                        <h3>Extract Pages</h3>
-                        <p>Pick specific pages</p>
-                    </a>
-
-                    <a href="/rotate-pdf" class="tool-card">
-                        <div class="tool-icon-tile" style="background:#F0FDF9;">
-                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21.5 2v6h-6" stroke="#0D9488" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" /><path d="M21.34 15.57a10 10 0 1 1-.57-8.38" stroke="#0D9488" stroke-width="2.5" stroke-linecap="round" /></svg>
-                        </div>
-                        <h3>Rotate PDF</h3>
-                        <p>Fix page orientation</p>
-                    </a>
-
-                    <a href="/flatten-pdf" class="tool-card">
-                        <div class="tool-icon-tile" style="background:#F0FDF9;">
-                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" fill="#0D9488" fill-opacity="0.2" stroke="#0D9488" stroke-width="1.5" /><polyline points="14,2 14,8 20,8" stroke="#0D9488" stroke-width="1.5" fill="none" /><path d="M8 13H16M8 17H16" stroke="#0D9488" stroke-width="2" stroke-linecap="round" /></svg>
-                        </div>
-                        <h3>Flatten PDF</h3>
-                        <p>Make uneditable</p>
-                    </a>
-
+                    <a href="/merge-pdf/app" class="tool-card"><div class="tool-icon-tile" style="background:#F0FDF9;"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 3H5a2 2 0 0 0-2 2v3m16 0V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3m8 0h3a2 2 0 0 0 2-2v-3" stroke="#0D9488" stroke-width="2.5" stroke-linecap="round" /><path d="M12 8V16M8 12H16" stroke="#0D9488" stroke-width="2.5" stroke-linecap="round" /></svg></div><h3>Merge PDF</h3><p>Combine PDFs</p></a>
+                    <a href="/split-pdf" class="tool-card"><div class="tool-icon-tile" style="background:#F0FDF9;"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 3H5a2 2 0 0 0-2 2v3m16 0V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3m8 0h3a2 2 0 0 0 2-2v-3" stroke="#0D9488" stroke-width="2.5" stroke-linecap="round" /><path d="M8 12H16" stroke="#0D9488" stroke-width="2.5" stroke-linecap="round" /></svg></div><h3>Split PDF</h3><p>Separate pages</p></a>
+                    <a href="/organize-pdf" class="tool-card"><div class="tool-icon-tile" style="background:#F0FDF9;"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="3" width="9" height="10" rx="1.5" fill="#0D9488" fill-opacity="0.7" /><rect x="13" y="3" width="9" height="6" rx="1.5" fill="#0D9488" fill-opacity="0.9" /><rect x="13" y="13" width="9" height="8" rx="1.5" fill="#0D9488" fill-opacity="0.5" /><rect x="2" y="17" width="9" height="4" rx="1.5" fill="#0D9488" fill-opacity="0.4" /></svg></div><h3>Organize PDF</h3><p>Reorder pages</p></a>
+                    <a href="/delete-pdf-pages" class="tool-card"><div class="tool-icon-tile" style="background:#F0FDF9;"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><polyline points="3,6 5,6 21,6" stroke="#0D9488" stroke-width="2.5" stroke-linecap="round" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" stroke="#0D9488" stroke-width="2" stroke-linecap="round" /><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" stroke="#0D9488" stroke-width="2" stroke-linecap="round" /><line x1="10" y1="11" x2="10" y2="17" stroke="#0D9488" stroke-width="2" stroke-linecap="round" /><line x1="14" y1="11" x2="14" y2="17" stroke="#0D9488" stroke-width="2" stroke-linecap="round" /></svg></div><h3>Delete Pages</h3><p>Remove pages</p></a>
+                    <a href="/extract-pdf-pages" class="tool-card"><div class="tool-icon-tile" style="background:#F0FDF9;"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="9" y="9" width="13" height="13" rx="2" fill="#0D9488" fill-opacity="0.7" stroke="#0D9488" stroke-width="1.5" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" stroke="#0D9488" stroke-width="1.5" stroke-linecap="round" /></svg></div><h3>Extract Pages</h3><p>Pick specific pages</p></a>
+                    <a href="/rotate-pdf" class="tool-card"><div class="tool-icon-tile" style="background:#F0FDF9;"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21.5 2v6h-6" stroke="#0D9488" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" /><path d="M21.34 15.57a10 10 0 1 1-.57-8.38" stroke="#0D9488" stroke-width="2.5" stroke-linecap="round" /></svg></div><h3>Rotate PDF</h3><p>Fix page orientation</p></a>
+                    <a href="/flatten-pdf" class="tool-card"><div class="tool-icon-tile" style="background:#F0FDF9;"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" fill="#0D9488" fill-opacity="0.2" stroke="#0D9488" stroke-width="1.5" /><polyline points="14,2 14,8 20,8" stroke="#0D9488" stroke-width="1.5" fill="none" /><path d="M8 13H16M8 17H16" stroke="#0D9488" stroke-width="2" stroke-linecap="round" /></svg></div><h3>Flatten PDF</h3><p>Make uneditable</p></a>
                 </div>
             </div>
 
@@ -517,23 +614,8 @@
             <div class="tools-category">
                 <div class="tools-category-title">Security</div>
                 <div class="tools-grid">
-
-                    <a href="/protect-pdf" class="tool-card">
-                        <div class="tool-icon-tile" style="background:#F1F5F9;">
-                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="11" width="18" height="11" rx="2" fill="#475569" fill-opacity="0.8" /><path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="#475569" stroke-width="2.5" stroke-linecap="round" /><circle cx="12" cy="16" r="1.5" fill="#475569" /></svg>
-                        </div>
-                        <h3>Protect PDF</h3>
-                        <p>Add password</p>
-                    </a>
-
-                    <a href="/unlock-pdf" class="tool-card">
-                        <div class="tool-icon-tile" style="background:#F1F5F9;">
-                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="11" width="18" height="11" rx="2" fill="#475569" fill-opacity="0.5" /><path d="M7 11V7a5 5 0 0 1 9.9-1" stroke="#475569" stroke-width="2.5" stroke-linecap="round" /><circle cx="12" cy="16" r="1.5" fill="#475569" fill-opacity="0.9" /></svg>
-                        </div>
-                        <h3>Unlock PDF</h3>
-                        <p>Remove password</p>
-                    </a>
-
+                    <a href="/protect-pdf" class="tool-card"><div class="tool-icon-tile" style="background:#F1F5F9;"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="11" width="18" height="11" rx="2" fill="#475569" fill-opacity="0.8" /><path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="#475569" stroke-width="2.5" stroke-linecap="round" /><circle cx="12" cy="16" r="1.5" fill="#475569" /></svg></div><h3>Protect PDF</h3><p>Add password</p></a>
+                    <a href="/unlock-pdf" class="tool-card"><div class="tool-icon-tile" style="background:#F1F5F9;"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="11" width="18" height="11" rx="2" fill="#475569" fill-opacity="0.5" /><path d="M7 11V7a5 5 0 0 1 9.9-1" stroke="#475569" stroke-width="2.5" stroke-linecap="round" /><circle cx="12" cy="16" r="1.5" fill="#475569" fill-opacity="0.9" /></svg></div><h3>Unlock PDF</h3><p>Remove password</p></a>
                 </div>
             </div>
 
@@ -541,39 +623,10 @@
             <div class="tools-category">
                 <div class="tools-category-title">View &amp; Read</div>
                 <div class="tools-grid">
-
-                    <a href="/pdf-reader" class="tool-card">
-                        <div class="tool-icon-tile" style="background:#F0FDF4;">
-                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" fill="#059669" fill-opacity="0.7" /><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" fill="#059669" fill-opacity="0.4" /></svg>
-                        </div>
-                        <h3>PDF Reader</h3>
-                        <p>View in browser</p>
-                    </a>
-
-                    <a href="/translate-pdf" class="tool-card">
-                        <div class="tool-icon-tile" style="background:#F0FDF4;">
-                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" fill="#059669" fill-opacity="0.2" stroke="#059669" stroke-width="1.5" /><line x1="2" y1="12" x2="22" y2="12" stroke="#059669" stroke-width="1.5" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" stroke="#059669" stroke-width="1.5" /></svg>
-                        </div>
-                        <h3>Translate PDF</h3>
-                        <p>Translate content</p>
-                    </a>
-
-                    <a href="/pdf-ocr" class="tool-card">
-                        <div class="tool-icon-tile" style="background:#F0FDF4;">
-                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="11" cy="11" r="8" fill="#059669" fill-opacity="0.2" stroke="#059669" stroke-width="2" /><line x1="21" y1="21" x2="16.65" y2="16.65" stroke="#059669" stroke-width="2.5" stroke-linecap="round" /><path d="M8 11H14M11 8V14" stroke="#059669" stroke-width="2" stroke-linecap="round" /></svg>
-                        </div>
-                        <h3>PDF OCR</h3>
-                        <p>Make scans searchable</p>
-                    </a>
-
-                    <a href="/pdf-scanner" class="tool-card">
-                        <div class="tool-icon-tile" style="background:#F0FDF4;">
-                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><polyline points="4,7 4,4 7,4" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" /><polyline points="20,7 20,4 17,4" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" /><polyline points="4,17 4,20 7,20" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" /><polyline points="20,17 20,20 17,20" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" /><line x1="2" y1="12" x2="22" y2="12" stroke="#059669" stroke-width="2.5" stroke-linecap="round" /></svg>
-                        </div>
-                        <h3>PDF Scanner</h3>
-                        <p>Scan to PDF</p>
-                    </a>
-
+                    <a href="/pdf-reader" class="tool-card"><div class="tool-icon-tile" style="background:#F0FDF4;"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" fill="#059669" fill-opacity="0.7" /><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" fill="#059669" fill-opacity="0.4" /></svg></div><h3>PDF Reader</h3><p>View in browser</p></a>
+                    <a href="/translate-pdf" class="tool-card"><div class="tool-icon-tile" style="background:#F0FDF4;"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" fill="#059669" fill-opacity="0.2" stroke="#059669" stroke-width="1.5" /><line x1="2" y1="12" x2="22" y2="12" stroke="#059669" stroke-width="1.5" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" stroke="#059669" stroke-width="1.5" /></svg></div><h3>Translate PDF</h3><p>Translate content</p></a>
+                    <a href="/pdf-ocr" class="tool-card"><div class="tool-icon-tile" style="background:#F0FDF4;"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="11" cy="11" r="8" fill="#059669" fill-opacity="0.2" stroke="#059669" stroke-width="2" /><line x1="21" y1="21" x2="16.65" y2="16.65" stroke="#059669" stroke-width="2.5" stroke-linecap="round" /><path d="M8 11H14M11 8V14" stroke="#059669" stroke-width="2" stroke-linecap="round" /></svg></div><h3>PDF OCR</h3><p>Make scans searchable</p></a>
+                    <a href="/pdf-scanner" class="tool-card"><div class="tool-icon-tile" style="background:#F0FDF4;"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><polyline points="4,7 4,4 7,4" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" /><polyline points="20,7 20,4 17,4" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" /><polyline points="4,17 4,20 7,20" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" /><polyline points="20,17 20,20 17,20" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" /><line x1="2" y1="12" x2="22" y2="12" stroke="#059669" stroke-width="2.5" stroke-linecap="round" /></svg></div><h3>PDF Scanner</h3><p>Scan to PDF</p></a>
                 </div>
             </div>
         }
@@ -685,16 +738,13 @@
     protected override async Task OnInitializedAsync()
     {
         var uri = new Uri(Nav.Uri);
-        var query = System.Web.HttpUtility.ParseQueryString(
-            uri.Query);
+        var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
         var refCode = query["ref"];
 
         if (!string.IsNullOrEmpty(refCode))
         {
             await ApiService.TrackReferralAsync(refCode);
-            // Store in session so we can associate after login
-            await JS.InvokeVoidAsync(
-                "sessionStorage.setItem", "ref", refCode);
+            await JS.InvokeVoidAsync("sessionStorage.setItem", "ref", refCode);
         }
     }
 
@@ -702,8 +752,6 @@
         string.IsNullOrWhiteSpace(HeroSearch)
             ? Enumerable.Empty<ToolInfo>()
             : AllTools.Where(t =>
-                t.Name.Contains(HeroSearch,
-                    StringComparison.OrdinalIgnoreCase) ||
-                t.Description.Contains(HeroSearch,
-                    StringComparison.OrdinalIgnoreCase));
+                t.Name.Contains(HeroSearch, StringComparison.OrdinalIgnoreCase) ||
+                t.Description.Contains(HeroSearch, StringComparison.OrdinalIgnoreCase));
 }
