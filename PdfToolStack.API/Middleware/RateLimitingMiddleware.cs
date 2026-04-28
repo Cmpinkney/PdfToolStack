@@ -120,7 +120,7 @@ namespace PdfToolStack.API.Middleware
             });
         }
 
-        private static void EvictStaleBuckets(object? _)
+        private static void EvictStaleBuckets(object? state)
         {
             var cutoff = DateTime.UtcNow.AddHours(-2);
 

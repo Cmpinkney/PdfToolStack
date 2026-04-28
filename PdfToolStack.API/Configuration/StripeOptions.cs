@@ -25,7 +25,7 @@
         public string AiCredits200PriceId { get; set; } = string.Empty;  // $29.99 = 200 credits
         public string AiDayPassPriceId { get; set; } = string.Empty;  // $4.99 = AI day pass
         public string BatchUnlockPriceId { get; set; } = string.Empty;  // $4.99 one time batch process
-        public string LargeFilePriceId { get; set; } = string.Empty; // large file $4.99
+        public string LargeFilePriceId { get; set; } = string.Empty; // large file $1.99
 
 
         public string Currency { get; set; } = "usd";

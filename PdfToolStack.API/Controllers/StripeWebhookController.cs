@@ -211,7 +211,7 @@ namespace PdfToolStack.API.Controllers
                         CreditsAdded = 50,
                         CreditsUsed = 0,
                         PurchasedAt = DateTime.UtcNow,
-                        ExpiresAt = DateTime.UtcNow.AddDays(90)
+                        ExpiresAt = DateTime.MaxValue
                     });
 
                     await _db.SaveChangesAsync();
