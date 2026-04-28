@@ -1,4 +1,5 @@
-﻿using System.Net.Http.Json;
+﻿using Microsoft.Extensions.Configuration;
+using System.Net.Http.Json;
 
 namespace PdfToolStack.Web.Services
 {
@@ -7,21 +8,23 @@ namespace PdfToolStack.Web.Services
         private readonly HttpClient _httpClient;
         private readonly ILogger<PaymentService> _logger;
 
-        // Free tier limit for current testing UX
-        public const long FreeTierMaxBytes = 102400; // 100 KB
+        // Free tier limit — 25 MB
+        public const long FreeTierMaxBytes = 26214400;
 
-        // Paid tier limit — 500MB
+        // Paid tier limit — 500 MB
         public const long PaidTierMaxBytes = 524288000;
 
-        // Optional: visible test mode flag for UI copy
-        public const bool IsTestModeEnabled = true;
+        // Driven by PaymentService:TestMode in appsettings; false in production
+        public bool IsTestModeEnabled { get; }
 
         public PaymentService(
             HttpClient httpClient,
-            ILogger<PaymentService> logger)
+            ILogger<PaymentService> logger,
+            IConfiguration configuration)
         {
             _httpClient = httpClient;
             _logger = logger;
+            IsTestModeEnabled = configuration["PaymentService:TestMode"] == "true";
         }
 
         public bool IsFileTooLargeForFree(long fileSizeBytes)

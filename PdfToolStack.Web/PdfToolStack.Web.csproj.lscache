@@ -369,6 +369,7 @@ App.razor
 Components/
  AdSlot.razor
  AiCreditTopUpModal.razor
+ AiLimitBanner.razor
  CookieBanner.razor
  FileUpload.razor
  Footer.razor
@@ -378,8 +379,10 @@ Components/
  ProUpsellModal.razor
  RedirectToLogin.razor
  SfPdfViewerShell.razor
+ SupportChat.razor
  ThemeSwitcher.razor
  ToastContainer.razor
+ UpgradeModal.razor
 Layout/
  CookiePolicy.razor
  MainLayout.razor
@@ -453,6 +456,8 @@ Pages/
  SignPdfLanding.razor
  SplitPdf.razor
  SubscriptionSuccess.razor
+ TeamAccept.razor
+ TeamDashboard.razor
  TermsAndConditions.razor
  TranslatePdf.razor
  UnlockPdf.razor
@@ -465,6 +470,7 @@ App.razor
 Components/
  AdSlot.razor
  AiCreditTopUpModal.razor
+ AiLimitBanner.razor
  CookieBanner.razor
  FileUpload.razor
  Footer.razor
@@ -474,8 +480,10 @@ Components/
  ProUpsellModal.razor
  RedirectToLogin.razor
  SfPdfViewerShell.razor
+ SupportChat.razor
  ThemeSwitcher.razor
  ToastContainer.razor
+ UpgradeModal.razor
 Layout/
  CookiePolicy.razor
  MainLayout.razor
@@ -549,6 +557,8 @@ Pages/
  SignPdfLanding.razor
  SplitPdf.razor
  SubscriptionSuccess.razor
+ TeamAccept.razor
+ TeamDashboard.razor
  TermsAndConditions.razor
  TranslatePdf.razor
  UnlockPdf.razor

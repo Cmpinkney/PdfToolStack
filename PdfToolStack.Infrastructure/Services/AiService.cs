@@ -467,10 +467,12 @@ namespace PdfToolStack.Infrastructure.Services
                 request.Content = new StringContent(
                     json, Encoding.UTF8, "application/json");
 
-                var response = await _http.SendAsync(
-                    request, cancellationToken);
+                using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                cts.CancelAfter(TimeSpan.FromSeconds(30));
+
+                var response = await _http.SendAsync(request, cts.Token);
                 var responseBody = await response.Content
-                    .ReadAsStringAsync(cancellationToken);
+                    .ReadAsStringAsync(cts.Token);
 
                 if (!response.IsSuccessStatusCode)
                     return "AI service unavailable. Please try again.";

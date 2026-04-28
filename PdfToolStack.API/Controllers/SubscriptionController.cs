@@ -1,6 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using PdfToolStack.API.Configuration;
+using System.Security.Claims;
 using PdfToolStack.Application.DTOs;
 using PdfToolStack.Infrastructure.Services;
 
@@ -39,10 +41,17 @@ namespace PdfToolStack.API.Controllers
         // ── Subscription checkout (recurring) ─────────────────────────────────────
 
         [HttpPost("create-checkout")]
+        [Authorize]
         public async Task<IActionResult> CreateCheckout([FromBody] CreateCheckoutDto dto)
         {
             if (_service == null)
                 return StatusCode(503, new { error = "Database not configured." });
+
+            dto.UserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                ?? User.FindFirst("sub")?.Value
+                ?? string.Empty;
+            if (string.IsNullOrEmpty(dto.UserId))
+                return Unauthorized();
 
             _logger.LogInformation(
                 "Checkout initiated — UserId: {UserId}, PriceId: {PriceId}",
@@ -75,14 +84,17 @@ namespace PdfToolStack.API.Controllers
         // ── Add-on checkout (one-time payment) ────────────────────────────────────
 
         [HttpPost("create-addon-checkout")]
+        [Authorize]
         public async Task<IActionResult> CreateAddonCheckout([FromBody] AddonCheckoutRequest request)
         {
             if (_service == null)
                 return StatusCode(503, new { error = "Database not configured." });
 
-            // UserId comes from the request body — API has no auth middleware
+            request.UserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                ?? User.FindFirst("sub")?.Value
+                ?? string.Empty;
             if (string.IsNullOrEmpty(request.UserId))
-                return BadRequest(new { error = "UserId is required." });
+                return Unauthorized();
 
             var validTypes = new[] { "large_file", "ai_day_pass", "ai_credit_pack", "batch_unlock" };
             if (!validTypes.Contains(request.AddonType))
@@ -133,6 +145,8 @@ namespace PdfToolStack.API.Controllers
             try
             {
                 var url = await _service.CreatePortalSessionAsync(dto);
+                if (url == null)
+                    return NotFound(new { error = "No active subscription found for this user." });
                 return Ok(new CheckoutResponseDto { Url = url });
             }
             catch (Exception ex)

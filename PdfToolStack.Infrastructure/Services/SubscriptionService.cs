@@ -137,7 +137,7 @@ namespace PdfToolStack.Infrastructure.Services
 
         // ── Portal ────────────────────────────────────────────────────────────────
 
-        public async Task<string> CreatePortalSessionAsync(CreatePortalDto dto)
+        public async Task<string?> CreatePortalSessionAsync(CreatePortalDto dto)
         {
             var sub = await _db.UserSubscriptions
                 .Where(s => s.UserId == dto.UserId)
@@ -145,7 +145,7 @@ namespace PdfToolStack.Infrastructure.Services
                 .FirstOrDefaultAsync();
 
             if (sub == null)
-                throw new Exception("No subscription found for user.");
+                return null;
 
             var options = new Stripe.BillingPortal.SessionCreateOptions
             {

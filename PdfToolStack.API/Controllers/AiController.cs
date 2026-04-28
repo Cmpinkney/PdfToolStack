@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PdfToolStack.Application.Interfaces;
 using PdfToolStack.Infrastructure.Services;
+using System.Collections.Concurrent;
 using System.Text.Json;
 
 namespace PdfToolStack.API.Controllers
@@ -20,6 +21,9 @@ namespace PdfToolStack.API.Controllers
 
         private const string HaikuModel = "claude-haiku-4-5-20251001";
         private const string OpusModel = "claude-opus-4-6";
+
+        private static readonly ConcurrentDictionary<string,
+            (int Count, DateTime WindowStart)> _supportCounts = new();
 
         public AiController(
         AiService aiService,
@@ -503,7 +507,13 @@ namespace PdfToolStack.API.Controllers
         [HttpGet("usage/{userId}")]
         public async Task<IActionResult> GetUsage(string userId)
         {
+            if (_subscriptionService == null)
+                return StatusCode(503, new { error = "Service unavailable." });
+
             var status = await _subscriptionService.GetStatusAsync(userId);
+            if (status?.PlanType == null)
+                return Ok(new { used = 0, limit = 5, remaining = 5, percentage = 0 });
+
             var (used, limit) = await _usageService.GetUsageAsync(
                 userId, status.PlanType);
             return Ok(new
@@ -511,7 +521,7 @@ namespace PdfToolStack.API.Controllers
                 used,
                 limit,
                 remaining = limit - used,
-                percentage = (double)used / limit * 100
+                percentage = limit > 0 ? (double)used / limit * 100 : 0
             });
         }
 
@@ -524,6 +534,23 @@ namespace PdfToolStack.API.Controllers
         {
             if (string.IsNullOrWhiteSpace(request.Message))
                 return BadRequest(new { error = "Message is required." });
+
+            // Anonymous callers: 5 requests per hour per IP
+            var userId = User.FindFirst("sub")?.Value;
+            if (string.IsNullOrEmpty(userId))
+            {
+                var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+                var key = $"support:ip:{ip}";
+                var now = DateTime.UtcNow;
+                _supportCounts.AddOrUpdate(key, (1, now), (_, existing) =>
+                {
+                    if ((now - existing.WindowStart).TotalHours >= 1)
+                        return (1, now);
+                    return (existing.Count + 1, existing.WindowStart);
+                });
+                if (_supportCounts[key].Count > 5)
+                    return StatusCode(429, new { error = "Too many requests. Please try again later." });
+            }
 
             var answer = await _aiService.SupportChatAsync(
                 request.Message,
