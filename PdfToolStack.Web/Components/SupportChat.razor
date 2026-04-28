@@ -1,5 +1,6 @@
 ﻿@inject ApiService ApiService
 @inject IJSRuntime JS
+@inject ILogger<SupportChat> Logger
 
 
 <div class="support-chat-wrap">
@@ -151,14 +152,14 @@
 
         try
         {
-            var result = await ApiService.PostAsync<object, SupportResponse>(
-                "api/ai/support", new
-                {
-                    message = msg,
-                    history = _history.SkipLast(1)
-                        .Select(h => new { role = h.Role, content = h.Content })
-                        .ToList()
-                });
+            var requestBody = new SupportChatRequest(
+                msg,
+                _history.SkipLast(1)
+                    .Select(h => new SupportHistoryEntry(h.Role, h.Content))
+                    .ToList());
+
+            var result = await ApiService.PostAsync<SupportChatRequest, SupportResponse>(
+                "api/ai/support", requestBody);
 
             string answer = result?.Answer
                 ?? "Sorry, I couldn't process that. Please try again.";
@@ -168,8 +169,9 @@
 
             if (!_open) _unread++;
         }
-        catch
+        catch (Exception ex)
         {
+            Logger.LogError(ex, "Support chat request failed");
             _messages.Add(new(
                 "Something went wrong. Please email support@pdftoolstack.com for help.",
                 false));
@@ -185,6 +187,10 @@
     private record ChatMsg(string Text, bool IsUser);
     private record HistoryMsg(string Role, string Content);
     private class SupportResponse { public string Answer { get; set; } = string.Empty; }
+
+    // Concrete types so System.Text.Json can serialize without reflection/trimming issues
+    private record SupportChatRequest(string Message, List<SupportHistoryEntry> History);
+    private record SupportHistoryEntry(string Role, string Content);
 
     private readonly List<string> _suggestions = new()
     {

@@ -36,6 +36,11 @@ namespace PdfToolStack.Web.Services
             if (response.IsSuccessStatusCode)
                 return await response.Content
                     .ReadFromJsonAsync<TResponse>();
+
+            var body = await response.Content.ReadAsStringAsync();
+            _logger.LogWarning(
+                "PostAsync {Endpoint} returned {StatusCode}: {Body}",
+                endpoint, (int)response.StatusCode, body);
             return default;
         }
         public async Task<ProcessResponse?> ProcessPdfAsync(
