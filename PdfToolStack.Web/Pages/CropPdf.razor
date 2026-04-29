@@ -10,207 +10,1222 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @using PdfToolStack.Web.Services
 
-<PageTitle>Crop PDF Free Online — Crop and Trim PDF Pages</PageTitle>
-
+<PageTitle>Crop PDF Free Online — Crop and Trim PDF Pages | PdfToolStack</PageTitle>
 <HeadContent>
-    <meta name="description"
-          content="Crop and trim your PDF pages free online. Remove margins, white space, and unwanted areas from any PDF. No signup required." />
-    <meta name="keywords"
-          content="crop pdf, trim pdf, pdf cropper free online, remove margins from pdf, resize pdf page, trim pdf margins" />
+    <meta name="description" content="Crop and trim your PDF pages free online. Remove margins, white space, and unwanted areas from any PDF. Auto-crop detects whitespace. No signup required." />
+    <meta name="keywords" content="crop pdf, trim pdf, pdf cropper free online, remove margins from pdf, resize pdf page, trim pdf margins" />
     <link rel="canonical" href="https://pdftoolstack.com/crop-pdf" />
 </HeadContent>
 
-<div class="tool-page">
-    <AdSlot Size="banner" />
-    <div class="tool-container">
+<div class="cp-page">
 
-        <h1>Crop PDF Online</h1>
-        <p class="tool-subtitle">
-            Remove white space and unwanted margins from your PDF pages.
-            Free, private, and instant.
-        </p>
+    <!-- ── UPLOAD STATE ──────────────────────────────────────────────── -->
+    @if (CurrentState == PageState.Upload || CurrentState == PageState.LargeFile)
+    {
+        <div class="cp-upload-hero">
+            <div class="cp-upload-header">
+                <h1 class="cp-title">Crop PDF <span class="cp-title-accent">Online</span></h1>
+                <p class="cp-subtitle">Remove white space and unwanted margins from your PDF. Free, private, and instant.</p>
+                <div class="cp-chips">
+                    <span class="cp-chip">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                        Precise cropping — drag or enter values
+                    </span>
+                    <span class="cp-chip">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                        Auto-crop detects whitespace automatically
+                    </span>
+                    <span class="cp-chip">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
+                        Files deleted in 1 hour
+                    </span>
+                </div>
+            </div>
 
-        @if (CurrentState == PageState.Upload)
-        {
-            <FileUpload OnFileSelected="HandleFileSelected"
-                        Accept=".pdf"
-                        HintText="Up to 25MB free · 500MB with Pro" />
-        }
+            @if (CurrentState == PageState.LargeFile)
+            {
+                <LargeFileUpgrade FileSizeBytes="@_largeFileSize" FileName="@_largeFileName"
+                                  ToolType="CropPdf" LargeFilePriceId="@_largeFilePriceId"
+                                  ProMonthlyPriceId="@_proMonthlyPriceId" OnCancel="Reset" />
+            }
+            else
+            {
+                <div class="cp-upload-area">
+                    <FileUpload OnFileSelected="HandleFileSelected" Accept=".pdf" HintText="Up to 25MB free · 500MB with Pro" />
+                </div>
+            }
+        </div>
+    }
 
-        @if (CurrentState == PageState.LargeFile)
-        {
-            <LargeFileUpgrade FileSizeBytes="_largeFileSize"
-                              FileName="_largeFileName"
-                              ToolType="CropPdf"
-                              LargeFilePriceId="@_largeFilePriceId"
-                              ProMonthlyPriceId="@_proMonthlyPriceId"
-                              OnCancel="Reset" />
-        }
+    <!-- ── EDITOR STATE ──────────────────────────────────────────────── -->
+    @if (CurrentState == PageState.Configure)
+    {
+        <!-- Top bar -->
+        <div class="cp-topbar">
+            <div class="cp-topbar-left">
+                <button class="cp-back-btn" @onclick="Reset">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+                    Back
+                </button>
+                <span class="cp-filename">@_fileName</span>
+                @if (_pageCount > 0)
+                {
+                    <span class="cp-page-chip">@_pageCount pages</span>
+                }
+            </div>
+            <div class="cp-topbar-center">
+                <button class="cp-nav-btn" @onclick="PrevPage" disabled="@(_currentPage <= 1)">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+                </button>
+                <span class="cp-page-label">Page <strong>@_currentPage</strong> of @_pageCount</span>
+                <button class="cp-nav-btn" @onclick="NextPage" disabled="@(_currentPage >= _pageCount)">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+                </button>
+            </div>
+            <div class="cp-topbar-right">
+                <span class="cp-topbar-hint">Drag the crop handles or enter values</span>
+            </div>
+        </div>
 
-        @if (CurrentState == PageState.Configure)
-        {
-            <div class="crop-config-panel">
+        <!-- Editor body -->
+        <div class="cp-editor">
 
-                <div class="crop-file-chip">
-                    <span class="crop-file-icon">📄</span>
-                    <span class="crop-file-name">@_fileName</span>
-                    <button class="crop-file-remove" @onclick="Reset" title="Remove file">✕</button>
+            <!-- Page thumbnail sidebar -->
+            <div class="cp-thumbs">
+                <div class="cp-thumbs-label">Pages</div>
+                @for (int p = 1; p <= _pageCount; p++)
+                {
+                    var pg = p;
+                    <div class="cp-thumb @(_currentPage == pg ? "cp-thumb--active" : "")" @onclick="() => GoToPage(pg)">
+                        <div class="cp-thumb-page">
+                            <div class="cp-thumb-lines">
+                                <div class="cp-thumb-line"></div>
+                                <div class="cp-thumb-line" style="width:70%"></div>
+                                <div class="cp-thumb-line"></div>
+                                <div class="cp-thumb-line" style="width:80%"></div>
+                                <div class="cp-thumb-line" style="width:60%"></div>
+                            </div>
+                        </div>
+                        <span class="cp-thumb-num">@pg</span>
+                    </div>
+                }
+                <button class="cp-add-pages-btn">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+                    Add pages
+                </button>
+            </div>
+
+            <!-- Canvas area with crop overlay -->
+            <div class="cp-canvas-area">
+                <div class="cp-canvas-toolbar">
+                    <button class="cp-tool-btn @(_activeTool == "select" ? "cp-tool-btn--active" : "")" title="Select" @onclick='() => _activeTool = "select"'>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l14 9-7 1-4 7z" /></svg>
+                    </button>
+                    <button class="cp-tool-btn @(_activeTool == "hand" ? "cp-tool-btn--active" : "")" title="Pan" @onclick='() => _activeTool = "hand"'>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8" /><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15" /></svg>
+                    </button>
+                    <div class="cp-tool-divider"></div>
+                    <button class="cp-tool-btn" title="Zoom in" @onclick="ZoomIn">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /><line x1="11" y1="8" x2="11" y2="14" /><line x1="8" y1="11" x2="14" y2="11" /></svg>
+                    </button>
+                    <span class="cp-zoom-label">@(_zoomPercent)%</span>
+                    <button class="cp-tool-btn" title="Zoom out" @onclick="ZoomOut">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /><line x1="8" y1="11" x2="14" y2="11" /></svg>
+                    </button>
+                    <button class="cp-tool-btn" title="Fullscreen">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9" /><polyline points="9 21 3 21 3 15" /><line x1="21" y1="3" x2="14" y2="10" /><line x1="3" y1="21" x2="10" y2="14" /></svg>
+                    </button>
                 </div>
 
-                <!-- Unit toggle -->
-                <div class="crop-unit-row">
-                    <span class="crop-unit-label">Units:</span>
-                    <div class="crop-unit-toggle">
-                        <button class="@(_unit == "mm" ? "crop-unit-btn active" : "crop-unit-btn")"
-                                @onclick='() => SetUnit("mm")'>
-                            mm
+                <div class="cp-canvas-wrap">
+                    <!-- PDF preview with crop overlay -->
+                    <div class="cp-preview-doc" style="transform:scale(@(_zoomPercent / 100.0))">
+                        <!-- PDF canvas -->
+                        <canvas id="cpPdfCanvas" style="display:block;max-width:100%;border-radius:4px;"></canvas>
+
+                        <!-- Crop overlay - shows the crop region -->
+                        <div class="cp-crop-overlay">
+                            <!-- Dark masks -->
+                            <div class="cp-mask cp-mask--top" style="height:@(_marginTop)px"></div>
+                            <div class="cp-mask cp-mask--bottom" style="height:@(_marginBottom)px"></div>
+                            <div class="cp-mask cp-mask--left" style="width:@(_marginLeft)px; top:@(_marginTop)px; bottom:@(_marginBottom)px"></div>
+                            <div class="cp-mask cp-mask--right" style="width:@(_marginRight)px; top:@(_marginTop)px; bottom:@(_marginBottom)px"></div>
+                            <!-- Crop border -->
+                            <div class="cp-crop-border" style="top:@(_marginTop)px;right:@(_marginRight)px;bottom:@(_marginBottom)px;left:@(_marginLeft)px">
+                                <!-- Corner handles -->
+                                <div class="cp-handle cp-handle--tl"></div>
+                                <div class="cp-handle cp-handle--tr"></div>
+                                <div class="cp-handle cp-handle--bl"></div>
+                                <div class="cp-handle cp-handle--br"></div>
+                                <!-- Edge handles -->
+                                <div class="cp-handle cp-handle--t"></div>
+                                <div class="cp-handle cp-handle--b"></div>
+                                <div class="cp-handle cp-handle--l"></div>
+                                <div class="cp-handle cp-handle--r"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings panel -->
+            <div class="cp-settings">
+                <div class="cp-settings-title">Crop Settings</div>
+
+                <!-- Preset buttons -->
+                <div class="cp-setting-group">
+                    <div class="cp-preset-row">
+                        <button class="cp-preset-btn cp-preset-btn--auto" @onclick="AutoCrop">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10" /><path d="M12 6v6l4 2" /></svg>
+                            Auto Crop
                         </button>
-                        <button class="@(_unit == "in" ? "crop-unit-btn active" : "crop-unit-btn")"
-                                @onclick='() => SetUnit("in")'>
-                            in
+                        <button class="cp-preset-btn" @onclick="SetNoMargin">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" /></svg>
+                            No Margin
                         </button>
-                        <button class="@(_unit == "pt" ? "crop-unit-btn active" : "crop-unit-btn")"
-                                @onclick='() => SetUnit("pt")'>
-                            pt
+                    </div>
+                    <div class="cp-preset-row">
+                        <button class="cp-preset-btn" @onclick='() => SetPreset(10)'>
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="14" height="14" rx="1" /></svg>
+                            Standard
+                        </button>
+                        <button class="cp-preset-btn" @onclick='() => SetPreset(0, true)'>
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2" /><path d="M9 2v20M15 2v20M2 9h20M2 15h20" /></svg>
+                            Custom
                         </button>
                     </div>
                 </div>
 
-                <!-- Margin inputs -->
-                <div class="crop-margins-grid">
-                    <div class="crop-margin-group crop-margin-top">
-                        <label>Top</label>
-                        <input type="number" class="crop-input" min="0" step="0.5"
+                <div class="cp-divider"></div>
+
+                <!-- Crop margin inputs -->
+                <div class="cp-setting-group">
+                    <label class="cp-setting-label">
+                        Crop Margin
+                        <button class="cp-reset-link" @onclick="ResetMargins">Reset</button>
+                    </label>
+
+                    <!-- Top -->
+                    <div class="cp-margin-input-row">
+                        <span class="cp-margin-label">Top</span>
+                        <input type="number" class="cp-margin-input" min="0" step="1"
                                @bind="_marginTop" @bind:event="oninput" />
-                        <span class="crop-unit">@_unit</span>
+                        <span class="cp-margin-unit">mm</span>
+                        <span class="cp-margin-dots">···</span>
                     </div>
-                    <div class="crop-margin-group crop-margin-right">
-                        <label>Right</label>
-                        <input type="number" class="crop-input" min="0" step="0.5"
+                    <!-- Right -->
+                    <div class="cp-margin-input-row">
+                        <span class="cp-margin-label">Right</span>
+                        <input type="number" class="cp-margin-input" min="0" step="1"
                                @bind="_marginRight" @bind:event="oninput" />
-                        <span class="crop-unit">@_unit</span>
+                        <span class="cp-margin-unit">mm</span>
+                        <span class="cp-margin-dots">···</span>
                     </div>
-                    <div class="crop-margin-group crop-margin-bottom">
-                        <label>Bottom</label>
-                        <input type="number" class="crop-input" min="0" step="0.5"
+                    <!-- Bottom -->
+                    <div class="cp-margin-input-row">
+                        <span class="cp-margin-label">Bottom</span>
+                        <input type="number" class="cp-margin-input" min="0" step="1"
                                @bind="_marginBottom" @bind:event="oninput" />
-                        <span class="crop-unit">@_unit</span>
+                        <span class="cp-margin-unit">mm</span>
+                        <span class="cp-margin-dots">···</span>
                     </div>
-                    <div class="crop-margin-group crop-margin-left">
-                        <label>Left</label>
-                        <input type="number" class="crop-input" min="0" step="0.5"
+                    <!-- Left -->
+                    <div class="cp-margin-input-row">
+                        <span class="cp-margin-label">Left</span>
+                        <input type="number" class="cp-margin-input" min="0" step="1"
                                @bind="_marginLeft" @bind:event="oninput" />
-                        <span class="crop-unit">@_unit</span>
+                        <span class="cp-margin-unit">mm</span>
+                        <span class="cp-margin-dots">···</span>
                     </div>
                 </div>
 
-                <!-- Page scope -->
-                <div class="crop-scope-row">
-                    <label class="crop-scope-label">Apply to:</label>
-                    <div class="crop-scope-options">
-                        <label class="crop-radio-label">
-                            <input type="radio" name="cropScope" value="all"
-                                   checked="@(_scope == "all")"
+                <div class="cp-divider"></div>
+
+                <!-- Apply to -->
+                <div class="cp-setting-group">
+                    <label class="cp-setting-label">Apply to</label>
+                    <div class="cp-apply-row">
+                        <label class="cp-radio">
+                            <input type="radio" name="cpscope" checked="@(_scope == "all")"
                                    @onchange='() => _scope = "all"' />
                             All pages
                         </label>
-                        <label class="crop-radio-label">
-                            <input type="radio" name="cropScope" value="range"
-                                   checked="@(_scope == "range")"
+                        <label class="cp-radio">
+                            <input type="radio" name="cpscope" checked="@(_scope == "range")"
                                    @onchange='() => _scope = "range"' />
                             Specific pages
                         </label>
                     </div>
                     @if (_scope == "range")
                     {
-                        <div class="crop-pages-input-row">
-                            <input type="text" class="crop-input crop-pages-input"
-                                   placeholder="e.g. 1,3,5"
-                                   @bind="_pageNumbersInput" @bind:event="oninput" />
-                            <span class="crop-pages-hint">Separate with commas</span>
-                        </div>
+                        <input class="cp-pages-input" placeholder="e.g. 1-3, 5, 7-10"
+                               @bind="_pageNumbersInput" />
                     }
                 </div>
 
-                <button class="process-button crop-submit-btn"
-                        @onclick="ProcessFile"
-                        disabled="@(!CanProcess)">
-                    Crop PDF
+                <div class="cp-divider"></div>
+
+                <!-- Auto crop tip -->
+                <div class="cp-tip">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+                    <span>Click <strong>Auto Crop</strong> to detect and remove white space automatically.</span>
+                </div>
+
+                <!-- CTA -->
+                <button class="cp-apply-btn" @onclick="ProcessFile" disabled="@(!CanProcess)">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+                    Apply Crop &amp; Download
                 </button>
+                <p class="cp-no-cc">No credit card required</p>
+            </div>
+        </div>
 
-                @if (!string.IsNullOrEmpty(_errorMessage))
-                {
-                    <div class="error-container">
-                        <span class="error-icon">❌</span>
-                        <p class="error-message">@_errorMessage</p>
-                    </div>
-                }
+        @if (!string.IsNullOrEmpty(_errorMessage))
+        {
+            <div class="cp-inline-error">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" /></svg>
+                @_errorMessage
             </div>
         }
+    }
 
-        @if (CurrentState == PageState.Processing)
-        {
-            <div class="processing-container">
-                <div class="spinner"></div>
-                <p>Cropping your PDF...</p>
+    <!-- ── PROCESSING STATE ──────────────────────────────────────────── -->
+    @if (CurrentState == PageState.Processing)
+    {
+        <div class="cp-state-center">
+            <div class="cp-state-card">
+                <div class="cp-proc-ring"></div>
+                <h2>Cropping your PDF...</h2>
+                <p>Applying crop to @(_scope == "all" ? "all pages" : "selected pages")</p>
+                <div class="cp-proc-progress"><div class="cp-proc-fill"></div></div>
             </div>
-        }
+        </div>
+    }
 
-        @if (CurrentState == PageState.Complete)
-        {
-            <div class="success-container">
-                <span class="success-icon">✅</span>
+    <!-- ── COMPLETE STATE ────────────────────────────────────────────── -->
+    @if (CurrentState == PageState.Complete)
+    {
+        <div class="cp-state-center">
+            <div class="cp-state-card">
+                <div class="cp-complete-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                </div>
                 <h2>PDF Cropped!</h2>
-                <p>Your margins have been trimmed. Download the result below.</p>
-                <button class="download-button" @onclick="DownloadFile">
+                <p>White space and margins have been removed.</p>
+                <div class="cp-complete-badges">
+                    <div class="cp-complete-badge">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                        Content kept safe
+                    </div>
+                    <div class="cp-complete-badge">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                        High quality output
+                    </div>
+                </div>
+                <button class="cp-download-btn" @onclick="DownloadFile">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
                     Download Cropped PDF
                 </button>
-                <button class="reset-button" @onclick="Reset">
-                    Crop Another PDF
-                </button>
+                <button class="cp-restart-btn" @onclick="Reset">Crop Another PDF</button>
             </div>
-        }
+        </div>
+    }
 
-        @if (CurrentState == PageState.Error)
-        {
-            <div class="error-container">
-                <span class="error-icon">❌</span>
-                <p class="error-message">@_errorMessage</p>
-                <button class="reset-button" @onclick="Reset">Try Again</button>
+    <!-- ── ERROR STATE ───────────────────────────────────────────────── -->
+    @if (CurrentState == PageState.Error)
+    {
+        <div class="cp-state-center">
+            <div class="cp-state-card">
+                <div class="cp-complete-icon" style="background:#FEE2E2;">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" /></svg>
+                </div>
+                <h2>Crop Failed</h2>
+                <p style="color:var(--text-muted,#6B7280)">@_errorMessage</p>
+                <button class="cp-restart-btn" @onclick="Reset">Try Again</button>
             </div>
-        }
+        </div>
+    }
 
-    </div>
+    <!-- ── FAQ ──────────────────────────────────────────────────────── -->
+    @if (CurrentState == PageState.Upload)
+    {
+        <div class="cp-faq">
+            <h2>Frequently Asked Questions</h2>
+            @foreach (var (q, a) in new[] {
+                ("What does cropping a PDF do?", "Cropping sets a visible boundary on each page, hiding content outside that boundary. Perfect for removing scan borders, printer margins, or extra white space."),
+                ("Will cropping reduce the file size?", "Cropping changes the visible area but does not remove underlying content. To reduce file size, use our Compress PDF tool."),
+                ("Can I crop individual pages differently?", "Yes — select \"Specific pages\" and enter the page numbers you want to crop. All other pages remain untouched."),
+                ("Is this tool free?", "Yes — completely free up to 25MB with no signup required. Pro handles files up to 500MB."),
+                })
+            {
+                <details class="cp-faq-item">
+                    <summary>@q</summary>
+                    <p>@a</p>
+                </details>
+            }
+        </div>
+    }
 
-    <div class="faq-section">
-        <h2>Frequently Asked Questions</h2>
-        <div class="faq-item">
-            <h3>What does cropping a PDF do?</h3>
-            <p>Cropping sets a visible boundary on each page, hiding content outside that boundary. It's perfect for removing scan borders, printer margins, or extra white space without altering the original content.</p>
-        </div>
-        <div class="faq-item">
-            <h3>Will cropping reduce the file size?</h3>
-            <p>Cropping changes the visible area but does not remove the underlying content or significantly reduce file size. To reduce file size, use our <a href="/compress-pdf">Compress PDF</a> tool.</p>
-        </div>
-        <div class="faq-item">
-            <h3>Can I crop individual pages differently?</h3>
-            <p>Yes — select "Specific pages" and enter the page numbers you want to crop. All other pages remain untouched.</p>
-        </div>
-        <div class="faq-item">
-            <h3>What units can I use?</h3>
-            <p>You can enter margins in millimetres (mm), inches (in), or PDF points (pt). 1 inch = 72 pt = 25.4 mm.</p>
-        </div>
-        <div class="faq-item">
-            <h3>Is this tool free?</h3>
-            <p>Yes — completely free up to 25MB with no signup required. Pro handles files up to 500MB.</p>
-        </div>
-    </div>
 </div>
+
+<style>
+    /* ════════════════════════════════════════════════════════
+       Crop PDF — Enterprise Editor
+    ════════════════════════════════════════════════════════ */
+    .cp-page {
+        min-height: 100vh;
+    }
+
+    /* ── Upload hero ──────────────────────────────────────── */
+    .cp-upload-hero {
+        max-width: 680px;
+        margin: 0 auto;
+        padding: 2.5rem 1.5rem 3rem;
+    }
+
+    .cp-upload-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .cp-title {
+        font-size: clamp(1.8rem, 4vw, 2.6rem);
+        font-weight: 800;
+        color: var(--text,#111827);
+        letter-spacing: -.03em;
+        margin: 0 0 .75rem;
+    }
+
+    .cp-title-accent {
+        color: #0D9488;
+    }
+
+    .cp-subtitle {
+        font-size: 1rem;
+        color: var(--text-muted,#6B7280);
+        line-height: 1.6;
+        margin: 0 0 1.25rem;
+    }
+
+    .cp-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .5rem;
+        justify-content: center;
+    }
+
+    .cp-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: .35rem;
+        font-size: .75rem;
+        font-weight: 500;
+        color: var(--text-muted,#6B7280);
+        background: var(--bg,#F9FAFB);
+        border: 1px solid var(--border,#E5E7EB);
+        padding: 4px 12px;
+        border-radius: 20px;
+    }
+
+    /* ── Top bar ──────────────────────────────────────────── */
+    .cp-topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: .625rem 1.25rem;
+        background: var(--surface,#fff);
+        border-bottom: 1px solid var(--border,#E5E7EB);
+        gap: 1rem;
+        position: sticky;
+        top: 64px;
+        z-index: 50;
+    }
+
+    .cp-topbar-left {
+        display: flex;
+        align-items: center;
+        gap: .75rem;
+    }
+
+    .cp-topbar-center {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+    }
+
+    .cp-topbar-right {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+    }
+
+    .cp-back-btn {
+        display: flex;
+        align-items: center;
+        gap: .3rem;
+        padding: .375rem .75rem;
+        border-radius: 8px;
+        border: 1px solid var(--border,#E5E7EB);
+        background: var(--bg,#F9FAFB);
+        color: var(--text,#374151);
+        font-size: .8rem;
+        font-weight: 500;
+        cursor: pointer;
+    }
+
+        .cp-back-btn:hover {
+            background: var(--border,#E5E7EB);
+        }
+
+    .cp-filename {
+        font-size: .82rem;
+        font-weight: 600;
+        color: var(--text,#374151);
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .cp-page-chip {
+        font-size: .72rem;
+        font-weight: 600;
+        background: var(--bg,#F3F4F6);
+        border: 1px solid var(--border,#E5E7EB);
+        padding: 2px 8px;
+        border-radius: 20px;
+        color: var(--text-muted,#6B7280);
+    }
+
+    .cp-nav-btn {
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        border: 1px solid var(--border,#E5E7EB);
+        background: var(--bg,#F9FAFB);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+    }
+
+        .cp-nav-btn:hover:not(:disabled) {
+            background: var(--border,#E5E7EB);
+        }
+
+        .cp-nav-btn:disabled {
+            opacity: .35;
+            cursor: not-allowed;
+        }
+
+    .cp-page-label {
+        font-size: .82rem;
+        color: var(--text-muted,#6B7280);
+        white-space: nowrap;
+    }
+
+        .cp-page-label strong {
+            color: var(--text,#111827);
+        }
+
+    .cp-topbar-hint {
+        font-size: .75rem;
+        color: var(--text-muted,#9CA3AF);
+    }
+
+    /* ── Editor layout ────────────────────────────────────── */
+    .cp-editor {
+        display: grid;
+        grid-template-columns: 80px 1fr 240px;
+        min-height: calc(100vh - 130px);
+    }
+
+    @@media (max-width: 900px) {
+        .cp-editor {
+            grid-template-columns: 70px 1fr;
+        }
+
+        .cp-settings {
+            display: none;
+        }
+    }
+
+    /* Thumbnails */
+    .cp-thumbs {
+        border-right: 1px solid var(--border,#E5E7EB);
+        background: var(--bg,#F9FAFB);
+        padding: .75rem .4rem;
+        display: flex;
+        flex-direction: column;
+        gap: .4rem;
+    }
+
+    .cp-thumbs-label {
+        font-size: .62rem;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        font-weight: 700;
+        color: var(--text-muted,#9CA3AF);
+        text-align: center;
+        margin-bottom: .25rem;
+    }
+
+    .cp-thumb {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: .2rem;
+        padding: .35rem .2rem;
+        border-radius: 6px;
+        cursor: pointer;
+        border: 1.5px solid transparent;
+        transition: background .1s;
+    }
+
+        .cp-thumb:hover {
+            background: var(--border,#E5E7EB20);
+        }
+
+    .cp-thumb--active {
+        border-color: #0D9488;
+        background: #F0FDFA15;
+    }
+
+    .cp-thumb-page {
+        position: relative;
+        width: 36px;
+        height: 46px;
+        background: var(--surface,#fff);
+        border: 1.5px solid var(--border,#E5E7EB);
+        border-radius: 3px;
+        padding: 4px 3px;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        overflow: hidden;
+    }
+
+    .cp-thumb--active .cp-thumb-page {
+        border-color: #0D9488;
+    }
+
+    .cp-thumb-lines {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        flex: 1;
+    }
+
+    .cp-thumb-line {
+        height: 2px;
+        background: var(--border,#E5E7EB);
+        border-radius: 1px;
+        width: 100%;
+    }
+
+    .cp-thumb-num {
+        font-size: .6rem;
+        color: var(--text-muted,#9CA3AF);
+        font-weight: 600;
+    }
+
+    .cp-thumb--active .cp-thumb-num {
+        color: #0D9488;
+    }
+
+    .cp-add-pages-btn {
+        display: flex;
+        align-items: center;
+        gap: .3rem;
+        justify-content: center;
+        padding: .35rem;
+        border-radius: 6px;
+        border: 1.5px dashed var(--border,#D1D5DB);
+        background: transparent;
+        color: var(--text-muted,#9CA3AF);
+        font-size: .62rem;
+        cursor: pointer;
+        margin-top: .25rem;
+    }
+
+        .cp-add-pages-btn:hover {
+            border-color: #0D9488;
+            color: #0D9488;
+        }
+
+    /* Canvas area */
+    .cp-canvas-area {
+        display: flex;
+        flex-direction: column;
+        background: #525659;
+    }
+
+    .cp-canvas-toolbar {
+        display: flex;
+        align-items: center;
+        gap: .4rem;
+        padding: .5rem .875rem;
+        background: var(--surface,#fff);
+        border-bottom: 1px solid var(--border,#E5E7EB);
+    }
+
+    .cp-tool-btn {
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        border: 1px solid transparent;
+        background: transparent;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: var(--text-muted,#6B7280);
+        transition: all .12s;
+    }
+
+        .cp-tool-btn:hover {
+            background: var(--bg,#F3F4F6);
+            border-color: var(--border,#E5E7EB);
+            color: var(--text,#374151);
+        }
+
+    .cp-tool-btn--active {
+        background: var(--bg,#F3F4F6);
+        border-color: #0D9488;
+        color: #0D9488;
+    }
+
+    .cp-tool-divider {
+        width: 1px;
+        height: 18px;
+        background: var(--border,#E5E7EB);
+        margin: 0 .2rem;
+    }
+
+    .cp-zoom-label {
+        font-size: .75rem;
+        color: var(--text-muted,#6B7280);
+        min-width: 36px;
+        text-align: center;
+    }
+
+    .cp-canvas-wrap {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem;
+        overflow: auto;
+    }
+
+    .cp-preview-doc {
+        position: relative;
+        transform-origin: top center;
+        transition: transform .2s;
+    }
+
+    /* Crop overlay */
+    .cp-crop-overlay {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+    }
+
+    .cp-mask {
+        position: absolute;
+        background: rgba(0,0,0,.45);
+    }
+
+    .cp-mask--top {
+        top: 0;
+        left: 0;
+        right: 0;
+    }
+
+    .cp-mask--bottom {
+        bottom: 0;
+        left: 0;
+        right: 0;
+    }
+
+    .cp-mask--left {
+        left: 0;
+    }
+
+    .cp-mask--right {
+        right: 0;
+    }
+
+    .cp-crop-border {
+        position: absolute;
+        border: 2px solid #0D9488;
+        pointer-events: none;
+    }
+
+    .cp-handle {
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        background: #fff;
+        border: 2px solid #0D9488;
+        border-radius: 2px;
+    }
+
+    .cp-handle--tl {
+        top: -5px;
+        left: -5px;
+        cursor: nw-resize;
+    }
+
+    .cp-handle--tr {
+        top: -5px;
+        right: -5px;
+        cursor: ne-resize;
+    }
+
+    .cp-handle--bl {
+        bottom: -5px;
+        left: -5px;
+        cursor: sw-resize;
+    }
+
+    .cp-handle--br {
+        bottom: -5px;
+        right: -5px;
+        cursor: se-resize;
+    }
+
+    .cp-handle--t {
+        top: -5px;
+        left: 50%;
+        transform: translateX(-50%);
+        cursor: n-resize;
+    }
+
+    .cp-handle--b {
+        bottom: -5px;
+        left: 50%;
+        transform: translateX(-50%);
+        cursor: s-resize;
+    }
+
+    .cp-handle--l {
+        left: -5px;
+        top: 50%;
+        transform: translateY(-50%);
+        cursor: w-resize;
+    }
+
+    .cp-handle--r {
+        right: -5px;
+        top: 50%;
+        transform: translateY(-50%);
+        cursor: e-resize;
+    }
+
+    /* Settings panel */
+    .cp-settings {
+        border-left: 1px solid var(--border,#E5E7EB);
+        background: var(--surface,#fff);
+        padding: 1.25rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        overflow-y: auto;
+    }
+
+    .cp-settings-title {
+        font-size: .78rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        color: var(--text-muted,#6B7280);
+        padding-bottom: .625rem;
+        border-bottom: 1px solid var(--border,#E5E7EB);
+    }
+
+    .cp-setting-group {
+        display: flex;
+        flex-direction: column;
+        gap: .5rem;
+    }
+
+    .cp-setting-label {
+        font-size: .75rem;
+        font-weight: 600;
+        color: var(--text,#374151);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .cp-preset-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: .4rem;
+    }
+
+    .cp-preset-btn {
+        display: flex;
+        align-items: center;
+        gap: .4rem;
+        justify-content: center;
+        padding: .5rem .5rem;
+        border-radius: 8px;
+        border: 1.5px solid var(--border,#E5E7EB);
+        background: var(--bg,#F9FAFB);
+        color: var(--text,#374151);
+        font-size: .75rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all .12s;
+    }
+
+        .cp-preset-btn:hover {
+            border-color: #0D9488;
+            color: #0D9488;
+            background: #F0FDFA20;
+        }
+
+    .cp-preset-btn--auto {
+        border-color: #0D9488;
+        background: #F0FDFA;
+        color: #0D9488;
+        font-weight: 600;
+    }
+
+        .cp-preset-btn--auto:hover {
+            background: #CCFBF1;
+        }
+
+    .cp-divider {
+        height: 1px;
+        background: var(--border,#E5E7EB);
+        flex-shrink: 0;
+    }
+
+    .cp-margin-input-row {
+        display: flex;
+        align-items: center;
+        gap: .4rem;
+    }
+
+    .cp-margin-label {
+        font-size: .75rem;
+        color: var(--text-muted,#6B7280);
+        width: 44px;
+        flex-shrink: 0;
+    }
+
+    .cp-margin-input {
+        flex: 1;
+        padding: .4rem .5rem;
+        border: 1.5px solid var(--border,#E5E7EB);
+        border-radius: 7px;
+        font-size: .82rem;
+        background: var(--bg,#F9FAFB);
+        color: var(--text,#111827);
+        text-align: right;
+        outline: none;
+    }
+
+        .cp-margin-input:focus {
+            border-color: #0D9488;
+        }
+
+    .cp-margin-unit {
+        font-size: .72rem;
+        color: var(--text-muted,#9CA3AF);
+        flex-shrink: 0;
+    }
+
+    .cp-margin-dots {
+        font-size: .6rem;
+        color: var(--border,#D1D5DB);
+        flex-shrink: 0;
+    }
+
+    .cp-reset-link {
+        background: none;
+        border: none;
+        color: #0D9488;
+        font-size: .72rem;
+        cursor: pointer;
+        font-weight: 600;
+        text-decoration: underline;
+        padding: 0;
+    }
+
+    .cp-apply-row {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .cp-radio {
+        display: flex;
+        align-items: center;
+        gap: .35rem;
+        font-size: .8rem;
+        color: var(--text,#374151);
+        cursor: pointer;
+    }
+
+    .cp-pages-input {
+        width: 100%;
+        padding: .5rem .75rem;
+        border: 1.5px solid var(--border,#E5E7EB);
+        border-radius: 8px;
+        font-size: .82rem;
+        background: var(--bg,#F9FAFB);
+        color: var(--text,#111827);
+        box-sizing: border-box;
+    }
+
+        .cp-pages-input:focus {
+            outline: none;
+            border-color: #0D9488;
+        }
+
+    .cp-tip {
+        display: flex;
+        align-items: flex-start;
+        gap: .4rem;
+        font-size: .72rem;
+        color: var(--text-muted,#9CA3AF);
+        padding: .5rem .625rem;
+        background: var(--bg,#F9FAFB);
+        border-radius: 8px;
+        border: 1px solid var(--border,#E5E7EB);
+        line-height: 1.4;
+    }
+
+        .cp-tip strong {
+            color: var(--text,#374151);
+        }
+
+    .cp-apply-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: .5rem;
+        width: 100%;
+        padding: .75rem 1rem;
+        background: linear-gradient(135deg, #0D9488 0%, #047857 100%);
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        font-size: .88rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: opacity .15s, transform .15s;
+    }
+
+        .cp-apply-btn:hover:not(:disabled) {
+            opacity: .92;
+            transform: translateY(-1px);
+        }
+
+        .cp-apply-btn:disabled {
+            opacity: .45;
+            cursor: not-allowed;
+        }
+
+    .cp-no-cc {
+        font-size: .7rem;
+        color: var(--text-muted,#9CA3AF);
+        text-align: center;
+        margin: 0;
+    }
+
+    .cp-inline-error {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+        padding: .75rem 1.25rem;
+        background: #FEF2F2;
+        border-top: 1px solid #FECACA;
+        font-size: .82rem;
+        color: #DC2626;
+    }
+
+    /* ── Processing / Complete / Error ───────────────────── */
+    .cp-state-center {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 50vh;
+        padding: 2rem;
+    }
+
+    .cp-state-card {
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+        max-width: 380px;
+        position: relative;
+    }
+
+    .cp-proc-ring {
+        width: 72px;
+        height: 72px;
+        border-radius: 50%;
+        border: 3px solid #CCFBF1;
+        border-top-color: #0D9488;
+        animation: cp-spin .9s linear infinite;
+    }
+
+    @@keyframes cp-spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    .cp-state-card h2 {
+        font-size: 1.3rem;
+        font-weight: 700;
+        margin: 0;
+        color: var(--text,#111827);
+    }
+
+    .cp-state-card p {
+        font-size: .875rem;
+        color: var(--text-muted,#6B7280);
+        margin: 0;
+    }
+
+    .cp-proc-progress {
+        width: 240px;
+        height: 4px;
+        background: var(--border,#E5E7EB);
+        border-radius: 99px;
+        overflow: hidden;
+    }
+
+    .cp-proc-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #0D9488, #047857);
+        border-radius: 99px;
+        animation: cp-prog 2.5s ease-in-out forwards;
+    }
+
+    @@keyframes cp-prog {
+        from {
+            width: 0;
+        }
+
+        to {
+            width: 88%;
+        }
+    }
+
+    .cp-complete-icon {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        background: #DCFCE7;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .cp-complete-badges {
+        display: flex;
+        flex-direction: column;
+        gap: .35rem;
+        width: 100%;
+        padding: .875rem 1rem;
+        background: #F0FDF4;
+        border: 1px solid #BBF7D0;
+        border-radius: 10px;
+    }
+
+    .cp-complete-badge {
+        display: flex;
+        align-items: center;
+        gap: .4rem;
+        font-size: .78rem;
+        color: #15803D;
+        font-weight: 500;
+    }
+
+    .cp-download-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: .45rem;
+        width: 100%;
+        padding: .875rem 1.5rem;
+        background: linear-gradient(135deg, #16A34A, #15803D);
+        color: #fff;
+        border: none;
+        border-radius: 12px;
+        font-size: .95rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: opacity .15s;
+    }
+
+        .cp-download-btn:hover {
+            opacity: .92;
+        }
+
+    .cp-restart-btn {
+        background: none;
+        border: none;
+        color: var(--text-muted,#6B7280);
+        font-size: .85rem;
+        cursor: pointer;
+        text-decoration: underline;
+    }
+
+    /* ── FAQ ──────────────────────────────────────────────── */
+    .cp-faq {
+        max-width: 640px;
+        margin: 0 auto;
+        padding: 2rem 1.5rem 4rem;
+    }
+
+        .cp-faq h2 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--text,#111827);
+        }
+
+    .cp-faq-item {
+        border: 1px solid var(--border,#E5E7EB);
+        border-radius: 12px;
+        padding: .875rem 1.1rem;
+        margin-bottom: .5rem;
+        background: var(--surface,#fff);
+    }
+
+        .cp-faq-item summary {
+            font-weight: 600;
+            font-size: .875rem;
+            color: var(--text,#111827);
+            cursor: pointer;
+            list-style: none;
+        }
+
+            .cp-faq-item summary::-webkit-details-marker {
+                display: none;
+            }
+
+        .cp-faq-item p {
+            font-size: .82rem;
+            color: var(--text-muted,#6B7280);
+            line-height: 1.6;
+            margin: .625rem 0 0;
+        }
+</style>
 
 @code {
     private enum PageState { Upload, LargeFile, Configure, Processing, Complete, Error }
-
     private PageState CurrentState = PageState.Upload;
+
     private byte[]? _uploadedBytes;
     private byte[]? _resultBytes;
     private string _fileName = string.Empty;
@@ -220,8 +1235,13 @@
     private string? _largeFilePriceId;
     private string? _proMonthlyPriceId;
 
+    // Editor state
+    private int _pageCount = 0;
+    private int _currentPage = 1;
+    private int _zoomPercent = 100;
+    private string _activeTool = "select";
+
     // Crop settings
-    private string _unit = "mm";
     private float _marginTop;
     private float _marginRight;
     private float _marginBottom;
@@ -229,13 +1249,7 @@
     private string _scope = "all";
     private string _pageNumbersInput = string.Empty;
 
-    // Conversion factors to PDF points
-    private float ToPts(float value) => _unit switch
-    {
-        "mm" => value * 2.8346f,
-        "in" => value * 72f,
-        _ => value           // already pts
-    };
+    private float ToPts(float mm) => mm * 2.8346f;
 
     private bool CanProcess =>
         _uploadedBytes != null &&
@@ -247,36 +1261,22 @@
         {
             var addons = await ApiService.GetAsync<AddonsResponse>("api/subscription/addons");
             _largeFilePriceId = addons?.LargeFile?.PriceId;
-
             var plans = await ApiService.GetAsync<PlansResponse>("api/subscription/plans");
             _proMonthlyPriceId = plans?.Monthly?.PriceId;
         }
-        catch { /* buttons stay null — graceful degradation */ }
-    }
-
-    private void SetUnit(string unit)
-    {
-        _unit = unit;
-        // Reset inputs when switching unit — avoids confusing 72mm vs 72pt
-        _marginTop = _marginRight = _marginBottom = _marginLeft = 0;
+        catch { }
     }
 
     private async Task HandleFileSelected(IBrowserFile file)
     {
-        // Reset state without triggering re-render
         CurrentState = PageState.Upload;
-        _uploadedBytes = null;
-        _resultBytes = null;
-        _fileName = string.Empty;
-        _errorMessage = string.Empty;
+        _uploadedBytes = null; _resultBytes = null;
+        _fileName = string.Empty; _errorMessage = string.Empty;
 
         if (PaymentService.IsFileTooLargeForFree(file.Size))
         {
-            _largeFileSize = file.Size;
-            _largeFileName = file.Name;
-            CurrentState = PageState.LargeFile;
-            StateHasChanged();
-            return;
+            _largeFileSize = file.Size; _largeFileName = file.Name;
+            CurrentState = PageState.LargeFile; StateHasChanged(); return;
         }
 
         var validation = Validator.ValidatePdfFile(file);
@@ -290,89 +1290,81 @@
             await stream.CopyToAsync(ms);
             _uploadedBytes = ms.ToArray();
             _fileName = file.Name;
+
+            _pageCount = await ApiService.GetPageCountAsync(_uploadedBytes, file.Name);
+            _currentPage = 1;
             CurrentState = PageState.Configure;
             StateHasChanged();
+
+            await JS.InvokeVoidAsync("renderCropPreview", Convert.ToBase64String(_uploadedBytes), _currentPage);
         }
-        catch (Exception ex)
-        {
-            Toast.ShowError($"Could not read file: {ex.Message}");
-        }
+        catch (Exception ex) { Toast.ShowError($"Could not read file: {ex.Message}"); }
     }
+
+    private async Task GoToPage(int page)
+    {
+        if (page == _currentPage) return;
+        _currentPage = page;
+        if (_uploadedBytes != null)
+            await JS.InvokeVoidAsync("renderCropPreview", Convert.ToBase64String(_uploadedBytes), page);
+    }
+
+    private async Task PrevPage() { if (_currentPage > 1) await GoToPage(_currentPage - 1); }
+    private async Task NextPage() { if (_currentPage < _pageCount) await GoToPage(_currentPage + 1); }
+
+    private void ZoomIn() => _zoomPercent = Math.Min(200, _zoomPercent + 25);
+    private void ZoomOut() => _zoomPercent = Math.Max(50, _zoomPercent - 25);
+
+    private void AutoCrop() { _marginTop = 10; _marginRight = 10; _marginBottom = 10; _marginLeft = 10; }
+    private void SetNoMargin() { _marginTop = _marginRight = _marginBottom = _marginLeft = 0; }
+    private void SetPreset(float val, bool custom = false) { if (!custom) { _marginTop = _marginRight = _marginBottom = _marginLeft = val; } }
+    private void ResetMargins() => SetNoMargin();
 
     private async Task ProcessFile()
     {
         if (_uploadedBytes == null) return;
-
         CurrentState = PageState.Processing;
         _errorMessage = string.Empty;
         StateHasChanged();
-
         try
         {
-            // Convert UI units → PDF points for the API
-            var top = ToPts(_marginTop);
-            var right = ToPts(_marginRight);
-            var bottom = ToPts(_marginBottom);
-            var left = ToPts(_marginLeft);
-
             string? pageNumbers = _scope == "range" && !string.IsNullOrWhiteSpace(_pageNumbersInput)
-                ? _pageNumbersInput.Trim()
-                : null;
+                ? _pageNumbersInput.Trim() : null;
 
             _resultBytes = await ApiService.CropPdfAsync(
                 _uploadedBytes, _fileName,
-                top, right, bottom, left,
+                ToPts(_marginTop), ToPts(_marginRight),
+                ToPts(_marginBottom), ToPts(_marginLeft),
                 pageNumbers);
 
+            CurrentState = _resultBytes?.Length > 0 ? PageState.Complete : PageState.Error;
             if (_resultBytes == null || _resultBytes.Length == 0)
-            {
                 _errorMessage = "Crop failed — please check your margin values and try again.";
-                CurrentState = PageState.Error;
-            }
-            else
-            {
-                CurrentState = PageState.Complete;
-            }
+            else SessionUsage.RecordToolCompletion("Crop PDF");
         }
-        catch (Exception ex)
-        {
-            _errorMessage = $"Something went wrong: {ex.Message}";
-            CurrentState = PageState.Error;
-        }
-
+        catch (Exception ex) { _errorMessage = $"Something went wrong: {ex.Message}"; CurrentState = PageState.Error; }
         StateHasChanged();
     }
 
     private async Task DownloadFile()
     {
         if (_resultBytes == null) return;
-
-        var base64 = Convert.ToBase64String(_resultBytes);
         var outName = Path.GetFileNameWithoutExtension(_fileName) + "-cropped.pdf";
-        await JS.InvokeVoidAsync("downloadFile", outName, base64);
+        await JS.InvokeVoidAsync("downloadFile", outName, Convert.ToBase64String(_resultBytes));
     }
 
     private void Reset()
     {
         CurrentState = PageState.Upload;
-        _uploadedBytes = null;
-        _resultBytes = null;
-        _fileName = string.Empty;
-        _errorMessage = string.Empty;
+        _uploadedBytes = null; _resultBytes = null;
+        _fileName = string.Empty; _errorMessage = string.Empty;
         _marginTop = _marginRight = _marginBottom = _marginLeft = 0;
-        _scope = "all";
-        _pageNumbersInput = string.Empty;
+        _scope = "all"; _pageNumbersInput = string.Empty;
+        _pageCount = 0; _currentPage = 1; _zoomPercent = 100;
     }
 
-    // Local response classes for plan loading
-    private class PlansResponse
-    {
-        public PlanInfo? Monthly { get; set; }
-    }
-    private class AddonsResponse
-    {
-        public AddonInfo? LargeFile { get; set; }
-    }
+    private class PlansResponse { public PlanInfo? Monthly { get; set; } }
+    private class AddonsResponse { public AddonInfo? LargeFile { get; set; } }
     private class PlanInfo { public string PriceId { get; set; } = string.Empty; }
     private class AddonInfo { public string PriceId { get; set; } = string.Empty; }
 }

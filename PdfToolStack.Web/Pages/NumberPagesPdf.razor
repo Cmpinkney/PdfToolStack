@@ -6,223 +6,1365 @@
 @inject ToastService Toast
 @inject SessionUsageService SessionUsage
 
-
-<PageTitle>Number PDF Pages Free Online — Add Page Numbers to PDF</PageTitle>
-
+<PageTitle>Add Page Numbers to PDF Free Online | PdfToolStack</PageTitle>
 <HeadContent>
-    <meta name="description"
-          content="Add page numbers to your PDF free online. 
-                   Choose position and starting number. 
-                   No signup required." />
-    <meta name="keywords"
-          content="number pdf pages, add page numbers to pdf,
-                   pdf page numbers free, pdf pagination" />
-    <link rel="canonical"
-          href="https://pdftoolstack.com/number-pages" />
+    <meta name="description" content="Add page numbers to your PDF free online. Choose position, font, style and starting number. Instant preview. No signup required." />
+    <meta name="keywords" content="number pdf pages, add page numbers to pdf, pdf page numbers free, pdf pagination" />
+    <link rel="canonical" href="https://pdftoolstack.com/number-pages" />
 </HeadContent>
 
-<div class="tool-page">
-    <AdSlot Size="banner" />
-    <div class="tool-container">
-        <h1>Add Page Numbers to PDF</h1>
-        <p class="tool-subtitle">
-            Insert page numbers into your PDF for free.
-            No signup required. Files deleted within 1 hour.
-        </p>
+<div class="np-page">
 
-        @if (CurrentState == PageState.Upload)
-        {
-            <FileUpload OnFileSelected="HandleFileSelected"
-                        OnFileRemoved="HandleFileRemoved" />
-
-            @if (SelectedFile != null)
-            {
-                <div class="tool-options-panel">
-                    <div class="option-group">
-                        <label>Position</label>
-                        <select class="field-input"
-                                @bind="Position">
-                            <option value="bottom-center">
-                                Bottom Center
-                            </option>
-                            <option value="bottom-left">
-                                Bottom Left
-                            </option>
-                            <option value="bottom-right">
-                                Bottom Right
-                            </option>
-                            <option value="top-center">
-                                Top Center
-                            </option>
-                        </select>
-                    </div>
-                    <div class="option-group">
-                        <label>Start numbering from</label>
-                        <input type="number"
-                               class="field-input"
-                               min="1" max="999"
-                               @bind="StartNumber" />
-                    </div>
-                </div>
-                <button class="process-button"
-                        @onclick="ProcessFile">
-                    Add Page Numbers
-                </button>
-            }
-        }
-
-        @if (CurrentState == PageState.LargeFile)
-        {
-            <LargeFileUpgrade
-                FileSizeBytes="@(SelectedFile?.Size ?? 0)"
-                FileName="@(SelectedFile?.Name ?? "")"
-                ToolType="NumberPages"
-                OnCancel="Reset" />
-        }
-
-        @if (CurrentState == PageState.Processing)
-        {
-            <div class="processing-container">
-                <div class="spinner"></div>
-                <p>Adding page numbers...</p>
-            </div>
-        }
-
-        @if (CurrentState == PageState.Complete
-             && ResultBytes != null)
-        {
-            <AdSlot Size="rectangle" />
-            <div class="result-container">
-                <span class="result-icon">✅</span>
-                <h2>Page Numbers Added!</h2>
-                <p style="color: var(--gray);
-                           margin-bottom: 1.5rem;">
-                    Page numbers have been added to your PDF.
-                </p>
-                <button class="download-button"
-                        @onclick="DownloadFile">
-                    Download PDF
-                </button>
-                <button class="reset-button"
-                        @onclick="Reset">
-                    Number Another PDF
-                </button>
-            </div>
-        }
-
-        @if (CurrentState == PageState.Error)
-        {
-            <div class="error-container">
-                <span class="error-icon">❌</span>
-                <p class="error-message">@ErrorMessage</p>
-                <button class="reset-button"
-                        @onclick="Reset">
-                    Try Again
-                </button>
-            </div>
-        }
-    </div>
-
-    <div class="faq-section">
-        <h2>Frequently Asked Questions</h2>
-        <div class="faq-item">
-            <h3>Where can I place page numbers?</h3>
-            <p>You can place page numbers at the bottom
-               center, bottom left, bottom right, or
-               top center of each page.</p>
-        </div>
-        <div class="faq-item">
-            <h3>Can I start from a number other than 1?</h3>
-            <p>Yes — set any starting number you need.</p>
-        </div>
-        <div class="faq-item">
-            <h3>Is this tool free?</h3>
-            <p>Yes — completely free up to 25MB with no
-               signup required.</p>
-        </div>
-    </div>
-</div>
-
-@code {
-    private enum PageState
+    <!-- ── UPLOAD STATE ──────────────────────────────────────────────── -->
+    @if (CurrentState == PageState.Upload || CurrentState == PageState.LargeFile)
     {
-        Upload, Processing, Complete, Error, LargeFile
+        <div class="np-upload-hero">
+            <div class="np-upload-header">
+                <h1 class="np-title">Add <span class="np-title-accent">Page Numbers</span> to PDF</h1>
+                <p class="np-subtitle">Insert page numbers into your PDF in seconds. Free, secure, and easy to use.</p>
+                <div class="np-chips">
+                    <span class="np-chip">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                        Fully customizable — position, style &amp; format
+                    </span>
+                    <span class="np-chip">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                        Instant preview — see changes in real-time
+                    </span>
+                    <span class="np-chip">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
+                        100% secure — files deleted in 1 hour
+                    </span>
+                </div>
+            </div>
+
+            @if (CurrentState == PageState.LargeFile)
+            {
+                <LargeFileUpgrade FileSizeBytes="@(SelectedFile?.Size ?? 0)" FileName="@(SelectedFile?.Name ?? "")" ToolType="NumberPages" OnCancel="Reset" />
+            }
+            else
+            {
+                <div class="np-upload-area">
+                    <FileUpload OnFileSelected="HandleFileSelected" OnFileRemoved="HandleFileRemoved" />
+                    @if (SelectedFile != null)
+                    {
+                        <button class="np-open-btn" @onclick="OpenEditor">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>
+                            Open in Editor
+                        </button>
+                    }
+                </div>
+            }
+        </div>
     }
 
+    <!-- ── EDITOR STATE ──────────────────────────────────────────────── -->
+    @if (CurrentState == PageState.Editor)
+    {
+        <!-- Top bar -->
+        <div class="np-topbar">
+            <div class="np-topbar-left">
+                <button class="np-back-btn" @onclick="Reset">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+                    Back
+                </button>
+                <span class="np-filename">@(SelectedFile?.Name ?? "document.pdf")</span>
+                @if (TotalPages > 0)
+                {
+                    <span class="np-page-chip">@TotalPages pages</span>
+                }
+            </div>
+            <div class="np-topbar-center">
+                <button class="np-nav-btn" @onclick="PrevPage" disabled="@(PreviewPage <= 1)">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+                </button>
+                <span class="np-page-label">Page <strong>@PreviewPage</strong> of @TotalPages</span>
+                <button class="np-nav-btn" @onclick="NextPage" disabled="@(PreviewPage >= TotalPages)">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+                </button>
+            </div>
+            <div class="np-topbar-right">
+                <label class="np-preview-toggle">
+                    Show preview
+                    <input type="checkbox" @bind="_showPreview" />
+                </label>
+            </div>
+        </div>
+
+        <!-- Editor body -->
+        <div class="np-editor">
+
+            <!-- Page thumbnail sidebar -->
+            <div class="np-thumbs">
+                <div class="np-thumbs-label">Pages</div>
+                @for (int p = 1; p <= TotalPages; p++)
+                {
+                    var pg = p;
+                    <div class="np-thumb @(PreviewPage == pg ? "np-thumb--active" : "")" @onclick="() => GoToPage(pg)">
+                        <div class="np-thumb-doc">
+                            <div class="np-thumb-page">
+                                <div class="np-thumb-lines">
+                                    <div class="np-thumb-line"></div>
+                                    <div class="np-thumb-line" style="width:70%"></div>
+                                    <div class="np-thumb-line"></div>
+                                    <div class="np-thumb-line" style="width:80%"></div>
+                                </div>
+                                <span class="np-thumb-pgnum @(Position.Contains("top") ? "np-thumb-pgnum--top" : "np-thumb-pgnum--bottom")">
+                                    @(StartNumber + pg - 1)
+                                </span>
+                            </div>
+                        </div>
+                        <span class="np-thumb-num">@pg</span>
+                    </div>
+                }
+            </div>
+
+            <!-- Preview canvas -->
+            <div class="np-preview-area">
+                @if (_showPreview && UploadedBytes != null)
+                {
+                    <div class="np-preview-hint">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+                        Live preview — page numbers update as you change settings
+                    </div>
+                    <div class="np-preview-wrap">
+                        <canvas id="npPdfCanvas" style="display:block;max-width:100%;border-radius:6px;box-shadow:0 8px 32px rgba(0,0,0,.35);"></canvas>
+                        <!-- Overlaid page number indicator -->
+                        <div class="np-preview-number @GetPositionClass()" style="font-family:@FontFamily;font-size:@(FontSize + 2)px;color:@FontColor">
+                            @GetPreviewNumber()
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="np-preview-placeholder">
+                        <div class="np-preview-mock">
+                            <div class="np-mock-lines">
+                                <div class="np-mock-line" style="width:85%"></div>
+                                <div class="np-mock-line" style="width:70%"></div>
+                                <div class="np-mock-line" style="width:90%"></div>
+                                <div class="np-mock-line" style="width:60%"></div>
+                                <div class="np-mock-line" style="width:80%"></div>
+                                <div class="np-mock-line" style="width:75%"></div>
+                                <div class="np-mock-line" style="width:88%"></div>
+                            </div>
+                            <div class="np-mock-number @GetPositionClass()" style="font-family:@FontFamily;font-size:@FontSize px;color:@FontColor">
+                                @GetPreviewNumber()
+                            </div>
+                        </div>
+                        <p class="np-preview-placeholder-hint">Enable "Show preview" to see your PDF</p>
+                    </div>
+                }
+            </div>
+
+            <!-- Settings panel -->
+            <div class="np-settings">
+                <div class="np-settings-title">Page Number Settings</div>
+
+                <!-- Position 3x3 grid -->
+                <div class="np-setting-group">
+                    <label class="np-setting-label">Position</label>
+                    <div class="np-position-grid">
+                        @foreach (var pos in Positions)
+                        {
+                            <button class="np-pos-btn @(Position == pos.Value ? "np-pos-btn--active" : "")"
+                                    title="@pos.Label"
+                                    @onclick="() => SelectPosition(pos.Value)">
+                                <div class="np-pos-dot @GetPosDotClass(pos.Value)"></div>
+                            </button>
+                        }
+                    </div>
+                </div>
+
+                <!-- Start number -->
+                <div class="np-setting-group">
+                    <label class="np-setting-label">Start numbering from</label>
+                    <div class="np-number-input-wrap">
+                        <button class="np-num-btn" @onclick="() => StartNumber = Math.Max(1, StartNumber - 1)">−</button>
+                        <input type="number" class="np-number-input" min="1" max="999"
+                               @bind="StartNumber" @bind:event="oninput" />
+                        <button class="np-num-btn" @onclick="() => StartNumber = Math.Min(999, StartNumber + 1)">+</button>
+                    </div>
+                </div>
+
+                <!-- Number style -->
+                <div class="np-setting-group">
+                    <label class="np-setting-label">Number style</label>
+                    <select class="np-select" @bind="NumberStyle">
+                        <option value="numeric">1, 2, 3, ...</option>
+                        <option value="roman">i, ii, iii, ...</option>
+                        <option value="Roman">I, II, III, ...</option>
+                        <option value="alpha">a, b, c, ...</option>
+                        <option value="page-of">Page 1 of @TotalPages</option>
+                    </select>
+                </div>
+
+                <!-- Font -->
+                <div class="np-setting-group">
+                    <label class="np-setting-label">Font</label>
+                    <div class="np-font-row">
+                        <select class="np-select" style="flex:1" @bind="FontFamily">
+                            <option value="Helvetica">Helvetica</option>
+                            <option value="Times New Roman">Times New Roman</option>
+                            <option value="Courier">Courier</option>
+                            <option value="Arial">Arial</option>
+                        </select>
+                        <select class="np-select np-select--small" @bind="FontSize">
+                            @foreach (var s in new[] { 8, 9, 10, 11, 12, 14 })
+                            {
+                                <option value="@s">@s</option>
+                            }
+                        </select>
+                        <input type="color" class="np-color-picker" @bind="FontColor" title="Font color" />
+                    </div>
+                </div>
+
+                <!-- Margin -->
+                <div class="np-setting-group">
+                    <label class="np-setting-label">Margin from edge</label>
+                    <div class="np-margin-row">
+                        <input type="range" class="np-slider" min="5" max="40" @bind="MarginMm" @bind:event="oninput" />
+                        <span class="np-margin-val">@MarginMm mm</span>
+                    </div>
+                </div>
+
+                <!-- Apply to -->
+                <div class="np-setting-group">
+                    <label class="np-setting-label">Apply to</label>
+                    <div class="np-apply-row">
+                        <label class="np-radio">
+                            <input type="radio" name="apply" value="all" checked="@(ApplyTo == "all")"
+                                   @onchange='() => ApplyTo = "all"' />
+                            All pages
+                        </label>
+                        <label class="np-radio">
+                            <input type="radio" name="apply" value="specific" checked="@(ApplyTo == "specific")"
+                                   @onchange='() => ApplyTo = "specific"' />
+                            Specific pages
+                        </label>
+                    </div>
+                    @if (ApplyTo == "specific")
+                    {
+                        <input class="np-pages-input" placeholder="e.g. 1-3, 5, 7-10"
+                               @bind="SpecificPages" />
+                    }
+                </div>
+
+                <!-- CTA -->
+                <button class="np-apply-btn" @onclick="ProcessFile">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+                    Add Page Numbers &amp; Download
+                </button>
+                <p class="np-no-cc">No credit card required</p>
+
+                <div class="np-tip">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+                    <span>
+                        Need different numbering for sections?
+                        <button class="np-tip-link">Try Advanced Mode</button>
+                    </span>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- ── PROCESSING STATE ──────────────────────────────────────────── -->
+    @if (CurrentState == PageState.Processing)
+    {
+        <div class="np-processing">
+            <div class="np-processing-card">
+                <div class="np-processing-ring"></div>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4338CA" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="position:absolute"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></svg>
+                <h2>Adding page numbers...</h2>
+                <p>Applying to all @TotalPages pages</p>
+                <div class="np-progress"><div class="np-progress-fill"></div></div>
+            </div>
+        </div>
+    }
+
+    <!-- ── COMPLETE STATE ────────────────────────────────────────────── -->
+    @if (CurrentState == PageState.Complete && ResultBytes != null)
+    {
+        <div class="np-complete">
+            <div class="np-complete-card">
+                <div class="np-complete-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                </div>
+                <h2>Page Numbers Added!</h2>
+                <p>@TotalPages pages numbered starting from @StartNumber</p>
+                <button class="np-download-btn" @onclick="DownloadFile">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+                    Download PDF
+                </button>
+                <button class="np-restart-btn" @onclick="Reset">Number Another PDF</button>
+            </div>
+        </div>
+    }
+
+    <!-- ── ERROR STATE ───────────────────────────────────────────────── -->
+    @if (CurrentState == PageState.Error)
+    {
+        <div class="np-complete">
+            <div class="np-complete-card">
+                <div class="np-complete-icon" style="background:#FEE2E2;">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" /></svg>
+                </div>
+                <h2>Something went wrong</h2>
+                <p style="color:var(--text-muted,#6B7280)">@ErrorMessage</p>
+                <button class="np-restart-btn" @onclick="Reset">Try Again</button>
+            </div>
+        </div>
+    }
+
+    <!-- ── FAQ ──────────────────────────────────────────────────────── -->
+    @if (CurrentState == PageState.Upload)
+    {
+        <div class="np-faq">
+            <h2>Frequently Asked Questions</h2>
+            @foreach (var (q, a) in new[] {
+                ("Where can I place page numbers?", "You can place page numbers at any of 9 positions: top-left, top-center, top-right, middle-left, middle-right, bottom-left, bottom-center, or bottom-right."),
+                ("Can I start from a number other than 1?", "Yes — set any starting number. Useful for documents that are part of a larger set."),
+                ("Can I number only specific pages?", "Yes — use Specific Pages mode and enter ranges like 1-3, 5, 7-10."),
+                ("Is this tool free?", "Yes — completely free up to 25MB with no signup required."),
+                })
+            {
+                <details class="np-faq-item">
+                    <summary>@q</summary>
+                    <p>@a</p>
+                </details>
+            }
+        </div>
+    }
+
+</div>
+
+<style>
+    /* ════════════════════════════════════════════════════════
+       Add Page Numbers — Enterprise Editor
+    ════════════════════════════════════════════════════════ */
+    .np-page {
+        min-height: 100vh;
+    }
+
+    /* ── Upload hero ──────────────────────────────────────── */
+    .np-upload-hero {
+        max-width: 680px;
+        margin: 0 auto;
+        padding: 2.5rem 1.5rem 3rem;
+    }
+
+    .np-upload-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .np-title {
+        font-size: clamp(1.8rem, 4vw, 2.6rem);
+        font-weight: 800;
+        color: var(--text, #111827);
+        letter-spacing: -.03em;
+        margin: 0 0 .75rem;
+    }
+
+    .np-title-accent {
+        color: #4338CA;
+    }
+
+    .np-subtitle {
+        font-size: 1rem;
+        color: var(--text-muted, #6B7280);
+        line-height: 1.6;
+        margin: 0 0 1.25rem;
+    }
+
+    .np-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .5rem;
+        justify-content: center;
+    }
+
+    .np-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: .35rem;
+        font-size: .75rem;
+        font-weight: 500;
+        color: var(--text-muted, #6B7280);
+        background: var(--bg, #F9FAFB);
+        border: 1px solid var(--border, #E5E7EB);
+        padding: 4px 12px;
+        border-radius: 20px;
+    }
+
+    .np-upload-area {
+        display: flex;
+        flex-direction: column;
+        gap: .75rem;
+    }
+
+    .np-open-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: .45rem;
+        width: 100%;
+        padding: .875rem;
+        background: linear-gradient(135deg, #4338CA 0%, #6D28D9 100%);
+        color: #fff;
+        border: none;
+        border-radius: 12px;
+        font-size: .95rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: opacity .15s, transform .15s;
+    }
+
+        .np-open-btn:hover {
+            opacity: .92;
+            transform: translateY(-1px);
+        }
+
+    /* ── Top bar ──────────────────────────────────────────── */
+    .np-topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: .625rem 1.25rem;
+        background: var(--surface, #fff);
+        border-bottom: 1px solid var(--border, #E5E7EB);
+        gap: 1rem;
+        position: sticky;
+        top: 64px;
+        z-index: 50;
+    }
+
+    .np-topbar-left {
+        display: flex;
+        align-items: center;
+        gap: .75rem;
+    }
+
+    .np-topbar-center {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+    }
+
+    .np-topbar-right {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+    }
+
+    .np-back-btn {
+        display: flex;
+        align-items: center;
+        gap: .3rem;
+        padding: .375rem .75rem;
+        border-radius: 8px;
+        border: 1px solid var(--border, #E5E7EB);
+        background: var(--bg, #F9FAFB);
+        color: var(--text, #374151);
+        font-size: .8rem;
+        font-weight: 500;
+        cursor: pointer;
+    }
+
+        .np-back-btn:hover {
+            background: var(--border, #E5E7EB);
+        }
+
+    .np-filename {
+        font-size: .82rem;
+        font-weight: 600;
+        color: var(--text, #374151);
+        max-width: 220px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .np-page-chip {
+        font-size: .72rem;
+        font-weight: 600;
+        background: var(--bg, #F3F4F6);
+        border: 1px solid var(--border, #E5E7EB);
+        padding: 2px 8px;
+        border-radius: 20px;
+        color: var(--text-muted, #6B7280);
+    }
+
+    .np-nav-btn {
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        border: 1px solid var(--border, #E5E7EB);
+        background: var(--bg, #F9FAFB);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+    }
+
+        .np-nav-btn:hover:not(:disabled) {
+            background: var(--border, #E5E7EB);
+        }
+
+        .np-nav-btn:disabled {
+            opacity: .35;
+            cursor: not-allowed;
+        }
+
+    .np-page-label {
+        font-size: .82rem;
+        color: var(--text-muted, #6B7280);
+        white-space: nowrap;
+    }
+
+        .np-page-label strong {
+            color: var(--text, #111827);
+        }
+
+    .np-preview-toggle {
+        display: flex;
+        align-items: center;
+        gap: .4rem;
+        font-size: .78rem;
+        color: var(--text-muted, #6B7280);
+        cursor: pointer;
+    }
+
+    /* ── Editor layout ────────────────────────────────────── */
+    .np-editor {
+        display: grid;
+        grid-template-columns: 80px 1fr 260px;
+        min-height: calc(100vh - 130px);
+    }
+
+    @@media (max-width: 900px) {
+        .np-editor {
+            grid-template-columns: 70px 1fr;
+        }
+
+        .np-settings {
+            display: none;
+        }
+    }
+
+    /* Thumbnails */
+    .np-thumbs {
+        border-right: 1px solid var(--border, #E5E7EB);
+        background: var(--bg, #F9FAFB);
+        padding: .75rem .4rem;
+        display: flex;
+        flex-direction: column;
+        gap: .4rem;
+    }
+
+    .np-thumbs-label {
+        font-size: .62rem;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        font-weight: 700;
+        color: var(--text-muted, #9CA3AF);
+        text-align: center;
+        margin-bottom: .25rem;
+    }
+
+    .np-thumb {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: .2rem;
+        padding: .35rem .2rem;
+        border-radius: 6px;
+        cursor: pointer;
+        border: 1.5px solid transparent;
+        transition: background .1s;
+    }
+
+        .np-thumb:hover {
+            background: var(--border, #E5E7EB20);
+        }
+
+    .np-thumb--active {
+        border-color: #4338CA;
+        background: #EDE9FE15;
+    }
+
+    .np-thumb-num {
+        font-size: .6rem;
+        color: var(--text-muted, #9CA3AF);
+        font-weight: 600;
+    }
+
+    .np-thumb--active .np-thumb-num {
+        color: #4338CA;
+    }
+
+    .np-thumb-page {
+        position: relative;
+        width: 36px;
+        height: 46px;
+        background: var(--surface, #fff);
+        border: 1.5px solid var(--border, #E5E7EB);
+        border-radius: 3px;
+        padding: 4px 3px;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        overflow: hidden;
+    }
+
+    .np-thumb--active .np-thumb-page {
+        border-color: #4338CA;
+    }
+
+    .np-thumb-lines {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        flex: 1;
+    }
+
+    .np-thumb-line {
+        height: 2px;
+        background: var(--border, #E5E7EB);
+        border-radius: 1px;
+        width: 100%;
+    }
+
+    .np-thumb-pgnum {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 5px;
+        font-weight: 700;
+        color: #4338CA;
+        white-space: nowrap;
+        line-height: 1;
+    }
+
+    .np-thumb-pgnum--bottom {
+        bottom: 3px;
+    }
+
+    .np-thumb-pgnum--top {
+        top: 3px;
+    }
+
+    /* Preview area */
+    .np-preview-area {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background: #525659;
+        padding: 1.5rem 1rem;
+        gap: .75rem;
+    }
+
+    .np-preview-hint {
+        display: flex;
+        align-items: center;
+        gap: .4rem;
+        font-size: .72rem;
+        color: rgba(255,255,255,.6);
+        background: rgba(0,0,0,.3);
+        padding: 4px 12px;
+        border-radius: 20px;
+    }
+
+    .np-preview-wrap {
+        position: relative;
+        display: inline-block;
+    }
+
+    /* Page number overlay on preview */
+    .np-preview-number {
+        position: absolute;
+        font-weight: 600;
+        pointer-events: none;
+        padding: 2px 6px;
+        background: rgba(67,56,202,.15);
+        border-radius: 4px;
+        border: 1px dashed rgba(67,56,202,.4);
+        white-space: nowrap;
+    }
+
+    .np-pos-tl {
+        top: 12px;
+        left: 12px;
+    }
+
+    .np-pos-tc {
+        top: 12px;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+
+    .np-pos-tr {
+        top: 12px;
+        right: 12px;
+    }
+
+    .np-pos-bl {
+        bottom: 12px;
+        left: 12px;
+    }
+
+    .np-pos-bc {
+        bottom: 12px;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+
+    .np-pos-br {
+        bottom: 12px;
+        right: 12px;
+    }
+
+    .np-pos-ml {
+        top: 50%;
+        left: 12px;
+        transform: translateY(-50%);
+    }
+
+    .np-pos-mr {
+        top: 50%;
+        right: 12px;
+        transform: translateY(-50%);
+    }
+
+    /* Mock preview placeholder */
+    .np-preview-placeholder {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: .75rem;
+        width: 100%;
+        max-width: 480px;
+    }
+
+    .np-preview-placeholder-hint {
+        font-size: .72rem;
+        color: rgba(255,255,255,.5);
+    }
+
+    .np-preview-mock {
+        position: relative;
+        width: 100%;
+        max-width: 420px;
+        background: #fff;
+        border-radius: 6px;
+        padding: 2rem 2rem 3rem;
+        box-shadow: 0 8px 32px rgba(0,0,0,.35);
+        min-height: 320px;
+    }
+
+    .np-mock-lines {
+        display: flex;
+        flex-direction: column;
+        gap: .5rem;
+    }
+
+    .np-mock-line {
+        height: 10px;
+        background: #E5E7EB;
+        border-radius: 4px;
+    }
+
+    .np-mock-number {
+        position: absolute;
+        font-weight: 600;
+        pointer-events: none;
+        padding: 2px 6px;
+        background: rgba(67,56,202,.1);
+        border-radius: 4px;
+        border: 1px dashed rgba(67,56,202,.4);
+    }
+
+    /* Settings panel */
+    .np-settings {
+        border-left: 1px solid var(--border, #E5E7EB);
+        background: var(--surface, #fff);
+        padding: 1.25rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        overflow-y: auto;
+    }
+
+    .np-settings-title {
+        font-size: .78rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        color: var(--text-muted, #6B7280);
+        padding-bottom: .625rem;
+        border-bottom: 1px solid var(--border, #E5E7EB);
+    }
+
+    .np-setting-group {
+        display: flex;
+        flex-direction: column;
+        gap: .5rem;
+    }
+
+    .np-setting-label {
+        font-size: .75rem;
+        font-weight: 600;
+        color: var(--text, #374151);
+    }
+
+    /* 3x3 Position grid */
+    .np-position-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: .3rem;
+        background: var(--bg, #F9FAFB);
+        border: 1px solid var(--border, #E5E7EB);
+        border-radius: 12px;
+        padding: .5rem;
+    }
+
+    .np-pos-btn {
+        aspect-ratio: 1;
+        border-radius: 8px;
+        border: 1.5px solid var(--border, #E5E7EB);
+        background: var(--surface, #fff);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all .12s;
+        padding: .35rem;
+    }
+
+        .np-pos-btn:hover {
+            border-color: #4338CA;
+            background: #EDE9FE20;
+        }
+
+    .np-pos-btn--active {
+        border-color: #4338CA;
+        background: #EDE9FE;
+    }
+
+    .np-pos-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--border, #D1D5DB);
+        transition: background .12s;
+    }
+
+    .np-pos-btn--active .np-pos-dot {
+        background: #4338CA;
+    }
+
+    .np-pos-btn:hover .np-pos-dot {
+        background: #6D28D9;
+    }
+
+    /* Number input */
+    .np-number-input-wrap {
+        display: flex;
+        align-items: center;
+        border: 1.5px solid var(--border, #E5E7EB);
+        border-radius: 8px;
+        overflow: hidden;
+        background: var(--bg, #F9FAFB);
+    }
+
+    .np-num-btn {
+        width: 36px;
+        height: 36px;
+        border: none;
+        background: var(--bg, #F3F4F6);
+        color: var(--text, #374151);
+        font-size: 1.1rem;
+        cursor: pointer;
+        transition: background .1s;
+    }
+
+        .np-num-btn:hover {
+            background: var(--border, #E5E7EB);
+        }
+
+    .np-number-input {
+        flex: 1;
+        border: none;
+        background: transparent;
+        text-align: center;
+        font-size: .9rem;
+        font-weight: 600;
+        color: var(--text, #111827);
+        padding: .375rem 0;
+        outline: none;
+    }
+
+    /* Font row */
+    .np-font-row {
+        display: flex;
+        gap: .4rem;
+        align-items: center;
+    }
+
+    .np-select {
+        padding: .45rem .625rem;
+        border: 1.5px solid var(--border, #E5E7EB);
+        border-radius: 8px;
+        font-size: .8rem;
+        background: var(--bg, #F9FAFB);
+        color: var(--text, #111827);
+        cursor: pointer;
+        flex: 1;
+    }
+
+    .np-select--small {
+        flex: 0 0 52px;
+    }
+
+    .np-color-picker {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        border: 1.5px solid var(--border, #E5E7EB);
+        padding: 2px;
+        cursor: pointer;
+        background: none;
+        flex-shrink: 0;
+    }
+
+    /* Margin slider */
+    .np-margin-row {
+        display: flex;
+        align-items: center;
+        gap: .75rem;
+    }
+
+    .np-slider {
+        flex: 1;
+        accent-color: #4338CA;
+    }
+
+    .np-margin-val {
+        font-size: .78rem;
+        font-weight: 600;
+        color: var(--text, #374151);
+        white-space: nowrap;
+        min-width: 40px;
+        text-align: right;
+    }
+
+    /* Apply to */
+    .np-apply-row {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .np-radio {
+        display: flex;
+        align-items: center;
+        gap: .35rem;
+        font-size: .82rem;
+        color: var(--text, #374151);
+        cursor: pointer;
+    }
+
+    .np-pages-input {
+        width: 100%;
+        padding: .5rem .75rem;
+        border: 1.5px solid var(--border, #E5E7EB);
+        border-radius: 8px;
+        font-size: .82rem;
+        background: var(--bg, #F9FAFB);
+        color: var(--text, #111827);
+        box-sizing: border-box;
+    }
+
+        .np-pages-input::placeholder {
+            color: var(--text-muted, #9CA3AF);
+        }
+
+        .np-pages-input:focus {
+            outline: none;
+            border-color: #4338CA;
+        }
+
+    /* Apply btn */
+    .np-apply-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: .5rem;
+        width: 100%;
+        padding: .75rem 1rem;
+        background: linear-gradient(135deg, #4338CA 0%, #6D28D9 100%);
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        font-size: .88rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: opacity .15s, transform .15s;
+    }
+
+        .np-apply-btn:hover {
+            opacity: .92;
+            transform: translateY(-1px);
+        }
+
+    .np-no-cc {
+        font-size: .7rem;
+        color: var(--text-muted, #9CA3AF);
+        text-align: center;
+        margin: 0;
+    }
+
+    .np-tip {
+        display: flex;
+        align-items: flex-start;
+        gap: .4rem;
+        font-size: .72rem;
+        color: var(--text-muted, #9CA3AF);
+        padding: .5rem .625rem;
+        background: var(--bg, #F9FAFB);
+        border-radius: 8px;
+        border: 1px solid var(--border, #E5E7EB);
+        line-height: 1.4;
+    }
+
+    .np-tip-link {
+        background: none;
+        border: none;
+        color: #4338CA;
+        font-size: .72rem;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: underline;
+        padding: 0;
+    }
+
+    /* ── Processing ───────────────────────────────────────── */
+    .np-processing {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 50vh;
+        padding: 2rem;
+    }
+
+    .np-processing-card {
+        position: relative;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: .875rem;
+        max-width: 320px;
+    }
+
+    .np-processing-ring {
+        position: absolute;
+        top: -22px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 72px;
+        height: 72px;
+        border-radius: 50%;
+        border: 3px solid #EDE9FE;
+        border-top-color: #4338CA;
+        animation: np-spin .9s linear infinite;
+    }
+
+    @@keyframes np-spin {
+        to {
+            transform: translateX(-50%) rotate(360deg);
+        }
+    }
+
+    .np-processing-card h2 {
+        font-size: 1.2rem;
+        font-weight: 700;
+        margin: 2.5rem 0 0;
+        color: var(--text,#111827);
+    }
+
+    .np-processing-card p {
+        font-size: .875rem;
+        color: var(--text-muted,#6B7280);
+        margin: 0;
+    }
+
+    .np-progress {
+        width: 240px;
+        height: 4px;
+        background: var(--border, #E5E7EB);
+        border-radius: 99px;
+        overflow: hidden;
+    }
+
+    .np-progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #4338CA, #6D28D9);
+        border-radius: 99px;
+        animation: np-prog 2.5s ease-in-out forwards;
+    }
+
+    @@keyframes np-prog {
+        from {
+            width: 0;
+        }
+
+        to {
+            width: 88%;
+        }
+    }
+
+    /* ── Complete ─────────────────────────────────────────── */
+    .np-complete {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 50vh;
+        padding: 2rem;
+    }
+
+    .np-complete-card {
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+        max-width: 380px;
+    }
+
+    .np-complete-icon {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        background: #DCFCE7;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .np-complete-card h2 {
+        font-size: 1.4rem;
+        font-weight: 800;
+        margin: 0;
+        color: var(--text,#111827);
+    }
+
+    .np-complete-card p {
+        font-size: .875rem;
+        color: var(--text-muted,#6B7280);
+        margin: 0;
+    }
+
+    .np-download-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: .45rem;
+        width: 100%;
+        padding: .875rem 1.5rem;
+        background: linear-gradient(135deg, #16A34A, #15803D);
+        color: #fff;
+        border: none;
+        border-radius: 12px;
+        font-size: .95rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: opacity .15s, transform .15s;
+    }
+
+        .np-download-btn:hover {
+            opacity: .92;
+            transform: translateY(-1px);
+        }
+
+    .np-restart-btn {
+        background: none;
+        border: none;
+        color: var(--text-muted, #6B7280);
+        font-size: .85rem;
+        cursor: pointer;
+        text-decoration: underline;
+    }
+
+    /* ── FAQ ──────────────────────────────────────────────── */
+    .np-faq {
+        max-width: 640px;
+        margin: 0 auto;
+        padding: 2rem 1.5rem 4rem;
+    }
+
+        .np-faq h2 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--text,#111827);
+        }
+
+    .np-faq-item {
+        border: 1px solid var(--border,#E5E7EB);
+        border-radius: 12px;
+        padding: .875rem 1.1rem;
+        margin-bottom: .5rem;
+        background: var(--surface,#fff);
+    }
+
+        .np-faq-item summary {
+            font-weight: 600;
+            font-size: .875rem;
+            color: var(--text,#111827);
+            cursor: pointer;
+            list-style: none;
+        }
+
+            .np-faq-item summary::-webkit-details-marker {
+                display: none;
+            }
+
+        .np-faq-item p {
+            font-size: .82rem;
+            color: var(--text-muted,#6B7280);
+            line-height: 1.6;
+            margin: .625rem 0 0;
+        }
+</style>
+
+@code {
+    private enum PageState { Upload, Editor, Processing, Complete, Error, LargeFile }
     private PageState CurrentState = PageState.Upload;
+
     private IBrowserFile? SelectedFile;
     private byte[]? UploadedBytes;
     private byte[]? ResultBytes;
     private string? ErrorMessage;
+
+    // Settings
     private string Position = "bottom-center";
     private int StartNumber = 1;
+    private string NumberStyle = "numeric";
+    private string FontFamily = "Helvetica";
+    private int FontSize = 10;
+    private string FontColor = "#000000";
+    private int MarginMm = 15;
+    private string ApplyTo = "all";
+    private string SpecificPages = string.Empty;
 
-    [SupplyParameterFromQuery]
-    private string? Paid { get; set; }
+    // Editor state
+    private int TotalPages = 0;
+    private int PreviewPage = 1;
+    private bool _showPreview = true;
 
-    protected override void OnInitialized()
+    [SupplyParameterFromQuery] private string? Paid { get; set; }
+    protected override void OnInitialized() { if (Paid == "true") CurrentState = PageState.Upload; }
+
+    private record PositionDef(string Value, string Label);
+    private readonly PositionDef[] Positions = new[]
     {
-        if (Paid == "true")
-            CurrentState = PageState.Upload;
+        new PositionDef("top-left",      "Top Left"),
+        new PositionDef("top-center",    "Top Center"),
+        new PositionDef("top-right",     "Top Right"),
+        new PositionDef("middle-left",   "Middle Left"),
+        new PositionDef("center",        "Center"),
+        new PositionDef("middle-right",  "Middle Right"),
+        new PositionDef("bottom-left",   "Bottom Left"),
+        new PositionDef("bottom-center", "Bottom Center"),
+        new PositionDef("bottom-right",  "Bottom Right"),
+    };
+
+    private string GetPositionClass() => Position switch
+    {
+        "top-left" => "np-pos-tl",
+        "top-center" => "np-pos-tc",
+        "top-right" => "np-pos-tr",
+        "middle-left" => "np-pos-ml",
+        "middle-right" => "np-pos-mr",
+        "bottom-left" => "np-pos-bl",
+        "bottom-center" => "np-pos-bc",
+        "bottom-right" => "np-pos-br",
+        _ => "np-pos-bc",
+    };
+
+    private string GetPosDotClass(string pos) => Position == pos ? "np-pos-dot" : "np-pos-dot";
+
+    private string GetPreviewNumber()
+    {
+        var n = StartNumber + PreviewPage - 1;
+        return NumberStyle switch
+        {
+            "roman" => ToRoman(n).ToLower(),
+            "Roman" => ToRoman(n),
+            "alpha" => ((char)('a' + (n - 1) % 26)).ToString(),
+            "page-of" => $"Page {n} of {TotalPages}",
+            _ => n.ToString(),
+        };
     }
+
+    private static string ToRoman(int n)
+    {
+        if (n <= 0) return n.ToString();
+        var vals = new[] { 1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1 };
+        var syms = new[] { "M", "CM", "D", "CD", "C", "XC", "L", "XL", "X", "IX", "V", "IV", "I" };
+        var sb = new System.Text.StringBuilder();
+        for (int i = 0; i < vals.Length; i++)
+            while (n >= vals[i]) { sb.Append(syms[i]); n -= vals[i]; }
+        return sb.ToString();
+    }
+
+    private void SelectPosition(string pos) { Position = pos; }
 
     private async Task HandleFileSelected(IBrowserFile file)
     {
-        SelectedFile = null;
-        UploadedBytes = null;
-        ErrorMessage = null;
-
+        SelectedFile = null; UploadedBytes = null; ErrorMessage = null;
         var validation = Validator.ValidatePdfFile(file);
-        if (!validation.IsValid)
-        {
-            Toast.ShowError(validation.Message!);
-            return;
-        }
-        if (validation.IsWarning)
-            Toast.ShowWarning(validation.Message!);
-
+        if (!validation.IsValid) { Toast.ShowError(validation.Message!); return; }
+        if (validation.IsWarning) Toast.ShowWarning(validation.Message!);
         try
         {
-            using var stream = file.OpenReadStream(
-                maxAllowedSize: 524288000);
+            using var stream = file.OpenReadStream(maxAllowedSize: 524288000);
             using var ms = new MemoryStream();
             await stream.CopyToAsync(ms);
             UploadedBytes = ms.ToArray();
-
             var bytesVal = Validator.ValidatePdfBytes(UploadedBytes);
-            if (!bytesVal.IsValid)
-            {
-                Toast.ShowError(bytesVal.Message!);
-                UploadedBytes = null;
-                return;
-            }
-            if (bytesVal.IsWarning)
-                Toast.ShowWarning(bytesVal.Message!);
-
-            if (PaymentService.IsFileTooLargeForFree(file.Size))
-            {
-                CurrentState = PageState.LargeFile;
-                StateHasChanged();
-                return;
-            }
-
+            if (!bytesVal.IsValid) { Toast.ShowError(bytesVal.Message!); UploadedBytes = null; return; }
+            if (PaymentService.IsFileTooLargeForFree(file.Size)) { CurrentState = PageState.LargeFile; StateHasChanged(); return; }
             SelectedFile = file;
-            Toast.ShowSuccess(
-                $"File ready — {Validator.FormatSize(file.Size)}");
+            Toast.ShowSuccess($"File ready — {Validator.FormatSize(file.Size)}");
         }
-        catch (Exception ex)
-        {
-            Toast.ShowError($"Could not read file: {ex.Message}");
-            UploadedBytes = null;
-        }
+        catch (Exception ex) { Toast.ShowError($"Could not read file: {ex.Message}"); UploadedBytes = null; }
         StateHasChanged();
     }
 
-    private void HandleFileRemoved()
+    private void HandleFileRemoved() { SelectedFile = null; UploadedBytes = null; }
+
+    private async Task OpenEditor()
     {
-        SelectedFile = null;
-        UploadedBytes = null;
+        if (UploadedBytes == null) return;
+        TotalPages = await ApiService.GetPageCountAsync(UploadedBytes, SelectedFile!.Name);
+        PreviewPage = 1;
+        CurrentState = PageState.Editor;
+        StateHasChanged();
+        if (_showPreview)
+            await JS.InvokeVoidAsync("renderNpPreview", Convert.ToBase64String(UploadedBytes), PreviewPage);
     }
+
+    private async Task GoToPage(int page)
+    {
+        if (page == PreviewPage) return;
+        PreviewPage = page;
+        if (_showPreview && UploadedBytes != null)
+            await JS.InvokeVoidAsync("renderNpPreview", Convert.ToBase64String(UploadedBytes), page);
+    }
+
+    private async Task PrevPage() { if (PreviewPage > 1) await GoToPage(PreviewPage - 1); }
+    private async Task NextPage() { if (PreviewPage < TotalPages) await GoToPage(PreviewPage + 1); }
 
     private async Task ProcessFile()
     {
@@ -231,43 +1373,30 @@
         StateHasChanged();
         try
         {
-            ResultBytes = await ApiService.NumberPagesAsync(
-                UploadedBytes, SelectedFile!.Name,
-                Position, StartNumber);
-            CurrentState = ResultBytes != null
-                ? PageState.Complete : PageState.Error;
-            if (ResultBytes == null)
-                ErrorMessage =
-                    "Failed to add page numbers.";
+            ResultBytes = await ApiService.NumberPagesAsync(UploadedBytes, SelectedFile!.Name, Position, StartNumber);
+            CurrentState = ResultBytes != null ? PageState.Complete : PageState.Error;
+            if (ResultBytes == null) ErrorMessage = "Failed to add page numbers. Please try again.";
         }
-        catch (Exception ex)
-        {
-            ErrorMessage = $"Error: {ex.Message}";
-            CurrentState = PageState.Error;
-        }
+        catch (Exception ex) { ErrorMessage = $"Error: {ex.Message}"; CurrentState = PageState.Error; }
         StateHasChanged();
     }
 
     private async Task DownloadFile()
     {
         if (ResultBytes == null) return;
-        var fileName = Path.GetFileNameWithoutExtension(
-            SelectedFile?.Name ?? "document")
-            + "_numbered.pdf";
-        await JS.InvokeVoidAsync("downloadFile",
-            fileName,
-            Convert.ToBase64String(ResultBytes));
-        SessionUsage.RecordToolCompletion("Tool Name");
+        var fileName = Path.GetFileNameWithoutExtension(SelectedFile?.Name ?? "document") + "_numbered.pdf";
+        await JS.InvokeVoidAsync("downloadFile", fileName, Convert.ToBase64String(ResultBytes));
+        SessionUsage.RecordToolCompletion("Number Pages");
     }
 
     private void Reset()
     {
         CurrentState = PageState.Upload;
-        SelectedFile = null;
-        UploadedBytes = null;
-        ResultBytes = null;
-        ErrorMessage = null;
-        Position = "bottom-center";
-        StartNumber = 1;
+        SelectedFile = null; UploadedBytes = null; ResultBytes = null;
+        ErrorMessage = null; TotalPages = 0; PreviewPage = 1;
+        Position = "bottom-center"; StartNumber = 1;
+        NumberStyle = "numeric"; FontFamily = "Helvetica";
+        FontSize = 10; FontColor = "#000000"; MarginMm = 15;
+        ApplyTo = "all"; SpecificPages = string.Empty;
     }
 }

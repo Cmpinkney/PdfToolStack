@@ -259,6 +259,36 @@
             canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
         };
 
+        // ── Crop PDF Preview ─────────────────────────────────────────────────
+        window.renderCropPreview = async (base64Data, pageNum) => {
+            try {
+                const canvas = document.getElementById('cpPdfCanvas');
+                if (!canvas) return;
+                const bytes = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+                const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
+                const page = await pdf.getPage(pageNum);
+                const viewport = page.getViewport({ scale: 1.4 });
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
+                await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+            } catch (e) { console.error('renderCropPreview error', e); }
+        };
+
+        // ── Number Pages Preview ─────────────────────────────────────────────
+        window.renderNpPreview = async (base64Data, pageNum) => {
+            try {
+                const canvas = document.getElementById('npPdfCanvas');
+                if (!canvas) return;
+                const bytes = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+                const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
+                const page = await pdf.getPage(pageNum);
+                const viewport = page.getViewport({ scale: 1.4 });
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
+                await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+            } catch (e) { console.error('renderNpPreview error', e); }
+        };
+
         // ── PDF Utilities ─────────────────────────────────────────────────
         window.getPdfPageCount = async (base64Data) => {
             const bytes = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
