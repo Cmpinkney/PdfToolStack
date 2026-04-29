@@ -1,0 +1,208 @@
+﻿@inject ApiService ApiService
+@inject IJSRuntime JS
+@inject ILogger<SupportChat> Logger
+
+
+<div class="support-chat-wrap">
+
+    @if (_open)
+    {
+        <div class="support-chat-window">
+            <div class="support-chat-header">
+                <div class="support-chat-header-info">
+                    <div class="support-chat-avatar">AI</div>
+                    <div>
+                        <div class="support-chat-name">PdfToolStack Support</div>
+                        <div class="support-chat-status">
+                            <span class="support-chat-status-dot"></span>
+                            Online — typically replies instantly
+                        </div>
+                    </div>
+                </div>
+                <button class="support-chat-close" @onclick="Toggle">✕</button>
+            </div>
+
+            <div class="support-chat-messages" id="supportMessages">
+                @foreach (var msg in _messages)
+                {
+                    <div class="support-msg @(msg.IsUser ? "support-msg-user" : "support-msg-ai")">
+                        @if (!msg.IsUser)
+                        {
+                            <div class="support-msg-avatar">AI</div>
+                        }
+                        <div class="support-msg-bubble">@msg.Text</div>
+                    </div>
+                }
+                @if (_thinking)
+                {
+                    <div class="support-msg support-msg-ai">
+                        <div class="support-msg-avatar">AI</div>
+                        <div class="support-msg-bubble support-msg-thinking">
+                            <span class="chat-dot"></span>
+                            <span class="chat-dot"></span>
+                            <span class="chat-dot"></span>
+                        </div>
+                    </div>
+                }
+            </div>
+            @if (_messages.Count == 1 && !_thinking)
+            {
+                <div class="support-suggestions">
+                    @foreach (var s in _suggestions)
+                    {
+                        <button class="support-suggestion-btn" @onclick="() => QuickAsk(s)">@s</button>
+                    }
+                </div>
+            }
+
+            <div class="support-chat-input-row">
+                <input class="support-chat-input"
+                       type="text"
+                       placeholder="Ask anything..."
+                       @bind="_input"
+                       @bind:event="oninput"
+                       @onkeydown="OnKeyDown"
+                       disabled="@_thinking" />
+                <button class="support-chat-send"
+                        @onclick="Send"
+                        disabled="@(_thinking || string.IsNullOrWhiteSpace(_input))">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="2.5"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="22" y1="2" x2="11" y2="13" />
+                        <polygon points="22,2 15,22 11,13 2,9" />
+                    </svg>
+                </button>
+            </div>
+
+            <div class="support-chat-footer">
+                Can't find your answer?
+                <a href="mailto:support@pdftoolstack.com">Email support</a>
+            </div>
+        </div>
+    }
+
+    <button class="support-chat-bubble @(_open ? "open" : "")"
+            @onclick="Toggle"
+            aria-label="Support chat">
+        @if (_open)
+        {
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2.5"
+                 stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+        }
+        else
+        {
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            </svg>
+            @if (_unread > 0)
+            {
+                <span class="support-chat-unread">@_unread</span>
+            }
+        }
+    </button>
+
+</div>
+
+@code {
+    private bool _open = false;
+    private bool _thinking = false;
+    private string _input = string.Empty;
+    private int _unread = 0;
+    private List<ChatMsg> _messages = new()
+    {
+        new("👋 Hi! I'm the PdfToolStack support assistant. Ask me anything about our tools, pricing, or how to get started.", false)
+    };
+    private List<HistoryMsg> _history = new();
+
+    private void Toggle()
+    {
+        _open = !_open;
+        if (_open)
+            _unread = 0;
+        else
+            _thinking = false;
+    }
+
+    private async Task OnKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(_input) && !_thinking)
+            await Send();
+    }
+
+    private async Task Send()
+    {
+        if (string.IsNullOrWhiteSpace(_input)) return;
+
+        var msg = _input.Trim();
+        _input = string.Empty;
+        _messages.Add(new(msg, true));
+        _history.Add(new("user", msg));
+        _thinking = true;
+        StateHasChanged();
+
+        await Task.Delay(50);
+        try { await JS.InvokeVoidAsync("scrollToBottom", "supportMessages"); } catch { }
+
+        try
+        {
+            var requestBody = new SupportChatRequest(
+                msg,
+                _history.SkipLast(1)
+                    .Select(h => new SupportHistoryEntry(h.Role, h.Content))
+                    .ToList());
+
+            var result = await ApiService.PostAsync<SupportChatRequest, SupportResponse>(
+                "api/ai/support", requestBody);
+
+            string answer = result?.Answer
+                ?? "Sorry, I couldn't process that. Please try again.";
+
+            _messages.Add(new(answer, false));
+            _history.Add(new("assistant", answer));
+
+            if (!_open) _unread++;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Support chat request failed");
+            _messages.Add(new(
+                "Something went wrong. Please email support@pdftoolstack.com for help.",
+                false));
+        }
+        finally
+        {
+            _thinking = false;
+            StateHasChanged();
+            try { await JS.InvokeVoidAsync("scrollToBottom", "supportMessages"); } catch { }
+        }
+    }
+
+    private record ChatMsg(string Text, bool IsUser);
+    private record HistoryMsg(string Role, string Content);
+    private class SupportResponse { public string Answer { get; set; } = string.Empty; }
+
+    // Concrete types so System.Text.Json can serialize without reflection/trimming issues
+    private record SupportChatRequest(string Message, List<SupportHistoryEntry> History);
+    private record SupportHistoryEntry(string Role, string Content);
+
+    private readonly List<string> _suggestions = new()
+    {
+        "How do I compress a PDF?",
+        "What's included in Pro?",
+        "How do I sign a PDF?",
+        "Can I merge PDFs for free?"
+    };
+
+    private async Task QuickAsk(string q)
+    {
+        _input = q;
+        await Send();
+    }
+}

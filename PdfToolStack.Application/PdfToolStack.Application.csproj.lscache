@@ -59,22 +59,28 @@ DTOs/
  ApiKeyDto.cs
  DetectFieldsResponse.cs
  JobStatusResponse.cs
+ PaywallApiError.cs
+ PaywallResult.cs
  ProcessRequest.cs
  ProcessResponse.cs
  ReferralDtos.cs
  SubscriptionDtos.cs
+ TeamDtos.cs
 Factories/PdfProcessorFactory.cs
 Interfaces/
  IAiUsageService.cs
  IAuth0ManagementService.cs
  IEmailService.cs
  IFeatureAccessService.cs
+ ITeamService.cs
 obj/Debug/net9.0/
  .NETCoreApp,Version=v9.0.AssemblyAttributes.cs
  PdfToolStack.Application.AssemblyInfo.cs
  PdfToolStack.Application.GlobalUsings.g.cs
 Services/
+ IPaywallService.cs
  IPdfService.cs
+ PaywallService.cs
  PdfService.cs
 Strategies/
  CompressStrategy.cs

@@ -1,0 +1,38 @@
+﻿@if (IsVisible)
+{
+    <div class="ai-limit-banner">
+        <div class="ai-limit-icon">⚡</div>
+        <div class="ai-limit-content">
+            <h3 class="ai-limit-title">
+                @(IsFreeLimit ? "You've used your 5 free AI requests" : "Monthly AI limit reached")
+            </h3>
+            <p class="ai-limit-sub">
+                @if (IsFreeLimit)
+                {
+                    <span>Upgrade to Pro for 200 AI requests/month — contract review, invoice extraction, PDF chat and more.</span>
+                }
+                else
+                {
+                    <span>You've used all @Limit requests this month. Upgrade your plan or wait until next month.</span>
+                }
+            </p>
+            <div class="ai-limit-actions">
+                <a href="/pricing" class="download-button" style="text-decoration:none;">
+                    Upgrade to Pro — $19/mo
+                </a>
+                @if (!IsFreeLimit)
+                {
+                    <a href="/account" class="reset-button" style="text-decoration:none;">
+                        View usage
+                    </a>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsVisible { get; set; }
+    [Parameter] public bool IsFreeLimit { get; set; } = true;
+    [Parameter] public int Limit { get; set; } = 5;
+}

@@ -77,6 +77,8 @@ Migrations/
  20260418231514_AddAiCreditPurchases.Designer.cs
  20260421032207_AddOneTimePurchases.cs
  20260421032207_AddOneTimePurchases.Designer.cs
+ 20260426182038_AddTeams.cs
+ 20260426182038_AddTeams.Designer.cs
  AppDbContextModelSnapshot.cs
 obj/Debug/net9.0/
  .NETCoreApp,Version=v9.0.AssemblyAttributes.cs
@@ -85,6 +87,7 @@ obj/Debug/net9.0/
 Processors/
  AnnotatePdfProcessor.cs
  ComparePdfProcessor.cs
+ CropPdfProcessor.cs
  DeletePagesProcessor.cs
  EditPdfProcessor.cs
  ExcelToPdfProcessor.cs
@@ -124,12 +127,14 @@ Services/
  PdfAnnotationService.cs
  ReferralService.cs
  SubscriptionService.cs
+ TeamService.cs
  UserDeletionService.cs
 Storage/
  AzureBlobStorageService.cs
  IBlobStorageService.cs
 Strategies/
  AnnotateStrategy.cs
+ CropStrategy.cs
  EditStrategy.cs
  JpgToPdfStrategy.cs
  OrganizeStrategy.cs

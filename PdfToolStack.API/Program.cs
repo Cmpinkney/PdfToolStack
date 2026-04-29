@@ -119,6 +119,7 @@ try
     builder.Services.AddScoped<ExcelToPdfProcessor>();
     builder.Services.AddScoped<PdfToJpgProcessor>();
     builder.Services.AddScoped<PdfToExcelProcessor>();
+    builder.Services.AddScoped<CropPdfProcessor>();
 
     if (hasDatabase)
     {
@@ -147,6 +148,12 @@ try
 
     builder.Services.AddMemoryCache();
     builder.Services.AddScoped<ICloudAuthStateStore, InMemoryCloudAuthStateStore>();
+
+    // ── Team Service ─────────────────────────────────────────────────────
+    if (hasDatabase)
+    {
+        builder.Services.AddScoped<ITeamService, TeamService>();
+    }
 
     // ── Strategies ────────────────────────────────────────────────────────
     builder.Services.AddScoped<IProcessingStrategy>(sp =>
@@ -245,6 +252,10 @@ try
         new PdfToolStack.Infrastructure.Strategies.PdfToExcelStrategy(
             sp.GetRequiredService<PdfToExcelProcessor>()));
 
+    builder.Services.AddScoped<IProcessingStrategy>(sp =>
+    new PdfToolStack.Infrastructure.Strategies.CropStrategy(
+        sp.GetRequiredService<CropPdfProcessor>()));
+
     // -- Email service ---------------------------------------------------------
     builder.Services.Configure<EmailOptions>(
         builder.Configuration.GetSection(EmailOptions.SectionName));
@@ -270,7 +281,7 @@ try
         var logger = sp.GetRequiredService<ILogger<AiService>>();
         return new AiService(
             http,
-            config["Anthropic:ApiKey"] ?? string.Empty,
+            config["Anthropic:ApiKey"] ?? throw new InvalidOperationException("Missing Anthropic:ApiKey"),
             config["Anthropic:Model"] ?? "claude-opus-4-6",
             int.TryParse(config["Anthropic:MaxTokens"],
                 out var mt) ? mt : 2000,
@@ -291,13 +302,6 @@ try
     });
 
     builder.Services.AddScoped<ICloudStorageService, OneDriveService>();
-
-    // ── HttpClient Service ────────────────────────────────────────────────────────────
-    builder.Services.AddHttpClient("CloudProxy", client =>
-    {
-        client.DefaultRequestHeaders.Add("User-Agent", "PdfToolStack/1.0");
-        client.Timeout = TimeSpan.FromSeconds(35);
-    });
 
     // ── Factory ───────────────────────────────────────────────────────────
     builder.Services.AddScoped<PdfProcessorFactory>(sp =>

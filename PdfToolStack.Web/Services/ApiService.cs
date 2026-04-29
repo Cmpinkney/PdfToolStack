@@ -36,6 +36,11 @@ namespace PdfToolStack.Web.Services
             if (response.IsSuccessStatusCode)
                 return await response.Content
                     .ReadFromJsonAsync<TResponse>();
+
+            var body = await response.Content.ReadAsStringAsync();
+            _logger.LogWarning(
+                "PostAsync {Endpoint} returned {StatusCode}: {Body}",
+                endpoint, (int)response.StatusCode, body);
             return default;
         }
         public async Task<ProcessResponse?> ProcessPdfAsync(
@@ -595,6 +600,35 @@ namespace PdfToolStack.Web.Services
                 : null;
         }
 
+        public async Task<byte[]?> CropPdfAsync(
+            byte[] fileBytes,
+            string fileName,
+            float marginTop,
+            float marginRight,
+            float marginBottom,
+            float marginLeft,
+            string? pageNumbers = null)
+        {
+            using var content = new MultipartFormDataContent();
+            content.Add(new ByteArrayContent(fileBytes), "file", fileName);
+            content.Add(new StringContent(
+                marginTop.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)), "marginTop");
+            content.Add(new StringContent(
+                marginRight.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)), "marginRight");
+            content.Add(new StringContent(
+                marginBottom.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)), "marginBottom");
+            content.Add(new StringContent(
+                marginLeft.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)), "marginLeft");
+
+            if (!string.IsNullOrWhiteSpace(pageNumbers))
+                content.Add(new StringContent(pageNumbers), "pageNumbers");
+
+            var response = await _httpClient.PostAsync("api/pdf/crop", content);
+            return response.IsSuccessStatusCode
+                ? await response.Content.ReadAsByteArrayAsync()
+                : null;
+        }
+
         public async Task<byte[]?> JpgToPdfAsync(
             List<byte[]> imageFiles,
             List<string> fileNames)
@@ -787,25 +821,34 @@ namespace PdfToolStack.Web.Services
             }
         }
 
-        public async Task<T?> PostMultipartAsync<T>(
+        public async Task<ApiResult<T>> PostMultipartWithStatusAsync<T>(
             string endpoint,
             MultipartFormDataContent content)
         {
             try
             {
                 var response = await _httpClient.PostAsync(endpoint, content);
-                if (response.IsSuccessStatusCode)
-                    return await response.Content.ReadFromJsonAsync<T>();
 
-                var error = await response.Content.ReadAsStringAsync();
-                _logger.LogWarning("PostMultipart {Endpoint} failed: {Error}",
-                    endpoint, error);
-                return default;
+                if (response.IsSuccessStatusCode)
+                {
+                    var data = await response.Content.ReadFromJsonAsync<T>();
+                    return new ApiResult<T> { Data = data, IsSuccess = true };
+                }
+
+                var errorBody = await response.Content.ReadAsStringAsync();
+                var isRateLimit = (int)response.StatusCode == 429;
+
+                return new ApiResult<T>
+                {
+                    IsSuccess = false,
+                    IsRateLimit = isRateLimit,
+                    ErrorMessage = errorBody
+                };
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "PostMultipart error: {Endpoint}", endpoint);
-                return default;
+                return new ApiResult<T> { IsSuccess = false, ErrorMessage = ex.Message };
             }
         }
 
@@ -874,5 +917,13 @@ namespace PdfToolStack.Web.Services
         public string Id { get; set; } = string.Empty;
         public string FileName { get; set; } = string.Empty;
         public string Url { get; set; } = string.Empty;
+    }
+
+    public class ApiResult<T>
+    {
+        public T? Data { get; set; }
+        public bool IsSuccess { get; set; }
+        public bool IsRateLimit { get; set; }
+        public string ErrorMessage { get; set; } = string.Empty;
     }
 }

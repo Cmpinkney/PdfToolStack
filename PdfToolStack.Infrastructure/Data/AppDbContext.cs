@@ -18,6 +18,9 @@ namespace PdfToolStack.Infrastructure.Data
         public DbSet<Referral> Referrals => Set<Referral>();
         public DbSet<AiCreditPurchase> AiCreditPurchases => Set<AiCreditPurchase>();
         public DbSet<OneTimePurchase> OneTimePurchases => Set<OneTimePurchase>();
+        public DbSet<Team> Teams => Set<Team>();
+        public DbSet<TeamMember> TeamMembers => Set<TeamMember>();
+        public DbSet<TeamInvite> TeamInvites => Set<TeamInvite>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -85,6 +88,41 @@ namespace PdfToolStack.Infrastructure.Data
                 entity.HasIndex(e => e.UserId);
                 entity.HasIndex(e => e.StripeSessionId).IsUnique();
                 entity.HasIndex(e => e.ExpiresAt);
+            });
+
+            modelBuilder.Entity<Team>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.OwnerUserId).IsRequired().HasMaxLength(128);
+                entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
+                entity.HasIndex(e => e.OwnerUserId);
+            });
+
+            modelBuilder.Entity<TeamMember>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.UserId).IsRequired().HasMaxLength(128);
+                entity.Property(e => e.Email).IsRequired().HasMaxLength(256);
+                entity.Property(e => e.Name).HasMaxLength(100);
+                entity.Property(e => e.Role).IsRequired().HasMaxLength(20);
+                entity.HasIndex(e => new { e.TeamId, e.UserId }).IsUnique();
+                entity.HasOne(e => e.Team)
+                      .WithMany(t => t.Members)
+                      .HasForeignKey(e => e.TeamId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<TeamInvite>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Email).IsRequired().HasMaxLength(256);
+                entity.Property(e => e.Token).IsRequired().HasMaxLength(128);
+                entity.HasIndex(e => e.Token).IsUnique();
+                entity.HasIndex(e => new { e.TeamId, e.Email });
+                entity.HasOne(e => e.Team)
+                      .WithMany(t => t.Invites)
+                      .HasForeignKey(e => e.TeamId)
+                      .OnDelete(DeleteBehavior.Cascade);
             });
         }
     }

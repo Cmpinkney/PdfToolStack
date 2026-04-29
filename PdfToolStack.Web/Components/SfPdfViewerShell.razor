@@ -21,7 +21,8 @@
     </div>
 }
 
-<div class="sf-viewer-area @(_showArea ? "" : "sf-viewer-area-hidden")" id="@_wrapperId">
+<div class="sf-viewer-area @(_showArea ? "" : "sf-viewer-area-hidden") @(_isLoading ? "is-loading" : "")"
+     id="@_wrapperId">
 
     <PdfLoadingOverlay IsVisible="@_isLoading"
                        Message="@_loadingMessage"

@@ -72,6 +72,29 @@ namespace PdfToolStack.Application.DTOs
         // Annotate — highlights, drawings, freehand
         public List<PdfHighlightDto> Highlights { get; set; }
             = new List<PdfHighlightDto>();
+
+        // ── Crop ─────────────────────────────────────────────────────────────────
+        // Margins in PDF points (1 pt = 1/72 inch).
+        // The processor converts these from pixels using a 72dpi default if needed,
+        // but the UI sends points directly (user enters mm, UI converts at 2.8346 pt/mm).
+
+        /// <summary>Points to remove from the top of each page.</summary>
+        public float CropMarginTop { get; set; } = 0f;
+
+        /// <summary>Points to remove from the right of each page.</summary>
+        public float CropMarginRight { get; set; } = 0f;
+
+        /// <summary>Points to remove from the bottom of each page.</summary>
+        public float CropMarginBottom { get; set; } = 0f;
+
+        /// <summary>Points to remove from the left of each page.</summary>
+        public float CropMarginLeft { get; set; } = 0f;
+
+        /// <summary>
+        /// Which pages to crop. null = all pages.
+        /// 1-indexed to match PDF convention.
+        /// </summary>
+        public List<int>? CropPageNumbers { get; set; }
     }
 
     public class RedactionRegionDto

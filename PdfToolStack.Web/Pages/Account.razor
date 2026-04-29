@@ -9,307 +9,285 @@
 
 <PageTitle>My Account — PdfToolStack</PageTitle>
 
-<div class="account-page">
+<div class="acc-root">
     <AuthorizeView>
         <Authorized>
-            <!-- Header -->
-            <div class="account-header">
-                @{
-                    var picture = context.User.FindFirst("picture")?.Value;
-                }
-                @if (!string.IsNullOrEmpty(picture))
-                {
-                    <img src="@picture" alt="Profile" class="account-avatar-img" />
-                }
-                else
-                {
-                    <div class="account-avatar">
-                        @(GetInitials(context.User.Identity?.Name))
-                    </div>
-                }
-                <div>
-                    <h1>@context.User.Identity?.Name</h1>
-                    <p class="account-email">@context.User.FindFirst("email")?.Value</p>
-                </div>
-                @if (_subStatus?.HasPro == true)
-                {
-                    <div class="account-pro-badge">Pro</div>
-                }
-            </div>
+            @{
+                var picture = context.User.FindFirst("picture")?.Value;
+                var name = context.User.Identity?.Name ?? "User";
+                var email = context.User.FindFirst("email")?.Value ?? "";
+                var planLabel = _subStatus?.HasTeams == true ? "Teams" : _subStatus?.HasPro == true ? "Pro" : "Free";
+                var planColor = _subStatus?.HasTeams == true ? "#0D9488" : _subStatus?.HasPro == true ? "#D97706" : "#6B7280";
+            }
 
-            <!-- Stats row -->
-            <div class="account-stats">
-                <div class="account-stat-card">
-                    <span class="account-stat-num">@(_history?.Count ?? 0)</span>
-                    <span class="account-stat-label">Documents processed</span>
-                </div>
-                <div class="account-stat-card">
-                    <span class="account-stat-num">@GetUniqueTools()</span>
-                    <span class="account-stat-label">Tools used</span>
-                </div>
-                <div class="account-stat-card">
-                    <span class="account-stat-num">@GetTotalSize()</span>
-                    <span class="account-stat-label">Total processed</span>
-                </div>
-                <div class="account-stat-card">
-                    <span class="account-stat-num">@(_subStatus?.HasPro == true ? "Pro" : "Free")</span>
-                    <span class="account-stat-label">Current plan</span>
-                </div>
-            </div>
-
-            <div class="account-grid">
-
-                <!-- Left: Subscription -->
-                <div class="account-panel">
-                    <div class="account-panel-header">
-                        <h2>Subscription</h2>
-                    </div>
-
-                    @if (_subStatus == null)
-                    {
-                        <p class="account-loading">Loading...</p>
-                    }
-                    else if (_subStatus.HasPro)
-                    {
-                        <div class="sub-card sub-card-pro">
-                            <div class="sub-card-icon">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="#D97706" stroke="none">
-                                    <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26 12,2" />
-                                </svg>
-                            </div>
-                            <div class="sub-card-info">
-                                <h3>Pro Plan</h3>
-                                <p>Unlimited files · All AI tools · No ads</p>
-                                @if (_subStatus.CurrentPeriodEnd.HasValue)
-                                {
-                                    <p class="sub-card-date">
-                                        @(_subStatus.CancelAtPeriodEnd ? "Cancels" : "Renews")
-                                        on @_subStatus.CurrentPeriodEnd.Value.ToString("MMMM d, yyyy")
-                                    </p>
-                                }
-                            </div>
-                        </div>
-                        <button class="reset-button" style="width:100%; margin-top:1rem;"
-                                @onclick="ManageBilling">
-                            Manage Billing
-                        </button>
-
-                        @if (_aiUsage != null)
+            <!-- ── Top profile hero ─────────────────────────────────────────── -->
+            <div class="acc-hero">
+                <div class="acc-hero-inner">
+                    <div class="acc-avatar-wrap">
+                        @if (!string.IsNullOrEmpty(picture))
                         {
-                            <div class="ai-usage-meter">
-                                <div class="ai-usage-header">
-                                    <span class="ai-usage-label">AI requests this month</span>
-                                    <span class="ai-usage-count">@_aiUsage.Used / @_aiUsage.Limit</span>
-                                </div>
-                                <div class="ai-usage-bar">
-                                    <div class="ai-usage-fill"
-                                         style="width: @(Math.Min(_aiUsage.Percentage, 100))%">
-                                    </div>
-                                </div>
-                                <span class="ai-usage-remaining">
-                                    @_aiUsage.Remaining requests remaining
-                                </span>
-
-                                @if (_purchasedCredits > 0)
-                                {
-                                    <div class="ai-credits-badge">
-                                        <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M8 2v5M5 5l3-3 3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 11h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" opacity="0.6"/></svg>
-                                        +@_purchasedCredits top-up credits available
-                                    </div>
-                                }
-                            </div>
-
-                            @if (_aiUsage.Percentage >= 100)
-                            {
-                                <button class="topup-inline-btn" @onclick="ShowTopUp">
-                                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 2v5M5 5l3-3 3 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                                    Buy more AI credits
-                                </button>
-                            }
-                            else if (_aiUsage.Percentage >= 80)
-                            {
-                                <button class="topup-inline-btn topup-inline-btn-warn" @onclick="ShowTopUp">
-                                    Running low — buy more credits
-                                </button>
-                            }
+                            <img src="@picture" alt="@name" class="acc-avatar-img" />
                         }
-                    }
-                    else
+                        else
+                        {
+                            <div class="acc-avatar-initials">@GetInitials(name)</div>
+                        }
+                        <span class="acc-avatar-badge" style="background:@planColor">@planLabel</span>
+                    </div>
+
+                    <div class="acc-hero-info">
+                        <h1 class="acc-hero-name">@name</h1>
+                        <p class="acc-hero-email">@email</p>
+                    </div>
+
+                    <div class="acc-hero-stats">
+                        <div class="acc-kpi">
+                            <span class="acc-kpi-val">@(_history?.Count ?? 0)</span>
+                            <span class="acc-kpi-lbl">Documents</span>
+                        </div>
+                        <div class="acc-kpi-divider"></div>
+                        <div class="acc-kpi">
+                            <span class="acc-kpi-val">@GetUniqueTools()</span>
+                            <span class="acc-kpi-lbl">Tools used</span>
+                        </div>
+                        <div class="acc-kpi-divider"></div>
+                        <div class="acc-kpi">
+                            <span class="acc-kpi-val">@GetTotalSize()</span>
+                            <span class="acc-kpi-lbl">Processed</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── Main grid ───────────────────────────────────────────────── -->
+            <div class="acc-grid">
+
+                <!-- LEFT COLUMN -->
+                <div class="acc-left">
+
+                    <!-- Subscription card -->
+                    <div class="acc-card">
+                        <div class="acc-card-header">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26 12,2" /></svg>
+                            <span>Subscription</span>
+                        </div>
+
+                        @if (_subStatus == null)
+                        {
+                            <div class="acc-skeleton-block"></div>
+                        }
+                        else if (_subStatus.HasPro || _subStatus.HasTeams)
+                        {
+                            <div class="acc-plan-badge acc-plan-badge--pro">
+                                <div class="acc-plan-icon" style="background:@(planColor + "20");color:@planColor">
+                                    @if (_subStatus.HasTeams)
+                                    {
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+                                    }
+                                    else
+                                    {
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="@planColor" stroke="none"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26 12,2" /></svg>
+                                    }
+                                </div>
+                                <div>
+                                    <p class="acc-plan-name">@planLabel Plan</p>
+                                    <p class="acc-plan-detail">
+                                        @if (_subStatus.CurrentPeriodEnd.HasValue)
+                                        {
+                                            @(_subStatus.CancelAtPeriodEnd ? "Cancels" : "Renews")
+                                            @(" on ")
+                                            @_subStatus.CurrentPeriodEnd.Value.ToString("MMM d, yyyy")
+                                        }
+                                        else
+                                        {
+                                            @("Active subscription")
+                                        }
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- AI usage meter -->
+                            @if (_aiUsage != null)
+                            {
+                                <div class="acc-usage-block">
+                                    <div class="acc-usage-row">
+                                        <span class="acc-usage-lbl">AI requests this month</span>
+                                        <span class="acc-usage-count">@_aiUsage.Used <span class="acc-usage-limit">/ @_aiUsage.Limit</span></span>
+                                    </div>
+                                    <div class="acc-usage-track">
+                                        <div class="acc-usage-fill" style="width:@(Math.Min(_aiUsage.Percentage, 100))%; background:@GetUsageColor(_aiUsage.Percentage)"></div>
+                                    </div>
+                                    <span class="acc-usage-remaining">@_aiUsage.Remaining remaining</span>
+
+                                    @if (_purchasedCredits > 0)
+                                    {
+                                        <div class="acc-credits-badge">
+                                            <svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M8 2v5M5 5l3-3 3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                                            +@_purchasedCredits top-up credits
+                                        </div>
+                                    }
+
+                                    @if (_aiUsage.Percentage >= 80)
+                                    {
+                                        <button class="acc-topup-btn @(_aiUsage.Percentage >= 100 ? "acc-topup-btn--urgent" : "")" @onclick="ShowTopUp">
+                                            @(_aiUsage.Percentage >= 100 ? "Buy more AI credits" : "Running low — top up credits")
+                                        </button>
+                                    }
+                                </div>
+                            }
+
+                            <button class="acc-action-btn acc-action-btn--secondary" @onclick="ManageBilling">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2" /><line x1="1" y1="10" x2="23" y2="10" /></svg>
+                                Manage Billing
+                            </button>
+                        }
+                        else
+                        {
+                            <!-- Free plan -->
+                            <div class="acc-free-plan">
+                                <div class="acc-free-header">
+                                    <span class="acc-free-tag">Free</span>
+                                    <span class="acc-free-limit">25MB · Standard tools</span>
+                                </div>
+                                <div class="acc-upgrade-features">
+                                    @foreach (var feat in new[] { "All AI tools", "Batch processing (20 files)", "Unlimited file size (500MB)", "30-day download history", "PDF Compare", "Priority processing" })
+                                    {
+                                        <div class="acc-upgrade-feat">
+                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                                            @feat
+                                        </div>
+                                    }
+                                </div>
+                                <a href="/pricing" class="acc-action-btn acc-action-btn--upgrade">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26 12,2" /></svg>
+                                    Upgrade to Pro — $19/mo
+                                </a>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Teams card (Pro teams only) -->
+                    @if (_subStatus?.HasTeams == true)
                     {
-                        <div class="sub-card sub-card-free">
-                            <div class="sub-card-icon">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <circle cx="12" cy="12" r="10" />
-                                    <line x1="12" y1="8" x2="12" y2="12" />
-                                    <line x1="12" y1="16" x2="12.01" y2="16" />
-                                </svg>
+                        <div class="acc-card">
+                            <div class="acc-card-header">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+                                <span>Team</span>
                             </div>
-                            <div class="sub-card-info">
-                                <h3>Free Plan</h3>
-                                <p>25MB limit · Standard tools only</p>
-                            </div>
+                            <p class="acc-card-desc">Manage your team members, invites, and shared usage.</p>
+                            <a href="/team" class="acc-action-btn acc-action-btn--primary">Open Team Dashboard →</a>
                         </div>
-                        <div class="sub-upgrade-list">
-                            <p class="sub-upgrade-label">Unlock with Pro:</p>
-                            <div class="sub-upgrade-feat">
-                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26 12,2" />
-                                </svg>
-                                All AI tools
-                            </div>
-                            <div class="sub-upgrade-feat">
-                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-                                </svg>
-                                Batch processing
-                            </div>
-                            <div class="sub-upgrade-feat">
-                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
-                                </svg>
-                                Unlimited file size
-                            </div>
-                            <div class="sub-upgrade-feat">
-                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                                    <line x1="16" y1="2" x2="16" y2="6" />
-                                    <line x1="8" y1="2" x2="8" y2="6" />
-                                    <line x1="3" y1="10" x2="21" y2="10" />
-                                </svg>
-                                30-day history
-                            </div>
-                        </div>
-                        <a href="/pricing" class="download-button"
-                           style="display:block; text-align:center; text-decoration:none; margin-top:1rem;">
-                            Upgrade to Pro — $12/mo
-                        </a>
                     }
 
                     <!-- Quick links -->
-                    <div class="account-quick-links">
-                        <h3>Quick links</h3>
-                        <a href="/ai-pdf-assist" class="account-quick-link">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26 12,2" />
-                            </svg>
-                            AI Tools
-                        </a>
-                        <a href="/extract-invoice-data" class="account-quick-link">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="3" y="3" width="18" height="18" rx="2" />
-                                <path d="M3 9h18" />
-                                <path d="M9 21V9" />
-                            </svg>
-                            Extract Invoice Data
-                        </a>
-                        <a href="/batch" class="account-quick-link">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-                            </svg>
-                            Batch Process
-                        </a>
-                        <a href="/compare-pdf" class="account-quick-link">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="11" cy="11" r="8" />
-                                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                            </svg>
-                            Compare PDFs
-                        </a>
-                        <a href="/pricing" class="account-quick-link">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
-                                <line x1="1" y1="10" x2="23" y2="10" />
-                            </svg>
-                            Pricing
-                        </a>
+                    <div class="acc-card">
+                        <div class="acc-card-header">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" /><polyline points="13 2 13 9 20 9" /></svg>
+                            <span>Quick Access</span>
+                        </div>
+                        <div class="acc-quicklinks">
+                            @foreach (var link in QuickLinks)
+                            {
+                                <a href="@link.Url" class="acc-quicklink">
+                                    <div class="acc-quicklink-icon" style="background:@(link.Color + "20");color:@link.Color">
+                                        @((MarkupString)link.IconSvg)
+                                    </div>
+                                    <span>@link.Label</span>
+                                    <svg class="acc-quicklink-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+                                </a>
+                            }
+                        </div>
                     </div>
+
+                    <!-- Danger zone -->
+                    <div class="acc-card acc-card--danger">
+                        <div class="acc-card-header">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>
+                            <span style="color:#EF4444">Danger Zone</span>
+                        </div>
+                        <p class="acc-card-desc">Permanently delete your account and all associated data. This action cannot be undone.</p>
+                        <a href="/account/delete" class="acc-action-btn acc-action-btn--danger">Delete My Account</a>
+                    </div>
+
                 </div>
 
-                <!-- Right: Document History -->
-                <div class="account-panel">
-                    <div class="account-panel-header" id="documents">
-                        <h2>Recent Documents</h2>
-                        @if (_history?.Any() == true)
-                        {
-                            <span class="account-panel-count">@_history.Count files</span>
-                        }
-                    </div>
-
-                    @if (_historyLoading)
-                    {
-                        <div class="account-loading-state">
-                            <div class="spinner"></div>
-                            <p>Loading your documents...</p>
-                        </div>
-                    }
-                    else if (_history == null || !_history.Any())
-                    {
-                        <div class="account-empty-state">
-                            <div class="account-empty-icon">
-                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.3;">
-                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                                    <polyline points="14,2 14,8 20,8" />
-                                    <line x1="16" y1="13" x2="8" y2="13" />
-                                    <line x1="16" y1="17" x2="8" y2="17" />
-                                </svg>
+                <!-- RIGHT COLUMN — Document History -->
+                <div class="acc-right">
+                    <div class="acc-card acc-card--full">
+                        <div class="acc-card-header acc-card-header--spaced">
+                            <div style="display:flex;align-items:center;gap:8px;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg>
+                                <span>Recent Documents</span>
                             </div>
-                            <h3>No documents yet</h3>
-                            <p>Your processed documents will appear here. Start by using any tool.</p>
-                            <a href="/" class="reset-button"
-                               style="display:inline-block; text-decoration:none; max-width:160px;">
-                                Browse Tools
-                            </a>
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="history-list">
-                            @foreach (var item in _history.Take(20))
+                            @if (_history?.Any() == true)
                             {
-                                <div class="history-item">
-                                    <div class="history-item-icon" style="background:@GetToolColor(item.ToolType)">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;">
-                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                                            <polyline points="14,2 14,8 20,8" />
-                                        </svg>
-                                    </div>
-                                    <div class="history-item-info">
-                                        <span class="history-item-name">@TruncateFileName(item.FileName)</span>
-                                        <span class="history-item-meta">
-                                            @FormatToolType(item.ToolType) · @FormatFileSize(item.FileSizeBytes)
-                                        </span>
-                                    </div>
-                                    <div class="history-item-date">
-                                        @GetRelativeDate(item.ProcessedAt)
-                                    </div>
-                                </div>
+                                <span class="acc-history-count">@_history.Count files</span>
                             }
                         </div>
 
-                        @if (!_subStatus!.HasPro)
+                        @if (_historyLoading)
                         {
-                            <div class="history-pro-nudge">
-                                <span>Pro users get 30-day history.</span>
-                                <a href="/pricing">Upgrade →</a>
+                            <div class="acc-loading">
+                                <div class="spinner"></div>
+                                <p>Loading documents...</p>
                             </div>
                         }
-                    }
+                        else if (_history == null || !_history.Any())
+                        {
+                            <div class="acc-empty">
+                                <div class="acc-empty-icon">
+                                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /></svg>
+                                </div>
+                                <h3 class="acc-empty-title">No documents yet</h3>
+                                <p class="acc-empty-desc">Your processed files will appear here after you use any tool.</p>
+                                <a href="/" class="acc-action-btn acc-action-btn--secondary" style="display:inline-flex;width:auto;text-decoration:none;">Browse Tools</a>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="acc-history">
+                                @foreach (var item in _history.Take(25))
+                                {
+                                    <div class="acc-history-row">
+                                        <div class="acc-history-icon" style="background:@GetToolColor(item.ToolType)15;color:@GetToolColor(item.ToolType)">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /></svg>
+                                        </div>
+                                        <div class="acc-history-info">
+                                            <span class="acc-history-name">@TruncateFileName(item.FileName)</span>
+                                            <span class="acc-history-meta">
+                                                <span class="acc-history-tool" style="color:@GetToolColor(item.ToolType)">@FormatToolType(item.ToolType)</span>
+                                                <span>·</span>
+                                                <span>@FormatFileSize(item.FileSizeBytes)</span>
+                                            </span>
+                                        </div>
+                                        <div class="acc-history-date">@GetRelativeDate(item.ProcessedAt)</div>
+                                    </div>
+                                }
+                            </div>
+
+                            @if (!(_subStatus?.HasPro == true))
+                            {
+                                <div class="acc-history-nudge">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26 12,2" /></svg>
+                                    Pro users get full 30-day history.
+                                    <a href="/pricing">Upgrade →</a>
+                                </div>
+                            }
+                        }
+                    </div>
                 </div>
 
             </div>
         </Authorized>
+
         <NotAuthorized>
-            <div class="account-signin-prompt">
-                <div class="account-empty-icon">
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.3;">
-                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                    </svg>
+            <div class="acc-signin">
+                <div class="acc-signin-icon">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
                 </div>
                 <h2>Sign in to view your account</h2>
                 <p>Access your document history, manage your subscription, and unlock Pro features.</p>
-                <a href="authentication/login" class="download-button"
-                   style="display:inline-block; text-decoration:none; max-width:200px;">
+                <a href="authentication/login" class="acc-action-btn acc-action-btn--primary" style="display:inline-flex;width:auto;text-decoration:none;max-width:220px;">
                     Sign In
                 </a>
             </div>
@@ -317,16 +295,745 @@
     </AuthorizeView>
 </div>
 
+<!-- Top-up toast -->
 @if (_showTopUpSuccess)
 {
-    <div class="topup-success-toast">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0D9488" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-        <span><strong>@_topUpCreditsAdded AI credits added!</strong> Valid for 90 days. Start using AI tools now.</span>
-        <button @onclick='() => _showTopUpSuccess = false' style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:1rem;padding:0;margin-left:0.5rem;">✕</button>
+    <div class="acc-toast">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0D9488" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+        <span><strong>@_topUpCreditsAdded AI credits added!</strong> Credits never expire — start using AI tools now.</span>
+        <button @onclick='() => _showTopUpSuccess = false' class="acc-toast-close">✕</button>
     </div>
 }
 
 <AiCreditTopUpModal @ref="_topUpModal" />
+
+<style>
+    /* ═══════════════════════════════════════════════════════
+       Account Page — Enterprise Dashboard
+    ═══════════════════════════════════════════════════════ */
+
+    .acc-root {
+        max-width: 1160px;
+        margin: 0 auto;
+        padding: 2rem 1.5rem 4rem;
+    }
+
+    /* ── Hero ─────────────────────────────────────────────── */
+    .acc-hero {
+        background: var(--surface, #fff);
+        border: 1px solid var(--border, #E5E7EB);
+        border-radius: 20px;
+        padding: 2rem 2.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 1px 4px rgba(0,0,0,.04);
+    }
+
+    .acc-hero-inner {
+        display: flex;
+        align-items: center;
+        gap: 1.75rem;
+        flex-wrap: wrap;
+    }
+
+    .acc-avatar-wrap {
+        position: relative;
+        flex-shrink: 0;
+    }
+
+    .acc-avatar-img {
+        width: 72px;
+        height: 72px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid var(--border, #E5E7EB);
+    }
+
+    .acc-avatar-initials {
+        width: 72px;
+        height: 72px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #4338CA 0%, #7C3AED 100%);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: 700;
+        letter-spacing: -.02em;
+    }
+
+    .acc-avatar-badge {
+        position: absolute;
+        bottom: -4px;
+        right: -4px;
+        padding: 2px 8px;
+        border-radius: 20px;
+        font-size: 0.65rem;
+        font-weight: 700;
+        color: #fff;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+        border: 2px solid var(--surface, #fff);
+    }
+
+    .acc-hero-info {
+        flex: 1;
+        min-width: 160px;
+    }
+
+    .acc-hero-name {
+        font-size: 1.4rem;
+        font-weight: 700;
+        margin: 0 0 .2rem;
+        color: var(--text, #111827);
+        letter-spacing: -.02em;
+    }
+
+    .acc-hero-email {
+        font-size: .875rem;
+        color: var(--text-muted, #6B7280);
+        margin: 0;
+    }
+
+    .acc-hero-stats {
+        display: flex;
+        align-items: center;
+        gap: 0;
+        margin-left: auto;
+        background: var(--bg, #F9FAFB);
+        border: 1px solid var(--border, #E5E7EB);
+        border-radius: 14px;
+        padding: .75rem 1.5rem;
+        gap: 1.5rem;
+    }
+
+    .acc-kpi {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: .15rem;
+    }
+
+    .acc-kpi-val {
+        font-size: 1.3rem;
+        font-weight: 800;
+        color: var(--text, #111827);
+        line-height: 1;
+        letter-spacing: -.03em;
+    }
+
+    .acc-kpi-lbl {
+        font-size: .72rem;
+        color: var(--text-muted, #9CA3AF);
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        font-weight: 600;
+    }
+
+    .acc-kpi-divider {
+        width: 1px;
+        height: 32px;
+        background: var(--border, #E5E7EB);
+    }
+
+    /* ── Grid ─────────────────────────────────────────────── */
+    .acc-grid {
+        display: grid;
+        grid-template-columns: 340px 1fr;
+        gap: 1.25rem;
+        align-items: start;
+    }
+
+    @@media (max-width: 900px) {
+        .acc-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .acc-hero-stats {
+            margin-left: 0;
+            width: 100%;
+            justify-content: space-around;
+        }
+    }
+
+    .acc-left {
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+    }
+
+    .acc-right {
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+    }
+
+    /* ── Cards ────────────────────────────────────────────── */
+    .acc-card {
+        background: var(--surface, #fff);
+        border: 1px solid var(--border, #E5E7EB);
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: 0 1px 4px rgba(0,0,0,.04);
+    }
+
+    .acc-card--full {
+        height: 100%;
+        min-height: 400px;
+    }
+
+    .acc-card--danger {
+        border-color: #FEE2E2;
+        background: #FFFAFA;
+    }
+
+    [data-theme="dark"] .acc-card--danger {
+        border-color: #450a0a40;
+        background: #1c0a0a;
+    }
+
+    .acc-card-header {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+        font-size: .8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        color: var(--text-muted, #6B7280);
+        margin-bottom: 1.25rem;
+    }
+
+    .acc-card-header--spaced {
+        justify-content: space-between;
+    }
+
+    .acc-card-desc {
+        font-size: .875rem;
+        color: var(--text-muted, #6B7280);
+        line-height: 1.5;
+        margin: 0 0 1rem;
+    }
+
+    /* ── Plan badge ───────────────────────────────────────── */
+    .acc-plan-badge {
+        display: flex;
+        align-items: center;
+        gap: .875rem;
+        padding: .875rem 1rem;
+        background: var(--bg, #F9FAFB);
+        border-radius: 12px;
+        border: 1px solid var(--border, #E5E7EB);
+        margin-bottom: 1rem;
+    }
+
+    .acc-plan-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .acc-plan-name {
+        font-weight: 700;
+        font-size: .95rem;
+        color: var(--text, #111827);
+        margin: 0 0 .1rem;
+    }
+
+    .acc-plan-detail {
+        font-size: .78rem;
+        color: var(--text-muted, #6B7280);
+        margin: 0;
+    }
+
+    /* ── AI usage ─────────────────────────────────────────── */
+    .acc-usage-block {
+        margin-bottom: 1rem;
+    }
+
+    .acc-usage-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: .4rem;
+    }
+
+    .acc-usage-lbl {
+        font-size: .78rem;
+        color: var(--text-muted, #6B7280);
+        font-weight: 500;
+    }
+
+    .acc-usage-count {
+        font-size: .85rem;
+        font-weight: 700;
+        color: var(--text, #111827);
+    }
+
+    .acc-usage-limit {
+        font-weight: 400;
+        color: var(--text-muted, #9CA3AF);
+    }
+
+    .acc-usage-track {
+        height: 6px;
+        background: var(--border, #E5E7EB);
+        border-radius: 99px;
+        overflow: hidden;
+        margin-bottom: .4rem;
+    }
+
+    .acc-usage-fill {
+        height: 100%;
+        border-radius: 99px;
+        transition: width .5s ease;
+    }
+
+    .acc-usage-remaining {
+        font-size: .75rem;
+        color: var(--text-muted, #9CA3AF);
+    }
+
+    .acc-credits-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: .3rem;
+        font-size: .72rem;
+        font-weight: 600;
+        color: #0D9488;
+        background: #0D948815;
+        border-radius: 6px;
+        padding: 2px 8px;
+        margin-top: .5rem;
+    }
+
+    .acc-topup-btn {
+        display: block;
+        width: 100%;
+        margin-top: .75rem;
+        padding: .5rem .875rem;
+        border-radius: 8px;
+        border: 1.5px solid #D97706;
+        background: #D9770610;
+        color: #D97706;
+        font-size: .8rem;
+        font-weight: 600;
+        cursor: pointer;
+        text-align: center;
+        transition: all .15s;
+    }
+
+        .acc-topup-btn:hover {
+            background: #D9770620;
+        }
+
+    .acc-topup-btn--urgent {
+        border-color: #EF4444;
+        background: #EF444410;
+        color: #EF4444;
+    }
+
+        .acc-topup-btn--urgent:hover {
+            background: #EF444420;
+        }
+
+    /* ── Free plan ────────────────────────────────────────── */
+    .acc-free-plan {
+    }
+
+    .acc-free-header {
+        display: flex;
+        align-items: center;
+        gap: .75rem;
+        margin-bottom: 1rem;
+    }
+
+    .acc-free-tag {
+        display: inline-block;
+        padding: 2px 10px;
+        background: var(--border, #E5E7EB);
+        border-radius: 20px;
+        font-size: .72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        color: var(--text-muted, #6B7280);
+    }
+
+    .acc-free-limit {
+        font-size: .8rem;
+        color: var(--text-muted, #9CA3AF);
+    }
+
+    .acc-upgrade-features {
+        display: flex;
+        flex-direction: column;
+        gap: .5rem;
+        margin-bottom: 1.25rem;
+        padding: 1rem;
+        background: var(--bg, #F9FAFB);
+        border-radius: 10px;
+        border: 1px solid var(--border, #E5E7EB);
+    }
+
+    .acc-upgrade-feat {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+        font-size: .82rem;
+        color: var(--text, #374151);
+    }
+
+    /* ── Action buttons ───────────────────────────────────── */
+    .acc-action-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: .4rem;
+        width: 100%;
+        padding: .625rem 1rem;
+        border-radius: 10px;
+        font-size: .85rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all .15s;
+        border: none;
+        text-decoration: none;
+        text-align: center;
+        box-sizing: border-box;
+    }
+
+    .acc-action-btn--primary {
+        background: linear-gradient(135deg, #4338CA 0%, #6D28D9 100%);
+        color: #fff;
+    }
+
+        .acc-action-btn--primary:hover {
+            opacity: .9;
+            transform: translateY(-1px);
+        }
+
+    .acc-action-btn--secondary {
+        background: var(--bg, #F3F4F6);
+        color: var(--text, #374151);
+        border: 1.5px solid var(--border, #D1D5DB);
+    }
+
+        .acc-action-btn--secondary:hover {
+            background: var(--border, #E5E7EB);
+        }
+
+    .acc-action-btn--upgrade {
+        background: linear-gradient(135deg, #D97706 0%, #B45309 100%);
+        color: #fff;
+    }
+
+        .acc-action-btn--upgrade:hover {
+            opacity: .92;
+            transform: translateY(-1px);
+        }
+
+    .acc-action-btn--danger {
+        background: transparent;
+        color: #EF4444;
+        border: 1.5px solid #FCA5A5;
+    }
+
+        .acc-action-btn--danger:hover {
+            background: #FEE2E2;
+        }
+
+    /* ── Quick links ──────────────────────────────────────── */
+    .acc-quicklinks {
+        display: flex;
+        flex-direction: column;
+        gap: .3rem;
+    }
+
+    .acc-quicklink {
+        display: flex;
+        align-items: center;
+        gap: .75rem;
+        padding: .625rem .75rem;
+        border-radius: 10px;
+        text-decoration: none;
+        color: var(--text, #374151);
+        font-size: .85rem;
+        font-weight: 500;
+        transition: background .12s;
+    }
+
+        .acc-quicklink:hover {
+            background: var(--bg, #F3F4F6);
+        }
+
+    .acc-quicklink-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .acc-quicklink-arrow {
+        margin-left: auto;
+        color: var(--text-muted, #D1D5DB);
+    }
+
+    /* ── History ──────────────────────────────────────────── */
+    .acc-history-count {
+        font-size: .75rem;
+        background: var(--bg, #F3F4F6);
+        border: 1px solid var(--border, #E5E7EB);
+        padding: 2px 10px;
+        border-radius: 20px;
+        color: var(--text-muted, #6B7280);
+        font-weight: 600;
+    }
+
+    .acc-history {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+    }
+
+    .acc-history-row {
+        display: flex;
+        align-items: center;
+        gap: .875rem;
+        padding: .75rem .5rem;
+        border-bottom: 1px solid var(--border, #F3F4F6);
+        transition: background .1s;
+        border-radius: 8px;
+    }
+
+        .acc-history-row:hover {
+            background: var(--bg, #F9FAFB);
+        }
+
+        .acc-history-row:last-child {
+            border-bottom: none;
+        }
+
+    .acc-history-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 9px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .acc-history-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .acc-history-name {
+        display: block;
+        font-size: .85rem;
+        font-weight: 600;
+        color: var(--text, #111827);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .acc-history-meta {
+        display: flex;
+        align-items: center;
+        gap: .35rem;
+        font-size: .75rem;
+        color: var(--text-muted, #9CA3AF);
+        margin-top: .1rem;
+    }
+
+    .acc-history-tool {
+        font-weight: 600;
+    }
+
+    .acc-history-date {
+        font-size: .75rem;
+        color: var(--text-muted, #9CA3AF);
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    .acc-history-nudge {
+        display: flex;
+        align-items: center;
+        gap: .4rem;
+        padding: .75rem 1rem;
+        margin-top: .75rem;
+        background: #FEF3C715;
+        border: 1px solid #FDE68A;
+        border-radius: 10px;
+        font-size: .8rem;
+        color: #92400E;
+    }
+
+        .acc-history-nudge a {
+            color: #D97706;
+            font-weight: 600;
+            text-decoration: none;
+            margin-left: auto;
+        }
+
+    /* ── Empty / loading states ───────────────────────────── */
+    .acc-empty {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 3rem 2rem;
+        text-align: center;
+        gap: .75rem;
+    }
+
+    .acc-empty-icon {
+        width: 72px;
+        height: 72px;
+        border-radius: 18px;
+        background: var(--bg, #F3F4F6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-muted, #9CA3AF);
+    }
+
+    .acc-empty-title {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: var(--text, #111827);
+        margin: 0;
+    }
+
+    .acc-empty-desc {
+        font-size: .875rem;
+        color: var(--text-muted, #6B7280);
+        margin: 0;
+        max-width: 280px;
+    }
+
+    .acc-loading {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: .75rem;
+        padding: 3rem;
+        color: var(--text-muted, #9CA3AF);
+        font-size: .875rem;
+    }
+
+    .acc-skeleton-block {
+        height: 72px;
+        border-radius: 12px;
+        background: linear-gradient(90deg, var(--border,#E5E7EB) 25%, var(--bg,#F3F4F6) 50%, var(--border,#E5E7EB) 75%);
+        background-size: 200% 100%;
+        animation: acc-shimmer 1.4s infinite;
+    }
+
+    @@keyframes acc-shimmer {
+        0% {
+            background-position: 200% 0;
+        }
+
+        100% {
+            background-position: -200% 0;
+        }
+    }
+
+    /* ── Not authorized ───────────────────────────────────── */
+    .acc-signin {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 5rem 2rem;
+        gap: 1rem;
+    }
+
+    .acc-signin-icon {
+        width: 88px;
+        height: 88px;
+        border-radius: 24px;
+        background: var(--bg, #F3F4F6);
+        border: 1px solid var(--border, #E5E7EB);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-muted, #9CA3AF);
+        margin-bottom: .5rem;
+    }
+
+    .acc-signin h2 {
+        font-size: 1.4rem;
+        font-weight: 700;
+        margin: 0;
+        color: var(--text, #111827);
+    }
+
+    .acc-signin p {
+        font-size: .9rem;
+        color: var(--text-muted, #6B7280);
+        max-width: 320px;
+        margin: 0;
+        line-height: 1.5;
+    }
+
+    /* ── Toast ────────────────────────────────────────────── */
+    .acc-toast {
+        position: fixed;
+        bottom: 2rem;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        align-items: center;
+        gap: .75rem;
+        background: var(--surface, #fff);
+        border: 1.5px solid #A7F3D0;
+        border-radius: 14px;
+        padding: .875rem 1.25rem;
+        box-shadow: 0 8px 32px rgba(0,0,0,.12);
+        z-index: 9999;
+        min-width: 300px;
+        max-width: 480px;
+        font-size: .875rem;
+        color: var(--text, #111827);
+        animation: acc-slidein .3s ease;
+    }
+
+    @@keyframes acc-slidein {
+        from {
+            opacity: 0;
+            transform: translateX(-50%) translateY(16px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+    }
+
+    .acc-toast-close {
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: var(--text-muted, #9CA3AF);
+        font-size: .9rem;
+        padding: 0;
+        margin-left: auto;
+        flex-shrink: 0;
+    }
+</style>
 
 @code {
     private string _userId = string.Empty;
@@ -340,15 +1047,37 @@
     private int _topUpCreditsAdded = 0;
     private AiCreditTopUpModal? _topUpModal;
 
+    private record QuickLinkDef(string Label, string Url, string Color, string IconSvg);
+
+    private List<QuickLinkDef> QuickLinks => new()
+    {
+        new("AI Tools", "/ai-pdf-assist", "#7C3AED",
+            "<svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polygon points='12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26 12,2'/></svg>"),
+        new("Extract Invoice Data", "/extract-invoice-data", "#6D28D9",
+            "<svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='3' width='18' height='18' rx='2'/><path d='M3 9h18'/><path d='M9 21V9'/></svg>"),
+        new("Batch Process", "/batch", "#4338CA",
+            "<svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z'/></svg>"),
+        new("Compare PDFs", "/compare-pdf", "#0D9488",
+            "<svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='11' cy='11' r='8'/><line x1='21' y1='21' x2='16.65' y2='16.65'/></svg>"),
+        new("Review Contract", "/review-contract", "#DC2626",
+            "<svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/><polyline points='14 2 14 8 20 8'/><line x1='16' y1='13' x2='8' y2='13'/></svg>"),
+        new("API Keys", "/account/api-keys", "#2563EB",
+            "<svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4'/></svg>"),
+    };
+
     protected override async Task OnInitializedAsync()
     {
         var authState = await Auth.GetAuthenticationStateAsync();
         var user = authState.User;
-
         if (!user.Identity?.IsAuthenticated ?? true) return;
 
         _userId = user.FindFirst("sub")?.Value ?? string.Empty;
         _baseUrl = Navigation.BaseUri.TrimEnd('/');
+
+        if (string.IsNullOrEmpty(_userId)) return;
+
+        // Clear any stale cache to ensure accurate status
+        SubService.ClearCache();
 
         await Task.WhenAll(
             LoadSubscriptionAsync(),
@@ -360,7 +1089,6 @@
     {
         if (!firstRender) return;
 
-        // Handle return from Stripe top-up checkout
         var uri = new Uri(Navigation.Uri);
         var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
         var topup = query["topup"];
@@ -371,23 +1099,17 @@
         {
             if (int.TryParse(creditsStr, out var credits))
             {
-                // Confirm with API (records in DB idempotently)
                 try
                 {
                     await ApiService.PostAsync<ConfirmTopUpRequest, object>(
                         "api/subscription/topup-credits/confirm",
                         new ConfirmTopUpRequest { SessionId = sessionId });
-
                     _topUpCreditsAdded = credits;
                     _showTopUpSuccess = true;
-
-                    // Reload usage to reflect new credits
                     await LoadAiUsageAsync();
                 }
-                catch { /* Confirm failed — credits may still have been recorded by webhook */ }
+                catch { }
             }
-
-            // Clean URL
             Navigation.NavigateTo("/account", replace: true);
             StateHasChanged();
         }
@@ -405,14 +1127,9 @@
     {
         try
         {
-            _history = await ApiService
-                .GetAsync<List<DownloadHistoryDto>>(
-                    $"api/subscription/history/{_userId}");
+            _history = await ApiService.GetAsync<List<DownloadHistoryDto>>($"api/subscription/history/{_userId}");
         }
-        catch
-        {
-            _history = new List<DownloadHistoryDto>();
-        }
+        catch { _history = new List<DownloadHistoryDto>(); }
         finally
         {
             _historyLoading = false;
@@ -424,30 +1141,16 @@
     {
         try
         {
-            _aiUsage = await ApiService
-                .GetAsync<AiUsageDto>($"api/ai/usage/{_userId}");
-
-            // Load purchased top-up credits
-            var creditsResult = await ApiService
-                .GetAsync<PurchasedCreditsDto>($"api/subscription/purchased-credits/{_userId}");
+            _aiUsage = await ApiService.GetAsync<AiUsageDto>($"api/ai/usage/{_userId}");
+            var creditsResult = await ApiService.GetAsync<PurchasedCreditsDto>($"api/subscription/purchased-credits/{_userId}");
             _purchasedCredits = creditsResult?.Remaining ?? 0;
         }
-        catch
-        {
-            _aiUsage = null;
-        }
+        catch { _aiUsage = null; }
         StateHasChanged();
     }
 
-    private class PurchasedCreditsDto
-    {
-        public int Remaining { get; set; }
-    }
-
-    private class ConfirmTopUpRequest
-    {
-        public string SessionId { get; set; } = string.Empty;
-    }
+    private class PurchasedCreditsDto { public int Remaining { get; set; } }
+    private class ConfirmTopUpRequest { public string SessionId { get; set; } = string.Empty; }
 
     private async Task ManageBilling()
     {
@@ -456,13 +1159,13 @@
             Navigation.NavigateTo(url, forceLoad: true);
     }
 
+    private string GetUsageColor(double pct) => pct >= 90 ? "#EF4444" : pct >= 70 ? "#D97706" : "#4338CA";
+
     private string GetInitials(string? name)
     {
         if (string.IsNullOrWhiteSpace(name)) return "?";
-        var parts = name.Trim().Split(' ',
-            StringSplitOptions.RemoveEmptyEntries);
-        if (parts.Length >= 2)
-            return $"{parts[0][0]}{parts[1][0]}".ToUpper();
+        var parts = name.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length >= 2) return $"{parts[0][0]}{parts[1][0]}".ToUpper();
         return name.Length >= 2 ? name[..2].ToUpper() : name.ToUpper();
     }
 
@@ -475,8 +1178,7 @@
     private string GetTotalSize()
     {
         if (_history == null || !_history.Any()) return "0 KB";
-        var total = _history.Sum(h => h.FileSizeBytes);
-        return FormatFileSize(total);
+        return FormatFileSize(_history.Sum(h => h.FileSizeBytes));
     }
 
     private string GetRelativeDate(DateTime date)
@@ -498,6 +1200,7 @@
         var t when t.Contains("Ai") || t.Contains("AI") => "#7C3AED",
         var t when t.Contains("Extract") => "#6D28D9",
         var t when t.Contains("Protect") => "#1E40AF",
+        var t when t.Contains("Redact") => "#DC2626",
         _ => "#4338CA"
     };
 
@@ -509,9 +1212,8 @@
     }
 
     private static string TruncateFileName(string name)
-        => name.Length > 40 ? name[..37] + "..." : name;
+        => name.Length > 42 ? name[..39] + "..." : name;
 
     private static string FormatToolType(string toolType)
-        => System.Text.RegularExpressions.Regex
-            .Replace(toolType, "([A-Z])", " $1").Trim();
+        => System.Text.RegularExpressions.Regex.Replace(toolType, "([A-Z])", " $1").Trim();
 }

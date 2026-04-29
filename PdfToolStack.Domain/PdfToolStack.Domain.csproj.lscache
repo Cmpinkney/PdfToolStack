@@ -65,9 +65,14 @@ Entities/
  ProcessingResult.cs
  RedactionRegion.cs
  Referral.cs
+ Team.cs
+ TeamInvite.cs
+ TeamMember.cs
  UserSubscription.cs
 Enums/
  JobStatus.cs
+ PaywallReason.cs
+ SubscriptionPlan.cs
  ToolType.cs
 Interfaces/
  IApiKeyService.cs

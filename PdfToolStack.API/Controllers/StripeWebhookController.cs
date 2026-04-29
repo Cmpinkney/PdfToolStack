@@ -75,6 +75,14 @@ namespace PdfToolStack.API.Controllers
                     case "customer.subscription.deleted":
                         await HandleSubscriptionDeletedAsync(stripeEvent);
                         break;
+
+                    case "charge.refunded":
+                        await HandleChargeRefundedAsync(stripeEvent);
+                        break;
+
+                    case "charge.dispute.created":
+                        await HandleChargeDisputeCreatedAsync(stripeEvent);
+                        break;
                 }
 
                 return Ok();
@@ -115,8 +123,11 @@ namespace PdfToolStack.API.Controllers
             var subscriptionService = new Stripe.SubscriptionService();
             var stripeSubscription = await subscriptionService.GetAsync(session.SubscriptionId);
 
+            var priceId = stripeSubscription.Items.Data[0].Price.Id;
             var interval = stripeSubscription.Items.Data[0].Price.Recurring?.Interval;
-            var planType = interval == "month" ? "monthly" : "yearly";
+            var planType = priceId == _stripeOptions.TeamsMonthlyPriceId
+                ? "teams"
+                : interval == "month" ? "monthly" : "yearly";
 
             var existing = await _db.UserSubscriptions.FirstOrDefaultAsync(x => x.UserId == userId);
 
@@ -200,7 +211,7 @@ namespace PdfToolStack.API.Controllers
                         CreditsAdded = 50,
                         CreditsUsed = 0,
                         PurchasedAt = DateTime.UtcNow,
-                        ExpiresAt = DateTime.UtcNow.AddDays(90)
+                        ExpiresAt = DateTime.MaxValue
                     });
 
                     await _db.SaveChangesAsync();
@@ -292,6 +303,61 @@ namespace PdfToolStack.API.Controllers
             sub.UpdatedAt = DateTime.UtcNow;
 
             await _db.SaveChangesAsync();
+        }
+
+        private async Task HandleChargeRefundedAsync(Event stripeEvent)
+        {
+            var charge = stripeEvent.Data.Object as Charge;
+            if (charge?.CustomerId == null)
+                return;
+
+            _logger.LogWarning(
+                "Charge refunded: {ChargeId}, Customer: {CustomerId}",
+                charge.Id, charge.CustomerId);
+
+            var sub = await _db.UserSubscriptions
+                .FirstOrDefaultAsync(s => s.StripeCustomerId == charge.CustomerId);
+
+            if (sub == null)
+                return;
+
+            sub.Status = "canceled";
+            sub.UpdatedAt = DateTime.UtcNow;
+            await _db.SaveChangesAsync();
+
+            _logger.LogInformation(
+                "Subscription downgraded to Free for user {UserId} after charge refund",
+                sub.UserId);
+        }
+
+        private async Task HandleChargeDisputeCreatedAsync(Event stripeEvent)
+        {
+            var dispute = stripeEvent.Data.Object as Dispute;
+            if (dispute?.ChargeId == null)
+                return;
+
+            _logger.LogWarning(
+                "Dispute created: {DisputeId}, ChargeId: {ChargeId}",
+                dispute.Id, dispute.ChargeId);
+
+            var chargeService = new ChargeService();
+            var charge = await chargeService.GetAsync(dispute.ChargeId);
+            if (charge?.CustomerId == null)
+                return;
+
+            var sub = await _db.UserSubscriptions
+                .FirstOrDefaultAsync(s => s.StripeCustomerId == charge.CustomerId);
+
+            if (sub == null)
+                return;
+
+            sub.Status = "disputed";
+            sub.UpdatedAt = DateTime.UtcNow;
+            await _db.SaveChangesAsync();
+
+            _logger.LogWarning(
+                "Subscription suspended for user {UserId} after dispute {DisputeId}",
+                sub.UserId, dispute.Id);
         }
     }
 }

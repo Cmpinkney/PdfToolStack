@@ -5,7 +5,6 @@
 
     <a href="/" class="nav-brand" aria-label="PdfToolStack home">
         <div class="nav-logo-wrap">
-            <!-- Icon: stacked docs + teal checkmark -->
             <svg class="nav-logo-icon" width="32" height="38" viewBox="0 0 28 38" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                 <rect x="8" y="6" width="20" height="26" rx="3" fill="#4F46E5" opacity="0.35" />
                 <rect x="4" y="3" width="20" height="26" rx="3" fill="#2250F4" opacity="0.65" />
@@ -16,7 +15,6 @@
                 <circle cx="18" cy="30" r="8" fill="#0D9488" />
                 <polyline points="13,30 16.5,33.5 23,25" stroke="white" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
-            <!-- Wordmark: pure HTML so font always renders -->
             <div class="nav-logo-wordmark">
                 <div class="nav-logo-name">Pdf<span>Tool</span>Stack</div>
                 <div class="nav-logo-tagline">COMPRESS · SIGN · EXTRACT</div>
@@ -24,21 +22,15 @@
         </div>
     </a>
 
-    <a href="/ai-pdf-assist" class="nav-link nav-link-ai">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 3c.5 1.5 1.5 2.5 3 3-1.5.5-2.5 1.5-3 3-.5-1.5-1.5-2.5-3-3 1.5-.5 2.5-1.5 3-3z" fill="currentColor" fill-opacity="0.3" />
-            <path d="M5 7c.3.8.8 1.4 1.5 1.5C5.8 8.8 5.3 9.4 5 10c-.3-.6-.8-1.2-1.5-1.5C4.2 8.2 4.7 7.6 5 7z" fill="currentColor" fill-opacity="0.7" />
-            <path d="M18 14c.3.8.8 1.4 1.5 1.5-.7.3-1.2.8-1.5 1.5-.3-.7-.8-1.2-1.5-1.5.7-.3 1.2-.8 1.5-1.5z" fill="currentColor" fill-opacity="0.7" />
-        </svg>
-        AI Tools
-    </a>
-    <a href="/compress-pdf" class="nav-link">Compress</a>
-    <a href="/converter" class="nav-link">Convert</a>
-    <a href="/merge-pdf" class="nav-link">Merge</a>
-    <a href="/split-pdf" class="nav-link">Split</a>
-    <a href="/edit-pdf" class="nav-link">Edit</a>
-    <a href="/sign-pdf" class="nav-link">Sign</a>
-    <a href="/batch" class="nav-link">Batch</a>
+    <!-- Desktop nav links -->
+    <a href="/ai-pdf-assist" class="nav-link nav-link-ai">AI Tools</a>
+    <a href="/compress-pdf" class="nav-link nav-link-tool">Compress</a>
+    <a href="/converter" class="nav-link nav-link-tool">Convert</a>
+    <a href="/merge-pdf" class="nav-link nav-link-tool">Merge</a>
+    <a href="/split-pdf" class="nav-link nav-link-tool">Split</a>
+    <a href="/edit-pdf" class="nav-link nav-link-tool">Edit</a>
+    <a href="/sign-pdf" class="nav-link nav-link-tool">Sign</a>
+    <a href="/batch" class="nav-link nav-link-tool">Batch</a>
     <a href="/pricing" class="nav-link">Pricing</a>
 
     <div class="nav-search">
@@ -60,13 +52,8 @@
             <div class="search-results" role="listbox" aria-label="Search results">
                 @foreach (var tool in FilteredTools.Take(6))
                 {
-                    <a class="search-result-item"
-                       href="@tool.Url"
-                       role="option"
-                       @onclick="ClearSearch">
-                        <span class="search-result-icon" aria-hidden="true">
-                            @tool.Icon
-                        </span>
+                    <a class="search-result-item" href="@tool.Url" role="option" @onclick="ClearSearch">
+                        <span class="search-result-icon" aria-hidden="true">@tool.Icon</span>
                         <div class="search-result-info">
                             <div class="search-result-name">@tool.Name</div>
                             <div class="search-result-desc">@tool.Description</div>
@@ -81,7 +68,7 @@
         <LoginDisplay />
     </div>
 
-    <button class="hamburger"
+    <button class="hamburger @(MobileMenuOpen ? "is-open" : "")"
             @onclick="ToggleMobileMenu"
             aria-label="@(MobileMenuOpen ? "Close menu" : "Open menu")"
             aria-expanded="@MobileMenuOpen">
@@ -91,115 +78,265 @@
     </button>
 </nav>
 
-<div class="mobile-menu @(MobileMenuOpen ? "open" : "")" role="navigation" aria-label="Mobile navigation">
-    <div class="mobile-section-title">PDF Tools</div>
-    <a href="/compress-pdf" class="mobile-nav-link" @onclick="CloseMobileMenu">🗜️ Compress PDF</a>
-    <a href="/pdf-to-word" class="mobile-nav-link" @onclick="CloseMobileMenu">📝 PDF to Word</a>
-    <a href="/word-to-pdf" class="mobile-nav-link" @onclick="CloseMobileMenu">📄 Word to PDF</a>
-    <a href="/merge-pdf" class="mobile-nav-link" @onclick="CloseMobileMenu">🔗 Merge PDF</a>
-    <a href="/split-pdf" class="mobile-nav-link" @onclick="CloseMobileMenu">✂️ Split PDF</a>
-    <a href="/converter" class="mobile-nav-link" @onclick="CloseMobileMenu">🔄 All Converters</a>
+<!-- Mobile overlay backdrop -->
+@if (MobileMenuOpen)
+{
+    <div class="mob-backdrop" @onclick="CloseMobileMenu"></div>
+}
 
-    <div class="mobile-section-title">Edit &amp; Annotate</div>
-    <a href="/edit-pdf" class="mobile-nav-link" @onclick="CloseMobileMenu">🖊️ Edit PDF</a>
-    <a href="/sign-pdf" class="mobile-nav-link" @onclick="CloseMobileMenu">✒️ Sign PDF</a>
-    <a href="/redact-pdf" class="mobile-nav-link" @onclick="CloseMobileMenu">🔒 Redact PDF</a>
-    <a href="/pdf-annotator" class="mobile-nav-link" @onclick="CloseMobileMenu">🖍️ Annotator</a>
-    <a href="/watermark-pdf" class="mobile-nav-link" @onclick="CloseMobileMenu">💧 Watermark</a>
+<!-- Mobile drawer -->
+<div class="mob-drawer @(MobileMenuOpen ? "mob-drawer--open" : "")" role="navigation" aria-label="Mobile navigation">
 
-    <div class="mobile-section-title">Organize</div>
-    <a href="/organize-pdf" class="mobile-nav-link" @onclick="CloseMobileMenu">📋 Organize PDF</a>
-    <a href="/delete-pdf-pages" class="mobile-nav-link" @onclick="CloseMobileMenu">🗑️ Delete Pages</a>
-    <a href="/extract-pdf-pages" class="mobile-nav-link" @onclick="CloseMobileMenu">📌 Extract Pages</a>
-    <a href="/rotate-pdf" class="mobile-nav-link" @onclick="CloseMobileMenu">🔄 Rotate PDF</a>
-    <a href="/batch" class="mobile-nav-link" @onclick="CloseMobileMenu">📦 Batch Process</a>
+    <!-- Drawer header -->
+    <div class="mob-header">
+        <span class="mob-header-title">Menu</span>
+        <button class="mob-close" @onclick="CloseMobileMenu" aria-label="Close menu">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+        </button>
+    </div>
 
-    <div class="mobile-section-title">Security</div>
-    <a href="/protect-pdf" class="mobile-nav-link" @onclick="CloseMobileMenu">🔐 Protect PDF</a>
-    <a href="/unlock-pdf" class="mobile-nav-link" @onclick="CloseMobileMenu">🔓 Unlock PDF</a>
-    <a href="/flatten-pdf" class="mobile-nav-link" @onclick="CloseMobileMenu">📄 Flatten PDF</a>
+    <!-- Quick links row -->
+    <div class="mob-quick-row">
+        <a href="/ai-pdf-assist" class="mob-quick-btn mob-quick-ai" @onclick="CloseMobileMenu">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c.5 1.5 1.5 2.5 3 3-1.5.5-2.5 1.5-3 3-.5-1.5-1.5-2.5-3-3 1.5-.5 2.5-1.5 3-3z" /><path d="M5 7c.3.8.8 1.4 1.5 1.5C5.8 8.8 5.3 9.4 5 10c-.3-.6-.8-1.2-1.5-1.5C4.2 8.2 4.7 7.6 5 7z" /></svg>
+            AI Tools
+        </a>
+        <a href="/pricing" class="mob-quick-btn" @onclick="CloseMobileMenu">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>
+            Pricing
+        </a>
+        <a href="/account" class="mob-quick-btn" @onclick="CloseMobileMenu">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+            Account
+        </a>
+    </div>
 
-    <div class="mobile-section-title">AI Tools</div>
-    <a href="/ai-pdf-assist" class="mobile-nav-link" @onclick="CloseMobileMenu">🤖 AI PDF Assist</a>
-    <a href="/chat-with-pdf" class="mobile-nav-link" @onclick="CloseMobileMenu">💬 Chat with PDF</a>
-    <a href="/ai-summarizer" class="mobile-nav-link" @onclick="CloseMobileMenu">✨ AI Summarizer</a>
-    <a href="/compare-pdf" class="mobile-nav-link" @onclick="CloseMobileMenu">🔍 Compare PDF</a>
-    <a href="/extract-invoice-data" class="mobile-nav-link" @onclick="CloseMobileMenu">📊 Extract Invoice Data</a>
-    <a href="/review-contract" class="mobile-nav-link" @onclick="CloseMobileMenu">⚖️ Contract Reviewer</a>
-    <a href="/ai-rewrite" class="mobile-nav-link" @onclick="CloseMobileMenu">✍️ AI Rewriter</a>
-    <a href="/translate-pdf" class="mobile-nav-link" @onclick="CloseMobileMenu">🌍 Translate PDF</a>
-    <a href="/invoice-data-extraction" class="nav-link">Invoice Extraction</a>
+    <div class="mob-divider"></div>
+
+    <!-- Accordion: AI Tools -->
+    <div class="mob-section">
+        <button class="mob-section-header @(OpenSection == "ai" ? "mob-section-header--open" : "")"
+                @onclick='() => ToggleSection("ai")'>
+            <div class="mob-section-header-left">
+                <span class="mob-section-icon mob-section-icon--ai">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c.5 1.5 1.5 2.5 3 3-1.5.5-2.5 1.5-3 3-.5-1.5-1.5-2.5-3-3 1.5-.5 2.5-1.5 3-3z" fill="currentColor" fill-opacity="0.3" /></svg>
+                </span>
+                <span>AI Tools</span>
+                <span class="mob-section-badge">Pro</span>
+            </div>
+            <svg class="mob-chevron @(OpenSection == "ai" ? "mob-chevron--open" : "")" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6,9 12,15 18,9" /></svg>
+        </button>
+        @if (OpenSection == "ai")
+        {
+            <div class="mob-section-body">
+                <a href="/ai-pdf-assist" class="mob-link" @onclick="CloseMobileMenu"><span class="mob-link-icon">🤖</span><div><div class="mob-link-name">AI PDF Assist</div><div class="mob-link-desc">All-in-one AI document tools</div></div></a>
+                <a href="/chat-with-pdf" class="mob-link" @onclick="CloseMobileMenu"><span class="mob-link-icon">💬</span><div><div class="mob-link-name">Chat with PDF</div><div class="mob-link-desc">Ask your document anything</div></div></a>
+                <a href="/ai-summarizer" class="mob-link" @onclick="CloseMobileMenu"><span class="mob-link-icon">✨</span><div><div class="mob-link-name">AI Summarizer</div><div class="mob-link-desc">Key points in seconds</div></div></a>
+                <a href="/compare-pdf" class="mob-link" @onclick="CloseMobileMenu"><span class="mob-link-icon">🔍</span><div><div class="mob-link-name">Compare PDFs</div><div class="mob-link-desc">Word-level diff report</div></div></a>
+                <a href="/extract-invoice-data" class="mob-link" @onclick="CloseMobileMenu"><span class="mob-link-icon">📊</span><div><div class="mob-link-name">Extract Invoice Data</div><div class="mob-link-desc">PDF invoice → Excel instantly</div></div></a>
+                <a href="/review-contract" class="mob-link" @onclick="CloseMobileMenu"><span class="mob-link-icon">⚖️</span><div><div class="mob-link-name">Contract Reviewer</div><div class="mob-link-desc">Catch risky clauses with AI</div></div></a>
+                <a href="/ai-rewrite" class="mob-link" @onclick="CloseMobileMenu"><span class="mob-link-icon">✍️</span><div><div class="mob-link-name">AI Rewriter</div><div class="mob-link-desc">Rewrite and change tone</div></div></a>
+                <a href="/translate-pdf" class="mob-link" @onclick="CloseMobileMenu"><span class="mob-link-icon">🌍</span><div><div class="mob-link-name">Translate PDF</div><div class="mob-link-desc">Translate to any language</div></div></a>
+            </div>
+        }
+    </div>
+
+    <!-- Accordion: Convert -->
+    <div class="mob-section">
+        <button class="mob-section-header @(OpenSection == "convert" ? "mob-section-header--open" : "")"
+                @onclick='() => ToggleSection("convert")'>
+            <div class="mob-section-header-left">
+                <span class="mob-section-icon mob-section-icon--blue">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17,1 21,5 17,9" /><path d="M3 11V9a4 4 0 0 1 4-4h14" /><polyline points="7,23 3,19 7,15" /><path d="M21 13v2a4 4 0 0 1-4 4H3" /></svg>
+                </span>
+                <span>Compress &amp; Convert</span>
+            </div>
+            <svg class="mob-chevron @(OpenSection == "convert" ? "mob-chevron--open" : "")" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6,9 12,15 18,9" /></svg>
+        </button>
+        @if (OpenSection == "convert")
+        {
+            <div class="mob-section-body">
+                <a href="/compress-pdf" class="mob-link" @onclick="CloseMobileMenu"><span class="mob-link-icon">🗜️</span><div><div class="mob-link-name">Compress PDF</div><div class="mob-link-desc">Reduce file size</div></div></a>
+                <a href="/compress-for-email" class="mob-link" @onclick="CloseMobileMenu"><span class="mob-link-icon">📧</span><div><div class="mob-link-name">Fix PDF for Email</div><div class="mob-link-desc">Make it email-ready</div></div></a>
+                <a href="/pdf-to-word" class="mob-link" @onclick="CloseMobileMenu"><span class="mob-link-icon">📝</span><div><div class="mob-link-name">PDF to Word</div><div class="mob-link-desc">Convert to editable DOCX</div></div></a>
+                <a href="/word-to-pdf" class="mob-link" @onclick="CloseMobileMenu"><span class="mob-link-icon">📄</span><div><div class="mob-link-name">Word to PDF</div><div class="mob-link-desc">DOCX to PDF</div></div></a>
+                <a href="/pdf-to-jpg" class="mob-link" @onclick="CloseMobileMenu"><span class="mob-link-icon">🖼️</span><div><div class="mob-link-name">PDF to JPG</div><div class="mob-link-desc">Pages to images</div></div></a>
+                <a href="/jpg-to-pdf" class="mob-link" @onclick="CloseMobileMenu"><span class="mob-link-icon">🖼️</span><div><div class="mob-link-name">JPG to PDF</div><div class="mob-link-desc">Images to PDF</div></div></a>
+                <a href="/pdf-to-excel-converter" class="mob-link" @onclick="CloseMobileMenu"><span class="mob-link-icon">📈</span><div><div class="mob-link-name">PDF to Excel</div><div class="mob-link-desc">Tables to XLSX</div></div></a>
+                <a href="/ppt-to-pdf" class="mob-link" @onclick="CloseMobileMenu"><span class="mob-link-icon">📊</span><div><div class="mob-link-name">PPT to PDF</div><div class="mob-link-desc">Presentation to PDF</div></div></a>
+                <a href="/converter" class="mob-link mob-link--more" @onclick="CloseMobileMenu"><span class="mob-link-icon">🔄</span><div><div class="mob-link-name">All Converters</div><div class="mob-link-desc">View every format option</div></div></a>
+            </div>
+        }
+    </div>
+
+    <!-- Accordion: Edit & Annotate -->
+    <div class="mob-section">
+        <button class="mob-section-header @(OpenSection == "edit" ? "mob-section-header--open" : "")"
+                @onclick='() => ToggleSection("edit")'>
+            <div class="mob-section-header-left">
+                <span class="mob-section-icon mob-section-icon--violet">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" /></svg>
+                </span>
+                <span>Edit &amp; Sign</span>
+            </div>
+            <svg class="mob-chevron @(OpenSection == "edit" ? "mob-chevron--open" : "")" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6,9 12,15 18,9" /></svg>
+        </button>
+        @if (OpenSection == "edit")
+        {
+            <div class="mob-section-body">
+                <a href="/edit-pdf" class="mob-link" @onclick="CloseMobileMenu"><span class="mob-link-icon">🖊️</span><div><div class="mob-link-name">Edit PDF</div><div class="mob-link-desc">Add text and shapes</div></div></a>
+                <a href="/sign-pdf" class="mob-link" @onclick="CloseMobileMenu"><span class="mob-link-icon">✒️</span><div><div class="mob-link-name">Sign PDF</div><div class="mob-link-desc">Electronic signature</div></div></a>
+                <a href="/sign-contract" class="mob-link" @onclick="CloseMobileMenu"><span class="mob-link-icon">📋</span><div><div class="mob-link-name">Sign a Contract</div><div class="mob-link-desc">Legally binding e-sign</div></div></a>
+                <a href="/pdf-annotator" class="mob-link" @onclick="CloseMobileMenu"><span class="mob-link-icon">🖍️</span><div><div class="mob-link-name">PDF Annotator</div><div class="mob-link-desc">Highlight and markup</div></div></a>
+                <a href="/watermark-pdf" class="mob-link" @onclick="CloseMobileMenu"><span class="mob-link-icon">💧</span><div><div class="mob-link-name">Watermark PDF</div><div class="mob-link-desc">Add watermark text</div></div></a>
+                <a href="/redact-pdf" class="mob-link" @onclick="CloseMobileMenu"><span class="mob-link-icon">🔒</span><div><div class="mob-link-name">Redact PDF</div><div class="mob-link-desc">Remove sensitive info</div></div></a>
+                <a href="/fill-pdf-form" class="mob-link" @onclick="CloseMobileMenu"><span class="mob-link-icon">📝</span><div><div class="mob-link-name">Fill PDF Form</div><div class="mob-link-desc">Complete form fields</div></div></a>
+                <a href="/number-pages" class="mob-link" @onclick="CloseMobileMenu"><span class="mob-link-icon">🔢</span><div><div class="mob-link-name">Number Pages</div><div class="mob-link-desc">Add page numbers</div></div></a>
+            </div>
+        }
+    </div>
+
+    <!-- Accordion: Organize -->
+    <div class="mob-section">
+        <button class="mob-section-header @(OpenSection == "organize" ? "mob-section-header--open" : "")"
+                @onclick='() => ToggleSection("organize")'>
+            <div class="mob-section-header-left">
+                <span class="mob-section-icon mob-section-icon--teal">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="9" height="10" rx="1" /><rect x="13" y="3" width="9" height="6" rx="1" /><rect x="13" y="13" width="9" height="8" rx="1" /><rect x="2" y="17" width="9" height="4" rx="1" /></svg>
+                </span>
+                <span>Organize</span>
+            </div>
+            <svg class="mob-chevron @(OpenSection == "organize" ? "mob-chevron--open" : "")" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6,9 12,15 18,9" /></svg>
+        </button>
+        @if (OpenSection == "organize")
+        {
+            <div class="mob-section-body">
+                <a href="/merge-pdf" class="mob-link" @onclick="CloseMobileMenu"><span class="mob-link-icon">🔗</span><div><div class="mob-link-name">Merge PDF</div><div class="mob-link-desc">Combine multiple PDFs</div></div></a>
+                <a href="/split-pdf" class="mob-link" @onclick="CloseMobileMenu"><span class="mob-link-icon">✂️</span><div><div class="mob-link-name">Split PDF</div><div class="mob-link-desc">Separate pages</div></div></a>
+                <a href="/organize-pdf" class="mob-link" @onclick="CloseMobileMenu"><span class="mob-link-icon">📋</span><div><div class="mob-link-name">Organize PDF</div><div class="mob-link-desc">Reorder pages</div></div></a>
+                <a href="/extract-pdf-pages" class="mob-link" @onclick="CloseMobileMenu"><span class="mob-link-icon">📌</span><div><div class="mob-link-name">Extract Pages</div><div class="mob-link-desc">Pick specific pages</div></div></a>
+                <a href="/delete-pdf-pages" class="mob-link" @onclick="CloseMobileMenu"><span class="mob-link-icon">🗑️</span><div><div class="mob-link-name">Delete Pages</div><div class="mob-link-desc">Remove pages</div></div></a>
+                <a href="/rotate-pdf" class="mob-link" @onclick="CloseMobileMenu"><span class="mob-link-icon">🔄</span><div><div class="mob-link-name">Rotate PDF</div><div class="mob-link-desc">Fix page orientation</div></div></a>
+                <a href="/batch" class="mob-link" @onclick="CloseMobileMenu"><span class="mob-link-icon">📦</span><div><div class="mob-link-name">Batch Process</div><div class="mob-link-desc">20 files at once → ZIP</div></div></a>
+            </div>
+        }
+    </div>
+
+    <!-- Accordion: Security -->
+    <div class="mob-section">
+        <button class="mob-section-header @(OpenSection == "security" ? "mob-section-header--open" : "")"
+                @onclick='() => ToggleSection("security")'>
+            <div class="mob-section-header-left">
+                <span class="mob-section-icon mob-section-icon--slate">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
+                </span>
+                <span>Security</span>
+            </div>
+            <svg class="mob-chevron @(OpenSection == "security" ? "mob-chevron--open" : "")" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6,9 12,15 18,9" /></svg>
+        </button>
+        @if (OpenSection == "security")
+        {
+            <div class="mob-section-body">
+                <a href="/protect-pdf" class="mob-link" @onclick="CloseMobileMenu"><span class="mob-link-icon">🔐</span><div><div class="mob-link-name">Protect PDF</div><div class="mob-link-desc">Add password protection</div></div></a>
+                <a href="/unlock-pdf" class="mob-link" @onclick="CloseMobileMenu"><span class="mob-link-icon">🔓</span><div><div class="mob-link-name">Unlock PDF</div><div class="mob-link-desc">Remove password</div></div></a>
+                <a href="/flatten-pdf" class="mob-link" @onclick="CloseMobileMenu"><span class="mob-link-icon">📄</span><div><div class="mob-link-name">Flatten PDF</div><div class="mob-link-desc">Make uneditable</div></div></a>
+                <a href="/redact-pdf" class="mob-link" @onclick="CloseMobileMenu"><span class="mob-link-icon">🔒</span><div><div class="mob-link-name">Redact PDF</div><div class="mob-link-desc">Permanently remove sensitive data</div></div></a>
+            </div>
+        }
+    </div>
+
+    <div class="mob-divider"></div>
+
+    <!-- Bottom links -->
+    <div class="mob-bottom-links">
+        <a href="/pricing" class="mob-bottom-link" @onclick="CloseMobileMenu">Pricing</a>
+        <a href="/about" class="mob-bottom-link" @onclick="CloseMobileMenu">About</a>
+        <a href="/blog" class="mob-bottom-link" @onclick="CloseMobileMenu">Blog</a>
+        <a href="/contact" class="mob-bottom-link" @onclick="CloseMobileMenu">Contact</a>
+        <a href="/security" class="mob-bottom-link" @onclick="CloseMobileMenu">Security</a>
+    </div>
+
 </div>
 
 @code {
     private bool MobileMenuOpen = false;
     private string SearchQuery = string.Empty;
     private bool ShowSearchResults = false;
+    private string OpenSection = string.Empty;
 
-    private record ToolInfo(string Name, string Description,
-        string Url, string Icon);
+    private record ToolInfo(string Name, string Description, string Url, string Icon);
 
     private List<ToolInfo> AllTools = new()
     {
-        new("Compress PDF", "Reduce PDF file size", "/compress-pdf", "🗜️"),
-        new("PDF to Word", "Convert PDF to Word", "/pdf-to-word", "📝"),
-        new("Word to PDF", "Convert Word to PDF", "/word-to-pdf", "📄"),
-        new("Merge PDF", "Combine multiple PDFs", "/merge-pdf", "🔗"),
-        new("Split PDF", "Split PDF into pages", "/split-pdf", "✂️"),
-        new("Rotate PDF", "Rotate PDF pages", "/rotate-pdf", "🔄"),
-        new("Edit PDF", "Add text and shapes", "/edit-pdf", "🖊️"),
-        new("Sign PDF", "Electronic signature", "/sign-pdf", "✒️"),
-        new("Redact PDF", "Remove sensitive info", "/redact-pdf", "🔒"),
-        new("PDF Annotator", "Highlight and markup", "/pdf-annotator", "🖍️"),
-        new("Watermark PDF", "Add watermark", "/watermark-pdf", "💧"),
-        new("Fill PDF Form", "Fill form fields", "/fill-pdf-form", "✍️"),
-        new("Organize PDF", "Rearrange pages", "/organize-pdf", "📋"),
-        new("Delete Pages", "Remove PDF pages", "/delete-pdf-pages", "🗑️"),
-        new("Extract Pages", "Extract PDF pages", "/extract-pdf-pages", "📌"),
-        new("Number Pages", "Add page numbers", "/number-pages", "🔢"),
-        new("Flatten PDF", "Make PDF uneditable", "/flatten-pdf", "📄"),
-        new("Protect PDF", "Add password", "/protect-pdf", "🔐"),
-        new("Unlock PDF", "Remove password", "/unlock-pdf", "🔓"),
-        new("JPG to PDF", "Images to PDF", "/jpg-to-pdf", "🖼️"),
-        new("PPT to PDF", "PowerPoint to PDF", "/ppt-to-pdf", "📊"),
-        new("Excel to PDF", "Spreadsheet to PDF", "/excel-to-pdf", "📈"),
-        new("PDF to JPG", "PDF pages to images", "/pdf-to-jpg", "🖼️"),
-        new("PDF to Excel", "Extract tables to Excel", "/pdf-to-excel", "📈"),
-        new("PDF Reader", "View PDFs online", "/pdf-reader", "📖"),
-        new("Translate PDF", "Translate PDF content", "/translate-pdf", "🌍"),
-        new("AI PDF Assist", "AI document processing", "/ai-pdf-assist", "🤖"),
-        new("Chat with PDF", "Ask your PDF questions", "/chat-with-pdf", "💬"),
-        new("AI Summarizer", "Summarize PDF with AI", "/ai-summarizer", "✨"),
-        new("AI Questions", "Generate quiz questions", "/ai-questions", "📝"),
-        new("PDF OCR", "Make scans searchable", "/pdf-ocr", "🔍"),
-        new("PDF Scanner", "Scan to PDF", "/pdf-scanner", "📱"),
-        new("Compare PDF", "Find differences between PDFs", "/compare-pdf", "🔍"),
-        new("Extract Invoice Data", "AI extracts invoice to Excel", "/extract-invoice-data", "📊"),
-        new("Batch Process", "Process 20 files at once", "/batch", "📦"),
-        new("Compress for Email", "Fix PDF too large for email", "/compress-for-email", "🗜️"),
-        new("Sign Contract", "Sign contracts online", "/sign-contract", "✒️"),
-        new("Merge for Submission", "Combine PDFs for filing", "/merge-pdfs-for-submission", "🔗"),
-        new("Compare Contracts", "Find differences in contracts", "/compare-contracts", "🔍"),
-        new("AI Rewriter", "Rewrite PDF content with AI", "/ai-rewrite", "✍️"),
+        new("Compress PDF",         "Reduce PDF file size",              "/compress-pdf",            "🗜️"),
+        new("PDF to Word",          "Convert PDF to Word",               "/pdf-to-word",             "📝"),
+        new("Word to PDF",          "Convert Word to PDF",               "/word-to-pdf",             "📄"),
+        new("Merge PDF",            "Combine multiple PDFs",             "/merge-pdf",               "🔗"),
+        new("Split PDF",            "Split PDF into pages",              "/split-pdf",               "✂️"),
+        new("Rotate PDF",           "Rotate PDF pages",                  "/rotate-pdf",              "🔄"),
+        new("Edit PDF",             "Add text and shapes",               "/edit-pdf",                "🖊️"),
+        new("Sign PDF",             "Electronic signature",              "/sign-pdf",                "✒️"),
+        new("Redact PDF",           "Remove sensitive info",             "/redact-pdf",              "🔒"),
+        new("PDF Annotator",        "Highlight and markup",              "/pdf-annotator",           "🖍️"),
+        new("Watermark PDF",        "Add watermark",                     "/watermark-pdf",           "💧"),
+        new("Fill PDF Form",        "Fill form fields",                  "/fill-pdf-form",           "✍️"),
+        new("Organize PDF",         "Rearrange pages",                   "/organize-pdf",            "📋"),
+        new("Delete Pages",         "Remove PDF pages",                  "/delete-pdf-pages",        "🗑️"),
+        new("Extract Pages",        "Extract PDF pages",                 "/extract-pdf-pages",       "📌"),
+        new("Number Pages",         "Add page numbers",                  "/number-pages",            "🔢"),
+        new("Flatten PDF",          "Make PDF uneditable",               "/flatten-pdf",             "📄"),
+        new("Protect PDF",          "Add password",                      "/protect-pdf",             "🔐"),
+        new("Unlock PDF",           "Remove password",                   "/unlock-pdf",              "🔓"),
+        new("JPG to PDF",           "Images to PDF",                     "/jpg-to-pdf",              "🖼️"),
+        new("PPT to PDF",           "PowerPoint to PDF",                 "/ppt-to-pdf",              "📊"),
+        new("Excel to PDF",         "Spreadsheet to PDF",                "/excel-to-pdf",            "📈"),
+        new("PDF to JPG",           "PDF pages to images",               "/pdf-to-jpg",              "🖼️"),
+        new("PDF to Excel",         "Extract tables to Excel",           "/pdf-to-excel",            "📈"),
+        new("PDF Reader",           "View PDFs online",                  "/pdf-reader",              "📖"),
+        new("Translate PDF",        "Translate PDF content",             "/translate-pdf",           "🌍"),
+        new("AI PDF Assist",        "AI document processing",            "/ai-pdf-assist",           "🤖"),
+        new("Chat with PDF",        "Ask your PDF questions",            "/chat-with-pdf",           "💬"),
+        new("AI Summarizer",        "Summarize PDF with AI",             "/ai-summarizer",           "✨"),
+        new("AI Questions",         "Generate quiz questions",           "/ai-questions",            "📝"),
+        new("PDF OCR",              "Make scans searchable",             "/pdf-ocr",                 "🔍"),
+        new("PDF Scanner",          "Scan to PDF",                       "/pdf-scanner",             "📱"),
+        new("Compare PDF",          "Find differences between PDFs",     "/compare-pdf",             "🔍"),
+        new("Extract Invoice Data", "AI extracts invoice to Excel",      "/extract-invoice-data",    "📊"),
+        new("Batch Process",        "Process 20 files at once",          "/batch",                   "📦"),
+        new("Compress for Email",   "Fix PDF too large for email",       "/compress-for-email",      "🗜️"),
+        new("Sign Contract",        "Sign contracts online",             "/sign-contract",           "✒️"),
+        new("Merge for Submission", "Combine PDFs for filing",           "/merge-pdfs-for-submission","🔗"),
+        new("Compare Contracts",    "Find differences in contracts",     "/compare-contracts",       "🔍"),
+        new("AI Rewriter",          "Rewrite PDF content with AI",       "/ai-rewrite",              "✍️"),
+        new("Contract Reviewer",    "Catch risky clauses with AI",       "/review-contract",         "⚖️"),
     };
 
     private IEnumerable<ToolInfo> FilteredTools =>
         string.IsNullOrWhiteSpace(SearchQuery)
             ? Enumerable.Empty<ToolInfo>()
             : AllTools.Where(t =>
-                t.Name.Contains(SearchQuery,
-                    StringComparison.OrdinalIgnoreCase) ||
-                t.Description.Contains(SearchQuery,
-                    StringComparison.OrdinalIgnoreCase));
+                t.Name.Contains(SearchQuery, StringComparison.OrdinalIgnoreCase) ||
+                t.Description.Contains(SearchQuery, StringComparison.OrdinalIgnoreCase));
 
-    private void ToggleMobileMenu() =>
+    private void ToggleMobileMenu()
+    {
         MobileMenuOpen = !MobileMenuOpen;
+        if (!MobileMenuOpen) OpenSection = string.Empty;
+    }
 
-    private void CloseMobileMenu() =>
+    private void CloseMobileMenu()
+    {
         MobileMenuOpen = false;
+        OpenSection = string.Empty;
+    }
 
-    private void ShowResults() =>
-        ShowSearchResults = true;
+    private void ToggleSection(string section) =>
+        OpenSection = OpenSection == section ? string.Empty : section;
+
+    private void ShowResults() => ShowSearchResults = true;
 
     private async Task HideResultsDelayed()
     {

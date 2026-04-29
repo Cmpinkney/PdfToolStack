@@ -18,6 +18,11 @@ namespace PdfToolStack.API.Middleware
         private static readonly ConcurrentDictionary<string,
             (int Count, DateTime WindowStart)> _aiCounts = new();
 
+        private static readonly Timer _evictionTimer = new Timer(
+            EvictStaleBuckets, null,
+            TimeSpan.FromHours(1),
+            TimeSpan.FromHours(1));
+
         public RateLimitingMiddleware(
             RequestDelegate next,
             IOptions<ProcessingOptions> options,
@@ -113,6 +118,19 @@ namespace PdfToolStack.API.Middleware
                 error = "Too many requests. Please try again in an hour.",
                 statusCode = 429
             });
+        }
+
+        private static void EvictStaleBuckets(object? state)
+        {
+            var cutoff = DateTime.UtcNow.AddHours(-2);
+
+            foreach (var key in _pdfCounts.Keys)
+                if (_pdfCounts.TryGetValue(key, out var val) && val.WindowStart < cutoff)
+                    _pdfCounts.TryRemove(key, out _);
+
+            foreach (var key in _aiCounts.Keys)
+                if (_aiCounts.TryGetValue(key, out var val) && val.WindowStart < cutoff)
+                    _aiCounts.TryRemove(key, out _);
         }
     }
 }

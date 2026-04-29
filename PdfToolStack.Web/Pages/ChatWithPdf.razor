@@ -19,7 +19,6 @@
 <div class="tool-page">
     <div class="tool-container">
 
-        <!-- Header -->
         <div class="ai-tool-header">
             <div class="ai-tool-badge">✨ AI-Powered</div>
             <h1>Chat with PDF</h1>
@@ -29,7 +28,6 @@
             </p>
         </div>
 
-        <!-- How it works -->
         <div class="how-it-works">
             <div class="hiw-step">
                 <div class="hiw-num">1</div>
@@ -60,150 +58,143 @@
             <NotAuthorized>
                 <div class="ai-upgrade-card">
                     <div class="ai-upgrade-icon">💬</div>
-                    <h2>Chat with PDF — Pro Feature</h2>
-                    <p>Ask your documents anything. Claude reads your PDF and answers based on the content. Available on Pro — $19/month.</p>
+                    <h2>Try Chat with PDF — 5 free uses</h2>
+                    <p>Sign in to get 5 free AI uses per month. Ask your documents anything — contracts, manuals, research papers.</p>
                     <div class="ai-upgrade-features">
-                        <div class="ai-upgrade-feat">✓ Ask unlimited questions</div>
+                        <div class="ai-upgrade-feat">✓ Ask questions in plain English</div>
                         <div class="ai-upgrade-feat">✓ Answers grounded in your document</div>
                         <div class="ai-upgrade-feat">✓ Works on contracts, manuals, papers</div>
                         <div class="ai-upgrade-feat">✓ Full conversation history</div>
                     </div>
                     <div class="ai-upgrade-actions">
-                        <a href="/pricing" class="download-button"
+                        <a href="authentication/login?screen_hint=signup" class="download-button"
                            style="display:inline-block; text-decoration:none;">
-                            Upgrade to Pro — $19/mo
+                            Sign up free — 5 AI uses included
                         </a>
                         <a href="authentication/login" class="reset-button"
                            style="display:inline-block; text-decoration:none;">
-                            Sign in if you have Pro
+                            Sign in
                         </a>
                     </div>
                 </div>
             </NotAuthorized>
 
             <Authorized>
-                @if (!_isPro)
+                @if (!_isPro && _aiUsed < 5)
                 {
-                    <div class="ai-upgrade-card">
-                        <div class="ai-upgrade-icon">💬</div>
-                        <h2>Upgrade to Pro to unlock Chat with PDF</h2>
-                        <p>You're signed in but on the Free plan. Upgrade to ask your documents anything.</p>
-                        <div class="ai-upgrade-actions">
-                            <a href="/pricing" class="download-button"
-                               style="display:inline-block; text-decoration:none;">
-                                Upgrade to Pro — $19/mo
-                            </a>
-                        </div>
+                    <div class="free-uses-banner">
+                        <span>✨ @(5 - _aiUsed) of 5 free AI uses remaining this month</span>
+                        <a href="/pricing">Upgrade to Pro for 200/mo →</a>
                     </div>
+                }
+
+                @if (_isRateLimit)
+                {
+                    <AiLimitBanner IsVisible="true"
+                                   IsFreeLimit="@_isFreeLimit"
+                                   Limit="@(_isFreeLimit ? 5 : 200)" />
+                }
+                else if (_fileBytes == null)
+                {
+                    <FileUpload OnFileSelected="HandleFileSelected"
+                                OnFileRemoved="HandleFileRemoved"
+                                HintText="Upload a PDF to start chatting — up to 50MB" />
                 }
                 else
                 {
-                    @if (_fileBytes == null)
+                    <div class="chat-file-bar">
+                        <div class="chat-file-bar-left">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                 stroke="currentColor" stroke-width="1.5"
+                                 stroke-linecap="round" stroke-linejoin="round"
+                                 style="color:var(--primary); flex-shrink:0;">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                <polyline points="14,2 14,8 20,8" />
+                            </svg>
+                            <span class="chat-file-name">@_fileName</span>
+                            <span class="chat-file-ready">Ready to chat</span>
+                        </div>
+                        <button class="reset-button"
+                                style="max-width:120px; padding:0.35rem 0.75rem; font-size:0.8rem;"
+                                @onclick="ClearFile">
+                            Change file
+                        </button>
+                    </div>
+
+                    @if (_messages.Any())
                     {
-                        <FileUpload OnFileSelected="HandleFileSelected"
-                                    OnFileRemoved="HandleFileRemoved"
-                                    HintText="Upload a PDF to start chatting — up to 50MB" />
+                        <div class="chat-history" id="chatHistory">
+                            @foreach (var msg in _messages)
+                            {
+                                <div class="chat-bubble @(msg.IsUser ? "chat-user" : "chat-ai")">
+                                    @if (!msg.IsUser)
+                                    {
+                                        <div class="chat-ai-avatar">AI</div>
+                                    }
+                                    <div class="chat-bubble-text">@msg.Text</div>
+                                </div>
+                            }
+                            @if (_processing)
+                            {
+                                <div class="chat-bubble chat-ai">
+                                    <div class="chat-ai-avatar">AI</div>
+                                    <div class="chat-bubble-text chat-thinking">
+                                        <span class="chat-dot"></span>
+                                        <span class="chat-dot"></span>
+                                        <span class="chat-dot"></span>
+                                    </div>
+                                </div>
+                            }
+                        </div>
                     }
                     else
                     {
-                        <!-- File indicator -->
-                        <div class="chat-file-bar">
-                            <div class="chat-file-bar-left">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-                                     stroke="currentColor" stroke-width="1.5"
-                                     stroke-linecap="round" stroke-linejoin="round"
-                                     style="color:var(--primary); flex-shrink:0;">
-                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                                    <polyline points="14,2 14,8 20,8" />
-                                </svg>
-                                <span class="chat-file-name">@_fileName</span>
-                                <span class="chat-file-ready">Ready to chat</span>
+                        <div class="chat-suggestions">
+                            <p class="chat-suggestions-label">Try asking:</p>
+                            <div class="chat-suggestions-grid">
+                                <button class="chat-suggestion-btn"
+                                        @onclick='() => SetQuestion("What is the main topic of this document?")'>
+                                    What is the main topic?
+                                </button>
+                                <button class="chat-suggestion-btn"
+                                        @onclick='() => SetQuestion("Summarize the key points in 3 bullet points.")'>
+                                    Summarize in 3 bullet points
+                                </button>
+                                <button class="chat-suggestion-btn"
+                                        @onclick='() => SetQuestion("What are the most important dates or deadlines mentioned?")'>
+                                    What are the key dates?
+                                </button>
+                                <button class="chat-suggestion-btn"
+                                        @onclick='() => SetQuestion("What action items or obligations are mentioned?")'>
+                                    What are the action items?
+                                </button>
                             </div>
-                            <button class="reset-button"
-                                    style="max-width:120px; padding:0.35rem 0.75rem; font-size:0.8rem;"
-                                    @onclick="ClearFile">
-                                Change file
-                            </button>
-                        </div>
-
-                        <!-- Chat history -->
-                        @if (_messages.Any())
-                        {
-                            <div class="chat-history" id="chatHistory">
-                                @foreach (var msg in _messages)
-                                {
-                                    <div class="chat-bubble @(msg.IsUser ? "chat-user" : "chat-ai")">
-                                        @if (!msg.IsUser)
-                                        {
-                                            <div class="chat-ai-avatar">AI</div>
-                                        }
-                                        <div class="chat-bubble-text">@msg.Text</div>
-                                    </div>
-                                }
-                                @if (_processing)
-                                {
-                                    <div class="chat-bubble chat-ai">
-                                        <div class="chat-ai-avatar">AI</div>
-                                        <div class="chat-bubble-text chat-thinking">
-                                            <span class="chat-dot"></span>
-                                            <span class="chat-dot"></span>
-                                            <span class="chat-dot"></span>
-                                        </div>
-                                    </div>
-                                }
-                            </div>
-                        }
-                        else
-                        {
-                            <!-- Suggested questions -->
-                            <div class="chat-suggestions">
-                                <p class="chat-suggestions-label">Try asking:</p>
-                                <div class="chat-suggestions-grid">
-                                    <button class="chat-suggestion-btn"
-                                            @onclick='() => SetQuestion("What is the main topic of this document?")'>
-                                        What is the main topic?
-                                    </button>
-                                    <button class="chat-suggestion-btn"
-                                            @onclick='() => SetQuestion("Summarize the key points in 3 bullet points.")'>
-                                        Summarize in 3 bullet points
-                                    </button>
-                                    <button class="chat-suggestion-btn"
-                                            @onclick='() => SetQuestion("What are the most important dates or deadlines mentioned?")'>
-                                        What are the key dates?
-                                    </button>
-                                    <button class="chat-suggestion-btn"
-                                            @onclick='() => SetQuestion("What action items or obligations are mentioned?")'>
-                                        What are the action items?
-                                    </button>
-                                </div>
-                            </div>
-                        }
-
-                        <!-- Input -->
-                        <div class="chat-input-row">
-                            <input class="chat-input"
-                                   type="text"
-                                   placeholder="Ask a question about your document..."
-                                   @bind="_question"
-                                   @bind:event="oninput"
-                                   @onkeydown="OnKeyDown"
-                                   disabled="@_processing" />
-                            <button class="process-button"
-                                    style="max-width:90px; margin-top:0; flex-shrink:0;"
-                                    @onclick="AskQuestion"
-                                    disabled="@(_processing || string.IsNullOrWhiteSpace(_question))">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-                                     stroke="currentColor" stroke-width="2.5"
-                                     stroke-linecap="round" stroke-linejoin="round">
-                                    <line x1="22" y1="2" x2="11" y2="13" />
-                                    <polygon points="22,2 15,22 11,13 2,9" />
-                                </svg>
-                                Ask
-                            </button>
                         </div>
                     }
 
-                    @if (!string.IsNullOrEmpty(_error))
+                    <div class="chat-input-row">
+                        <input class="chat-input"
+                               type="text"
+                               placeholder="Ask a question about your document..."
+                               @bind="_question"
+                               @bind:event="oninput"
+                               @onkeydown="OnKeyDown"
+                               disabled="@_processing" />
+                        <button class="process-button"
+                                style="max-width:90px; margin-top:0; flex-shrink:0;"
+                                @onclick="AskQuestion"
+                                disabled="@(_processing || string.IsNullOrWhiteSpace(_question))">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                 stroke="currentColor" stroke-width="2.5"
+                                 stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="22" y1="2" x2="11" y2="13" />
+                                <polygon points="22,2 15,22 11,13 2,9" />
+                            </svg>
+                            Ask
+                        </button>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(_error) && _error != "rate_limit")
                     {
                         <div class="error-message" style="margin-top:1rem;">@_error</div>
                     }
@@ -234,9 +225,12 @@
     private byte[]? _fileBytes;
     private string? _fileName;
     private bool _isPro;
+    private int _aiUsed = 0;
     private bool _processing;
     private string _question = string.Empty;
     private string _error = string.Empty;
+    private bool _isRateLimit = false;
+    private bool _isFreeLimit = false;
     private List<ChatMessage> _messages = new();
 
     protected override async Task OnInitializedAsync()
@@ -248,6 +242,12 @@
             var userId = user.FindFirst("sub")?.Value ?? string.Empty;
             var status = await SubService.GetStatusAsync(userId);
             _isPro = status.HasPro;
+
+            if (!_isPro)
+            {
+                var usage = await ApiService.GetAsync<AiUsageResponse>("api/ai/usage");
+                _aiUsed = usage?.Used ?? 0;
+            }
         }
     }
 
@@ -313,12 +313,24 @@
             content.Add(fc, "file", _fileName ?? "document.pdf");
             content.Add(new StringContent(q), "question");
 
-            var result = await ApiService.PostMultipartAsync<ChatResponse>(
+            var result = await ApiService.PostMultipartWithStatusAsync<ChatResponse>(
                 "api/ai/chat", content);
 
-            _messages.Add(new ChatMessage(
-                result?.Answer ?? "Sorry, I couldn't find an answer in this document.",
-                false));
+            if (result.IsRateLimit)
+            {
+                _isRateLimit = true;
+                _isFreeLimit = !_isPro;
+                _error = "rate_limit";
+                // Remove the user question we added since it can't be answered
+                if (_messages.Any() && _messages.Last().IsUser)
+                    _messages.RemoveAt(_messages.Count - 1);
+            }
+            else
+            {
+                _messages.Add(new ChatMessage(
+                    result.Data?.Answer ?? "Sorry, I couldn't find an answer in this document.",
+                    false));
+            }
         }
         catch (Exception ex)
         {
@@ -337,5 +349,11 @@
     private class ChatResponse
     {
         public string Answer { get; set; } = string.Empty;
+    }
+
+    private class AiUsageResponse
+    {
+        public int Used { get; set; }
+        public int Limit { get; set; }
     }
 }

@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using PdfToolStack.API.Configuration;
+using System.Security.Claims;
 using PdfToolStack.Application.DTOs;
 using PdfToolStack.Infrastructure.Services;
 
@@ -25,23 +26,47 @@ namespace PdfToolStack.API.Controllers
             _logger = logger;
         }
 
+        // ── Subscription status ───────────────────────────────────────────────────
+
         [HttpGet("status/{userId}")]
         public async Task<IActionResult> GetStatus(string userId)
         {
             if (_service == null)
                 return StatusCode(503, new { error = "Database not configured." });
+
             var status = await _service.GetStatusAsync(userId);
             return Ok(status);
         }
 
+        // ── Subscription checkout (recurring) ─────────────────────────────────────
+
         [HttpPost("create-checkout")]
+        [Authorize]
         public async Task<IActionResult> CreateCheckout([FromBody] CreateCheckoutDto dto)
         {
             if (_service == null)
                 return StatusCode(503, new { error = "Database not configured." });
+
+            dto.UserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                ?? User.FindFirst("sub")?.Value
+                ?? string.Empty;
+            if (string.IsNullOrEmpty(dto.UserId))
+                return Unauthorized();
+
+            _logger.LogInformation(
+                "Checkout initiated — UserId: {UserId}, PriceId: {PriceId}",
+                dto.UserId, dto.PriceId);
+
             try
             {
                 var url = await _service.CreateCheckoutSessionAsync(dto);
+
+                if (string.IsNullOrEmpty(url))
+                {
+                    _logger.LogError("Checkout URL empty for UserId: {UserId}", dto.UserId);
+                    return BadRequest(new { error = "Checkout session could not be created." });
+                }
+
                 return Ok(new CheckoutResponseDto { Url = url });
             }
             catch (Stripe.StripeException ex)
@@ -56,14 +81,72 @@ namespace PdfToolStack.API.Controllers
             }
         }
 
+        // ── Add-on checkout (one-time payment) ────────────────────────────────────
+
+        [HttpPost("create-addon-checkout")]
+        [Authorize]
+        public async Task<IActionResult> CreateAddonCheckout([FromBody] AddonCheckoutRequest request)
+        {
+            if (_service == null)
+                return StatusCode(503, new { error = "Database not configured." });
+
+            request.UserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                ?? User.FindFirst("sub")?.Value
+                ?? string.Empty;
+            if (string.IsNullOrEmpty(request.UserId))
+                return Unauthorized();
+
+            var validTypes = new[] { "large_file", "ai_day_pass", "ai_credit_pack", "batch_unlock" };
+            if (!validTypes.Contains(request.AddonType))
+                return BadRequest(new { error = $"Unknown addon type: {request.AddonType}" });
+
+            _logger.LogInformation(
+                "Addon checkout initiated — UserId: {UserId}, AddonType: {AddonType}, PriceId: {PriceId}",
+                request.UserId, request.AddonType, request.PriceId);
+
+            try
+            {
+                var url = await _service.CreateOneTimeCheckoutAsync(
+                    request.PriceId,
+                    request.AddonType,
+                    request.UserId,
+                    request.Email,
+                    request.SuccessUrl,
+                    request.CancelUrl);
+
+                if (string.IsNullOrEmpty(url))
+                {
+                    _logger.LogError("Addon checkout URL empty — UserId: {UserId}", request.UserId);
+                    return BadRequest(new { error = "Addon checkout session could not be created." });
+                }
+
+                return Ok(new CheckoutResponseDto { Url = url });
+            }
+            catch (Stripe.StripeException ex)
+            {
+                _logger.LogError("Stripe error for addon: {Code} — {Message}", ex.StripeError?.Code, ex.Message);
+                return BadRequest(new { error = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Addon checkout error: {Message}", ex.Message);
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        // ── Portal ────────────────────────────────────────────────────────────────
+
         [HttpPost("create-portal")]
         public async Task<IActionResult> CreatePortal([FromBody] CreatePortalDto dto)
         {
             if (_service == null)
                 return StatusCode(503, new { error = "Database not configured." });
+
             try
             {
                 var url = await _service.CreatePortalSessionAsync(dto);
+                if (url == null)
+                    return NotFound(new { error = "No active subscription found for this user." });
                 return Ok(new CheckoutResponseDto { Url = url });
             }
             catch (Exception ex)
@@ -72,18 +155,51 @@ namespace PdfToolStack.API.Controllers
             }
         }
 
+        // ── Webhook ───────────────────────────────────────────────────────────────
+
+        [HttpPost("webhook")]
+        public async Task<IActionResult> Webhook()
+        {
+            if (_service == null)
+                return StatusCode(503, new { error = "Database not configured." });
+
+            var json = await new StreamReader(HttpContext.Request.Body).ReadToEndAsync();
+            var signature = Request.Headers["Stripe-Signature"].ToString();
+
+            try
+            {
+                await _service.HandleWebhookAsync(json, signature);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Webhook error: {Message}", ex.Message);
+                return BadRequest(ex.Message);
+            }
+        }
+
+        // ── History ───────────────────────────────────────────────────────────────
+
         [HttpGet("history/{userId}")]
         public async Task<IActionResult> GetHistory(string userId)
         {
             if (_service == null)
                 return StatusCode(503, new { error = "Database not configured." });
+
             var history = await _service.GetDownloadHistoryAsync(userId);
             return Ok(history);
         }
 
+        // ── Plans ─────────────────────────────────────────────────────────────────
+
         [HttpGet("plans")]
         public IActionResult GetPlans()
         {
+            if (string.IsNullOrEmpty(_stripeOptions.ProMonthlyPriceIdV2))
+                _logger.LogWarning("Stripe__ProMonthlyPriceIdV2 is not configured.");
+            if (string.IsNullOrEmpty(_stripeOptions.ProYearlyPriceIdV2))
+                _logger.LogWarning("Stripe__ProYearlyPriceIdV2 is not configured.");
+
             return Ok(new
             {
                 monthly = new
@@ -107,55 +223,34 @@ namespace PdfToolStack.API.Controllers
             });
         }
 
-        [HttpPost("create-addon-checkout")]
-        public async Task<IActionResult> CreateAddonCheckout([FromBody] AddonCheckoutRequest request)
-        {
-            var userId = User.FindFirst("sub")?.Value;
-            var email = User.FindFirst("email")?.Value;
-
-            if (userId == null || email == null)
-                return Unauthorized();
-
-            var baseUrl = $"{Request.Scheme}://{Request.Host}";
-
-            var url = await _service.CreateOneTimeCheckoutAsync(
-                request.PriceId,
-                userId,
-                email,
-                baseUrl
-            );
-
-            return Ok(new { url });
-        }
+        // ── Add-on plans ──────────────────────────────────────────────────────────
 
         [HttpGet("addons")]
-        public IActionResult GetAddons([FromServices] IOptions<StripeOptions> stripeOptions)
+        public IActionResult GetAddons()
         {
-            var options = stripeOptions.Value;
-
             return Ok(new
             {
                 largeFile = new
                 {
-                    priceId = options.LargeFilePriceId,
+                    priceId = _stripeOptions.LargeFilePriceId,
                     amount = 199,
                     label = "$1.99"
                 },
                 aiDayPass = new
                 {
-                    priceId = options.AiDayPassPriceId,
+                    priceId = _stripeOptions.AiDayPassPriceId,
                     amount = 499,
                     label = "$4.99"
                 },
                 aiCredits50 = new
                 {
-                    priceId = options.AiCredits50PriceId,
+                    priceId = _stripeOptions.AiCredits50PriceId,
                     amount = 999,
                     label = "$9.99"
                 },
                 batchUnlock = new
                 {
-                    priceId = options.BatchUnlockPriceId,
+                    priceId = _stripeOptions.BatchUnlockPriceId,
                     amount = 499,
                     label = "$4.99"
                 }

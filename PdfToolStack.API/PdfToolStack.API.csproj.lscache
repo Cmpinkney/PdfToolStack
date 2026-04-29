@@ -69,6 +69,7 @@ Controllers/
  ReferralController.cs
  StripeWebhookController.cs
  SubscriptionController.cs
+ TeamController.cs
  TempPdfController.cs
  UserController.cs
 Middleware/

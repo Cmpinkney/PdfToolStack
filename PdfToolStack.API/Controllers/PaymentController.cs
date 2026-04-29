@@ -28,6 +28,9 @@ namespace PdfToolStack.API.Controllers
         public async Task<IActionResult> CreateCheckoutSession(
             [FromBody] CreateSessionRequest request)
         {
+            if (!IsSafeUrl(request.SuccessUrl) || !IsSafeUrl(request.CancelUrl))
+                return BadRequest(new { error = "Invalid redirect URL." });
+
             try
             {
                 var options = new SessionCreateOptions
@@ -133,6 +136,14 @@ namespace PdfToolStack.API.Controllers
             {
                 publishableKey = _stripeOptions.PublishableKey
             });
+        }
+
+        private static bool IsSafeUrl(string url)
+        {
+            if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
+                return false;
+            var allowed = new[] { "localhost", "pdftoolstack.com", "www.pdftoolstack.com" };
+            return allowed.Any(h => uri.Host.Equals(h, StringComparison.OrdinalIgnoreCase));
         }
     }
 

@@ -7,277 +7,1519 @@
 @using Microsoft.AspNetCore.Components.Authorization
 
 <PageTitle>Translate PDF Online — 50+ Languages | PdfToolStack</PageTitle>
-
 <HeadContent>
-    <meta name="description"
-          content="Translate any PDF into 50+ languages instantly with AI.
-                   Spanish, French, German, Chinese, Arabic and more.
-                   Download translated text in seconds." />
-    <meta name="keywords"
-          content="translate pdf, pdf translator online, translate pdf to spanish,
-                   pdf translation tool, translate document online free" />
+    <meta name="description" content="Translate any PDF into 50+ languages instantly with AI. Spanish, French, German, Chinese, Arabic and more. Keeps formatting, tables, and layout intact." />
+    <meta name="keywords" content="translate pdf, pdf translator online, translate pdf to spanish, pdf translation tool, translate document online free" />
     <link rel="canonical" href="https://pdftoolstack.com/translate-pdf" />
 </HeadContent>
 
-<div class="tool-page">
-    <AdSlot Size="banner" />
+<div class="tp-page">
 
-    <div class="tool-container">
+    <!-- ── UPLOAD STATE ──────────────────────────────────────────────── -->
+    @if (CurrentState == PageState.Upload)
+    {
+        <!-- Hero -->
+        <div class="tp-hero">
+            <div class="tp-hero-left">
+                <div class="tp-ai-badge">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10" /><path d="M12 6v6l4 2" /></svg>
+                    AI-Powered Translation
+                </div>
+                <h1 class="tp-title">Translate PDFs<br /><span class="tp-title-accent">in seconds</span></h1>
+                <p class="tp-subtitle">Accurate AI translations that keep the original formatting, layout, and structure intact.</p>
+                <div class="tp-trust-chips">
+                    <span class="tp-chip">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                        AI-Powered — High accuracy
+                    </span>
+                    <span class="tp-chip">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                        Keeps formatting, tables, layout
+                    </span>
+                    <span class="tp-chip">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
+                        Files deleted in 1 hour
+                    </span>
+                </div>
+            </div>
 
-        <div class="ai-tool-header">
-            <div class="ai-tool-badge">🌍 AI-Powered</div>
-            <h1>Translate PDF Online</h1>
-            <p class="tool-subtitle">
-                Upload any PDF and AI translates the full content into
-                your chosen language. 50+ languages supported.
-                No signup required for basic use.
-            </p>
+            <!-- Upload zone -->
+            <div class="tp-upload-zone">
+                <AuthorizeView>
+                    <NotAuthorized>
+                        <div class="tp-auth-gate">
+                            <div class="tp-auth-icon">🌍</div>
+                            <h3>Sign in to translate PDFs</h3>
+                            <p>Free with any account. 50+ languages supported.</p>
+                            <a href="authentication/login?screen_hint=signup" class="tp-primary-btn" style="text-decoration:none;display:inline-flex;">Get started free</a>
+                            <a href="authentication/login" class="tp-secondary-btn" style="text-decoration:none;display:inline-flex;">Sign in</a>
+                        </div>
+                    </NotAuthorized>
+                    <Authorized>
+                        <FileUpload OnFileSelected="HandleFileSelected" OnFileRemoved="HandleFileRemoved" HintText="Upload a PDF document — up to 50MB" />
+                        @if (_fileBytes != null)
+                        {
+                            <button class="tp-primary-btn" style="margin-top:.75rem;width:100%;" @onclick="ScrollToLanguage">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
+                                Choose language →
+                            </button>
+                        }
+                        <div class="tp-upload-privacy">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
+                            Your files are safe and private. Automatically deleted in 1 hour.
+                        </div>
+                    </Authorized>
+                </AuthorizeView>
+            </div>
         </div>
 
-        <div class="how-it-works">
-            <div class="hiw-step">
-                <div class="hiw-num">1</div>
-                <div class="hiw-text">
-                    <strong>Upload your PDF</strong>
-                    <span>Any text-based document</span>
-                </div>
-            </div>
-            <div class="hiw-arrow">→</div>
-            <div class="hiw-step">
-                <div class="hiw-num">2</div>
-                <div class="hiw-text">
-                    <strong>Choose language</strong>
-                    <span>50+ languages available</span>
-                </div>
-            </div>
-            <div class="hiw-arrow">→</div>
-            <div class="hiw-step">
-                <div class="hiw-num">3</div>
-                <div class="hiw-text">
-                    <strong>Download translation</strong>
-                    <span>Clean text file, instant</span>
-                </div>
-            </div>
-        </div>
-
-        <AuthorizeView>
-            <NotAuthorized>
-                <div class="ai-upgrade-card">
-                    <div class="ai-upgrade-icon">🌍</div>
-                    <h2>AI PDF Translator</h2>
-                    <p>
-                        Translate any PDF into 50+ languages instantly.
-                        Sign in to access — free with any account.
-                    </p>
-                    <div class="ai-upgrade-features">
-                        <div class="ai-upgrade-feat">✓ 50+ languages supported</div>
-                        <div class="ai-upgrade-feat">✓ Spanish, French, German, Chinese, Arabic</div>
-                        <div class="ai-upgrade-feat">✓ Powered by Claude AI</div>
-                        <div class="ai-upgrade-feat">✓ Files deleted within 1 hour</div>
-                    </div>
-                    <div class="ai-upgrade-actions">
-                        <a href="authentication/login?screen_hint=signup"
-                           class="download-button"
-                           style="display:inline-block; text-decoration:none;">
-                            Sign up free
-                        </a>
-                        <a href="authentication/login"
-                           class="reset-button"
-                           style="display:inline-block; text-decoration:none;">
-                            Sign in
-                        </a>
+        <!-- Step strip -->
+        <div class="tp-steps">
+            @foreach (var (num, title, desc) in new[] {
+                ("1", "Upload PDF", "Add any PDF document"),
+                ("2", "Choose Language", "Select your target language"),
+                ("3", "Download Translation", "Get your translated PDF instantly")
+                })
+            {
+                <div class="tp-step">
+                    <div class="tp-step-num">@num</div>
+                    <div class="tp-step-text">
+                        <strong>@title</strong>
+                        <span>@desc</span>
                     </div>
                 </div>
-            </NotAuthorized>
-
-            <Authorized>
-                @if (CurrentState == PageState.Upload)
+                @if (num != "3")
                 {
-                    <FileUpload OnFileSelected="HandleFileSelected"
-                                OnFileRemoved="HandleFileRemoved"
-                                HintText="Upload a PDF document — up to 50MB" />
+                    <div class="tp-step-arrow">→</div>
+                }
+            }
+        </div>
 
-                    @if (_fileBytes != null)
-                    {
-                        <!-- Language selector -->
-                        <div class="translate-lang-section">
-                            <p class="translate-lang-label">Translate into:</p>
-                            <div class="translate-lang-grid">
-                                @foreach (var lang in _languages)
+        <!-- Language + options section -->
+        <AuthorizeView>
+            <Authorized>
+                @if (_fileBytes != null)
+                {
+                    <div class="tp-config" id="language-section">
+                        <!-- Language picker -->
+                        <div class="tp-config-left">
+                            <div class="tp-section-label">Select target language</div>
+                            <div class="tp-search-wrap">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
+                                <input class="tp-search" placeholder="Search language..." @bind="_langSearch" @bind:event="oninput" />
+                            </div>
+
+                            <!-- Popular row -->
+                            <div class="tp-lang-popular-label">Popular languages</div>
+                            <div class="tp-lang-popular">
+                                @foreach (var lang in PopularLanguages)
                                 {
-                                    <button class="translate-lang-btn @(_selectedLang == lang.Code ? "active" : "")"
+                                    <button class="tp-lang-pill @(_selectedLang == lang.Code ? "tp-lang-pill--active" : "")"
                                             @onclick="() => SelectLanguage(lang)">
-                                        <span class="translate-lang-flag">@lang.Flag</span>
-                                        <span class="translate-lang-name">@lang.Name</span>
+                                        <span>@lang.Flag</span> @lang.Name
                                     </button>
                                 }
                             </div>
 
-                            @if (_selectedLang == "other")
+                            <!-- Full grid (filtered) -->
+                            @if (!string.IsNullOrWhiteSpace(_langSearch))
                             {
-                                <div class="translate-custom-wrap">
-                                    <input type="text"
-                                           class="chat-input"
-                                           placeholder="Enter language name (e.g. Turkish, Vietnamese...)"
-                                           @bind="_customLanguage"
-                                           style="max-width:320px;" />
+                                <div class="tp-lang-grid">
+                                    @foreach (var lang in FilteredLanguages)
+                                    {
+                                        <button class="tp-lang-btn @(_selectedLang == lang.Code ? "tp-lang-btn--active" : "")"
+                                                @onclick="() => SelectLanguage(lang)">
+                                            <span class="tp-lang-flag">@lang.Flag</span>
+                                            <span>@lang.Name</span>
+                                        </button>
+                                    }
                                 </div>
                             }
+                            else
+                            {
+                                <button class="tp-view-all" @onclick='() => _showAllLangs = !_showAllLangs'>
+                                    @(_showAllLangs ? "Show fewer languages ↑" : $"View all {_languages.Count}+ languages >")
+                                </button>
+                                @if (_showAllLangs)
+                                {
+                                    <div class="tp-lang-grid">
+                                        @foreach (var lang in _languages)
+                                        {
+                                            <button class="tp-lang-btn @(_selectedLang == lang.Code ? "tp-lang-btn--active" : "")"
+                                                    @onclick="() => SelectLanguage(lang)">
+                                                <span class="tp-lang-flag">@lang.Flag</span>
+                                                <span>@lang.Name</span>
+                                            </button>
+                                        }
+                                    </div>
+                                }
+                            }
+
+                            @if (_selectedLang == "other")
+                            {
+                                <input class="tp-custom-lang" placeholder="Enter language (e.g. Turkish, Vietnamese...)"
+                                       @bind="_customLanguage" />
+                            }
+
+                            <div class="tp-ai-note">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10" /><path d="M12 6v6l4 2" /></svg>
+                                AI translates your document while preserving the original layout, fonts, tables, and images.
+                            </div>
                         </div>
 
-                        <button class="process-button" @onclick="RunTranslate">
-                            🌍 Translate PDF
-                        </button>
-                    }
-                }
+                        <!-- Options panel -->
+                        <div class="tp-config-right">
+                            <div class="tp-section-label">Translation options</div>
 
-                @if (CurrentState == PageState.Processing)
-                {
-                    <div class="ai-processing-container">
-                        <div class="ai-processing-icon">🌍</div>
-                        <h3>Translating your document...</h3>
-                        <p>AI is translating into @_selectedLangName</p>
-                        <div class="ai-processing-steps">
-                            <div class="ai-processing-step @(_step >= 1 ? "done" : "")">
-                                Reading PDF content
+                            <div class="tp-option-card">
+                                <div class="tp-option-label">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26 12,2" /></svg>
+                                    Translation quality
+                                </div>
+                                <select class="tp-select" @bind="_quality">
+                                    <option value="high">High accuracy (Recommended)</option>
+                                    <option value="standard">Standard</option>
+                                    <option value="fast">Fast (shorter documents)</option>
+                                </select>
                             </div>
-                            <div class="ai-processing-step @(_step >= 2 ? "done" : "")">
-                                Translating text
+
+                            <div class="tp-option-card">
+                                <div class="tp-option-label">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><path d="M8 12a4 4 0 0 1 8 0" /></svg>
+                                    Tone (Optional)
+                                </div>
+                                <select class="tp-select" @bind="_tone">
+                                    <option value="default">Default / Neutral</option>
+                                    <option value="formal">Formal</option>
+                                    <option value="casual">Casual</option>
+                                    <option value="technical">Technical / Professional</option>
+                                </select>
                             </div>
-                            <div class="ai-processing-step @(_step >= 3 ? "done" : "")">
-                                Preparing download
+
+                            <!-- Sample file -->
+                            <div class="tp-sample-card">
+                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-muted,#9CA3AF)"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /></svg>
+                                <strong>Try with a sample file</strong>
+                                <span>See the quality for yourself</span>
+                                <button class="tp-sample-btn">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+                                    Use sample PDF
+                                </button>
                             </div>
+
+                            <button class="tp-translate-btn" @onclick="RunTranslate"
+                                    disabled="@(_fileBytes == null)">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 0 1 6.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" /></svg>
+                                Translate &amp; Download Full PDF
+                            </button>
+                            <p class="tp-no-cc">No credit card required</p>
                         </div>
                     </div>
                 }
 
-                @if (CurrentState == PageState.Complete &&
-                                !string.IsNullOrEmpty(_translatedText))
-                {
-                    <div class="ai-result-card">
-                        <div class="ai-result-header">
-                            <div>
-                                <h2>Translation complete</h2>
-                                <p style="color:var(--text-secondary); font-size:0.875rem;">
-                                    @_fileName → @_selectedLangName
-                                </p>
-                            </div>
-                            <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
-                                <button class="download-button"
-                                        style="max-width:180px; margin-top:0;"
-                                        @onclick="DownloadTranslation">
-                                    ⬇ Download .txt
-                                </button>
-                                <button class="reset-button"
-                                        style="max-width:140px;"
-                                        @onclick="Reset">
-                                    Translate Another
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Language badge -->
-                        <div style="margin-bottom:1rem;">
-                            <span class="extract-confidence-badge">
-                                🌍 Translated to @_selectedLangName
-                            </span>
-                        </div>
-
-                        <!-- Preview -->
-                        <div class="translate-preview">
-                            <div class="translate-preview-header">
-                                <svg width="14" height="14" viewBox="0 0 24 24"
-                                     fill="none" stroke="currentColor" stroke-width="2"
-                                     stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0
-                                                 0 1 6.412 9m6.088 9h7M11 21l5-10 5 10M12.751
-                                                 5C11.783 10.77 8.07 15.61 3 18.129" />
-                                </svg>
-                                Translation Preview
-                                <span style="margin-left:auto; font-size:0.72rem;
-                                                 color:var(--text-muted); font-weight:400;">
-                                    Scroll to read full translation
-                                </span>
-                            </div>
-                            <div class="translate-preview-body">
-                                @_translatedText
-                            </div>
-                        </div>
-
-                        <!-- Download CTA -->
-                        <div class="extract-download-cta" style="margin-top:1rem;">
-                            <div class="extract-download-cta-text">
-                                <svg width="20" height="20" viewBox="0 0 24 24"
-                                     fill="none" stroke="currentColor" stroke-width="2"
-                                     stroke-linecap="round" stroke-linejoin="round"
-                                     style="color:var(--success); flex-shrink:0;">
-                                    <path d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022
-                                                 0 0 1 6.412 9m6.088 9h7M11 21l5-10
-                                                 5 10M12.751 5C11.783 10.77 8.07
-                                                 15.61 3 18.129" />
-                                </svg>
-                                <div>
-                                    <strong>Download your translation</strong>
-                                    <p>Clean text file ready to use in Word, Google Docs, or email.</p>
+                <!-- Before/After preview section (always visible) -->
+                <div class="tp-preview-section">
+                    <div class="tp-preview-header">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+                        See how it works
+                        <span>Preview a translated page side-by-side</span>
+                    </div>
+                    <div class="tp-preview-body">
+                        <div class="tp-preview-col">
+                            <div class="tp-preview-lang">Original (English)</div>
+                            <div class="tp-preview-doc">
+                                <div class="tp-preview-doc-title">INVOICE</div>
+                                <div class="tp-preview-doc-line">Invoice # INV-2024-001</div>
+                                <div class="tp-preview-doc-line">Date: May 10, 2024</div>
+                                <div class="tp-preview-doc-table">
+                                    <div class="tp-preview-doc-row tp-preview-doc-row--header">
+                                        <span>Item</span><span>Quantity</span><span>Unit Price</span><span>Total</span>
+                                    </div>
+                                    <div class="tp-preview-doc-row">
+                                        <span>Consulting Services</span><span>10</span><span>$100.00</span><span>$1,000.00</span>
+                                    </div>
                                 </div>
                             </div>
-                            <button class="download-button"
-                                    style="max-width:180px; margin-top:0;"
-                                    @onclick="DownloadTranslation">
-                                ⬇ Download .txt
+                        </div>
+                        <div class="tp-preview-swap">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 1l4 4-4 4" /><path d="M3 11V9a4 4 0 0 1 4-4h14" /><path d="M7 23l-4-4 4-4" /><path d="M21 13v2a4 4 0 0 1-4 4H3" /></svg>
+                        </div>
+                        <div class="tp-preview-col">
+                            <div class="tp-preview-lang tp-preview-lang--translated">Translated (@_selectedLangName)</div>
+                            <div class="tp-preview-doc tp-preview-doc--translated">
+                                @if (_selectedLang == "es")
+                                {
+                                    <div class="tp-preview-doc-title">FACTURA</div>
+                                    <div class="tp-preview-doc-line">Factura # INV-2024-001</div>
+                                    <div class="tp-preview-doc-line">Fecha: 10 de mayo de 2024</div>
+                                    <div class="tp-preview-doc-table">
+                                        <div class="tp-preview-doc-row tp-preview-doc-row--header">
+                                            <span>Artículo</span><span>Cantidad</span><span>Precio Unitario</span><span>Total</span>
+                                        </div>
+                                        <div class="tp-preview-doc-row">
+                                            <span>Servicios de Consultoría</span><span>10</span><span>$100.00</span><span>$1,000.00</span>
+                                        </div>
+                                    </div>
+                                }
+                                else if (_selectedLang == "fr")
+                                {
+                                    <div class="tp-preview-doc-title">FACTURE</div>
+                                    <div class="tp-preview-doc-line">Facture # INV-2024-001</div>
+                                    <div class="tp-preview-doc-line">Date: 10 mai 2024</div>
+                                }
+                                else if (_selectedLang == "de")
+                                {
+                                    <div class="tp-preview-doc-title">RECHNUNG</div>
+                                    <div class="tp-preview-doc-line">Rechnung # INV-2024-001</div>
+                                    <div class="tp-preview-doc-line">Datum: 10. Mai 2024</div>
+                                }
+                                else
+                                {
+                                    <div class="tp-preview-doc-title">(@_selectedLangName)</div>
+                                    <div class="tp-preview-doc-line">Invoice # INV-2024-001</div>
+                                    <div class="tp-preview-doc-line">Translated content appears here</div>
+                                }
+                            </div>
+                        </div>
+                        <!-- Try with sample -->
+                        <div class="tp-preview-sample">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-muted,#9CA3AF)"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /></svg>
+                            <strong>Try with a sample file</strong>
+                            <span>See the quality before uploading yours</span>
+                            <button class="tp-sample-btn">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+                                Use sample PDF
                             </button>
                         </div>
                     </div>
-                }
-
-                @if (CurrentState == PageState.Error)
-                {
-                    <div class="error-container" role="alert">
-                        <span class="error-icon">❌</span>
-                        <p class="error-message">@_error</p>
-                        <button class="reset-button" @onclick="Reset">Try Again</button>
-                    </div>
-                }
+                </div>
             </Authorized>
         </AuthorizeView>
 
+        <!-- Download CTA banner -->
+        <div class="tp-cta-banner">
+            <div class="tp-cta-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 0 1 6.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" /></svg>
+            </div>
+            <div>
+                <strong>Your translated document is ready!</strong>
+                <p>Create a free account to download your full translated PDF.</p>
+            </div>
+            <button class="tp-cta-btn" @onclick="RunTranslate" disabled="@(_fileBytes == null)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+                Translate &amp; Download Full PDF
+            </button>
+            <p class="tp-no-cc" style="color:rgba(255,255,255,.7)">No credit card required</p>
+        </div>
+
+        <!-- Trust badges -->
+        <div class="tp-trust-row">
+            @foreach (var (icon, title, desc) in new[] {
+                ("🔒", "256-bit encryption", "Military-grade security"),
+                ("🗑", "Files deleted in 1 hour", "Your privacy matters"),
+                ("🚫", "No data training", "Your data is never used"),
+                ("💻", "Works everywhere", "On any device, anytime"),
+                })
+            {
+                <div class="tp-trust-item">
+                    <span class="tp-trust-icon">@icon</span>
+                    <strong>@title</strong>
+                    <span>@desc</span>
+                </div>
+            }
+        </div>
+    }
+
+    <!-- ── PROCESSING STATE ──────────────────────────────────────────── -->
+    @if (CurrentState == PageState.Processing)
+    {
+        <div class="tp-processing">
+            <div class="tp-processing-card">
+                <div class="tp-processing-globe">🌍</div>
+                <h2>Translating your document...</h2>
+                <p>AI is translating into <strong>@_selectedLangName</strong></p>
+                <div class="tp-steps-list">
+                    @foreach (var (i, label) in new[] { (1, "Reading PDF content"), (2, "Translating text"), (3, "Preparing download") })
+                    {
+                        <div class="tp-proc-step @(_step >= i ? "tp-proc-step--done" : _step == i - 1 ? "tp-proc-step--active" : "")">
+                            @if (_step >= i)
+                            {
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                            }
+                            else if (_step == i - 1)
+                            {
+                                <div class="tp-proc-spinner"></div>
+                            }
+                            else
+                            {
+                                <div class="tp-proc-dot"></div>
+                            }
+                            @label
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- ── COMPLETE STATE ────────────────────────────────────────────── -->
+    @if (CurrentState == PageState.Complete && !string.IsNullOrEmpty(_translatedText))
+    {
+        <div class="tp-result">
+            <div class="tp-result-header">
+                <div class="tp-result-title">
+                    <div class="tp-result-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                    </div>
+                    <div>
+                        <h2>Translation complete</h2>
+                        <p>@_fileName → @_selectedLangName</p>
+                    </div>
+                </div>
+                <div class="tp-result-actions">
+                    <button class="tp-download-btn" @onclick="DownloadTranslation">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+                        Download .txt
+                    </button>
+                    <button class="tp-secondary-btn" @onclick="Reset">Translate Another</button>
+                </div>
+            </div>
+
+            <div class="tp-result-badge">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 0 1 6.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" /></svg>
+                Translated to @_selectedLangName
+            </div>
+
+            <div class="tp-preview-output">
+                <div class="tp-preview-output-header">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 0 1 6.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" /></svg>
+                    Translation Preview
+                    <span>Scroll to read full translation</span>
+                </div>
+                <div class="tp-preview-output-body">@_translatedText</div>
+            </div>
+
+            <div class="tp-result-cta">
+                <div class="tp-result-cta-text">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 0 1 6.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" /></svg>
+                    <div>
+                        <strong>Download your translation</strong>
+                        <p>Clean text file ready to use in Word, Google Docs, or email.</p>
+                    </div>
+                </div>
+                <button class="tp-download-btn" @onclick="DownloadTranslation">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+                    Download .txt
+                </button>
+            </div>
+        </div>
+    }
+
+    <!-- ── ERROR STATE ───────────────────────────────────────────────── -->
+    @if (CurrentState == PageState.Error)
+    {
+        @if (_isRateLimit)
+        {
+            <AiLimitBanner IsVisible="true" IsFreeLimit="@_isFreeLimit" Limit="@(_isFreeLimit ? 5 : 200)" />
+        }
+        else
+        {
+            <div class="tp-error">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" /></svg>
+                <p>@_error</p>
+                <button class="tp-secondary-btn" @onclick="Reset">Try Again</button>
+            </div>
+        }
+    }
+
+    <!-- ── FAQ ──────────────────────────────────────────────────────── -->
+    <div class="tp-faq">
+        <h2>Frequently Asked Questions</h2>
+        @foreach (var (q, a) in new[] {
+                ("What languages are supported?", "50+ languages including Spanish, French, German, Italian, Portuguese, Chinese (Simplified & Traditional), Japanese, Korean, Arabic, Hindi, Russian, Dutch, Polish, Turkish, Swedish, and many more."),
+                ("Does it preserve formatting?", "The translation preserves document structure — headings, paragraphs, and lists. The download is a clean text file. For fully formatted PDF output, upgrade to Pro."),
+                ("How accurate is the translation?", "Very accurate for standard documents. Powered by Claude AI, which understands context and produces natural-sounding translations rather than word-for-word substitutions."),
+                ("Is my document stored?", "No. Your PDF is processed in memory and deleted within 1 hour. We never store document contents permanently."),
+                })
+        {
+            <details class="tp-faq-item">
+                <summary>@q</summary>
+                <p>@a</p>
+            </details>
+        }
     </div>
 
-    <div class="faq-section">
-        <h2>Frequently Asked Questions</h2>
-        <div class="faq-item">
-            <h3>What languages are supported?</h3>
-            <p>
-                50+ languages including Spanish, French, German, Italian,
-                Portuguese, Chinese (Simplified & Traditional), Japanese,
-                Korean, Arabic, Hindi, Russian, Dutch, Swedish, and many more.
-            </p>
-        </div>
-        <div class="faq-item">
-            <h3>Does it preserve formatting?</h3>
-            <p>
-                The translation preserves document structure — headings,
-                paragraphs, and lists. The download is a clean text file.
-                For fully formatted PDF output, upgrade to Pro.
-            </p>
-        </div>
-        <div class="faq-item">
-            <h3>How accurate is the translation?</h3>
-            <p>
-                Very accurate for standard documents. Powered by Claude AI,
-                which understands context and produces natural-sounding
-                translations rather than word-for-word substitutions.
-            </p>
-        </div>
-        <div class="faq-item">
-            <h3>Is my document stored?</h3>
-            <p>
-                No. Your PDF is processed in memory and deleted within
-                1 hour. We never store document contents permanently.
-            </p>
-        </div>
-    </div>
 </div>
+
+<style>
+    /* ════════════════════════════════════════════════════════
+       Translate PDF — Full Redesign
+    ════════════════════════════════════════════════════════ */
+    .tp-page {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 0 1.5rem 4rem;
+    }
+
+    /* ── Hero ─────────────────────────────────────────────── */
+    .tp-hero {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2.5rem;
+        align-items: center;
+        padding: 3rem 0 2rem;
+    }
+
+    @@media (max-width: 768px) {
+        .tp-hero {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .tp-ai-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: .4rem;
+        background: linear-gradient(135deg, #EDE9FE, #DDD6FE);
+        color: #5B21B6;
+        font-size: .75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        padding: 4px 12px;
+        border-radius: 20px;
+        margin-bottom: 1rem;
+    }
+
+    .tp-title {
+        font-size: clamp(2rem, 4vw, 3rem);
+        font-weight: 800;
+        color: var(--text, #111827);
+        letter-spacing: -.03em;
+        line-height: 1.1;
+        margin: 0 0 .875rem;
+    }
+
+    .tp-title-accent {
+        color: #4338CA;
+    }
+
+    .tp-subtitle {
+        font-size: 1.05rem;
+        color: var(--text-muted, #6B7280);
+        line-height: 1.6;
+        margin: 0 0 1.25rem;
+        max-width: 420px;
+    }
+
+    .tp-trust-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .5rem;
+    }
+
+    .tp-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: .3rem;
+        font-size: .75rem;
+        color: var(--text-muted, #6B7280);
+        background: var(--bg, #F9FAFB);
+        border: 1px solid var(--border, #E5E7EB);
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-weight: 500;
+    }
+
+    /* Upload zone */
+    .tp-upload-zone {
+        background: var(--surface, #fff);
+        border: 1.5px dashed var(--border, #D1D5DB);
+        border-radius: 20px;
+        padding: 1.5rem;
+    }
+
+    .tp-upload-privacy {
+        display: flex;
+        align-items: center;
+        gap: .35rem;
+        font-size: .72rem;
+        color: var(--text-muted, #9CA3AF);
+        background: #F0FDF4;
+        border: 1px solid #BBF7D0;
+        border-radius: 8px;
+        padding: 6px 10px;
+        margin-top: .75rem;
+    }
+
+    .tp-auth-gate {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: .75rem;
+        padding: 1.5rem;
+    }
+
+    .tp-auth-icon {
+        font-size: 2.5rem;
+    }
+
+    .tp-auth-gate h3 {
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin: 0;
+    }
+
+    .tp-auth-gate p {
+        font-size: .875rem;
+        color: var(--text-muted, #6B7280);
+        margin: 0;
+    }
+
+    /* ── Step strip ───────────────────────────────────────── */
+    .tp-steps {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1.25rem 1.5rem;
+        background: var(--surface, #fff);
+        border: 1px solid var(--border, #E5E7EB);
+        border-radius: 16px;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+    }
+
+    .tp-step {
+        display: flex;
+        align-items: center;
+        gap: .75rem;
+        flex: 1;
+        min-width: 160px;
+    }
+
+    .tp-step-num {
+        width: 32px;
+        height: 32px;
+        min-width: 32px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #4338CA, #7C3AED);
+        color: #fff;
+        font-size: .85rem;
+        font-weight: 800;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .tp-step-text {
+        display: flex;
+        flex-direction: column;
+        gap: .1rem;
+    }
+
+        .tp-step-text strong {
+            font-size: .85rem;
+            color: var(--text, #111827);
+        }
+
+        .tp-step-text span {
+            font-size: .75rem;
+            color: var(--text-muted, #9CA3AF);
+        }
+
+    .tp-step-arrow {
+        color: var(--text-muted, #D1D5DB);
+        font-size: 1.2rem;
+    }
+
+    /* ── Config section ───────────────────────────────────── */
+    .tp-config {
+        display: grid;
+        grid-template-columns: 1fr 320px;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+        align-items: start;
+    }
+
+    @@media (max-width: 900px) {
+        .tp-config {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .tp-section-label {
+        font-size: .78rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        color: var(--text-muted, #6B7280);
+        margin-bottom: .75rem;
+    }
+
+    .tp-search-wrap {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+        border: 1.5px solid var(--border, #E5E7EB);
+        border-radius: 10px;
+        padding: .5rem .875rem;
+        background: var(--bg, #F9FAFB);
+        margin-bottom: .875rem;
+        color: var(--text-muted, #9CA3AF);
+    }
+
+    .tp-search {
+        border: none;
+        background: transparent;
+        font-size: .875rem;
+        color: var(--text, #111827);
+        flex: 1;
+        outline: none;
+    }
+
+        .tp-search::placeholder {
+            color: var(--text-muted, #9CA3AF);
+        }
+
+    .tp-lang-popular-label {
+        font-size: .72rem;
+        color: var(--text-muted, #9CA3AF);
+        font-weight: 600;
+        margin-bottom: .5rem;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+    }
+
+    .tp-lang-popular {
+        display: flex;
+        gap: .5rem;
+        flex-wrap: wrap;
+        margin-bottom: .875rem;
+    }
+
+    .tp-lang-pill {
+        display: flex;
+        align-items: center;
+        gap: .35rem;
+        padding: .375rem .875rem;
+        border-radius: 20px;
+        border: 1.5px solid var(--border, #E5E7EB);
+        background: var(--bg, #F9FAFB);
+        font-size: .82rem;
+        font-weight: 500;
+        color: var(--text, #374151);
+        cursor: pointer;
+        transition: all .12s;
+    }
+
+        .tp-lang-pill:hover {
+            border-color: #4338CA;
+            color: #4338CA;
+            background: #EDE9FE20;
+        }
+
+    .tp-lang-pill--active {
+        border-color: #4338CA;
+        background: #EDE9FE;
+        color: #4338CA;
+        font-weight: 700;
+    }
+
+    .tp-lang-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+        gap: .4rem;
+        margin-bottom: .875rem;
+    }
+
+    .tp-lang-btn {
+        display: flex;
+        align-items: center;
+        gap: .4rem;
+        padding: .5rem .75rem;
+        border-radius: 8px;
+        border: 1.5px solid var(--border, #E5E7EB);
+        background: var(--bg, #F9FAFB);
+        font-size: .8rem;
+        color: var(--text, #374151);
+        cursor: pointer;
+        transition: all .12s;
+    }
+
+        .tp-lang-btn:hover {
+            border-color: #4338CA;
+            background: #EDE9FE20;
+        }
+
+    .tp-lang-btn--active {
+        border-color: #4338CA;
+        background: #EDE9FE;
+        color: #4338CA;
+        font-weight: 600;
+    }
+
+    .tp-lang-flag {
+        font-size: 1rem;
+    }
+
+    .tp-view-all {
+        background: none;
+        border: none;
+        color: #4338CA;
+        font-size: .82rem;
+        font-weight: 600;
+        cursor: pointer;
+        padding: .25rem 0;
+        margin-bottom: .75rem;
+        text-decoration: underline;
+    }
+
+    .tp-custom-lang {
+        width: 100%;
+        padding: .625rem .875rem;
+        border: 1.5px solid var(--border, #E5E7EB);
+        border-radius: 8px;
+        font-size: .875rem;
+        background: var(--bg, #F9FAFB);
+        color: var(--text, #111827);
+        margin-bottom: .75rem;
+        box-sizing: border-box;
+    }
+
+        .tp-custom-lang:focus {
+            outline: none;
+            border-color: #4338CA;
+        }
+
+    .tp-ai-note {
+        display: flex;
+        align-items: flex-start;
+        gap: .5rem;
+        font-size: .78rem;
+        color: var(--text-muted, #6B7280);
+        background: #EDE9FE20;
+        border: 1px solid #C4B5FD;
+        border-radius: 10px;
+        padding: .625rem .875rem;
+        line-height: 1.4;
+    }
+
+    /* Options panel */
+    .tp-config-right {
+        display: flex;
+        flex-direction: column;
+        gap: .875rem;
+    }
+
+    .tp-option-card {
+        background: var(--surface, #fff);
+        border: 1px solid var(--border, #E5E7EB);
+        border-radius: 12px;
+        padding: .875rem 1rem;
+    }
+
+    .tp-option-label {
+        display: flex;
+        align-items: center;
+        gap: .4rem;
+        font-size: .75rem;
+        font-weight: 600;
+        color: var(--text-muted, #6B7280);
+        text-transform: uppercase;
+        letter-spacing: .04em;
+        margin-bottom: .5rem;
+    }
+
+    .tp-select {
+        width: 100%;
+        padding: .5rem .75rem;
+        border: 1.5px solid var(--border, #E5E7EB);
+        border-radius: 8px;
+        font-size: .85rem;
+        background: var(--bg, #F9FAFB);
+        color: var(--text, #111827);
+        cursor: pointer;
+    }
+
+    .tp-sample-card {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: .4rem;
+        padding: 1.25rem;
+        background: var(--bg, #F9FAFB);
+        border: 1px solid var(--border, #E5E7EB);
+        border-radius: 14px;
+    }
+
+        .tp-sample-card strong {
+            font-size: .875rem;
+            color: var(--text, #111827);
+        }
+
+        .tp-sample-card span {
+            font-size: .75rem;
+            color: var(--text-muted, #9CA3AF);
+        }
+
+    .tp-sample-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: .35rem;
+        padding: .45rem .875rem;
+        border-radius: 8px;
+        border: 1.5px solid var(--border, #E5E7EB);
+        background: var(--surface, #fff);
+        font-size: .78rem;
+        font-weight: 600;
+        color: #4338CA;
+        cursor: pointer;
+        margin-top: .25rem;
+        transition: background .12s;
+    }
+
+        .tp-sample-btn:hover {
+            background: #EDE9FE20;
+        }
+
+    /* ── Buttons ──────────────────────────────────────────── */
+    .tp-primary-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: .4rem;
+        padding: .75rem 1.5rem;
+        background: linear-gradient(135deg, #4338CA 0%, #6D28D9 100%);
+        color: #fff;
+        border: none;
+        border-radius: 12px;
+        font-size: .9rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: opacity .15s, transform .15s;
+        white-space: nowrap;
+    }
+
+        .tp-primary-btn:hover {
+            opacity: .92;
+            transform: translateY(-1px);
+        }
+
+    .tp-secondary-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: .4rem;
+        padding: .625rem 1.25rem;
+        background: var(--bg, #F3F4F6);
+        color: var(--text, #374151);
+        border: 1.5px solid var(--border, #D1D5DB);
+        border-radius: 10px;
+        font-size: .85rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background .12s;
+        white-space: nowrap;
+    }
+
+        .tp-secondary-btn:hover {
+            background: var(--border, #E5E7EB);
+        }
+
+    .tp-translate-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: .5rem;
+        width: 100%;
+        padding: .875rem 1.5rem;
+        background: linear-gradient(135deg, #4338CA 0%, #6D28D9 100%);
+        color: #fff;
+        border: none;
+        border-radius: 12px;
+        font-size: .95rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: opacity .15s, transform .15s;
+    }
+
+        .tp-translate-btn:hover:not(:disabled) {
+            opacity: .92;
+            transform: translateY(-1px);
+        }
+
+        .tp-translate-btn:disabled {
+            opacity: .45;
+            cursor: not-allowed;
+        }
+
+    .tp-no-cc {
+        font-size: .72rem;
+        color: var(--text-muted, #9CA3AF);
+        text-align: center;
+        margin: .25rem 0 0;
+    }
+
+    /* ── Preview section ──────────────────────────────────── */
+    .tp-preview-section {
+        background: var(--surface, #fff);
+        border: 1px solid var(--border, #E5E7EB);
+        border-radius: 16px;
+        overflow: hidden;
+        margin-bottom: 2rem;
+    }
+
+    .tp-preview-header {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+        padding: .875rem 1.25rem;
+        border-bottom: 1px solid var(--border, #E5E7EB);
+        background: var(--bg, #F9FAFB);
+        font-size: .82rem;
+        font-weight: 600;
+        color: var(--text, #374151);
+    }
+
+        .tp-preview-header span {
+            color: var(--text-muted, #9CA3AF);
+            font-weight: 400;
+            margin-left: .5rem;
+            font-size: .75rem;
+        }
+
+    .tp-preview-body {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr auto;
+        gap: 1rem;
+        padding: 1.25rem;
+        align-items: start;
+    }
+
+    @@media (max-width: 700px) {
+        .tp-preview-body {
+            grid-template-columns: 1fr;
+        }
+
+        .tp-preview-swap {
+            display: none;
+        }
+    }
+
+    .tp-preview-col {
+        display: flex;
+        flex-direction: column;
+        gap: .5rem;
+    }
+
+    .tp-preview-lang {
+        font-size: .72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        color: var(--text-muted, #9CA3AF);
+    }
+
+    .tp-preview-lang--translated {
+        color: #4338CA;
+    }
+
+    .tp-preview-doc {
+        background: var(--bg, #F9FAFB);
+        border: 1px solid var(--border, #E5E7EB);
+        border-radius: 10px;
+        padding: 1rem;
+        font-size: .8rem;
+        color: var(--text, #374151);
+        min-height: 120px;
+    }
+
+    .tp-preview-doc--translated {
+        border-color: #C4B5FD;
+        background: #FAF5FF;
+    }
+
+    .tp-preview-doc-title {
+        font-size: .95rem;
+        font-weight: 800;
+        margin-bottom: .4rem;
+        color: var(--text, #111827);
+    }
+
+    .tp-preview-doc--translated .tp-preview-doc-title {
+        color: #4338CA;
+    }
+
+    .tp-preview-doc-line {
+        font-size: .75rem;
+        color: var(--text-muted, #6B7280);
+        margin-bottom: .2rem;
+    }
+
+    .tp-preview-doc-table {
+        margin-top: .5rem;
+        border-top: 1px solid var(--border, #E5E7EB);
+        padding-top: .5rem;
+    }
+
+    .tp-preview-doc-row {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr 1fr;
+        gap: .25rem;
+        font-size: .7rem;
+        padding: .2rem 0;
+    }
+
+    .tp-preview-doc-row--header {
+        font-weight: 700;
+        color: var(--text-muted, #9CA3AF);
+    }
+
+    .tp-preview-swap {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-muted, #9CA3AF);
+        padding-top: 1.5rem;
+    }
+
+    .tp-preview-sample {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: .35rem;
+        padding: .75rem;
+        border-left: 1px solid var(--border, #E5E7EB);
+    }
+
+        .tp-preview-sample strong {
+            font-size: .8rem;
+            color: var(--text, #111827);
+        }
+
+        .tp-preview-sample span {
+            font-size: .72rem;
+            color: var(--text-muted, #9CA3AF);
+        }
+
+    /* ── CTA Banner ───────────────────────────────────────── */
+    .tp-cta-banner {
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+        padding: 1.5rem 2rem;
+        background: linear-gradient(135deg, #4338CA 0%, #6D28D9 100%);
+        border-radius: 16px;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+    }
+
+    .tp-cta-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        background: rgba(255,255,255,.15);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .tp-cta-banner strong {
+        color: #fff;
+        font-size: 1rem;
+        display: block;
+        margin-bottom: .15rem;
+    }
+
+    .tp-cta-banner p {
+        color: rgba(255,255,255,.75);
+        font-size: .82rem;
+        margin: 0;
+    }
+
+    .tp-cta-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: .4rem;
+        padding: .75rem 1.5rem;
+        background: #fff;
+        color: #4338CA;
+        border: none;
+        border-radius: 10px;
+        font-size: .88rem;
+        font-weight: 700;
+        cursor: pointer;
+        margin-left: auto;
+        white-space: nowrap;
+        transition: opacity .15s;
+    }
+
+        .tp-cta-btn:hover:not(:disabled) {
+            opacity: .92;
+        }
+
+        .tp-cta-btn:disabled {
+            opacity: .5;
+            cursor: not-allowed;
+        }
+
+    /* ── Trust row ────────────────────────────────────────── */
+    .tp-trust-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1rem;
+        padding: 1.5rem;
+        background: var(--bg, #F9FAFB);
+        border: 1px solid var(--border, #E5E7EB);
+        border-radius: 16px;
+        margin-bottom: 2rem;
+    }
+
+    @@media (max-width: 700px) {
+        .tp-trust-row {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    .tp-trust-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: .2rem;
+    }
+
+    .tp-trust-icon {
+        font-size: 1.4rem;
+    }
+
+    .tp-trust-item strong {
+        font-size: .8rem;
+        color: var(--text, #111827);
+    }
+
+    .tp-trust-item span {
+        font-size: .72rem;
+        color: var(--text-muted, #9CA3AF);
+    }
+
+    /* ── Processing ───────────────────────────────────────── */
+    .tp-processing {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 50vh;
+        padding: 3rem;
+    }
+
+    .tp-processing-card {
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+        max-width: 360px;
+    }
+
+    .tp-processing-globe {
+        font-size: 3rem;
+        animation: tp-pulse 1.5s ease-in-out infinite;
+    }
+
+    @@keyframes tp-pulse {
+        0%, 100% {
+            transform: scale(1);
+        }
+
+        50% {
+            transform: scale(1.1);
+        }
+    }
+
+    .tp-processing-card h2 {
+        font-size: 1.3rem;
+        font-weight: 700;
+        margin: 0;
+        color: var(--text, #111827);
+    }
+
+    .tp-processing-card p {
+        font-size: .875rem;
+        color: var(--text-muted, #6B7280);
+        margin: 0;
+    }
+
+    .tp-steps-list {
+        display: flex;
+        flex-direction: column;
+        gap: .625rem;
+        width: 100%;
+    }
+
+    .tp-proc-step {
+        display: flex;
+        align-items: center;
+        gap: .625rem;
+        font-size: .85rem;
+        color: var(--text-muted, #9CA3AF);
+        padding: .5rem .875rem;
+        border-radius: 10px;
+        background: var(--bg, #F9FAFB);
+        border: 1px solid var(--border, #E5E7EB);
+        transition: all .3s;
+    }
+
+    .tp-proc-step--done {
+        color: #16A34A;
+        border-color: #BBF7D0;
+        background: #F0FDF4;
+    }
+
+    .tp-proc-step--active {
+        color: var(--text, #111827);
+        border-color: #C4B5FD;
+        background: #FAF5FF;
+        font-weight: 600;
+    }
+
+    .tp-proc-spinner {
+        width: 14px;
+        height: 14px;
+        min-width: 14px;
+        border: 2px solid #C4B5FD;
+        border-top-color: #7C3AED;
+        border-radius: 50%;
+        animation: tp-spin .7s linear infinite;
+    }
+
+    @@keyframes tp-spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    .tp-proc-dot {
+        width: 14px;
+        height: 14px;
+        min-width: 14px;
+        border-radius: 50%;
+        border: 2px solid var(--border, #E5E7EB);
+        background: var(--bg, #F9FAFB);
+    }
+
+    /* ── Result ───────────────────────────────────────────── */
+    .tp-result {
+        max-width: 860px;
+        margin: 2rem auto;
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+    }
+
+    .tp-result-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .tp-result-title {
+        display: flex;
+        align-items: center;
+        gap: .875rem;
+    }
+
+    .tp-result-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: #DCFCE7;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .tp-result-title h2 {
+        font-size: 1.2rem;
+        font-weight: 700;
+        margin: 0 0 .2rem;
+        color: var(--text, #111827);
+    }
+
+    .tp-result-title p {
+        font-size: .8rem;
+        color: var(--text-muted, #6B7280);
+        margin: 0;
+    }
+
+    .tp-result-actions {
+        display: flex;
+        gap: .625rem;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .tp-result-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: .4rem;
+        padding: 4px 12px;
+        background: #EDE9FE;
+        color: #5B21B6;
+        border-radius: 20px;
+        font-size: .75rem;
+        font-weight: 600;
+    }
+
+    .tp-preview-output {
+        background: var(--surface, #fff);
+        border: 1px solid var(--border, #E5E7EB);
+        border-radius: 14px;
+        overflow: hidden;
+    }
+
+    .tp-preview-output-header {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+        padding: .75rem 1rem;
+        background: var(--bg, #F9FAFB);
+        border-bottom: 1px solid var(--border, #E5E7EB);
+        font-size: .78rem;
+        font-weight: 600;
+        color: var(--text, #374151);
+    }
+
+        .tp-preview-output-header span {
+            margin-left: auto;
+            font-size: .72rem;
+            color: var(--text-muted, #9CA3AF);
+            font-weight: 400;
+        }
+
+    .tp-preview-output-body {
+        padding: 1.25rem;
+        font-size: .875rem;
+        line-height: 1.7;
+        color: var(--text, #374151);
+        max-height: 400px;
+        overflow-y: auto;
+        white-space: pre-wrap;
+    }
+
+    .tp-result-cta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 1.25rem 1.5rem;
+        background: #F0FDF4;
+        border: 1px solid #BBF7D0;
+        border-radius: 14px;
+        flex-wrap: wrap;
+    }
+
+    .tp-result-cta-text {
+        display: flex;
+        align-items: flex-start;
+        gap: .75rem;
+    }
+
+        .tp-result-cta-text strong {
+            font-size: .9rem;
+            color: var(--text, #111827);
+            display: block;
+            margin-bottom: .15rem;
+        }
+
+        .tp-result-cta-text p {
+            font-size: .78rem;
+            color: var(--text-muted, #6B7280);
+            margin: 0;
+        }
+
+    .tp-download-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: .4rem;
+        padding: .625rem 1.25rem;
+        background: linear-gradient(135deg, #16A34A, #15803D);
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        font-size: .875rem;
+        font-weight: 700;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: opacity .15s;
+    }
+
+        .tp-download-btn:hover {
+            opacity: .92;
+        }
+
+    /* ── Error ────────────────────────────────────────────── */
+    .tp-error {
+        display: flex;
+        align-items: center;
+        gap: .75rem;
+        padding: 1rem 1.25rem;
+        background: #FEF2F2;
+        border: 1px solid #FECACA;
+        border-radius: 12px;
+        font-size: .875rem;
+        color: #DC2626;
+        max-width: 600px;
+        margin: 2rem auto;
+        flex-wrap: wrap;
+    }
+
+    /* ── FAQ ──────────────────────────────────────────────── */
+    .tp-faq {
+        max-width: 680px;
+        margin: 2rem auto 0;
+    }
+
+        .tp-faq h2 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--text, #111827);
+        }
+
+    .tp-faq-item {
+        border: 1px solid var(--border, #E5E7EB);
+        border-radius: 12px;
+        padding: .875rem 1.1rem;
+        margin-bottom: .5rem;
+        background: var(--surface, #fff);
+    }
+
+        .tp-faq-item summary {
+            font-weight: 600;
+            font-size: .875rem;
+            color: var(--text, #111827);
+            cursor: pointer;
+            list-style: none;
+        }
+
+            .tp-faq-item summary::-webkit-details-marker {
+                display: none;
+            }
+
+        .tp-faq-item p {
+            font-size: .82rem;
+            color: var(--text-muted, #6B7280);
+            line-height: 1.6;
+            margin: .625rem 0 0;
+        }
+</style>
 
 @code {
     private enum PageState { Upload, Processing, Complete, Error }
@@ -288,31 +1530,53 @@
     private string _selectedLang = "es";
     private string _selectedLangName = "Spanish";
     private string _customLanguage = string.Empty;
+    private string _langSearch = string.Empty;
+    private string _quality = "high";
+    private string _tone = "default";
+    private bool _showAllLangs = false;
     private int _step = 0;
     private string _translatedText = string.Empty;
     private string _error = string.Empty;
+    private bool _isRateLimit = false;
+    private bool _isFreeLimit = false;
 
     private record Language(string Code, string Name, string Flag);
 
     private readonly List<Language> _languages = new()
     {
-        new("es", "Spanish",    "🇪🇸"),
-        new("fr", "French",     "🇫🇷"),
-        new("de", "German",     "🇩🇪"),
-        new("it", "Italian",    "🇮🇹"),
-        new("pt", "Portuguese", "🇵🇹"),
-        new("zh", "Chinese",    "🇨🇳"),
-        new("ja", "Japanese",   "🇯🇵"),
-        new("ko", "Korean",     "🇰🇷"),
-        new("ar", "Arabic",     "🇸🇦"),
-        new("hi", "Hindi",      "🇮🇳"),
-        new("ru", "Russian",    "🇷🇺"),
-        new("nl", "Dutch",      "🇳🇱"),
-        new("pl", "Polish",     "🇵🇱"),
-        new("tr", "Turkish",    "🇹🇷"),
-        new("sv", "Swedish",    "🇸🇪"),
+        new("es", "Spanish",    "🇪🇸"), new("fr", "French",     "🇫🇷"),
+        new("de", "German",     "🇩🇪"), new("it", "Italian",    "🇮🇹"),
+        new("pt", "Portuguese", "🇵🇹"), new("zh", "Chinese",    "🇨🇳"),
+        new("ja", "Japanese",   "🇯🇵"), new("ko", "Korean",     "🇰🇷"),
+        new("ar", "Arabic",     "🇸🇦"), new("hi", "Hindi",      "🇮🇳"),
+        new("ru", "Russian",    "🇷🇺"), new("nl", "Dutch",      "🇳🇱"),
+        new("pl", "Polish",     "🇵🇱"), new("tr", "Turkish",    "🇹🇷"),
+        new("sv", "Swedish",    "🇸🇪"), new("da", "Danish",     "🇩🇰"),
+        new("fi", "Finnish",    "🇫🇮"), new("no", "Norwegian",  "🇳🇴"),
+        new("cs", "Czech",      "🇨🇿"), new("ro", "Romanian",   "🇷🇴"),
+        new("hu", "Hungarian",  "🇭🇺"), new("el", "Greek",      "🇬🇷"),
+        new("he", "Hebrew",     "🇮🇱"), new("th", "Thai",       "🇹🇭"),
+        new("vi", "Vietnamese", "🇻🇳"), new("id", "Indonesian", "🇮🇩"),
+        new("ms", "Malay",      "🇲🇾"), new("uk", "Ukrainian",  "🇺🇦"),
         new("other", "Other",   "🌐"),
     };
+
+    private Language[] PopularLanguages => new[]
+    {
+        _languages.First(l => l.Code == "es"),
+        _languages.First(l => l.Code == "fr"),
+        _languages.First(l => l.Code == "de"),
+        _languages.First(l => l.Code == "zh"),
+        _languages.First(l => l.Code == "ja"),
+    };
+
+    private IEnumerable<Language> FilteredLanguages =>
+        string.IsNullOrWhiteSpace(_langSearch)
+            ? _languages
+            : _languages.Where(l => l.Name.Contains(_langSearch, StringComparison.OrdinalIgnoreCase));
+
+    private async Task ScrollToLanguage()
+        => await JS.InvokeVoidAsync("eval", "document.getElementById('language-section')?.scrollIntoView({behavior:'smooth'})");
 
     private async Task HandleFileSelected(IBrowserFile file)
     {
@@ -324,11 +1588,7 @@
         _error = string.Empty;
     }
 
-    private void HandleFileRemoved()
-    {
-        _fileBytes = null;
-        _fileName = null;
-    }
+    private void HandleFileRemoved() { _fileBytes = null; _fileName = null; }
 
     private void SelectLanguage(Language lang)
     {
@@ -340,15 +1600,8 @@
     {
         if (_fileBytes == null) return;
 
-        var langName = _selectedLang == "other"
-            ? _customLanguage.Trim()
-            : _selectedLangName;
-
-        if (string.IsNullOrWhiteSpace(langName))
-        {
-            _error = "Please enter a target language.";
-            return;
-        }
+        var langName = _selectedLang == "other" ? _customLanguage.Trim() : _selectedLangName;
+        if (string.IsNullOrWhiteSpace(langName)) { _error = "Please enter a target language."; return; }
 
         _selectedLangName = langName;
         CurrentState = PageState.Processing;
@@ -362,21 +1615,26 @@
 
             using var content = new MultipartFormDataContent();
             var fc = new ByteArrayContent(_fileBytes);
-            fc.Headers.ContentType =
-                new System.Net.Http.Headers.MediaTypeHeaderValue("application/pdf");
+            fc.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/pdf");
             content.Add(fc, "file", _fileName ?? "document.pdf");
             content.Add(new StringContent(_selectedLang), "targetLanguage");
             content.Add(new StringContent(langName), "languageName");
 
-            var result = await ApiService.PostMultipartAsync<TranslateResponse>(
-                "api/ai/translate", content);
+            var result = await ApiService.PostMultipartWithStatusAsync<TranslateResponse>("api/ai/translate", content);
 
             _step = 3; StateHasChanged();
 
-            if (result?.TranslatedText != null)
+            if (result.IsSuccess && result.Data?.TranslatedText != null)
             {
-                _translatedText = result.TranslatedText;
+                _translatedText = result.Data.TranslatedText;
                 CurrentState = PageState.Complete;
+                SessionUsage.RecordToolCompletion("Translate PDF");
+            }
+            else if (result.IsRateLimit)
+            {
+                _isRateLimit = true;
+                _isFreeLimit = true;
+                CurrentState = PageState.Error;
             }
             else
             {
@@ -389,7 +1647,6 @@
             _error = $"Error: {ex.Message}";
             CurrentState = PageState.Error;
         }
-
         StateHasChanged();
     }
 
@@ -397,23 +1654,18 @@
     {
         if (string.IsNullOrEmpty(_translatedText)) return;
         var bytes = System.Text.Encoding.UTF8.GetBytes(_translatedText);
-        var base64 = Convert.ToBase64String(bytes);
-        SessionUsage.RecordToolCompletion("Tool Name");
         var name = $"translated_{_selectedLang}_{Path.GetFileNameWithoutExtension(_fileName ?? "document")}.txt";
-        await JS.InvokeVoidAsync("downloadFile", name, base64);
+        await JS.InvokeVoidAsync("downloadFile", name, Convert.ToBase64String(bytes));
     }
 
     private void Reset()
     {
         CurrentState = PageState.Upload;
-        _fileBytes = null;
-        _fileName = null;
-        _translatedText = string.Empty;
-        _error = string.Empty;
-        _step = 0;
-        _selectedLang = "es";
-        _selectedLangName = "Spanish";
-        _customLanguage = string.Empty;
+        _fileBytes = null; _fileName = null;
+        _translatedText = string.Empty; _error = string.Empty;
+        _step = 0; _isRateLimit = false; _isFreeLimit = false;
+        _selectedLang = "es"; _selectedLangName = "Spanish";
+        _customLanguage = string.Empty; _langSearch = string.Empty;
     }
 
     private class TranslateResponse

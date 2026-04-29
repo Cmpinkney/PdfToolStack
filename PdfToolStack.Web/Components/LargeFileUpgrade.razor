@@ -1,53 +1,56 @@
 ﻿@inject PaymentService PaymentService
+@inject PdfToolStack.Web.Services.SubscriptionService SubService
 @inject NavigationManager Navigation
-@inject IJSRuntime JS
-@inject HttpClient Http
-@using System.Net.Http.Json
+@inject AuthenticationStateProvider Auth
+@using Microsoft.AspNetCore.Components.Authorization
 @using PdfToolStack.Web.Services
 
 <div class="upgrade-banner">
 
-    @if (PaymentService.IsTestModeEnabled)
-    {
-        <div class="test-mode-badge">Test Mode</div>
-    }
-
-    <div class="upgrade-icon">🚀</div>
+    <div class="upgrade-icon">📄</div>
 
     <div class="upgrade-content">
         <h3>@Title</h3>
         <p>
-            @if (PaymentService.IsTestModeEnabled)
-            {
-                <span>
-                    Your file is
-                    <strong>@PaymentService.FormatFileSize(FileSizeBytes)</strong>.
-                    The free limit is temporarily set to
-                    <strong>@PaymentService.FormatFileSize(PaymentService.FreeTierMaxBytes)</strong>
-                    for testing. Upgrade to Pro to process any file up to 500MB.
-                </span>
-            }
-            else
-            {
-                <span>
-                    Your file is
-                    <strong>@PaymentService.FormatFileSize(FileSizeBytes)</strong>.
-                    Free processing is limited to
-                    <strong>@PaymentService.FormatFileSize(PaymentService.FreeTierMaxBytes)</strong>.
-                    Upgrade to Pro to process files up to 500MB.
-                </span>
-            }
+            Your file is <strong>@PaymentService.FormatFileSize(FileSizeBytes)</strong>.
+            Free processing is limited to <strong>@PaymentService.FormatFileSize(PaymentService.FreeTierMaxBytes)</strong>.
         </p>
 
-        <p class="upgrade-price">
-            Unlock with <strong class="price-highlight">Pro — $19/month</strong>
-        </p>
+        <div class="upgrade-options">
 
-        @if (!string.IsNullOrWhiteSpace(LargeFilePriceId))
+            <!-- $1.99 one-time unlock -->
+            @if (!string.IsNullOrWhiteSpace(LargeFilePriceId))
+            {
+                <div class="upgrade-option upgrade-option-onetime">
+                    <div class="upgrade-option-badge">Quick option</div>
+                    <div class="upgrade-option-price">$1.99</div>
+                    <div class="upgrade-option-desc">Process this one file up to 500MB — one-time, no subscription</div>
+                    <button class="process-button upgrade-btn-onetime"
+                            @onclick="UnlockLargeFile"
+                            disabled="@(_isLoading)">
+                        @(_isLoading && _activeAction == "onetime" ? "Redirecting..." : "Unlock for $1.99")
+                    </button>
+                </div>
+                <div class="upgrade-option-divider">or</div>
+            }
+
+            <!-- Pro subscription -->
+            <div class="upgrade-option upgrade-option-pro">
+                <div class="upgrade-option-badge upgrade-option-badge-pro">Best value</div>
+                <div class="upgrade-option-price">$19<span>/mo</span></div>
+                <div class="upgrade-option-desc">Unlimited file size, all AI tools, batch processing — cancel anytime</div>
+                <button class="process-button upgrade-btn"
+                        @onclick="HandleUpgrade"
+                        disabled="@(_isLoading)">
+                    @(_isLoading && _activeAction == "pro" ? "Redirecting..." : PrimaryButtonText)
+                </button>
+            </div>
+
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(_error))
         {
-            <p class="upgrade-price one-time-unlock">
-                Or use a <strong class="price-highlight">$1.99 one-time large file unlock</strong>
-            </p>
+            <p class="upgrade-error">@_error</p>
         }
 
         <div class="upgrade-features">
@@ -58,29 +61,9 @@
             <span>✅ No ads</span>
             <span>✅ Cancel anytime</span>
         </div>
-
-        @if (!string.IsNullOrWhiteSpace(_error))
-        {
-            <p class="upgrade-error">@_error</p>
-        }
     </div>
 
     <div class="upgrade-actions">
-        <button class="process-button upgrade-btn"
-                @onclick="HandleUpgrade"
-                disabled="@_isLoading">
-            @PrimaryButtonText
-        </button>
-
-        @if (!string.IsNullOrWhiteSpace(LargeFilePriceId))
-        {
-            <button class="process-button one-time-btn"
-                    @onclick="UnlockLargeFile"
-                    disabled="@_isLoading">
-                @(_isLoading ? "Starting checkout..." : "Unlock this file for $1.99")
-            </button>
-        }
-
         <button class="reset-button"
                 @onclick="HandleSecondaryAction"
                 disabled="@_isLoading">
@@ -96,80 +79,134 @@
     [Parameter] public string ToolType { get; set; } = string.Empty;
     [Parameter] public EventCallback OnCancel { get; set; }
     [Parameter] public string Title { get; set; } = "This file is over the free limit";
-    [Parameter] public string Message { get; set; } = "This file is above the free processing limit.";
     [Parameter] public string PrimaryButtonText { get; set; } = "Upgrade to Pro";
     [Parameter] public string SecondaryButtonText { get; set; } = "Return to upload";
-    [Parameter] public string LargeFilePriceId { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Pass from the parent page: load from api/subscription/addons.
+    /// If null, the $1.99 button is hidden and only Pro upgrade is shown.
+    /// </summary>
+    [Parameter] public string? LargeFilePriceId { get; set; }
+
+    /// <summary>
+    /// Pass from the parent page: load from api/subscription/plans.
+    /// If null, Pro upgrade falls back to /pricing page navigation.
+    /// </summary>
+    [Parameter] public string? ProMonthlyPriceId { get; set; }
 
     private bool _isLoading;
+    private string _activeAction = string.Empty;
     private string? _error;
+    private string _userId = string.Empty;
+    private string _userEmail = string.Empty;
 
-    private void HandleUpgrade()
+    protected override async Task OnInitializedAsync()
     {
-        var returnUrl = Uri.EscapeDataString(Navigation.Uri);
-        Navigation.NavigateTo($"/pricing?from={returnUrl}", forceLoad: false);
+        var authState = await Auth.GetAuthenticationStateAsync();
+        var user = authState.User;
+        _userId = user.FindFirst("sub")?.Value ?? string.Empty;
+        _userEmail = user.FindFirst("email")?.Value ?? string.Empty;
+    }
+
+    private async Task UnlockLargeFile()
+    {
+        if (string.IsNullOrWhiteSpace(LargeFilePriceId)) return;
+
+        if (string.IsNullOrEmpty(_userId))
+        {
+            Navigation.NavigateTo("authentication/login");
+            return;
+        }
+
+        _isLoading = true;
+        _activeAction = "onetime";
+        _error = null;
+        StateHasChanged();
+
+        try
+        {
+            var baseUrl = Navigation.BaseUri.TrimEnd('/');
+            var returnPath = new Uri(Navigation.Uri).PathAndQuery;
+
+            var url = await SubService.CreateAddonCheckoutSessionAsync(
+                LargeFilePriceId,
+                "large_file",
+                _userId,
+                _userEmail,
+                baseUrl,
+                returnPath);
+
+            if (!string.IsNullOrEmpty(url))
+            {
+                Navigation.NavigateTo(url, forceLoad: true);
+            }
+            else
+            {
+                _error = "Could not start checkout. Please try again or email support@pdftoolstack.com.";
+            }
+        }
+        catch
+        {
+            _error = "Something went wrong. Please email support@pdftoolstack.com.";
+        }
+        finally
+        {
+            _isLoading = false;
+            _activeAction = string.Empty;
+            StateHasChanged();
+        }
+    }
+
+    private async Task HandleUpgrade()
+    {
+        if (string.IsNullOrEmpty(_userId))
+        {
+            Navigation.NavigateTo("authentication/login");
+            return;
+        }
+
+        if (string.IsNullOrEmpty(ProMonthlyPriceId))
+        {
+            var returnUrl = Uri.EscapeDataString(Navigation.Uri);
+            Navigation.NavigateTo($"/pricing?from={returnUrl}");
+            return;
+        }
+
+        _isLoading = true;
+        _activeAction = "pro";
+        _error = null;
+        StateHasChanged();
+
+        try
+        {
+            var baseUrl = Navigation.BaseUri.TrimEnd('/');
+            var url = await SubService.CreateCheckoutSessionAsync(
+                ProMonthlyPriceId, _userId, _userEmail, baseUrl);
+
+            if (!string.IsNullOrEmpty(url))
+            {
+                Navigation.NavigateTo(url, forceLoad: true);
+            }
+            else
+            {
+                _error = "Could not start checkout. Please try again or email support@pdftoolstack.com.";
+            }
+        }
+        catch
+        {
+            _error = "Something went wrong. Please email support@pdftoolstack.com.";
+        }
+        finally
+        {
+            _isLoading = false;
+            _activeAction = string.Empty;
+            StateHasChanged();
+        }
     }
 
     private async Task HandleSecondaryAction()
     {
         if (OnCancel.HasDelegate)
             await OnCancel.InvokeAsync();
-    }
-
-    private async Task UnlockLargeFile()
-    {
-        try
-        {
-            _isLoading = true;
-            _error = null;
-
-            if (string.IsNullOrWhiteSpace(LargeFilePriceId))
-            {
-                _error = "Large file checkout is not configured yet.";
-                return;
-            }
-
-            var response = await Http.PostAsJsonAsync("api/subscription/create-addon-checkout", new AddonCheckoutRequest
-            {
-                PriceId = LargeFilePriceId
-            });
-
-            if (!response.IsSuccessStatusCode)
-            {
-                var errorText = await response.Content.ReadAsStringAsync();
-                _error = string.IsNullOrWhiteSpace(errorText)
-                    ? "Could not start checkout. Please try again."
-                    : errorText;
-                return;
-            }
-
-            var result = await response.Content.ReadFromJsonAsync<CheckoutResponseDto>();
-
-            if (result == null || string.IsNullOrWhiteSpace(result.Url))
-            {
-                _error = "Checkout URL was not returned.";
-                return;
-            }
-
-            Navigation.NavigateTo(result.Url, forceLoad: true);
-        }
-        catch (Exception ex)
-        {
-            _error = $"Could not start checkout: {ex.Message}";
-        }
-        finally
-        {
-            _isLoading = false;
-        }
-    }
-
-    private sealed class AddonCheckoutRequest
-    {
-        public string PriceId { get; set; } = string.Empty;
-    }
-
-    private sealed class CheckoutResponseDto
-    {
-        public string Url { get; set; } = string.Empty;
     }
 }
