@@ -24,24 +24,34 @@
         {
             <FileUpload OnFileSelected="HandleFileSelected" OnFileRemoved="HandleFileRemoved" />
 
-            @if (SelectedFile != null && TotalPages > 0)
+            @if (SelectedFile != null)
             {
-                <div class="split-options">
-                    <h3>Select Page Range</h3>
-                    <p class="page-selector-hint">Your PDF has @TotalPages pages.</p>
-                    <div class="split-range">
-                        <div class="form-group">
-                            <label>From Page</label>
-                            <input type="number" class="field-input" min="1" max="@TotalPages" @bind="FromPage" />
-                        </div>
-                        <span class="split-to">to</span>
-                        <div class="form-group">
-                            <label>To Page</label>
-                            <input type="number" class="field-input" min="1" max="@TotalPages" @bind="ToPage" />
-                        </div>
+                @if (_loadingPageCount)
+                {
+                    <div class="processing-container">
+                        <div class="spinner"></div>
+                        <p>Reading PDF...</p>
                     </div>
-                    <button class="process-button" @onclick="ProcessFile">Extract Pages @FromPage–@ToPage</button>
-                </div>
+                }
+                else if (TotalPages > 0)
+                {
+                    <div class="split-options">
+                        <h3>Select Page Range</h3>
+                        <p class="page-selector-hint">Your PDF has @TotalPages page@(TotalPages == 1 ? "" : "s").</p>
+                        <div class="split-range">
+                            <div class="form-group">
+                                <label>From Page</label>
+                                <input type="number" class="field-input" min="1" max="@TotalPages" @bind="FromPage" />
+                            </div>
+                            <span class="split-to">to</span>
+                            <div class="form-group">
+                                <label>To Page</label>
+                                <input type="number" class="field-input" min="1" max="@TotalPages" @bind="ToPage" />
+                            </div>
+                        </div>
+                        <button class="process-button" @onclick="ProcessFile">Extract Pages @FromPage–@ToPage</button>
+                    </div>
+                }
             }
         }
 
@@ -100,6 +110,7 @@
     private int TotalPages = 0;
     private int FromPage = 1;
     private int ToPage = 1;
+    private bool _loadingPageCount = false;
 
     [SupplyParameterFromQuery] private string? Paid { get; set; }
     protected override void OnInitialized() { if (Paid == "true") CurrentState = PageState.Upload; }
@@ -109,6 +120,7 @@
         SelectedFile = null;
         UploadedBytes = null;
         ErrorMessage = null;
+        TotalPages = 0;
 
         var validation = Validator.ValidatePdfFile(file);
         if (!validation.IsValid)
@@ -121,8 +133,7 @@
 
         try
         {
-            using var stream = file.OpenReadStream(
-                maxAllowedSize: 524288000);
+            using var stream = file.OpenReadStream(maxAllowedSize: 524288000);
             using var ms = new MemoryStream();
             await stream.CopyToAsync(ms);
             UploadedBytes = ms.ToArray();
@@ -139,28 +150,49 @@
 
             if (PaymentService.IsFileTooLargeForFree(file.Size))
             {
+                SelectedFile = file;
                 CurrentState = PageState.LargeFile;
                 StateHasChanged();
                 return;
             }
 
             SelectedFile = file;
-            Toast.ShowSuccess(
-                $"File ready — {Validator.FormatSize(file.Size)}");
+            Toast.ShowSuccess($"File ready — {Validator.FormatSize(file.Size)}");
+
+            // *** FIX: Fetch page count so split options appear ***
+            _loadingPageCount = true;
+            StateHasChanged();
+
+            TotalPages = await ApiService.GetPageCountAsync(UploadedBytes, file.Name);
+            ToPage = TotalPages; // default: extract all pages
+
+            _loadingPageCount = false;
         }
         catch (Exception ex)
         {
             Toast.ShowError($"Could not read file: {ex.Message}");
             UploadedBytes = null;
+            _loadingPageCount = false;
         }
         StateHasChanged();
     }
 
-    private void HandleFileRemoved() { SelectedFile = null; UploadedBytes = null; TotalPages = 0; }
+    private void HandleFileRemoved()
+    {
+        SelectedFile = null;
+        UploadedBytes = null;
+        TotalPages = 0;
+        _loadingPageCount = false;
+    }
 
     private async Task ProcessFile()
     {
         if (UploadedBytes == null) return;
+
+        // Clamp page range
+        FromPage = Math.Max(1, Math.Min(FromPage, TotalPages));
+        ToPage = Math.Max(FromPage, Math.Min(ToPage, TotalPages));
+
         CurrentState = PageState.Processing;
         StateHasChanged();
         try
@@ -177,8 +209,19 @@
     {
         if (ResultBytes == null) return;
         await JS.InvokeVoidAsync("downloadFile", $"pages_{FromPage}_{ToPage}.pdf", Convert.ToBase64String(ResultBytes));
-        SessionUsage.RecordToolCompletion("Tool Name");
+        SessionUsage.RecordToolCompletion("Split PDF");
     }
 
-    private void Reset() { CurrentState = PageState.Upload; SelectedFile = null; UploadedBytes = null; ResultBytes = null; ErrorMessage = null; TotalPages = 0; FromPage = 1; ToPage = 1; }
+    private void Reset()
+    {
+        CurrentState = PageState.Upload;
+        SelectedFile = null;
+        UploadedBytes = null;
+        ResultBytes = null;
+        ErrorMessage = null;
+        TotalPages = 0;
+        FromPage = 1;
+        ToPage = 1;
+        _loadingPageCount = false;
+    }
 }

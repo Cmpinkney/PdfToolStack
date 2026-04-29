@@ -7,6 +7,7 @@ namespace PdfToolStack.Web.Services
         private readonly ApiService _api;
         private SubscriptionStatusDto? _cachedStatus;
         private DateTime _cacheExpiry;
+        private string _cachedUserId = string.Empty; // ← guard: cache is per user
 
         public SubscriptionService(ApiService api)
         {
@@ -17,6 +18,14 @@ namespace PdfToolStack.Web.Services
 
         public async Task<SubscriptionStatusDto> GetStatusAsync(string userId)
         {
+            // Guard: never serve cached status for a different user
+            if (string.IsNullOrWhiteSpace(userId))
+                return new SubscriptionStatusDto();
+
+            // Invalidate cache if userId changed (e.g. admin → free user in same session)
+            if (_cachedUserId != userId)
+                ClearCache();
+
             if (_cachedStatus != null && DateTime.UtcNow < _cacheExpiry)
                 return _cachedStatus;
 
@@ -26,6 +35,7 @@ namespace PdfToolStack.Web.Services
                     $"api/subscription/status/{userId}");
 
                 _cachedStatus = status ?? new SubscriptionStatusDto();
+                _cachedUserId = userId;
                 _cacheExpiry = DateTime.UtcNow.AddMinutes(5);
                 return _cachedStatus;
             }
@@ -57,13 +67,6 @@ namespace PdfToolStack.Web.Services
 
         // ── Add-on checkout (one-time payment) ────────────────────────────────────
 
-        /// <summary>
-        /// Creates a one-time payment checkout for a pay-as-you-go add-on.
-        /// UserId and Email are passed in the request body — the API has no auth middleware.
-        ///
-        /// addonType: "large_file" | "ai_day_pass" | "ai_credit_pack" | "batch_unlock"
-        /// returnPath: optional path to redirect back to after success (e.g. "/compress-pdf")
-        /// </summary>
         public async Task<string> CreateAddonCheckoutSessionAsync(
             string priceId,
             string addonType,
@@ -114,7 +117,11 @@ namespace PdfToolStack.Web.Services
 
         // ── Cache ─────────────────────────────────────────────────────────────────
 
-        public void ClearCache() => _cachedStatus = null;
+        public void ClearCache()
+        {
+            _cachedStatus = null;
+            _cachedUserId = string.Empty;
+        }
 
         public bool IsPro(SubscriptionStatusDto status) => status.HasPro;
     }

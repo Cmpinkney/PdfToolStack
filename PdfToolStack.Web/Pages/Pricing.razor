@@ -203,9 +203,9 @@
                     <li>Great for occasional use</li>
                 </ul>
                 <button class="pricing-btn-addon"
-                        @onclick='() => BuyAddon(_largeFilePriceId," large-file")'
+                        @onclick='() => BuyAddon(_largeFilePriceId, "large_file")'
                         disabled="@(IsLoading || string.IsNullOrWhiteSpace(_largeFilePriceId))">
-                    @if (IsLoading && _checkoutTarget == "large-file")
+                    @if (IsLoading && _checkoutTarget == "large_file")
                     {
                         <span>Loading...</span>
                     }
@@ -229,9 +229,9 @@
                     <li>No subscription required</li>
                 </ul>
                 <button class="pricing-btn-addon"
-                        @onclick='() => BuyAddon(_aiDayPassPriceId," ai-day-pass")'
+                        @onclick='() => BuyAddon(_aiDayPassPriceId, "ai_day_pass")'
                         disabled="@(IsLoading || string.IsNullOrWhiteSpace(_aiDayPassPriceId))">
-                    @if (IsLoading && _checkoutTarget == "ai-day-pass")
+                    @if (IsLoading && _checkoutTarget == "ai_day_pass")
                     {
                         <span>Loading...</span>
                     }
@@ -255,9 +255,9 @@
                     <li>Good for repeat use</li>
                 </ul>
                 <button class="pricing-btn-addon"
-                        @onclick='() => BuyAddon(_aiCredits50PriceId," ai-credits")'
+                        @onclick='() => BuyAddon(_aiCredits50PriceId, "ai_credit_pack")'
                         disabled="@(IsLoading || string.IsNullOrWhiteSpace(_aiCredits50PriceId))">
-                    @if (IsLoading && _checkoutTarget == "ai-credits")
+                    @if (IsLoading && _checkoutTarget == "ai_credit_pack")
                     {
                         <span>Loading...</span>
                     }
@@ -281,9 +281,9 @@
                     <li>Fast one-off workflow</li>
                 </ul>
                 <button class="pricing-btn-addon"
-                        @onclick='() => BuyAddon(_batchUnlockPriceId," batch-unlock")'
+                        @onclick='() => BuyAddon(_batchUnlockPriceId, "batch_unlock")'
                         disabled="@(IsLoading || string.IsNullOrWhiteSpace(_batchUnlockPriceId))">
-                    @if (IsLoading && _checkoutTarget == "batch-unlock")
+                    @if (IsLoading && _checkoutTarget == "batch_unlock")
                     {
                         <span>Loading...</span>
                     }
@@ -684,7 +684,7 @@
         StateHasChanged();
     }
 
-    private async Task BuyAddon(string? priceId, string target)
+    private async Task BuyAddon(string? priceId, string addonType)
     {
         if (string.IsNullOrWhiteSpace(priceId))
             return;
@@ -696,15 +696,21 @@
         }
 
         _addonError = null;
-        _checkoutTarget = target;
+        _checkoutTarget = addonType;
         IsLoading = true;
         StateHasChanged();
+
+        var baseUrl = Navigation.BaseUri.TrimEnd('/');
 
         try
         {
             var response = await Http.PostAsJsonAsync("api/subscription/create-addon-checkout", new AddonCheckoutRequest
             {
-                PriceId = priceId
+                PriceId = priceId,
+                AddonType = addonType,
+                Email = UserEmail,
+                SuccessUrl = baseUrl + "/subscription/success",
+                CancelUrl = baseUrl + "/pricing"
             });
 
             if (!response.IsSuccessStatusCode)
@@ -770,6 +776,10 @@
     private class AddonCheckoutRequest
     {
         public string PriceId { get; set; } = string.Empty;
+        public string AddonType { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string SuccessUrl { get; set; } = string.Empty;
+        public string CancelUrl { get; set; } = string.Empty;
     }
 
     private class CheckoutResponseDto

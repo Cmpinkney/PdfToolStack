@@ -264,12 +264,12 @@ namespace PdfToolStack.Infrastructure.Services
             // Idempotency — webhook may fire more than once for the same session
             if (await _db.OneTimePurchases.AnyAsync(p => p.StripeSessionId == session.Id)) return;
 
-            var expiry = addonType switch
+            DateTime? expiry = addonType switch
             {
                 "ai_day_pass" => DateTime.UtcNow.AddHours(24),
                 "large_file" => DateTime.UtcNow.AddDays(7),
                 "batch_unlock" => DateTime.UtcNow.AddDays(7),
-                "ai_credit_pack" => DateTime.UtcNow.AddDays(90),
+                "ai_credit_pack" => null,
                 _ => DateTime.UtcNow.AddDays(7)
             };
 
