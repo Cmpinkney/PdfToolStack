@@ -112,7 +112,7 @@
             </ul>
             <button class="pricing-btn-pro"
                     @onclick="() => Subscribe(_isAnnual ? _yearlyPriceId : _monthlyPriceId)"
-                    disabled="@(IsLoading || (_isAnnual ? _yearlyPriceId == null : _monthlyPriceId == null))">
+                    disabled="@(IsLoading || string.IsNullOrWhiteSpace(_isAnnual ? _yearlyPriceId : _monthlyPriceId))">
                 @if (IsLoading && _checkoutTarget == "pro")
                 {
                     <span>Loading...</span>
@@ -164,7 +164,7 @@
             </ul>
             <button class="pricing-btn-teams"
                     @onclick='() => Subscribe(_teamsPriceId)'
-                    disabled="@(IsLoading || _teamsPriceId == null)">
+                    disabled="@(IsLoading || string.IsNullOrWhiteSpace(_teamsPriceId))">
                 @if (IsLoading && _checkoutTarget == "teams")
                 {
                     <span>Loading...</span>
