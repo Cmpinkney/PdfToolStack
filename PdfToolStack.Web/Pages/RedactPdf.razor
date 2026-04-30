@@ -15,6 +15,36 @@
 </HeadContent>
 
 <div class="rp-page">
+    <section class="rp-shell">
+        <div class="rp-hero">
+            <div>
+                <span class="rp-eyebrow">PDF workspace</span>
+                <h1 class="rp-title">Redact PDF Online</h1>
+                <p class="rp-subtitle">Permanently remove sensitive content with precise redaction overlays, page review, and secure processing.</p>
+            </div>
+            <div class="rp-trust-row" aria-label="Privacy and security">
+                <span class="rp-trust-badge">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>
+                    Secure upload
+                </span>
+                <span class="rp-trust-badge">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="M19 6l-1 14H6L5 6" /></svg>
+                    Auto-delete
+                </span>
+                <span class="rp-trust-badge">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
+                    Private processing
+                </span>
+            </div>
+        </div>
+
+        <div class="rp-stepper" aria-label="Progress">
+            <div class="rp-step @(CurrentState == PageState.Upload || CurrentState == PageState.LargeFile ? "rp-step--active" : "rp-step--done")"><span>1</span>Upload</div>
+            <div class="rp-step @(CurrentState == PageState.Redact ? "rp-step--active" : CurrentState == PageState.Processing || CurrentState == PageState.Complete || CurrentState == PageState.Error ? "rp-step--done" : "")"><span>2</span>Configure</div>
+            <div class="rp-step @(CurrentState == PageState.Processing ? "rp-step--active" : CurrentState == PageState.Complete || CurrentState == PageState.Error ? "rp-step--done" : "")"><span>3</span>Process</div>
+            <div class="rp-step @(CurrentState == PageState.Complete ? "rp-step--active" : "")"><span>4</span>Download</div>
+        </div>
+    </section>
 
     <!-- ── UPLOAD STATE ──────────────────────────────────────────────── -->
     @if (CurrentState == PageState.Upload || CurrentState == PageState.LargeFile)
@@ -25,8 +55,8 @@
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>
                     True Redaction
                 </div>
-                <h1 class="rp-upload-title">Redact PDF Online</h1>
-                <p class="rp-upload-sub">Permanently remove sensitive information from your PDF. Data is destroyed — not just visually hidden.</p>
+                <h2 class="rp-upload-title">Upload your document</h2>
+                <p class="rp-upload-sub">Mark sensitive areas, review every overlay, then create a permanently redacted copy.</p>
                 <div class="rp-trust-chips">
                     <span class="rp-chip rp-chip--red">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
@@ -76,6 +106,24 @@
                         </div>
                     }
                 </div>
+
+                <aside class="rp-upload-inspector">
+                    <div class="rp-panel-title">Security workflow</div>
+                    <div class="rp-feature-list">
+                        <div>
+                            <strong>Permanent removal</strong>
+                            <span>Redactions are burned into the output PDF, not placed as removable shapes.</span>
+                        </div>
+                        <div>
+                            <strong>Review before apply</strong>
+                            <span>Use before/after mode and page badges to confirm every marked area.</span>
+                        </div>
+                        <div>
+                            <strong>Private processing</strong>
+                            <span>Files are processed securely and automatically deleted after 1 hour.</span>
+                        </div>
+                    </div>
+                </aside>
             }
         </div>
     }
@@ -227,6 +275,29 @@
                             }
                         </div>
                         <p class="rp-color-label">@(RedactColors.FirstOrDefault(c => c.Hex == _selectedColor)?.Name ?? "Black")</p>
+                    </div>
+
+                    <div class="rp-divider"></div>
+
+                    <div class="rp-panel-section rp-confidence">
+                        <div class="rp-panel-title">Confidence Check</div>
+                        <div class="rp-confidence-grid">
+                            <div>
+                                <strong>@AllRegions.Count</strong>
+                                <span>Total redactions</span>
+                            </div>
+                            <div>
+                                <strong>@CurrentPageRegions.Count</strong>
+                                <span>This page</span>
+                            </div>
+                            <div>
+                                <strong>@AllRegions.Select(r => r.PageNumber).Distinct().Count()</strong>
+                                <span>Pages marked</span>
+                            </div>
+                        </div>
+                        <p class="rp-confidence-note">
+                            Redactions are permanent after processing. Review every page before download.
+                        </p>
                     </div>
 
                     <div class="rp-divider"></div>
@@ -1395,6 +1466,596 @@
             line-height: 1.6;
             margin: .75rem 0 0;
         }
+
+    /* ── SaaS facelift overrides ─────────────────────────── */
+    .rp-page {
+        min-height: 100vh;
+        background:
+            radial-gradient(circle at 15% 0%, rgba(220, 38, 38, .10), transparent 34%),
+            radial-gradient(circle at 92% 8%, rgba(79, 70, 229, .12), transparent 30%),
+            linear-gradient(180deg, #F8FAFC 0%, #EEF2F7 100%);
+        color: #111827;
+        padding: 1.5rem;
+    }
+
+    .rp-shell,
+    .rp-upload-hero,
+    .rp-editor,
+    .rp-processing,
+    .rp-complete,
+    .rp-faq {
+        max-width: 1180px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .rp-shell {
+        margin-bottom: 1rem;
+    }
+
+    .rp-hero {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .rp-eyebrow {
+        display: inline-flex;
+        align-items: center;
+        width: fit-content;
+        color: #991B1B;
+        background: #FEE2E2;
+        border: 1px solid rgba(220, 38, 38, .16);
+        border-radius: 999px;
+        padding: .28rem .65rem;
+        font-size: .72rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        margin-bottom: .75rem;
+    }
+
+    .rp-title {
+        font-size: clamp(2rem, 4vw, 3.35rem);
+        font-weight: 850;
+        letter-spacing: 0;
+        line-height: 1;
+        margin: 0 0 .8rem;
+        color: #0F172A;
+    }
+
+    .rp-subtitle {
+        max-width: 660px;
+        color: #475569;
+        font-size: 1.02rem;
+        line-height: 1.6;
+        margin: 0;
+    }
+
+    .rp-trust-row,
+    .rp-trust-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .55rem;
+    }
+
+    .rp-trust-row {
+        justify-content: flex-end;
+        min-width: 320px;
+    }
+
+    .rp-trust-badge,
+    .rp-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: .42rem;
+        color: #334155;
+        background: rgba(255, 255, 255, .78);
+        border: 1px solid rgba(148, 163, 184, .34);
+        box-shadow: 0 10px 26px rgba(15, 23, 42, .06);
+        border-radius: 999px;
+        padding: .45rem .7rem;
+        font-size: .78rem;
+        font-weight: 700;
+    }
+
+    .rp-chip--red {
+        color: #B91C1C;
+        background: #FEF2F2;
+        border-color: #FECACA;
+    }
+
+    .rp-trust-badge svg,
+    .rp-load-btn svg,
+    .rp-back-btn svg,
+    .rp-nav-btn svg,
+    .rp-canvas-hint svg,
+    .rp-panel-btn svg,
+    .rp-action-btn svg,
+    .rp-apply-btn svg,
+    .rp-download-btn svg,
+    .rp-panel-tip svg {
+        width: 1rem;
+        height: 1rem;
+        flex-shrink: 0;
+    }
+
+    .rp-stepper {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: .65rem;
+        padding: .65rem;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, .72);
+        border: 1px solid rgba(148, 163, 184, .28);
+        box-shadow: 0 20px 55px rgba(15, 23, 42, .08);
+        backdrop-filter: blur(14px);
+    }
+
+    .rp-step {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: .5rem;
+        min-height: 42px;
+        border-radius: 12px;
+        color: #64748B;
+        font-size: .82rem;
+        font-weight: 800;
+        background: transparent;
+    }
+
+    .rp-step span {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 22px;
+        height: 22px;
+        border-radius: 999px;
+        color: #64748B;
+        background: #E2E8F0;
+        font-size: .72rem;
+    }
+
+    .rp-step--active {
+        color: #FFFFFF;
+        background: linear-gradient(135deg, #0F172A, #DC2626);
+        box-shadow: 0 12px 26px rgba(220, 38, 38, .22);
+    }
+
+    .rp-step--active span {
+        color: #0F172A;
+        background: #FFFFFF;
+    }
+
+    .rp-step--done {
+        color: #991B1B;
+        background: rgba(254, 226, 226, .72);
+    }
+
+    .rp-step--done span {
+        color: #FFFFFF;
+        background: #DC2626;
+    }
+
+    .rp-upload-hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1.45fr) minmax(300px, .8fr);
+        gap: 1rem;
+        padding: 0;
+    }
+
+    .rp-upload-header,
+    .rp-upload-zone,
+    .rp-how-it-works,
+    .rp-upload-inspector,
+    .rp-editor-topbar,
+    .rp-thumbnails,
+    .rp-canvas-area,
+    .rp-panel,
+    .rp-action-bar,
+    .rp-processing-card,
+    .rp-complete-card {
+        background: rgba(255, 255, 255, .86);
+        border: 1px solid rgba(148, 163, 184, .24);
+        box-shadow: 0 24px 70px rgba(15, 23, 42, .09);
+        backdrop-filter: blur(18px);
+    }
+
+    .rp-upload-header {
+        grid-column: 1 / -1;
+        text-align: left;
+        margin: 0;
+        border-radius: 22px;
+        padding: 1.2rem;
+    }
+
+    .rp-tool-badge {
+        margin-bottom: .75rem;
+    }
+
+    .rp-upload-title {
+        color: #0F172A;
+        font-size: 1.25rem;
+        font-weight: 850;
+        letter-spacing: 0;
+    }
+
+    .rp-upload-sub {
+        max-width: none;
+        color: #64748B;
+        margin: 0 0 1rem;
+        font-size: .92rem;
+    }
+
+    .rp-upload-zone,
+    .rp-how-it-works,
+    .rp-upload-inspector {
+        border-radius: 26px;
+        padding: 1rem;
+    }
+
+    .rp-upload-zone .upload-container {
+        border-radius: 20px;
+        border-color: rgba(220, 38, 38, .24);
+        background: linear-gradient(180deg, #FFFFFF, #F8FAFC);
+    }
+
+    .rp-load-btn,
+    .rp-apply-btn {
+        min-height: 48px;
+        border-radius: 14px;
+        background: linear-gradient(135deg, #0F172A 0%, #DC2626 52%, #7F1D1D 100%);
+        box-shadow: 0 16px 34px rgba(220, 38, 38, .28);
+    }
+
+    .rp-how-it-works {
+        grid-column: 1;
+        margin: 0;
+        gap: .8rem;
+        align-content: start;
+    }
+
+    .rp-upload-inspector {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .rp-feature-list {
+        display: grid;
+        gap: .75rem;
+    }
+
+    .rp-feature-list div {
+        padding: .85rem;
+        border-radius: 16px;
+        background: #F8FAFC;
+        border: 1px solid #E2E8F0;
+    }
+
+    .rp-feature-list strong,
+    .rp-feature-list span {
+        display: block;
+    }
+
+    .rp-feature-list strong {
+        color: #0F172A;
+        font-size: .88rem;
+        margin-bottom: .18rem;
+    }
+
+    .rp-feature-list span {
+        color: #64748B;
+        font-size: .78rem;
+        line-height: 1.5;
+    }
+
+    .rp-step-num {
+        background: linear-gradient(135deg, #DC2626, #7F1D1D);
+    }
+
+    .rp-editor {
+        gap: 1rem;
+    }
+
+    .rp-editor-topbar {
+        max-width: 1180px;
+        width: 100%;
+        margin: 0 auto;
+        top: 0;
+        border-radius: 18px;
+        border-bottom: 1px solid rgba(148, 163, 184, .24);
+        background: rgba(255, 255, 255, .82);
+    }
+
+    .rp-editor-body {
+        display: grid;
+        grid-template-columns: 92px minmax(0, 1fr) 330px;
+        gap: 1rem;
+        min-height: auto;
+    }
+
+    .rp-thumbnails,
+    .rp-canvas-area,
+    .rp-panel {
+        border-radius: 24px;
+        border: 1px solid rgba(148, 163, 184, .24);
+        overflow: hidden;
+    }
+
+    .rp-thumbnails {
+        width: auto;
+        min-width: 0;
+        background: rgba(255, 255, 255, .82);
+        max-height: 720px;
+        overflow-y: auto;
+    }
+
+    .rp-thumb {
+        border-radius: 12px;
+    }
+
+    .rp-canvas-area {
+        min-height: 720px;
+        justify-content: flex-start;
+        background:
+            linear-gradient(135deg, rgba(15, 23, 42, .88), rgba(51, 65, 85, .86)),
+            repeating-linear-gradient(45deg, rgba(255,255,255,.04), rgba(255,255,255,.04) 10px, transparent 10px, transparent 20px);
+    }
+
+    .rp-canvas-hint {
+        color: #FEE2E2;
+        background: rgba(127, 29, 29, .42);
+        border: 1px solid rgba(254, 202, 202, .26);
+        backdrop-filter: blur(10px);
+    }
+
+    .rp-canvas-wrap {
+        border-radius: 16px !important;
+        box-shadow: 0 28px 70px rgba(0,0,0,.42);
+        background: #FFFFFF;
+    }
+
+    .rp-canvas-wrap canvas {
+        border-radius: 14px !important;
+    }
+
+    #redactCanvas {
+        mix-blend-mode: multiply;
+        outline: 2px solid rgba(220, 38, 38, .28);
+        outline-offset: -2px;
+    }
+
+    .rp-panel {
+        width: auto;
+        min-width: 0;
+        background: rgba(255, 255, 255, .9);
+        padding: 1.1rem;
+        gap: .95rem;
+        max-height: 720px;
+        overflow-y: auto;
+    }
+
+    .rp-panel-title {
+        color: #0F172A;
+        font-size: .78rem;
+        letter-spacing: .05em;
+    }
+
+    .rp-panel-section {
+        padding: .85rem;
+        border-radius: 16px;
+        background: #F8FAFC;
+        border: 1px solid #E2E8F0;
+    }
+
+    .rp-panel-btn,
+    .rp-action-btn,
+    .rp-search-input {
+        border-radius: 12px;
+        border-color: #CBD5E1;
+        background: #FFFFFF;
+    }
+
+    .rp-panel-btn--primary {
+        background: linear-gradient(135deg, #DC2626, #7F1D1D);
+        border-color: transparent;
+        box-shadow: 0 12px 22px rgba(220, 38, 38, .18);
+    }
+
+    .rp-panel-btn--ai {
+        background: linear-gradient(135deg, #EEF2FF, #F5F3FF);
+    }
+
+    .rp-confidence {
+        background: linear-gradient(180deg, #FFFFFF, #FEF2F2);
+        border-color: #FECACA;
+    }
+
+    .rp-confidence-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: .5rem;
+    }
+
+    .rp-confidence-grid div {
+        padding: .65rem .45rem;
+        border-radius: 12px;
+        background: rgba(255,255,255,.82);
+        border: 1px solid rgba(254, 202, 202, .85);
+        text-align: center;
+    }
+
+    .rp-confidence-grid strong,
+    .rp-confidence-grid span {
+        display: block;
+    }
+
+    .rp-confidence-grid strong {
+        color: #991B1B;
+        font-size: 1.1rem;
+        line-height: 1;
+    }
+
+    .rp-confidence-grid span {
+        color: #64748B;
+        font-size: .66rem;
+        margin-top: .28rem;
+    }
+
+    .rp-confidence-note {
+        color: #7F1D1D;
+        font-size: .74rem;
+        line-height: 1.45;
+        margin: .75rem 0 0;
+    }
+
+    .rp-panel-tip,
+    .rp-permanent-warning {
+        border-radius: 14px;
+        color: #7F1D1D;
+        background: #FEF2F2;
+        border: 1px solid #FECACA;
+    }
+
+    .rp-color-swatch {
+        border-radius: 12px;
+    }
+
+    .rp-action-bar {
+        max-width: 1180px;
+        width: 100%;
+        margin: 0 auto;
+        border-radius: 20px;
+        border-top: 1px solid rgba(148, 163, 184, .24);
+        position: sticky;
+        bottom: 1rem;
+    }
+
+    .rp-action-summary {
+        padding: .45rem .7rem;
+        border-radius: 999px;
+        background: #FEF2F2;
+        border: 1px solid #FECACA;
+    }
+
+    .rp-action-summary--empty {
+        background: #F8FAFC;
+        border-color: #E2E8F0;
+    }
+
+    .rp-before-after {
+        border-radius: 12px;
+    }
+
+    .rp-permanent-warning {
+        max-width: 1180px;
+        margin: 0 auto;
+        position: sticky;
+        bottom: 5.8rem;
+        box-shadow: 0 18px 40px rgba(127, 29, 29, .12);
+    }
+
+    .rp-processing,
+    .rp-complete {
+        min-height: 440px;
+        padding: 0;
+    }
+
+    .rp-processing-card,
+    .rp-complete-card {
+        width: min(100%, 460px);
+        max-width: 460px;
+        border-radius: 28px;
+        padding: 2rem;
+    }
+
+    .rp-complete-icon {
+        border-radius: 18px;
+    }
+
+    .rp-download-btn {
+        border-radius: 14px;
+        background: linear-gradient(135deg, #059669, #14B8A6);
+        box-shadow: 0 16px 34px rgba(20, 184, 166, .22);
+    }
+
+    .rp-faq {
+        padding-top: 2.5rem;
+    }
+
+    .rp-faq h2 {
+        color: #0F172A;
+    }
+
+    .rp-faq-item {
+        border-radius: 18px;
+        background: rgba(255, 255, 255, .82);
+        box-shadow: 0 12px 30px rgba(15, 23, 42, .05);
+    }
+
+    @@media (max-width: 1050px) {
+        .rp-upload-hero,
+        .rp-editor-body {
+            grid-template-columns: 1fr;
+        }
+
+        .rp-thumbnails {
+            flex-direction: row;
+            overflow-x: auto;
+            overflow-y: hidden;
+            max-height: none;
+        }
+
+        .rp-panel {
+            max-height: none;
+        }
+    }
+
+    @@media (max-width: 760px) {
+        .rp-page {
+            padding: 1rem;
+        }
+
+        .rp-hero {
+            display: block;
+        }
+
+        .rp-trust-row {
+            justify-content: flex-start;
+            min-width: 0;
+            margin-top: 1rem;
+        }
+
+        .rp-stepper {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .rp-editor-topbar,
+        .rp-action-bar {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .rp-editor-topbar-left,
+        .rp-editor-topbar-center,
+        .rp-editor-topbar-right,
+        .rp-action-bar-left,
+        .rp-action-bar-right {
+            justify-content: center;
+        }
+
+        .rp-canvas-area {
+            min-height: 520px;
+        }
+
+        .rp-confidence-grid {
+            grid-template-columns: 1fr;
+        }
+    }
 </style>
 
 @code {
