@@ -22,12 +22,21 @@
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26 12,2" /></svg>
                 Pro Feature
             </div>
-            <h1 class="bp-hero-title">Batch Process<br><span class="bp-title-accent">PDFs</span></h1>
+            <h1 class="bp-hero-title">Batch Process PDFs <span class="hero-gradient-text">faster</span></h1>
             <p>Apply any tool to up to 20 files at once. Download everything as a single ZIP.</p>
             <div class="bp-trust-chips">
-                <span>⏱ Save hours</span>
-                <span>🔒 Secure &amp; private</span>
-                <span>⚡ Bulk power</span>
+                <span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+                    Time-saving automation
+                </span>
+                <span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
+                    Secure/private
+                </span>
+                <span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16" /><path d="M4 12h16" /><path d="M4 17h10" /></svg>
+                    Workflow builder
+                </span>
             </div>
         </div>
         <div class="bp-stat-cards">
@@ -62,6 +71,13 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <div class="bp-stepper" aria-label="Progress">
+        <div class="bp-flow-step @(!_files.Any() ? "bp-flow-step--active" : "bp-flow-step--done")"><span>1</span>Upload</div>
+        <div class="bp-flow-step @(_files.Any() && !_processing && _zipBytes == null ? "bp-flow-step--active" : _processing || _zipBytes != null ? "bp-flow-step--done" : "")"><span>2</span>Build Workflow</div>
+        <div class="bp-flow-step @(_processing ? "bp-flow-step--active" : _zipBytes != null ? "bp-flow-step--done" : "")"><span>3</span>Process</div>
+        <div class="bp-flow-step @(_zipBytes != null ? "bp-flow-step--active" : "")"><span>4</span>Download</div>
     </div>
 
     <!-- ══ GATE STATES ════════════════════════════════════════════════════ -->
@@ -264,6 +280,33 @@
 
                     <!-- ── RIGHT COLUMN 40% ────────────────────────────── -->
                     <div class="bp-col-right">
+
+                        <div class="bp-workflow-pipeline">
+                            <div class="bp-workflow-title">
+                                <span>Processing pipeline</span>
+                                <strong>@GetToolLabel(_selectedTool)</strong>
+                            </div>
+                            <div class="bp-workflow-lane">
+                                <div class="bp-workflow-node @(_files.Any() ? "bp-workflow-node--ready" : "")">
+                                    <span>1</span>
+                                    <strong>Files</strong>
+                                    <small>@(_files.Any() ? $"{_files.Count} queued" : "Waiting")</small>
+                                </div>
+                                <div class="bp-workflow-link"></div>
+                                <div class="bp-workflow-node bp-workflow-node--active">
+                                    <span>2</span>
+                                    <strong>@GetToolLabel(_selectedTool)</strong>
+                                    <small>@GetCompressionEstimate()</small>
+                                </div>
+                                <div class="bp-workflow-link"></div>
+                                <div class="bp-workflow-node @(_zipBytes != null ? "bp-workflow-node--ready" : "")">
+                                    <span>3</span>
+                                    <strong>@(_outputMode == "zip" ? "ZIP" : "Files")</strong>
+                                    <small>@(_zipBytes != null ? "Ready" : "Output")</small>
+                                </div>
+                            </div>
+                            <p>@GetOperationDescription()</p>
+                        </div>
 
                         <!-- Card 1: Select Tool -->
                         <div class="bp-card">
@@ -647,6 +690,17 @@
                                 }
                             </div>
                         }
+                    </div>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(_error))
+                {
+                    <div class="bp-error-banner">
+                        <div>
+                            <strong>Batch could not finish</strong>
+                            <p>@_error</p>
+                        </div>
+                        <button class="bp-quick-btn" @onclick="RetryFailedFiles" disabled="@(!_fileErrors.Any())">Retry failed</button>
                     </div>
                 }
 
@@ -3008,6 +3062,565 @@
 
         .bp-gate-feats {
             grid-template-columns: 1fr;
+        }
+    }
+    /* ── SaaS workflow-builder facelift overrides ───────────────────── */
+    .bp-wrap {
+        max-width: none;
+        min-height: 100vh;
+        padding: 1.5rem;
+        background:
+            radial-gradient(circle at 15% 0%, rgba(20, 184, 166, .12), transparent 34%),
+            radial-gradient(circle at 92% 8%, rgba(79, 70, 229, .12), transparent 30%),
+            linear-gradient(180deg, #F8FAFC 0%, #EEF2F7 100%);
+        color: #111827;
+    }
+
+    .bp-header,
+    .bp-stepper,
+    .bp-main,
+    .bp-progress-section,
+    .bp-insight-grid,
+    .bp-result,
+    .bp-gate,
+    .bp-faq {
+        max-width: 1180px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .bp-header {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 1.5rem;
+        margin-bottom: 1rem;
+        padding: 0;
+        background: transparent;
+        border: 0;
+        box-shadow: none;
+    }
+
+    .bp-hero-title {
+        max-width: 760px;
+        margin: 0 0 .8rem;
+        color: #0F172A;
+        font-size: clamp(2rem, 4vw, 3.35rem);
+        font-weight: 850;
+        letter-spacing: 0;
+        line-height: 1;
+    }
+
+    .hero-gradient-text {
+        background: linear-gradient(135deg, #2563EB 0%, #4F46E5 48%, #7C3AED 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+
+    .bp-header-left > p {
+        max-width: 660px;
+        color: #475569;
+        font-size: 1.02rem;
+        line-height: 1.6;
+        margin: 0 0 .9rem;
+    }
+
+    .bp-pro-pill {
+        width: fit-content;
+        color: #0F766E;
+        background: #CCFBF1;
+        border: 1px solid rgba(15, 118, 110, .16);
+        border-radius: 999px;
+        padding: .28rem .65rem;
+        font-size: .72rem;
+        font-weight: 800;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        box-shadow: none;
+    }
+
+    .bp-trust-chips {
+        justify-content: flex-start;
+        gap: .55rem;
+    }
+
+    .bp-trust-chips span {
+        display: inline-flex;
+        align-items: center;
+        gap: .42rem;
+        color: #334155;
+        background: rgba(255, 255, 255, .78);
+        border: 1px solid rgba(148, 163, 184, .34);
+        box-shadow: 0 10px 26px rgba(15, 23, 42, .06);
+        border-radius: 999px;
+        padding: .45rem .7rem;
+        font-size: .78rem;
+        font-weight: 700;
+    }
+
+    .bp-trust-chips svg {
+        width: 1rem;
+        height: 1rem;
+        flex-shrink: 0;
+    }
+
+    .bp-stat-cards {
+        grid-template-columns: repeat(3, minmax(128px, 1fr));
+        gap: .75rem;
+        min-width: 420px;
+    }
+
+    .bp-stat-card,
+    .bp-card,
+    .bp-workflow-pipeline,
+    .bp-batch-summary,
+    .bp-dropzone,
+    .bp-empty-card,
+    .bp-pipeline,
+    .bp-progress-section,
+    .bp-insight-card,
+    .bp-result,
+    .bp-gate {
+        background: rgba(255, 255, 255, .86);
+        border: 1px solid rgba(148, 163, 184, .24);
+        box-shadow: 0 24px 70px rgba(15, 23, 42, .09);
+        backdrop-filter: blur(18px);
+    }
+
+    .bp-stat-card {
+        border-radius: 18px;
+        padding: .9rem;
+    }
+
+    .bp-stat-label {
+        color: #64748B;
+        letter-spacing: .05em;
+    }
+
+    .bp-stat-num {
+        color: #0F172A;
+    }
+
+    .bp-stepper {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: .65rem;
+        padding: .65rem;
+        margin-bottom: 1rem;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, .72);
+        border: 1px solid rgba(148, 163, 184, .28);
+        box-shadow: 0 20px 55px rgba(15, 23, 42, .08);
+        backdrop-filter: blur(14px);
+    }
+
+    .bp-flow-step {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: .5rem;
+        min-height: 42px;
+        border-radius: 12px;
+        color: #64748B;
+        font-size: .82rem;
+        font-weight: 800;
+        background: transparent;
+    }
+
+    .bp-flow-step span {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 22px;
+        height: 22px;
+        border-radius: 999px;
+        color: #64748B;
+        background: #E2E8F0;
+        font-size: .72rem;
+    }
+
+    .bp-flow-step--active {
+        color: #FFFFFF;
+        background: linear-gradient(135deg, #0F172A, #4F46E5);
+        box-shadow: 0 12px 26px rgba(79, 70, 229, .22);
+    }
+
+    .bp-flow-step--active span {
+        color: #0F172A;
+        background: #FFFFFF;
+    }
+
+    .bp-flow-step--done {
+        color: #0F766E;
+        background: rgba(204, 251, 241, .55);
+    }
+
+    .bp-flow-step--done span {
+        color: #FFFFFF;
+        background: #0F766E;
+    }
+
+    .bp-main {
+        grid-template-columns: minmax(0, 1fr) 360px;
+        gap: 1rem;
+        align-items: start;
+    }
+
+    .bp-col-left,
+    .bp-col-right {
+        gap: 1rem;
+    }
+
+    .bp-col-right {
+        position: sticky;
+        top: 1rem;
+        max-height: calc(100vh - 2rem);
+        overflow-y: auto;
+        padding-right: .15rem;
+    }
+
+    .bp-workflow-pipeline {
+        border-radius: 24px;
+        padding: 1rem;
+    }
+
+    .bp-workflow-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: .75rem;
+        margin-bottom: .85rem;
+    }
+
+    .bp-workflow-title span {
+        color: #334155;
+        font-size: .78rem;
+        font-weight: 850;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+    }
+
+    .bp-workflow-title strong {
+        color: #4F46E5;
+        font-size: .9rem;
+    }
+
+    .bp-workflow-lane {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 22px minmax(0, 1fr) 22px minmax(0, 1fr);
+        align-items: stretch;
+        gap: .35rem;
+    }
+
+    .bp-workflow-node {
+        display: grid;
+        gap: .25rem;
+        min-width: 0;
+        padding: .7rem .55rem;
+        border-radius: 16px;
+        background: #F8FAFC;
+        border: 1px solid #E2E8F0;
+        text-align: center;
+    }
+
+    .bp-workflow-node span {
+        display: inline-grid;
+        place-items: center;
+        justify-self: center;
+        width: 22px;
+        height: 22px;
+        border-radius: 999px;
+        color: #64748B;
+        background: #E2E8F0;
+        font-size: .72rem;
+        font-weight: 900;
+    }
+
+    .bp-workflow-node strong {
+        color: #0F172A;
+        font-size: .78rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .bp-workflow-node small {
+        color: #64748B;
+        font-size: .68rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .bp-workflow-node--active {
+        background: linear-gradient(135deg, #EEF2FF, #F0FDFA);
+        border-color: #A5B4FC;
+        box-shadow: 0 12px 22px rgba(79, 70, 229, .14);
+    }
+
+    .bp-workflow-node--active span,
+    .bp-workflow-node--ready span {
+        color: #FFFFFF;
+        background: #0F766E;
+    }
+
+    .bp-workflow-node--active span {
+        background: #4F46E5;
+    }
+
+    .bp-workflow-link {
+        height: 2px;
+        align-self: center;
+        background: linear-gradient(90deg, #CBD5E1, #A5B4FC);
+        border-radius: 999px;
+    }
+
+    .bp-workflow-pipeline p {
+        margin: .85rem 0 0;
+        color: #64748B;
+        font-size: .78rem;
+        line-height: 1.5;
+    }
+
+    .bp-card,
+    .bp-pipeline,
+    .bp-progress-section,
+    .bp-insight-card,
+    .bp-result,
+    .bp-gate {
+        border-radius: 24px;
+    }
+
+    .bp-card {
+        padding: 1rem;
+    }
+
+    .bp-card-hdr {
+        color: #0F172A;
+        font-size: .9rem;
+        letter-spacing: 0;
+    }
+
+    .bp-step-num {
+        color: #FFFFFF;
+        background: #4F46E5;
+    }
+
+    .bp-tool-btn,
+    .bp-output-option,
+    .bp-copt,
+    .bp-input,
+    .bp-select,
+    .bp-pos-pill,
+    .bp-pgb,
+    .bp-ropt {
+        border-radius: 12px;
+        border-color: #CBD5E1;
+        background: #FFFFFF;
+    }
+
+    .bp-tool-btn--on,
+    .bp-output-option--on,
+    .bp-copt--on,
+    .bp-pos-pill--on,
+    .bp-pgb--on,
+    .bp-ropt--on {
+        border-color: #818CF8;
+        background: linear-gradient(135deg, #EEF2FF, #F0FDFA);
+        box-shadow: 0 12px 22px rgba(79, 70, 229, .14);
+    }
+
+    .bp-dropzone {
+        border-style: dashed;
+        border-color: rgba(79, 70, 229, .34);
+        border-radius: 26px;
+        background:
+            linear-gradient(180deg, rgba(255,255,255,.9), rgba(248,250,252,.9));
+    }
+
+    .bp-dropzone--active {
+        border-color: #4F46E5;
+        background: #EEF2FF;
+    }
+
+    .bp-dz-cloud {
+        background: linear-gradient(135deg, #EEF2FF, #CCFBF1);
+        border-radius: 18px;
+    }
+
+    .bp-empty-command-center {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1rem;
+    }
+
+    .bp-empty-card {
+        border-radius: 20px;
+        padding: 1rem;
+        background: rgba(255,255,255,.78);
+    }
+
+    .bp-batch-summary {
+        border-radius: 20px;
+        background: linear-gradient(135deg, rgba(255,255,255,.9), rgba(240,253,250,.86));
+    }
+
+    .bp-pipeline {
+        overflow: hidden;
+    }
+
+    .bp-pipeline-hdr,
+    .bp-pipeline-footer,
+    .bp-preview-card,
+    .bp-ready-card,
+    .bp-info-badge,
+    .bp-warn-badge,
+    .bp-secure-note {
+        border-radius: 14px;
+    }
+
+    .bp-file-row {
+        border-radius: 14px;
+        border-color: #E2E8F0;
+        background: #FFFFFF;
+    }
+
+    .bp-file-row--processing {
+        border-color: #A5B4FC;
+        background: #EEF2FF;
+    }
+
+    .bp-file-row--done {
+        border-color: #A7F3D0;
+        background: #ECFDF5;
+    }
+
+    .bp-file-row--error {
+        border-color: #FECACA;
+        background: #FEF2F2;
+    }
+
+    .bp-proc-btn,
+    .bp-dl-btn,
+    .bp-btn-up {
+        min-height: 48px;
+        border-radius: 14px;
+        background: linear-gradient(135deg, #0F172A 0%, #4F46E5 48%, #14B8A6 100%);
+        box-shadow: 0 16px 34px rgba(79, 70, 229, .28);
+    }
+
+    .bp-proc-btn:disabled {
+        background: linear-gradient(135deg, #CBD5E1, #94A3B8);
+        box-shadow: none;
+    }
+
+    .bp-secure-note,
+    .bp-info-badge {
+        color: #475569;
+        background: #F0FDFA;
+        border-color: #99F6E4;
+    }
+
+    .bp-progress-section {
+        margin-top: 1rem;
+        padding: 1rem;
+    }
+
+    .bp-prog-title,
+    .bp-insight-title {
+        color: #0F172A;
+    }
+
+    .bp-prog-track {
+        background: #E2E8F0;
+        border-radius: 999px;
+    }
+
+    .bp-prog-fill {
+        background: linear-gradient(135deg, #4F46E5, #14B8A6);
+    }
+
+    .bp-result {
+        margin-top: 1rem;
+        padding: 1.2rem;
+        background: linear-gradient(135deg, rgba(236,253,245,.92), rgba(238,242,255,.92));
+    }
+
+    .bp-result-circle {
+        border-radius: 18px;
+        background: linear-gradient(135deg, #059669, #14B8A6);
+    }
+
+    .bp-error-banner,
+    .bp-fail-section {
+        border-radius: 16px;
+        background: #FEF2F2;
+        border: 1px solid #FECACA;
+    }
+
+    .bp-error-banner {
+        max-width: 1180px;
+        margin: 1rem auto 0;
+        padding: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        color: #B91C1C;
+    }
+
+    .bp-error-banner strong,
+    .bp-error-banner p {
+        display: block;
+        margin: 0;
+    }
+
+    .bp-error-banner p {
+        color: #7F1D1D;
+        font-size: .84rem;
+        margin-top: .2rem;
+    }
+
+    @@media (max-width: 1100px) {
+        .bp-header,
+        .bp-main {
+            grid-template-columns: 1fr;
+            display: grid;
+        }
+
+        .bp-stat-cards {
+            min-width: 0;
+        }
+
+        .bp-col-right {
+            position: static;
+            max-height: none;
+        }
+    }
+
+    @@media (max-width: 760px) {
+        .bp-wrap {
+            padding: 1rem;
+        }
+
+        .bp-header {
+            display: block;
+        }
+
+        .bp-stat-cards,
+        .bp-stepper,
+        .bp-empty-command-center {
+            grid-template-columns: 1fr;
+        }
+
+        .bp-workflow-lane {
+            grid-template-columns: 1fr;
+        }
+
+        .bp-workflow-link {
+            width: 2px;
+            height: 18px;
+            justify-self: center;
         }
     }
 </style>
