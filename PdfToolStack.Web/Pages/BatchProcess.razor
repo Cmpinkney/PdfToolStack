@@ -1,4 +1,4 @@
-﻿@page "/batch"
+@page "/batch"
 @inject ApiService ApiService
 @inject PdfToolStack.Web.Services.SubscriptionService SubService
 @inject AuthenticationStateProvider Auth
@@ -7,355 +7,3010 @@
 @using PdfToolStack.Application.DTOs
 @using PdfToolStack.Domain.Enums
 
-<PageTitle>Batch PDF Processing — PdfToolStack</PageTitle>
-
+<PageTitle>Batch PDF Processing — Process 20 PDFs at Once | PdfToolStack</PageTitle>
 <HeadContent>
-    <meta name="description" content="Batch process PDFs online. Apply any PDF tool to up to 20 files at once and download all results as a ZIP. Pro feature." />
+    <meta name="description" content="Batch process PDFs online. Apply any PDF tool to up to 20 files at once. Pro feature." />
     <link rel="canonical" href="https://pdftoolstack.com/batch" />
 </HeadContent>
 
-<div class="tool-page">
+<div class="bp-wrap">
 
-    <div class="tool-container">
-
-        <!-- Header -->
-        <div class="ai-tool-header">
-            <div class="ai-tool-badge">⚡ Pro Feature</div>
-            <h1>Batch Process PDFs</h1>
-            <p class="tool-subtitle">
-                Apply any tool to up to 20 PDFs at once.
-                All results bundled into a single ZIP file.
-            </p>
-        </div>
-
-        <!-- How it works -->
-        <div class="how-it-works">
-            <div class="hiw-step">
-                <div class="hiw-num">1</div>
-                <div class="hiw-text">
-                    <strong>Choose a tool</strong>
-                    <span>Compress, convert, watermark...</span>
-                </div>
+    <!-- ══ HEADER ══════════════════════════════════════════════════════════ -->
+    <div class="bp-header">
+        <div class="bp-header-left">
+            <div class="bp-pro-pill">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26 12,2" /></svg>
+                Pro Feature
             </div>
-            <div class="hiw-arrow">→</div>
-            <div class="hiw-step">
-                <div class="hiw-num">2</div>
-                <div class="hiw-text">
-                    <strong>Upload up to 20 PDFs</strong>
-                    <span>Drag & drop or browse</span>
-                </div>
-            </div>
-            <div class="hiw-arrow">→</div>
-            <div class="hiw-step">
-                <div class="hiw-num">3</div>
-                <div class="hiw-text">
-                    <strong>Download ZIP</strong>
-                    <span>All processed files, instant</span>
-                </div>
+            <h1 class="bp-hero-title">Batch Process<br><span class="bp-title-accent">PDFs</span></h1>
+            <p>Apply any tool to up to 20 files at once. Download everything as a single ZIP.</p>
+            <div class="bp-trust-chips">
+                <span>⏱ Save hours</span>
+                <span>🔒 Secure &amp; private</span>
+                <span>⚡ Bulk power</span>
             </div>
         </div>
-
-        <AuthorizeView>
-            <NotAuthorized>
-                <div class="ai-upgrade-card">
-                    <div class="ai-upgrade-icon">⚡</div>
-                    <h2>Batch Processing — Pro Feature</h2>
-                    <p>Process up to 20 PDFs at once with any tool. Available on Pro — $19/month.</p>
-                    <div class="ai-upgrade-features">
-                        <div class="ai-upgrade-feat">✓ Up to 20 files per batch</div>
-                        <div class="ai-upgrade-feat">✓ All PDF tools available</div>
-                        <div class="ai-upgrade-feat">✓ Download as single ZIP</div>
-                        <div class="ai-upgrade-feat">✓ Unlimited file size</div>
-                    </div>
-                    <div class="ai-upgrade-actions">
-                        <a href="/pricing" class="download-button"
-                           style="display:inline-block; text-decoration:none;">
-                            Upgrade to Pro — $19/mo
-                        </a>
-                        <a href="authentication/login" class="reset-button"
-                           style="display:inline-block; text-decoration:none;">
-                            Sign in if you have Pro
-                        </a>
-                    </div>
+        <div class="bp-stat-cards">
+            <div class="bp-stat-card">
+                <div class="bp-stat-icon" style="background:#EDE9FE;color:#4338CA">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /></svg>
                 </div>
-            </NotAuthorized>
+                <div class="bp-stat-body">
+                    <div class="bp-stat-label">PIPELINE READY</div>
+                    <div class="bp-stat-num">@_files.Count</div>
+                    <div class="bp-stat-sub">@(_files.Count == 0 ? "Drop files to begin" : $"{_files.Count} file{(_files.Count == 1 ? "" : "s")} queued")</div>
+                </div>
+            </div>
+            <div class="bp-stat-card">
+                <div class="bp-stat-icon" style="background:#DCFCE7;color:#16A34A">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                </div>
+                <div class="bp-stat-body">
+                    <div class="bp-stat-label">CURRENT OPERATION</div>
+                    <div class="bp-stat-num bp-stat-num--sm">@GetToolLabel(_selectedTool)</div>
+                    <div class="bp-stat-sub">Active tool</div>
+                </div>
+            </div>
+            <div class="bp-stat-card">
+                <div class="bp-stat-icon" style="background:#FEF3C7;color:#D97706">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+                </div>
+                <div class="bp-stat-body">
+                    <div class="bp-stat-label">OUTPUT PACKAGE</div>
+                    <div class="bp-stat-num">~@(_files.Count > 0 ? _files.Count * 3 : 0)s</div>
+                    <div class="bp-stat-sub">Estimated time</div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-            <Authorized>
-                @if (!_isPro)
-                {
-                    <div class="ai-upgrade-card">
-                        <div class="ai-upgrade-icon">⚡</div>
-                        <h2>Upgrade to Pro to unlock Batch</h2>
-                        <p>You're signed in but on the Free plan. Upgrade to process up to 20 files at once.</p>
-                        <div class="ai-upgrade-actions">
-                            <a href="/pricing" class="download-button"
-                               style="display:inline-block; text-decoration:none;">
-                                Upgrade to Pro — $19/mo
-                            </a>
+    <!-- ══ GATE STATES ════════════════════════════════════════════════════ -->
+    <AuthorizeView>
+        <NotAuthorized>
+            <div class="bp-gate">
+                <div class="bp-gate-icon">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
+                </div>
+                <h2>Batch Processing — Pro Feature</h2>
+                <p>Process up to 20 PDFs at once with any tool. Sign in or upgrade to get started.</p>
+                <div class="bp-gate-feats">
+                    @foreach (var f in new[] { "Up to 20 files per batch", "All 9 PDF tools", "Single ZIP download", "500MB per file" })
+                    {
+                        <div class="bp-gate-feat">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4338CA" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                            @f
                         </div>
+                    }
+                </div>
+                <div class="bp-gate-btns">
+                    <a href="/pricing" class="bp-btn-up" style="text-decoration:none">Upgrade to Pro — $19/mo</a>
+                    <a href="authentication/login" class="bp-btn-si" style="text-decoration:none">Sign in if you have Pro</a>
+                </div>
+            </div>
+        </NotAuthorized>
+
+        <Authorized>
+            @if (!_isPro)
+            {
+                <div class="bp-gate">
+                    <div class="bp-gate-icon" style="background:#FEF3C7;color:#D97706">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26 12,2" /></svg>
                     </div>
-                }
-                else
-                {
-                    <!-- Step 1: Tool selector -->
-                    <div class="batch-section">
-                        <div class="batch-section-label">
-                            <span class="batch-step-num">1</span>
-                            Select tool to apply
-                        </div>
-                        <div class="batch-tool-grid">
-                            <button class="batch-tool-btn @(_selectedTool == ToolType.CompressPdf ? "active" : "")"
-                                    @onclick='() => _selectedTool = ToolType.CompressPdf'>
-                                <span class="batch-tool-icon" style="background:#E85D04;">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                                        <polyline points="7,10 12,15 17,10" />
-                                        <line x1="12" y1="15" x2="12" y2="3" />
-                                    </svg>
-                                </span>
-                                Compress PDF
-                            </button>
-                            <button class="batch-tool-btn @(_selectedTool == ToolType.PdfToWord ? "active" : "")"
-                                    @onclick='() => _selectedTool = ToolType.PdfToWord'>
-                                <span class="batch-tool-icon" style="background:#2563EB;">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                                        <polyline points="14,2 14,8 20,8" />
-                                        <path d="M9 13l1.5 4L12 14l1.5 3L15 13" />
-                                    </svg>
-                                </span>
-                                PDF to Word
-                            </button>
-                            <button class="batch-tool-btn @(_selectedTool == ToolType.PdfToJpg ? "active" : "")"
-                                    @onclick='() => _selectedTool = ToolType.PdfToJpg'>
-                                <span class="batch-tool-icon" style="background:#0891B2;">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                        <rect x="3" y="3" width="18" height="18" rx="2" />
-                                        <circle cx="8.5" cy="8.5" r="1.5" fill="white" stroke="none" />
-                                        <polyline points="21,15 16,10 5,21" />
-                                    </svg>
-                                </span>
-                                PDF to JPG
-                            </button>
-                            <button class="batch-tool-btn @(_selectedTool == ToolType.WatermarkPdf ? "active" : "")"
-                                    @onclick='() => _selectedTool = ToolType.WatermarkPdf'>
-                                <span class="batch-tool-icon" style="background:#9333EA;">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M12 2L2 7l10 5 10-5-10-5z" />
-                                        <path d="M2 17l10 5 10-5" />
-                                        <path d="M2 12l10 5 10-5" />
-                                    </svg>
-                                </span>
-                                Watermark
-                            </button>
-                            <button class="batch-tool-btn @(_selectedTool == ToolType.NumberPages ? "active" : "")"
-                                    @onclick='() => _selectedTool = ToolType.NumberPages'>
-                                <span class="batch-tool-icon" style="background:#2563EB;">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                                        <polyline points="14,2 14,8 20,8" />
-                                        <line x1="8" y1="17" x2="16" y2="17" />
-                                    </svg>
-                                </span>
-                                Number Pages
-                            </button>
-                            <button class="batch-tool-btn @(_selectedTool == ToolType.FlattenPdf ? "active" : "")"
-                                    @onclick='() => _selectedTool = ToolType.FlattenPdf'>
-                                <span class="batch-tool-icon" style="background:#4338CA;">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                                        <polyline points="14,2 14,8 20,8" />
-                                        <line x1="8" y1="13" x2="16" y2="13" />
-                                        <line x1="8" y1="17" x2="16" y2="17" />
-                                    </svg>
-                                </span>
-                                Flatten
-                            </button>
-                            <button class="batch-tool-btn @(_selectedTool == ToolType.RotatePdf ? "active" : "")"
-                                    @onclick='() => _selectedTool = ToolType.RotatePdf'>
-                                <span class="batch-tool-icon" style="background:#15803D;">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M21.5 2v6h-6" />
-                                        <path d="M21.34 15.57a10 10 0 1 1-.57-8.38" />
-                                    </svg>
-                                </span>
-                                Rotate
-                            </button>
-                            <button class="batch-tool-btn @(_selectedTool == ToolType.ProtectPdf ? "active" : "")"
-                                    @onclick='() => _selectedTool = ToolType.ProtectPdf'>
-                                <span class="batch-tool-icon" style="background:#1E40AF;">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                                    </svg>
-                                </span>
-                                Protect
-                            </button>
-                            <button class="batch-tool-btn @(_selectedTool == ToolType.UnlockPdf ? "active" : "")"
-                                    @onclick='() => _selectedTool = ToolType.UnlockPdf'>
-                                <span class="batch-tool-icon" style="background:#D97706;">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                                        <path d="M7 11V7a5 5 0 0 1 9.9-1" />
-                                    </svg>
-                                </span>
-                                Unlock
-                            </button>
-                        </div>
-                    </div>
+                    <h2>Upgrade to Pro to unlock Batch</h2>
+                    <p>You're on the Free plan. Upgrade to process up to 20 files at once.</p>
+                    <a href="/pricing" class="bp-btn-up" style="text-decoration:none">Upgrade to Pro — $19/mo</a>
+                </div>
+            }
+            else
+            {
+                <!-- ══ MAIN TWO-COLUMN LAYOUT ════════════════════════════════ -->
+                <div class="bp-main">
 
-                    <!-- Step 2: File upload -->
-                    <div class="batch-section">
-                        <div class="batch-section-label">
-                            <span class="batch-step-num">2</span>
-                            Upload PDFs
-                            <span class="batch-file-count-badge">
-                                @_files.Count / 20 files
-                            </span>
-                        </div>
-
-                        <label class="batch-drop-zone @(_batchDragging ? "dragging" : "")"
-                               @ondragover="() => _batchDragging = true"
-                               @ondragover:preventDefault="true"
-                               @ondragleave="() => _batchDragging = false"
-                               @ondrop="() => _batchDragging = false"
-                               @ondrop:preventDefault="true">
-                            <svg width="36" height="36" viewBox="0 0 24 24" fill="none"
-                                 stroke="currentColor" stroke-width="1.5"
-                                 stroke-linecap="round" stroke-linejoin="round"
-                                 style="color:var(--text-muted); margin-bottom:0.5rem;">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                                <polyline points="14,2 14,8 20,8" />
-                                <line x1="12" y1="13" x2="12" y2="19" />
-                                <polyline points="9,16 12,19 15,16" />
-                            </svg>
-                            <p style="color:var(--text-secondary); margin-bottom:0.5rem; font-size:0.9rem;">
-                                Drag and drop PDFs here or
-                            </p>
-                            <span class="upload-button" style="pointer-events:none;">
-                                Browse Files
-                            </span>
-                            <p style="font-size:0.75rem; color:var(--text-muted); margin-top:0.5rem;">
-                                Up to 20 PDFs · 500MB per file
-                            </p>
-                            <InputFile OnChange="OnFilesSelected"
-                                       multiple
-                                       accept=".pdf"
-                                       style="position:absolute; inset:0; opacity:0; cursor:pointer;" />
-                        </label>
+                    <!-- ── LEFT COLUMN 60% ─────────────────────────────── -->
+                    <div class="bp-col-left">
 
                         @if (_files.Any())
                         {
-                            <div class="batch-file-list">
-                                @foreach (var f in _files)
-                                {
-                                    var status = GetStatusLabel(f.Name);
-                                    var statusClass = GetStatusClass(f.Name);
-                                    <div class="batch-file-row-v2">
-                                        <div class="batch-file-icon">
-                                            <svg width="20" height="20" viewBox="0 0 24 24"
-                                                 fill="none" stroke="currentColor" stroke-width="1.5"
-                                                 stroke-linecap="round" stroke-linejoin="round"
-                                                 style="color:var(--primary);">
-                                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                                                <polyline points="14,2 14,8 20,8" />
-                                            </svg>
-                                        </div>
-                                        <div class="batch-file-info">
-                                            <span class="batch-file-name-v2">@TruncateName(f.Name)</span>
-                                            <span class="batch-file-size-v2">@FormatSize(f.Size)</span>
-                                        </div>
-                                        <span class="batch-status-chip @statusClass">
-                                            @status
+                            <div class="bp-batch-summary">
+                                <div>
+                                    <span class="bp-summary-kicker">Batch plan</span>
+                                    <strong>@_files.Count file@(_files.Count == 1 ? "" : "s") · @GetToolLabel(_selectedTool)</strong>
+                                    <p>@GetOperationDescription()</p>
+                                </div>
+                                <div class="bp-summary-metrics">
+                                    <span>@FormatSize(_files.Sum(f => f.Size)) total</span>
+                                    <span>@GetCompressionEstimate()</span>
+                                    <span>~@GetRemainingEstimate()s est.</span>
+                                </div>
+                            </div>
+                        }
+
+                        <!-- Dropzone -->
+                        <label class="bp-dropzone @(_batchDragging ? "bp-dropzone--active" : "")"
+                               @ondragover="() => _batchDragging = true" @ondragover:preventDefault="true"
+                               @ondragleave="() => _batchDragging = false"
+                               @ondrop="() => _batchDragging = false" @ondrop:preventDefault="true">
+                            <div class="bp-dz-cloud">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#4338CA" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="16 16 12 12 8 16" />
+                                    <line x1="12" y1="12" x2="12" y2="21" />
+                                    <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" />
+                                </svg>
+                            </div>
+                            <p class="bp-dz-title">Drag &amp; drop up to 20 PDF files here</p>
+                            <p class="bp-dz-sub">or click to browse your device</p>
+                            <p class="bp-dz-hint">PDF only · Max 500 MB each</p>
+                            <InputFile OnChange="OnFilesSelected" multiple accept=".pdf"
+                                       style="position:absolute;inset:0;opacity:0;cursor:pointer;" />
+                        </label>
+
+                        @if (!_files.Any())
+                        {
+                            <div class="bp-empty-command-center">
+                                <div class="bp-empty-card">
+                                    <span class="bp-empty-kicker">Pipeline ready</span>
+                                    <strong>No files uploaded yet</strong>
+                                    <p>Drop PDFs into the lane above to build a processing queue.</p>
+                                </div>
+                                <div class="bp-empty-card">
+                                    <span class="bp-empty-kicker">Current operation</span>
+                                    <strong>@GetToolLabel(_selectedTool)</strong>
+                                    <p>@GetOperationDescription()</p>
+                                </div>
+                                <div class="bp-empty-card">
+                                    <span class="bp-empty-kicker">Output package</span>
+                                    <strong>@(_outputMode == "zip" ? "Single ZIP" : "Individual files")</strong>
+                                    <p>Your processed files will be organized for clean download.</p>
+                                </div>
+                            </div>
+                        }
+
+                        <!-- File Pipeline -->
+                        @if (_files.Any())
+                        {
+                            <div class="bp-pipeline">
+                                <div class="bp-pipeline-hdr">
+                                    <span class="bp-pl-title">File Pipeline (@_files.Count)</span>
+                                    <div class="bp-pipeline-actions">
+                                        <span class="bp-pl-reorder">
+                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" /></svg>
+                                            Drag to reorder
                                         </span>
+                                        <button type="button" class="bp-add-more-btn">+ Add more files</button>
+                                    </div>
+                                </div>
+
+                                @for (int i = 0; i < _files.Count; i++)
+                                {
+                                    var idx = i;
+                                    var f = _files[i];
+                                    var status = _fileStatuses.TryGetValue(f.Name, out var sv) ? sv : "waiting";
+                                    var progress = _fileProgress.TryGetValue(f.Name, out var pv) ? pv : 0;
+                                    var outSize = _fileOutputSizes.TryGetValue(f.Name, out var ov) ? ov : 0L;
+                                    var errMsg = _fileErrors.TryGetValue(f.Name, out var ev) ? ev : "";
+
+                                    <div class="bp-file-row @GetRowClass(status)">
+                                        <span class="bp-drag-handle">⠿</span>
+                                        <span class="bp-timeline-marker @GetTimelineClass(status)"></span>
+                                        <div class="bp-row-num">@(idx + 1)</div>
+                                        <div class="bp-pdf-badge">
+                                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /></svg>
+                                            PDF
+                                        </div>
+                                        <span class="bp-fname" title="@f.Name">@TruncateName(f.Name, 28)</span>
+                                        <span class="bp-fsize">@FormatSize(f.Size)</span>
+
+                                        <div class="bp-status-area">
+                                            @if (status == "waiting")
+                                            {
+                                                <span class="bp-pill bp-pill--gray"><span class="bp-dot bp-dot--gray"></span> Waiting</span>
+                                            }
+                                            else if (status == "queued")
+                                            {
+                                                <span class="bp-pill bp-pill--yellow"><span class="bp-dot bp-dot--yellow"></span> Queued</span>
+                                            }
+                                            else if (status == "processing")
+                                            {
+                                                <div class="bp-proc-status">
+                                                    <span class="bp-pill bp-pill--purple"><div class="bp-spin-xs"></div> Processing</span>
+                                                    <div class="bp-file-pbar"><div class="bp-file-pbar-fill" style="width:@progress%"></div></div>
+                                                    <span class="bp-pct-lbl">@progress%</span>
+                                                </div>
+                                            }
+                                            else if (status == "done")
+                                            {
+                                                <div class="bp-done-row">
+                                                    <span class="bp-pill bp-pill--green">
+                                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                                                        Completed
+                                                    </span>
+                                                    @if (outSize > 0)
+                                                    {
+                                                        <span class="bp-out-size">@FormatSize(outSize)</span>
+                                                        <span class="bp-savings">↓ @GetSavingsPct(f.Size, outSize)% smaller</span>
+                                                    }
+                                                </div>
+                                            }
+                                            else if (status == "error")
+                                            {
+                                                <div class="bp-err-row">
+                                                    <span class="bp-pill bp-pill--red">
+                                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" /></svg>
+                                                        Failed
+                                                    </span>
+                                                    @if (!string.IsNullOrEmpty(errMsg))
+                                                    {
+                                                        <span class="bp-err-msg">Error: @errMsg</span>
+                                                    }
+                                                    <button class="bp-retry-link" @onclick="() => RetryFile(idx)">Retry</button>
+                                                </div>
+                                            }
+                                        </div>
+
+                                        <button class="bp-remove-btn" @onclick="() => RemoveFile(idx)" disabled="@_processing">×</button>
                                     </div>
                                 }
-                            </div>
 
-                            <div class="batch-section" style="margin-top:1.5rem; border-top:1px solid var(--border); padding-top:1.5rem;">
-                                <div class="batch-section-label">
-                                    <span class="batch-step-num">3</span>
-                                    Process &amp; Download
-                                </div>
-                                <div style="display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap;">
-                                    <button class="process-button"
-                                            style="max-width:240px; margin-top:0;"
-                                            @onclick="RunBatch"
-                                            disabled="@(_processing || _files.Count == 0)">
-                                        @if (_processing)
-                                        {
-                                            <span>
-                                                <span class="batch-spinner"></span>
-                                                Processing @_processedCount / @_files.Count...
-                                            </span>
-                                        }
-                                        else
-                                        {
-                                            <span>⚡ Process @_files.Count file@(_files.Count == 1 ? "" : "s")</span>
-                                        }
+                                <div class="bp-pipeline-footer">
+                                    <span>@_files.Count file@(_files.Count == 1 ? "" : "s") · @FormatSize(_files.Sum(f => f.Size)) total</span>
+                                    <button class="bp-clear-btn" @onclick="ClearFiles" disabled="@_processing">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" /></svg>
+                                        Clear All
                                     </button>
-                                    @if (!_processing)
-                                    {
-                                        <button class="reset-button"
-                                                style="max-width:100px; margin-top:0;"
-                                                @onclick="ClearFiles">
-                                            Clear
-                                        </button>
-                                    }
                                 </div>
                             </div>
                         }
                     </div>
 
-                    @if (_zipBytes != null)
-                    {
-                        <div class="batch-result-card">
-                            <div class="batch-result-icon">✅</div>
-                            <div class="batch-result-info">
-                                <h3>Batch complete!</h3>
-                                <p>
-                                    @_successCount of @_files.Count files processed successfully.
-                                    @if (_failCount > 0)
-                                    {
-                                        <span> @_failCount failed — see batch_errors.txt in ZIP.</span>
-                                    }
-                                </p>
+                    <!-- ── RIGHT COLUMN 40% ────────────────────────────── -->
+                    <div class="bp-col-right">
+
+                        <!-- Card 1: Select Tool -->
+                        <div class="bp-card">
+                            <div class="bp-card-hdr">
+                                <div class="bp-step-num">1</div>
+                                <span>Batch Operation</span>
+                                <span class="bp-card-note">Applies to all files</span>
                             </div>
-                            <button class="download-button"
-                                    @onclick="DownloadZip"
-                                    style="max-width:200px; margin-top:0;">
-                                ⬇ Download ZIP
-                            </button>
+                            <div class="bp-tool-grid">
+                                @foreach (var tool in BatchTools)
+                                {
+                                    var selectedTool = tool.Type;
+
+                                    <button type="button"
+                                            class="bp-tool-btn @(_selectedTool == selectedTool ? "bp-tool-btn--on" : "")"
+                                            @onclick="EventCallback.Factory.Create(this, () => SelectTool(selectedTool))">
+                                        <div class="bp-tool-icon" style="background:@tool.Bg;color:@GetToolAccent(tool.Type)">
+                                            @((MarkupString)tool.Svg)
+                                        </div>
+                                        <span class="bp-tool-name">@tool.Label</span>
+                                        <span class="bp-tool-desc">@tool.Desc</span>
+                                    </button>
+                                }
+                            </div>
                         </div>
-                    }
 
-                    @if (!string.IsNullOrEmpty(_error))
-                    {
-                        <div class="error-message">@_error</div>
-                    }
+                        <!-- Card 2: Settings -->
+                        <div class="bp-card">
+                            <div class="bp-card-hdr">
+                                <div class="bp-step-num">2</div>
+                                <span>@GetSettingsTitle(_selectedTool)</span>
+                            </div>
+
+                            <label class="bp-toggle-row">
+                                <span>Apply these settings to every file</span>
+                                <input type="checkbox" @bind="_applyToAll" />
+                            </label>
+
+                            @if (_selectedTool == ToolType.CompressPdf)
+                            {
+                                <div class="bp-compress-opts">
+                                    @foreach (var option in CompressionOptions)
+                                    {
+                                        <label class="bp-copt @(_compressionLevel == option.Value ? "bp-copt--on" : "")">
+                                            <div class="bp-copt-radio">
+                                                @if (_compressionLevel == option.Value)
+                                                {
+                                                    <div class="bp-copt-dot"></div>
+                                                }
+                                            </div>
+
+                                            <div class="bp-copt-body">
+                                                <strong>@option.Title</strong>
+                                                <small>@option.Line1</small>
+                                                <small>@option.Line2</small>
+                                            </div>
+
+                                            <input type="radio"
+                                                   name="cl"
+                                                   value="@option.Value"
+                                                   checked="@(_compressionLevel == option.Value)"
+                                                   @onchange="() => SetCompressionLevel(option.Value)"
+                                                   style="display:none" />
+                                        </label>
+                                    }
+                                </div>
+                                <div class="bp-preview-card">
+                                    <div class="bp-preview-hdr">
+                                        <span class="bp-preview-title">Live Preview</span>
+                                        <span class="bp-preview-sub">Estimated reduction</span>
+                                    </div>
+                                    <div class="bp-lp-pct">~@(_compressionLevel == "maximum" ? "60–80%" : _compressionLevel == "medium" ? "40–60%" : "20–40%")</div>
+                                    <div class="bp-lp-bars">
+                                        <div class="bp-lp-row"><span>Original</span><div class="bp-lp-track"><div class="bp-lp-orig"></div></div></div>
+                                        <div class="bp-lp-row"><span>Estimated</span><div class="bp-lp-track"><div class="bp-lp-fill" style="width:@(_compressionLevel == "maximum" ? "25" : _compressionLevel == "medium" ? "45" : "70")%"></div></div></div>
+                                    </div>
+                                </div>
+                            }
+
+                            @if (_selectedTool == ToolType.WatermarkPdf)
+                            {
+                                <div class="bp-fg">
+                                    <label class="bp-lbl">Watermark Text</label>
+                                    <input class="bp-input" placeholder="CONFIDENTIAL" @bind="_watermarkText" @bind:event="oninput" maxlength="40" />
+                                </div>
+                                <div class="bp-row2">
+                                    <div class="bp-fg">
+                                        <label class="bp-lbl">Font Size <span class="bp-badge-sm">@_watermarkFontSize</span></label>
+                                        <input type="range" class="bp-range" min="20" max="100" @bind="_watermarkFontSize" @bind:event="oninput" />
+                                    </div>
+                                    <div class="bp-fg">
+                                        <label class="bp-lbl">Color</label>
+                                        <input type="color" class="bp-colorpick" @bind="_watermarkColor" />
+                                    </div>
+                                </div>
+                                <div class="bp-fg">
+                                    <label class="bp-lbl">Opacity <span class="bp-badge-sm">@_watermarkOpacity%</span></label>
+                                    <input type="range" class="bp-range" min="10" max="80" @bind="_watermarkOpacity" @bind:event="oninput" />
+                                </div>
+                                <div class="bp-fg">
+                                    <label class="bp-lbl">Position</label>
+                                    <div class="bp-pos-pills">
+                                        @foreach (var (pos, lbl) in new[] { ("center-diagonal", "Diagonal"), ("top-left", "Top L"), ("top-right", "Top R"), ("bottom-left", "Bot L"), ("bottom-right", "Bot R") })
+                                        {
+                                            <button class="bp-pos-pill @(_watermarkPosition == pos ? "bp-pos-pill--on" : "")" @onclick="() => _watermarkPosition = pos">@lbl</button>
+                                        }
+                                    </div>
+                                </div>
+                                <div class="bp-preview-card">
+                                    <span class="bp-preview-title">Live Preview</span>
+                                    <div class="bp-wm-doc">
+                                        <div class="bp-doc-lines">
+                                            <div class="bp-doc-line" style="width:90%"></div>
+                                            <div class="bp-doc-line" style="width:75%"></div>
+                                            <div class="bp-doc-line" style="width:85%"></div>
+                                            <div class="bp-doc-line" style="width:65%"></div>
+                                            <div class="bp-doc-line" style="width:80%"></div>
+                                        </div>
+                                        <div class="bp-wm-text @GetWmClass()"
+                                             style="color:@_watermarkColor;opacity:@(_watermarkOpacity / 100.0);font-size:@(Math.Max(8, _watermarkFontSize / 5))px;transform:@GetWmTransform()">
+                                            @(string.IsNullOrWhiteSpace(_watermarkText) ? "CONFIDENTIAL" : _watermarkText)
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+
+                            @if (_selectedTool == ToolType.NumberPages)
+                            {
+                                <div class="bp-fg">
+                                    <label class="bp-lbl">Position</label>
+                                    <div class="bp-pos-grid">
+                                        @foreach (var pos in new[] { "top-left", "top-center", "top-right", "middle-left", "center", "middle-right", "bottom-left", "bottom-center", "bottom-right" })
+                                        {
+                                            <button class="bp-pgb @(_numberPosition == pos ? "bp-pgb--on" : "")" @onclick="() => _numberPosition = pos">
+                                                <div class="bp-pgdot @(_numberPosition == pos ? "bp-pgdot--on" : "")"></div>
+                                            </button>
+                                        }
+                                    </div>
+                                </div>
+                                <div class="bp-row2">
+                                    <div class="bp-fg">
+                                        <label class="bp-lbl">Start from</label>
+                                        <div class="bp-num-ctrl">
+                                            <button class="bp-ncb" @onclick="() => _numberStart = Math.Max(1, _numberStart - 1)">−</button>
+                                            <input type="number" class="bp-nci" min="1" max="999" @bind="_numberStart" />
+                                            <button class="bp-ncb" @onclick="() => _numberStart = Math.Min(999, _numberStart + 1)">+</button>
+                                        </div>
+                                    </div>
+                                    <div class="bp-fg">
+                                        <label class="bp-lbl">Style</label>
+                                        <select class="bp-select" @bind="_numberStyle">
+                                            <option value="numeric">1, 2, 3...</option>
+                                            <option value="roman">i, ii, iii...</option>
+                                            <option value="Roman">I, II, III...</option>
+                                            <option value="alpha">a, b, c...</option>
+                                            <option value="page-of">Page X of N</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="bp-preview-card">
+                                    <span class="bp-preview-title">Live Preview</span>
+                                    <div class="bp-wm-doc">
+                                        <div class="bp-doc-lines">
+                                            <div class="bp-doc-line" style="width:90%"></div>
+                                            <div class="bp-doc-line" style="width:70%"></div>
+                                            <div class="bp-doc-line" style="width:80%"></div>
+                                        </div>
+                                        <div class="bp-num-pos @GetNumClass()">@_numberStart</div>
+                                    </div>
+                                </div>
+                            }
+
+                            @if (_selectedTool == ToolType.RotatePdf)
+                            {
+                                <div class="bp-rotate-opts">
+                                    @foreach (var (deg, lbl, sym) in new[] { ("90", "90° Clockwise", "↻"), ("180", "180°", "↕"), ("270", "90° Counter-CW", "↺") })
+                                    {
+                                        <button class="bp-ropt @(_rotateDegrees == deg ? "bp-ropt--on" : "")" @onclick="() => _rotateDegrees = deg">
+                                            <span class="bp-ropt-sym">@sym</span>
+                                            <span class="bp-ropt-lbl">@lbl</span>
+                                        </button>
+                                    }
+                                </div>
+                                <div class="bp-preview-card">
+                                    <span class="bp-preview-title">Live Preview</span>
+                                    <div class="bp-rotate-preview">
+                                        <div class="bp-rot-doc" style="transform:rotate(@(_rotateDegrees == "90" ? "90deg" : _rotateDegrees == "180" ? "180deg" : "-90deg"))">
+                                            <div class="bp-doc-line" style="width:100%;margin-bottom:4px"></div>
+                                            <div class="bp-doc-line" style="width:80%;margin-bottom:4px"></div>
+                                            <div class="bp-doc-line" style="width:90%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+
+                            @if (_selectedTool == ToolType.ProtectPdf)
+                            {
+                                <div class="bp-fg">
+                                    <label class="bp-lbl">Password</label>
+                                    <div class="bp-pw-wrap">
+                                        <input type="@(_showPw ? "text" : "password")" class="bp-input" placeholder="Enter password..." @bind="_protectPassword" @bind:event="oninput" />
+                                        <button class="bp-pw-toggle" @onclick="() => _showPw = !_showPw">@(_showPw ? "Hide" : "Show")</button>
+                                    </div>
+                                </div>
+                                <div class="bp-fg">
+                                    <label class="bp-lbl">Confirm Password</label>
+                                    <input type="@(_showPw ? "text" : "password")" class="bp-input" placeholder="Confirm password..." @bind="_protectConfirm" />
+                                </div>
+                                @if (!string.IsNullOrEmpty(_protectPassword))
+                                {
+                                    <div class="bp-pw-strength">
+                                        <div class="bp-pw-track"><div class="bp-pw-fill" style="width:@GetPwPct()%;background:@GetPwColor()"></div></div>
+                                        <span style="font-size:.7rem;color:@GetPwColor();font-weight:700">@GetPwLabel()</span>
+                                    </div>
+                                }
+                                <div class="bp-warn-badge">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>
+                                    Save your password — it cannot be recovered
+                                </div>
+                            }
+
+                            @if (_selectedTool == ToolType.UnlockPdf)
+                            {
+                                <div class="bp-fg">
+                                    <label class="bp-lbl">Current Password</label>
+                                    <div class="bp-pw-wrap">
+                                        <input type="@(_showPw ? "text" : "password")" class="bp-input" placeholder="Enter current PDF password..." @bind="_unlockPassword" />
+                                        <button class="bp-pw-toggle" @onclick="() => _showPw = !_showPw">@(_showPw ? "Hide" : "Show")</button>
+                                    </div>
+                                </div>
+                                <div class="bp-info-badge">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+                                    Enter the current password to remove protection from all files.
+                                </div>
+                            }
+
+                            @if (_selectedTool == ToolType.PdfToWord || _selectedTool == ToolType.PdfToJpg || _selectedTool == ToolType.FlattenPdf)
+                            {
+                                <div class="bp-ready-card">
+                                    <div class="bp-ready-check">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                                    </div>
+                                    <div>
+                                        <strong>Ready to process</strong>
+                                        <p>@GetSimpleDesc(_selectedTool)</p>
+                                    </div>
+                                    <span class="bp-fmt-badge">@GetFmt(_selectedTool)</span>
+                                </div>
+                            }
+                        </div>
+
+                        <!-- Card 3: Output Strategy -->
+                        <div class="bp-card">
+                            <div class="bp-card-hdr">
+                                <div class="bp-step-num">3</div>
+                                <span>Output Strategy</span>
+                            </div>
+                            <div class="bp-output-options">
+                                <label class="bp-output-option @(_outputMode == "zip" ? "bp-output-option--on" : "")">
+                                    <input type="radio" name="outputMode" value="zip" @onchange='() => _outputMode = "zip"' checked="@(_outputMode == "zip")" />
+                                    <div>
+                                        <strong>Single ZIP</strong>
+                                        <span>Best for downloading many processed files at once.</span>
+                                    </div>
+                                </label>
+                                <label class="bp-output-option @(_outputMode == "individual" ? "bp-output-option--on" : "")">
+                                    <input type="radio" name="outputMode" value="individual" @onchange='() => _outputMode = "individual"' checked="@(_outputMode == "individual")" />
+                                    <div>
+                                        <strong>Individual files</strong>
+                                        <span>Keep each output file separate in the results package.</span>
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="bp-fg bp-fg-compact">
+                                <label class="bp-lbl">Output filename suffix</label>
+                                <input class="bp-input" @bind="_fileNameSuffix" placeholder="-processed" maxlength="24" />
+                            </div>
+                        </div>
+
+                        <!-- Card 4: Process -->
+                        <div class="bp-card bp-process-card">
+                            <div class="bp-card-hdr">
+                                <div class="bp-step-num">4</div>
+                                <span>Process</span>
+                            </div>
+                            <button class="bp-proc-btn" @onclick="RunBatch" disabled="@(_processing || !_files.Any())">
+                                @if (_processing)
+                                {
+                                    <div class="bp-spin-btn"></div>
+                                    <span>Processing @_processedCount of @_files.Count files...</span>
+                                }
+                                else
+                                {
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3" /></svg>
+                                    <span>Run Batch Process @(_files.Any() ? $"({_files.Count} file{(_files.Count == 1 ? "" : "s")})" : "") →</span>
+                                }
+                            </button>
+                            <div class="bp-secure-note">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
+                                Your files are secure and private
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- ══ FULL-WIDTH PROGRESS ══════════════════════════════════ -->
+                @if (_processing || (_zipBytes != null && _files.Any()))
+                {
+                    <div class="bp-progress-section">
+                        <div class="bp-prog-header">
+                            <span class="bp-prog-title">Overall Progress</span>
+                            <span class="bp-prog-pct">@_overallPct% complete</span>
+                            <span class="bp-prog-count">@_processedCount of @_files.Count files processed</span>
+                        </div>
+                        <div class="bp-prog-track">
+                            <div class="bp-prog-fill @(_processing ? "bp-prog-fill--anim" : "")" style="width:@_overallPct%"></div>
+                        </div>
+                        <div class="bp-mini-cards">
+                            @foreach (var f in _files)
+                            {
+                                var st = _fileStatuses.TryGetValue(f.Name, out var sv2) ? sv2 : "waiting";
+                                var pr = _fileProgress.TryGetValue(f.Name, out var pv2) ? pv2 : 0;
+                                var os = _fileOutputSizes.TryGetValue(f.Name, out var ov2) ? ov2 : 0L;
+                                <div class="bp-mini-card bp-mini-@st">
+                                    <div class="bp-mini-icon bp-mini-icon--@st">
+                                        @if (st == "done")
+                                        {
+                                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                                        }
+                                        else if (st == "processing")
+                                        {
+                                            <div class="bp-spin-xs-w"></div>
+                                        }
+                                        else if (st == "error")
+                                        {
+                                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                                        }
+                                        else if (st == "queued")
+                                        {
+                                            <div class="bp-dot-yellow"></div>
+                                        }
+                                        else
+                                        {
+                                            <div class="bp-dot-gray"></div>
+                                        }
+                                    </div>
+                                    <span class="bp-mini-name">@TruncateName(f.Name, 16)</span>
+                                    <span class="bp-mini-size">@FormatSize(f.Size)</span>
+                                    @if (st == "processing")
+                                    {
+                                        <div class="bp-mini-bar"><div class="bp-mini-fill" style="width:@pr%"></div></div>
+                                        <span class="bp-mini-pct">@pr%</span>
+                                    }
+                                    else if (st == "done" && os > 0)
+                                    {
+                                        <span class="bp-mini-out">@FormatSize(os)</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="bp-mini-lbl">@GetStatusLabel(f.Name)</span>
+                                    }
+                                    @if (st == "error")
+                                    {
+                                        <button class="bp-mini-retry" @onclick="() => RetryFile(_files.IndexOf(f))">Retry</button>
+                                    }
+                                </div>
+                            }
+                        </div>
+
+                        @if (_activityFeed.Any())
+                        {
+                            <div class="bp-activity-feed">
+                                <div class="bp-activity-title">Live activity</div>
+                                @foreach (var item in _activityFeed.TakeLast(6))
+                                {
+                                    <div class="bp-activity-item">
+                                        <span class="bp-activity-dot"></span>
+                                        <span>@item</span>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
                 }
-            </Authorized>
-        </AuthorizeView>
 
-    </div>
+                @if (_files.Any())
+                {
+                    <div class="bp-insight-grid">
+                        <div class="bp-insight-card bp-insight-card--activity">
+                            <div class="bp-insight-title"><span class="bp-live-dot"></span>Live Activity</div>
+                            @if (_activityFeed.Any())
+                            {
+                                @foreach (var item in _activityFeed.TakeLast(5))
+                                {
+                                    <div class="bp-activity-line"><span>@item.Split(" · ").FirstOrDefault()</span><strong>@item.Split(" · ").LastOrDefault()</strong></div>
+                                }
+                            }
+                            else
+                            {
+                                <p class="bp-muted-note">Activity will appear here once files are added or processed.</p>
+                            }
+                        </div>
+                        <div class="bp-insight-card">
+                            <div class="bp-insight-title">Batch Statistics</div>
+                            <div class="bp-stat-grid-mini">
+                                <div><strong>@_successCount</strong><span>Completed</span></div>
+                                <div><strong>@_failCount</strong><span>Failed</span></div>
+                                <div><strong>@Math.Max(0, _files.Count - _successCount - _failCount)</strong><span>Remaining</span></div>
+                                <div><strong>@(_totalOutputBytes > 0 ? FormatSize(_totalOutputBytes) : "—")</strong><span>Output</span></div>
+                            </div>
+                        </div>
+                        <div class="bp-insight-card">
+                            <div class="bp-insight-title">Quick Actions</div>
+                            <div class="bp-quick-actions">
+                                <button type="button" class="bp-quick-btn" @onclick="RetryFailedFiles" disabled="@(!_fileErrors.Any())">Retry failed (@_fileErrors.Count)</button>
+                                <button type="button" class="bp-quick-btn bp-quick-btn--danger" @onclick="ClearFiles" disabled="@_processing">Clear completed</button>
+                            </div>
+                        </div>
+                    </div>
+                }
 
-    <div class="faq-section">
+                <!-- ══ FULL-WIDTH RESULT BANNER ══════════════════════════════ -->
+                @if (_zipBytes != null)
+                {
+                    <div class="bp-result">
+                        <div class="bp-result-left">
+                            <div class="bp-result-circle">
+                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                            </div>
+                            <div>
+                                <div class="bp-result-title">Batch Complete!</div>
+                                <div class="bp-result-sub">@_successCount of @_files.Count files processed successfully</div>
+                                @if (_totalProcessTime > 0)
+                                {
+                                    <div class="bp-result-time">Completed in @_totalProcessTime seconds</div>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="bp-result-stats">
+                            <div class="bp-rstat">
+                                <div class="bp-rstat-num" style="color:#16A34A">@_successCount</div>
+                                <div class="bp-rstat-lbl">Succeeded</div>
+                                <div class="bp-rstat-sub" style="color:#16A34A">@((_files.Count > 0 ? _successCount * 100 / _files.Count : 0))%</div>
+                            </div>
+                            @if (_failCount > 0)
+                            {
+                                <div class="bp-rstat">
+                                    <div class="bp-rstat-num" style="color:#DC2626">@_failCount</div>
+                                    <div class="bp-rstat-lbl">Failed</div>
+                                    <div class="bp-rstat-sub" style="color:#DC2626">@((_files.Count > 0 ? _failCount * 100 / _files.Count : 0))%</div>
+                                </div>
+                            }
+                            @if (_totalOutputBytes > 0)
+                            {
+                                <div class="bp-rstat">
+                                    <div class="bp-rstat-num">@FormatSize(_totalOutputBytes)</div>
+                                    <div class="bp-rstat-lbl">Total Output Size</div>
+                                    <div class="bp-rstat-sub" style="color:#16A34A">@GetTotalSavings()% smaller</div>
+                                </div>
+                            }
+                        </div>
+
+                        <div class="bp-result-right">
+                            <button class="bp-dl-btn" @onclick="DownloadZip">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+                                Download All (ZIP)
+                            </button>
+                            <button class="bp-again-btn" @onclick="ClearFiles">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10" /><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" /></svg>
+                                Process another batch
+                            </button>
+                            @if (_failCount > 0)
+                            {
+                                <button class="bp-retry-failed-btn" @onclick="RetryFailedFiles">
+                                    Retry failed only (@_failCount)
+                                </button>
+                            }
+                        </div>
+
+                        @if (_failCount > 0)
+                        {
+                            <div class="bp-fail-section">
+                                <button class="bp-fail-toggle" @onclick='() => _showErrors = !_showErrors'>
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+                                    @_failCount file@(_failCount == 1 ? "" : "s") failed — View errors
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transform:rotate(@(_showErrors ? "180deg" : "0deg"));transition:transform .2s"><polyline points="6 9 12 15 18 9" /></svg>
+                                </button>
+                                @if (_showErrors)
+                                {
+                                    <div class="bp-fail-list">
+                                        @foreach (var kv in _fileErrors)
+                                        {
+                                            <div class="bp-fail-item">
+                                                <span class="bp-fail-fname">@kv.Key</span>
+                                                <span class="bp-fail-msg">@kv.Value</span>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+            }
+        </Authorized>
+    </AuthorizeView>
+
+    <!-- FAQ -->
+    <div class="bp-faq">
         <h2>Frequently Asked Questions</h2>
-        <div class="faq-item">
-            <h3>How many files can I process at once?</h3>
-            <p>Up to 20 PDFs per batch. Each file can be up to 500MB with a Pro plan.</p>
-        </div>
-        <div class="faq-item">
-            <h3>What happens if one file fails?</h3>
-            <p>The ZIP still downloads with all successful files. A batch_errors.txt file lists any failures.</p>
-        </div>
-        <div class="faq-item">
-            <h3>Are my files stored after processing?</h3>
-            <p>No. All files are deleted within 1 hour of processing. We never store document contents permanently.</p>
-        </div>
+        @foreach (var (q, a) in new[]{
+                ("How many files can I process at once?","Up to 20 PDFs per batch. Each file can be up to 500MB with a Pro plan."),
+                ("What happens if one file fails?","The ZIP downloads with all successful files. A batch_errors.txt lists any failures."),
+                ("Are my files stored after processing?","No. All files are deleted within 1 hour of processing."),
+                })
+        {
+            <details class="bp-faq-item"><summary>@q</summary><p>@a</p></details>
+        }
     </div>
 
 </div>
+
+<style>
+    .bp-wrap {
+        --bp-primary: #4f46e5;
+        --bp-primary-2: #7c3aed;
+        --bp-primary-soft: rgba(79, 70, 229, .10);
+        --bp-success: #16a34a;
+        --bp-warning: #d97706;
+        --bp-danger: #dc2626;
+        --bp-shadow: 0 20px 60px rgba(31, 41, 55, .08);
+        --bp-card-shadow: 0 10px 28px rgba(31, 41, 55, .07);
+        max-width: 1680px;
+        margin: 0 auto;
+        padding: 2rem clamp(1rem, 2vw, 2rem) 5rem;
+        font-family: inherit;
+        color: var(--text, #111827);
+    }
+
+        .bp-wrap::before {
+            content: "";
+            position: fixed;
+            inset: 64px 0 auto;
+            height: 420px;
+            background: radial-gradient(circle at 22% 5%, rgba(124, 58, 237, .18), transparent 38%), radial-gradient(circle at 92% 12%, rgba(14, 165, 233, .18), transparent 36%), linear-gradient(135deg, rgba(245, 243, 255, .85), rgba(239, 246, 255, .72));
+            z-index: -1;
+            pointer-events: none;
+        }
+
+    .bp-header {
+        display: grid;
+        grid-template-columns: minmax(320px, 1fr) minmax(420px, 560px);
+        gap: 2rem;
+        align-items: start;
+        padding: 1.35rem 0 2rem;
+    }
+
+    .bp-header-left h1,
+    .bp-hero-title {
+        font-size: clamp(2.5rem, 5vw, 3.5rem);
+        line-height: 1.1;
+        font-weight: 800;
+        color: var(--text, #111827);
+        letter-spacing: -.03em;
+        margin: .4rem 0 .35rem;
+    }
+
+    .bp-title-accent { color: #4338CA; }
+
+    .bp-header-left p {
+        font-size: 1.03rem;
+        color: var(--text-muted, #667085);
+        margin: 0;
+        max-width: 720px;
+        line-height: 1.65;
+    }
+
+    .bp-pro-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: .42rem;
+        background: linear-gradient(135deg, #fef3c7, #fde68a);
+        color: #92400e;
+        border: 1px solid rgba(217, 119, 6, .18);
+        font-size: .68rem;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: .09em;
+        padding: .36rem .78rem;
+        border-radius: 999px;
+        box-shadow: 0 8px 20px rgba(217, 119, 6, .12);
+    }
+
+    .bp-trust-chips {
+        display: flex;
+        align-items: center;
+        gap: .65rem;
+        flex-wrap: wrap;
+        margin-top: 1.2rem;
+    }
+
+        .bp-trust-chips span {
+            display: inline-flex;
+            align-items: center;
+            gap: .35rem;
+            padding: .46rem .75rem;
+            border: 1px solid var(--border, #e5e7eb);
+            background: rgba(255, 255, 255, .82);
+            color: var(--text-muted, #667085);
+            border-radius: 999px;
+            font-size: .78rem;
+            font-weight: 750;
+            box-shadow: 0 6px 18px rgba(17, 24, 39, .04);
+            backdrop-filter: blur(12px);
+        }
+
+    .bp-stat-cards {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        background: rgba(255, 255, 255, .86);
+        border: 1px solid rgba(226, 232, 240, .95);
+        border-radius: 22px;
+        overflow: hidden;
+        box-shadow: var(--bp-shadow);
+        backdrop-filter: blur(18px);
+        align-self: start;
+    }
+
+    .bp-stat-card {
+        display: flex;
+        align-items: center;
+        gap: .95rem;
+        padding: 1.2rem 1.3rem;
+        border-right: 1px solid var(--border, #e5e7eb);
+        min-height: 86px;
+    }
+
+        .bp-stat-card:last-child {
+            border-right: none;
+        }
+
+    .bp-stat-icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 17px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        box-shadow: inset 0 0 0 1px rgba(255,255,255,.7);
+    }
+
+    .bp-stat-body {
+        display: flex;
+        flex-direction: column;
+        gap: .16rem;
+        min-width: 0;
+    }
+
+    .bp-stat-num {
+        font-size: 1rem;
+        font-weight: 700;
+        line-height: 1;
+        color: var(--text, #111827);
+    }
+
+    .bp-stat-num--sm {
+        font-size: .9rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 150px;
+    }
+
+    .bp-stat-label {
+        font-size: .65rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        color: #4338CA;
+    }
+
+    .bp-stat-sub {
+        font-size: .75rem;
+        color: var(--text-muted, #6B7280);
+    }
+
+    .bp-gate {
+        max-width: 520px;
+        margin: 3rem auto;
+        background: rgba(255,255,255,.9);
+        border: 1px solid var(--border, #e5e7eb);
+        border-radius: 28px;
+        padding: 3rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+        text-align: center;
+        box-shadow: var(--bp-shadow);
+        backdrop-filter: blur(18px);
+    }
+
+    .bp-gate-icon {
+        width: 72px;
+        height: 72px;
+        border-radius: 22px;
+        background: #ede9fe;
+        color: var(--bp-primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .bp-gate h2 {
+        font-size: 1.35rem;
+        font-weight: 850;
+        margin: 0;
+        color: var(--text, #111827);
+    }
+
+    .bp-gate p {
+        font-size: .92rem;
+        color: var(--text-muted, #667085);
+        margin: 0;
+        line-height: 1.6;
+    }
+
+    .bp-gate-feats {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: .55rem;
+        align-self: stretch;
+        margin: .5rem 0;
+    }
+
+    .bp-gate-feat {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+        font-size: .82rem;
+        color: var(--text-muted, #475467);
+        text-align: left;
+    }
+
+    .bp-gate-btns {
+        display: flex;
+        flex-direction: column;
+        gap: .65rem;
+        width: 100%;
+    }
+
+    .bp-btn-up, .bp-dl-btn, .bp-proc-btn {
+        background: linear-gradient(135deg, #4338CA 0%, #6D28D9 100%);
+        color: #fff;
+        box-shadow: 0 4px 20px rgba(67,56,202,.4);
+    }
+
+    .bp-proc-btn:disabled {
+        opacity: .4;
+        box-shadow: none;
+    }
+
+    .bp-btn-up, .bp-btn-si {
+        display: block;
+        font-weight: 850;
+        font-size: .9rem;
+        padding: .82rem 1.4rem;
+        border-radius: 14px;
+        text-align: center;
+        border: none;
+        cursor: pointer;
+    }
+
+    .bp-btn-si {
+        background: var(--surface, #fff);
+        color: var(--text, #344054);
+        border: 1px solid var(--border, #e5e7eb);
+        box-shadow: 0 8px 20px rgba(17,24,39,.04);
+    }
+
+    .bp-main {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 520px;
+        gap: 1.25rem;
+        align-items: start;
+    }
+
+    .bp-col-left, .bp-col-right {
+        min-width: 0;
+    }
+
+    .bp-col-right {
+        position: sticky;
+        top: 88px;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .bp-batch-summary {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 1.25rem;
+        background: rgba(255, 255, 255, .88);
+        border: 1px solid var(--border, #e5e7eb);
+        border-radius: 20px;
+        padding: 1.1rem 1.25rem;
+        margin-bottom: 1rem;
+        box-shadow: var(--bp-card-shadow);
+        backdrop-filter: blur(18px);
+    }
+
+    .bp-summary-kicker {
+        display: inline-flex;
+        align-items: center;
+        gap: .3rem;
+        color: var(--bp-primary);
+        font-size: .72rem;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        margin-bottom: .32rem;
+    }
+
+    .bp-batch-summary strong {
+        display: block;
+        font-size: .98rem;
+        color: var(--text, #111827);
+    }
+
+    .bp-batch-summary p {
+        margin: .2rem 0 0;
+        color: var(--text-muted, #667085);
+        font-size: .8rem;
+        line-height: 1.45;
+    }
+
+    .bp-summary-metrics {
+        display: grid;
+        grid-template-columns: repeat(3, auto);
+        gap: .7rem;
+    }
+
+        .bp-summary-metrics span {
+            padding: .52rem .72rem;
+            border: 1px solid var(--border, #e5e7eb);
+            background: var(--bg, #f9fafb);
+            border-radius: 12px;
+            color: var(--text-muted, #475467);
+            font-size: .76rem;
+            font-weight: 800;
+            white-space: nowrap;
+        }
+
+    .bp-dropzone {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: .42rem;
+        min-height: 210px;
+        border: 2px dashed #C4B5FD;
+        border-radius: 16px;
+        background: var(--surface, #fff);
+        padding: 2.2rem;
+        cursor: pointer;
+        position: relative;
+        transition: background .15s ease, border-color .15s ease;
+        text-align: center;
+        margin-bottom: 1rem;
+    }
+
+        .bp-dropzone:hover, .bp-dropzone--active {
+            border-color: #4338CA;
+            background: rgba(237,233,254,.031);
+        }
+
+    .bp-dz-cloud {
+        width: 68px;
+        height: 68px;
+        border-radius: 22px;
+        background: linear-gradient(135deg, #ede9fe, #eef2ff);
+        color: var(--bp-primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: .35rem;
+        box-shadow: 0 14px 30px rgba(79,70,229,.16);
+    }
+
+    .bp-dz-title {
+        font-size: 1.05rem;
+        font-weight: 850;
+        color: var(--text, #111827);
+        margin: 0;
+    }
+
+    .bp-dz-sub {
+        font-size: .86rem;
+        color: var(--text-muted, #667085);
+        margin: 0;
+    }
+
+    .bp-dz-hint {
+        font-size: .76rem;
+        color: var(--text-muted, #98a2b3);
+        margin: 0;
+    }
+
+    .bp-empty-command-center {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: .9rem;
+        margin-top: .85rem;
+    }
+
+    .bp-empty-card {
+        background: rgba(255,255,255,.76);
+        border: 1px solid var(--border, #e5e7eb);
+        border-radius: 18px;
+        padding: 1rem;
+        box-shadow: 0 12px 26px rgba(17,24,39,.05);
+    }
+
+    .bp-empty-kicker {
+        display: block;
+        font-size: .68rem;
+        font-weight: 900;
+        color: var(--bp-primary);
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        margin-bottom: .35rem;
+    }
+
+    .bp-empty-card strong {
+        display: block;
+        font-size: .88rem;
+        color: var(--text, #111827);
+        margin-bottom: .25rem;
+    }
+
+    .bp-empty-card p {
+        margin: 0;
+        font-size: .76rem;
+        color: var(--text-muted, #667085);
+        line-height: 1.45;
+    }
+
+    .bp-pipeline, .bp-progress-section, .bp-card, .bp-result, .bp-insight-card, .bp-faq {
+        background: var(--surface, #fff);
+        border: 1px solid #E5E7EB;
+        border-radius: 16px;
+        box-shadow: 0 1px 4px rgba(0,0,0,.04);
+    }
+
+    .bp-pipeline {
+        overflow: hidden;
+    }
+
+    .bp-pipeline-hdr {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: .95rem 1.1rem;
+        border-bottom: 1px solid var(--border, #e5e7eb);
+        background: linear-gradient(180deg, rgba(248,250,252,.92), rgba(255,255,255,.78));
+    }
+
+    .bp-pl-title {
+        font-size: .9rem;
+        font-weight: 900;
+        color: var(--text, #111827);
+    }
+
+    .bp-pipeline-actions {
+        display: flex;
+        align-items: center;
+        gap: .65rem;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+
+    .bp-pl-reorder {
+        display: flex;
+        align-items: center;
+        gap: .35rem;
+        font-size: .72rem;
+        color: var(--text-muted, #667085);
+        font-weight: 700;
+    }
+
+    .bp-add-more-btn {
+        border: 1px solid #c7d2fe;
+        background: #eef2ff;
+        color: var(--bp-primary);
+        border-radius: 10px;
+        padding: .38rem .62rem;
+        font-size: .72rem;
+        font-weight: 850;
+        cursor: pointer;
+    }
+
+    .bp-file-row {
+        position: relative;
+        display: grid;
+        grid-template-columns: 20px 18px 26px 48px minmax(120px, 1fr) 76px minmax(210px, auto) 28px;
+        align-items: center;
+        gap: .65rem;
+        min-height: 54px;
+        padding: .62rem 1rem;
+        border-bottom: 1px solid #eef2f7;
+        background: rgba(255,255,255,.72);
+        transition: background .16s, transform .16s, box-shadow .16s;
+    }
+
+        .bp-file-row:hover {
+            background: #fff;
+            box-shadow: inset 3px 0 0 rgba(79,70,229,.22);
+        }
+
+        .bp-file-row:last-of-type {
+            border-bottom: none;
+        }
+
+    .bp-file-row--done {
+        background: linear-gradient(90deg, rgba(240,253,244,.78), rgba(255,255,255,.76));
+    }
+
+    .bp-file-row--error {
+        background: linear-gradient(90deg, rgba(254,242,242,.85), rgba(255,255,255,.78));
+    }
+
+    .bp-file-row--processing {
+        background: linear-gradient(90deg, rgba(245,243,255,.95), rgba(255,255,255,.78));
+    }
+
+    .bp-file-row::before {
+        content: "";
+        position: absolute;
+        left: 47px;
+        top: 0;
+        bottom: 0;
+        width: 1px;
+        background: #dbe3ef;
+    }
+
+    .bp-drag-handle {
+        font-size: 1rem;
+        color: var(--text-muted, #98a2b3);
+        cursor: grab;
+        z-index: 1;
+    }
+
+    .bp-timeline-marker {
+        width: 11px;
+        height: 11px;
+        border-radius: 999px;
+        border: 2px solid #cbd5e1;
+        background: #fff;
+        z-index: 2;
+        box-shadow: 0 0 0 4px #fff;
+    }
+
+    .bp-timeline-marker--waiting {
+        border-color: #94a3b8;
+    }
+
+    .bp-timeline-marker--queued {
+        border-color: #f59e0b;
+        background: #f59e0b;
+    }
+
+    .bp-timeline-marker--processing {
+        border-color: #8b5cf6;
+        background: #8b5cf6;
+        box-shadow: 0 0 0 4px rgba(139,92,246,.16);
+        animation: bpPulse 1.4s infinite;
+    }
+
+    .bp-timeline-marker--done {
+        border-color: #16a34a;
+        background: #16a34a;
+    }
+
+    .bp-timeline-marker--error {
+        border-color: #ef4444;
+        background: #ef4444;
+    }
+
+    .bp-row-num {
+        font-size: .72rem;
+        font-weight: 900;
+        color: var(--text-muted, #667085);
+        text-align: center;
+        z-index: 1;
+    }
+
+    .bp-pdf-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+        width: 42px;
+        height: 30px;
+        background: linear-gradient(135deg, #4f46e5, #7c3aed);
+        color: #fff;
+        font-size: .54rem;
+        font-weight: 900;
+        border-radius: 9px;
+        letter-spacing: .02em;
+        box-shadow: 0 8px 16px rgba(79,70,229,.18);
+    }
+
+    .bp-fname {
+        font-size: .82rem;
+        font-weight: 750;
+        color: var(--text, #111827);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        min-width: 0;
+    }
+
+    .bp-fsize {
+        font-size: .74rem;
+        color: var(--text-muted, #667085);
+        font-weight: 650;
+    }
+
+    .bp-status-area {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        min-width: 0;
+    }
+
+    .bp-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: .36rem;
+        font-size: .72rem;
+        font-weight: 850;
+        padding: .28rem .62rem;
+        border-radius: 999px;
+        white-space: nowrap;
+    }
+
+    .bp-pill--gray {
+        background: #f1f5f9;
+        color: #64748b;
+    }
+
+    .bp-pill--yellow {
+        background: #fef3c7;
+        color: #a16207;
+    }
+
+    .bp-pill--purple {
+        background: #ede9fe;
+        color: #5b21b6;
+    }
+
+    .bp-pill--green {
+        background: #dcfce7;
+        color: #15803d;
+    }
+
+    .bp-pill--red {
+        background: #fee2e2;
+        color: #b91c1c;
+    }
+
+    .bp-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+    }
+
+    .bp-dot--gray {
+        background: #94a3b8;
+    }
+
+    .bp-dot--yellow, .bp-dot-yellow {
+        background: #f59e0b;
+    }
+
+    .bp-dot-gray {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #94a3b8;
+    }
+
+    .bp-proc-status, .bp-done-row, .bp-err-row {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: .5rem;
+        flex-wrap: wrap;
+    }
+
+    .bp-file-pbar {
+        width: 150px;
+        height: 7px;
+        background: #e5e7eb;
+        border-radius: 999px;
+        overflow: hidden;
+    }
+
+    .bp-file-pbar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--bp-primary), #8b5cf6);
+        border-radius: inherit;
+        transition: width .25s ease;
+    }
+
+    .bp-pct-lbl {
+        font-size: .72rem;
+        color: #4f46e5;
+        font-weight: 900;
+        min-width: 34px;
+        text-align: right;
+    }
+
+    .bp-out-size {
+        font-size: .74rem;
+        color: var(--text-muted,#667085);
+        font-weight: 700;
+    }
+
+    .bp-savings {
+        font-size: .72rem;
+        color: #16a34a;
+        font-weight: 900;
+    }
+
+    .bp-err-msg {
+        font-size: .72rem;
+        color: #dc2626;
+        font-weight: 700;
+        max-width: 180px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .bp-retry-link {
+        color: #4f46e5;
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 0;
+        font-size: .72rem;
+        font-weight: 900;
+        text-decoration: underline;
+    }
+
+    .bp-remove-btn {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        border: 1px solid var(--border,#e5e7eb);
+        background: transparent;
+        color: #94a3b8;
+        font-size: 1rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+        .bp-remove-btn:hover {
+            background: #fee2e2;
+            border-color: #fecaca;
+            color: #dc2626;
+        }
+
+        .bp-remove-btn:disabled {
+            opacity: .45;
+            cursor: not-allowed;
+        }
+
+    .bp-pipeline-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: .8rem 1rem;
+        border-top: 1px solid var(--border,#e5e7eb);
+        background: #f8fafc;
+        color: var(--text-muted,#667085);
+        font-size: .78rem;
+        font-weight: 700;
+    }
+
+    .bp-clear-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: .35rem;
+        color: #dc2626;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        font-weight: 850;
+        font-size: .75rem;
+    }
+
+        .bp-clear-btn:disabled {
+            opacity: .45;
+            cursor: not-allowed;
+        }
+
+    .bp-card {
+        padding: 1.05rem;
+    }
+
+    .bp-card-hdr {
+        display: flex;
+        align-items: center;
+        gap: .7rem;
+        margin-bottom: .95rem;
+        font-size: .95rem;
+        font-weight: 900;
+        color: var(--text,#111827);
+    }
+
+    .bp-card-note {
+        margin-left: auto;
+        padding: .28rem .55rem;
+        border-radius: 999px;
+        background: #eef2ff;
+        color: var(--bp-primary);
+        font-size: .68rem;
+        font-weight: 900;
+    }
+
+    .bp-step-num {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #4338CA, #6D28D9);
+        color: #fff;
+        font-size: .75rem;
+        font-weight: 800;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .bp-tool-grid {
+        display: grid;
+        grid-template-columns: repeat(3,1fr);
+        gap: .7rem;
+    }
+
+    .bp-tool-btn {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: .34rem;
+        min-height: 100px;
+        padding: .78rem .45rem;
+        border: 1.5px solid var(--border,#e5e7eb);
+        border-radius: 15px;
+        background: linear-gradient(180deg,#fff,#f8fafc);
+        cursor: pointer;
+        text-align: center;
+        transition: transform .16s, border-color .16s, box-shadow .16s, background .16s;
+    }
+
+        .bp-tool-btn:hover {
+            transform: translateY(-1px);
+            border-color: #a5b4fc;
+            box-shadow: 0 12px 24px rgba(79,70,229,.10);
+        }
+
+    .bp-tool-btn--on {
+        border-color: var(--bp-primary);
+        background: linear-gradient(180deg,#eef2ff,#fff);
+        box-shadow: 0 14px 30px rgba(79,70,229,.15);
+    }
+
+    .bp-tool-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+        .bp-tool-icon svg {
+            width: 18px;
+            height: 18px;
+        }
+
+    .bp-tool-name {
+        font-size: .76rem;
+        font-weight: 900;
+        color: var(--text,#111827);
+        line-height: 1.1;
+    }
+
+    .bp-tool-desc {
+        font-size: .66rem;
+        color: var(--text-muted,#667085);
+        line-height: 1.25;
+    }
+
+    .bp-toggle-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: .75rem;
+        padding: .72rem .82rem;
+        margin-bottom: .9rem;
+        border-radius: 13px;
+        background: #f8fafc;
+        border: 1px solid var(--border,#e5e7eb);
+        color: var(--text,#344054);
+        font-size: .78rem;
+        font-weight: 850;
+    }
+
+        .bp-toggle-row input {
+            accent-color: var(--bp-primary);
+            width: 16px;
+            height: 16px;
+        }
+
+    .bp-fg {
+        display: flex;
+        flex-direction: column;
+        gap: .35rem;
+        margin-bottom: .8rem;
+    }
+
+    .bp-lbl {
+        display: flex;
+        align-items: center;
+        gap: .4rem;
+        color: var(--text,#344054);
+        font-size: .76rem;
+        font-weight: 850;
+    }
+
+    .bp-badge-sm {
+        background: #ede9fe;
+        color: var(--bp-primary);
+        border-radius: 999px;
+        padding: .1rem .45rem;
+        font-size: .65rem;
+        font-weight: 900;
+    }
+
+    .bp-input, .bp-select {
+        width: 100%;
+        box-sizing: border-box;
+        padding: .62rem .75rem;
+        border: 1.5px solid var(--border,#d0d5dd);
+        border-radius: 12px;
+        background: #fff;
+        color: var(--text,#111827);
+        font: inherit;
+        font-size: .82rem;
+        outline: none;
+        transition: border-color .16s, box-shadow .16s;
+    }
+
+        .bp-input:focus, .bp-select:focus {
+            border-color: var(--bp-primary);
+            box-shadow: 0 0 0 4px rgba(79,70,229,.10);
+        }
+
+    .bp-range {
+        width: 100%;
+        accent-color: var(--bp-primary);
+    }
+
+    .bp-colorpick {
+        width: 48px;
+        height: 38px;
+        border-radius: 10px;
+        border: 1.5px solid var(--border,#d0d5dd);
+        background: #fff;
+        padding: 3px;
+        cursor: pointer;
+    }
+
+    .bp-row2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: .75rem;
+    }
+
+    .bp-compress-opts {
+        display: grid;
+        grid-template-columns: repeat(3,1fr);
+        gap: .65rem;
+        margin-bottom: .9rem;
+    }
+
+    .bp-copt {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: .42rem;
+        padding: .8rem .55rem;
+        border: 1.5px solid var(--border,#e5e7eb);
+        border-radius: 14px;
+        background: #fff;
+        cursor: pointer;
+        transition: all .16s;
+        min-height: 95px;
+    }
+
+    .bp-copt--on {
+        border: 2px solid #4338CA;
+        background: rgba(237,233,254,.08);
+    }
+
+    .bp-copt-radio {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        border: 2px solid #cbd5e1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .bp-copt--on .bp-copt-radio {
+        border-color: var(--bp-primary);
+    }
+
+    .bp-copt-dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: var(--bp-primary);
+    }
+
+    .bp-copt-body strong {
+        font-size: .76rem;
+        color: var(--text,#111827);
+    }
+
+    .bp-copt-body small {
+        display: block;
+        margin-top: .12rem;
+        color: var(--text-muted,#667085);
+        font-size: .66rem;
+    }
+
+    .bp-preview-card, .bp-ready-card, .bp-output-option {
+        background: #f8fafc;
+        border: 1px solid var(--border,#e5e7eb);
+        border-radius: 15px;
+    }
+
+    .bp-preview-card {
+        padding: .95rem;
+        margin-top: .3rem;
+    }
+
+    .bp-preview-hdr {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: .55rem;
+    }
+
+    .bp-preview-title {
+        color: var(--text,#344054);
+        font-weight: 900;
+        font-size: .75rem;
+    }
+
+    .bp-preview-sub {
+        color: var(--text-muted,#98a2b3);
+        font-size: .68rem;
+    }
+
+    .bp-lp-pct {
+        color: var(--bp-primary);
+        font-size: 2rem;
+        font-weight: 950;
+        letter-spacing: -.04em;
+        text-align: left;
+        margin: .25rem 0 .7rem;
+    }
+
+    .bp-lp-bars {
+        display: flex;
+        flex-direction: column;
+        gap: .48rem;
+    }
+
+    .bp-lp-row {
+        display: grid;
+        grid-template-columns: 72px 1fr;
+        gap: .6rem;
+        align-items: center;
+        color: var(--text-muted,#667085);
+        font-size: .68rem;
+        font-weight: 700;
+    }
+
+    .bp-lp-track {
+        height: 9px;
+        background: #e5e7eb;
+        border-radius: 999px;
+        overflow: hidden;
+    }
+
+    .bp-lp-orig {
+        width: 100%;
+        height: 100%;
+        background: #cbd5e1;
+    }
+
+    .bp-lp-fill {
+        height: 100%;
+        background: linear-gradient(90deg,var(--bp-primary),#8b5cf6);
+        border-radius: inherit;
+        transition: width .3s;
+    }
+
+    .bp-wm-doc {
+        width: 100%;
+        aspect-ratio: .707;
+        max-height: 150px;
+        background: #fff;
+        border: 1px solid var(--border,#e5e7eb);
+        border-radius: 10px;
+        position: relative;
+        overflow: hidden;
+        margin-top: .65rem;
+        padding: 12px;
+        box-sizing: border-box;
+        box-shadow: inset 0 0 0 1px rgba(255,255,255,.8);
+    }
+
+    .bp-doc-lines {
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+        width: 100%;
+    }
+
+    .bp-doc-line {
+        height: 6px;
+        background: #e5e7eb;
+        border-radius: 999px;
+    }
+
+    .bp-wm-text {
+        position: absolute;
+        font-weight: 900;
+        letter-spacing: .05em;
+        pointer-events: none;
+        white-space: nowrap;
+    }
+
+    .bp-wm-c {
+        top: 50%;
+        left: 50%;
+    }
+
+    .bp-wm-tl {
+        top: 8%;
+        left: 6%;
+    }
+
+    .bp-wm-tr {
+        top: 8%;
+        right: 6%;
+    }
+
+    .bp-wm-bl {
+        bottom: 8%;
+        left: 6%;
+    }
+
+    .bp-wm-br {
+        bottom: 8%;
+        right: 6%;
+    }
+
+    .bp-pos-pills {
+        display: flex;
+        gap: .4rem;
+        flex-wrap: wrap;
+    }
+
+    .bp-pos-pill, .bp-pgb, .bp-ropt, .bp-ncb, .bp-pw-toggle, .bp-again-btn, .bp-retry-failed-btn, .bp-quick-btn {
+        font-family: inherit;
+    }
+
+    .bp-pos-pill {
+        padding: .32rem .7rem;
+        border-radius: 999px;
+        border: 1.5px solid var(--border,#e5e7eb);
+        background: #fff;
+        color: var(--text-muted,#667085);
+        cursor: pointer;
+        font-size: .7rem;
+        font-weight: 850;
+    }
+
+    .bp-pos-pill--on {
+        background: #ede9fe;
+        border-color: var(--bp-primary);
+        color: var(--bp-primary);
+    }
+
+    .bp-pos-grid {
+        display: grid;
+        grid-template-columns: repeat(3,32px);
+        gap: .35rem;
+    }
+
+    .bp-pgb {
+        width: 32px;
+        height: 32px;
+        border-radius: 9px;
+        border: 1.5px solid var(--border,#e5e7eb);
+        background: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+    }
+
+    .bp-pgb--on {
+        background: #ede9fe;
+        border-color: var(--bp-primary);
+    }
+
+    .bp-pgdot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #cbd5e1;
+    }
+
+    .bp-pgdot--on {
+        background: var(--bp-primary);
+    }
+
+    .bp-num-pos {
+        position: absolute;
+        font-size: .62rem;
+        font-weight: 950;
+        color: var(--bp-primary);
+        background: #ede9fe;
+        border-radius: 5px;
+        padding: 2px 5px;
+    }
+
+    .bp-num-tl {
+        top: 6%;
+        left: 6%
+    }
+
+    .bp-num-tc {
+        top: 6%;
+        left: 50%;
+        transform: translateX(-50%)
+    }
+
+    .bp-num-tr {
+        top: 6%;
+        right: 6%
+    }
+
+    .bp-num-ml {
+        top: 50%;
+        left: 6%;
+        transform: translateY(-50%)
+    }
+
+    .bp-num-mr {
+        top: 50%;
+        right: 6%;
+        transform: translateY(-50%)
+    }
+
+    .bp-num-bl {
+        bottom: 6%;
+        left: 6%
+    }
+
+    .bp-num-bc {
+        bottom: 6%;
+        left: 50%;
+        transform: translateX(-50%)
+    }
+
+    .bp-num-br {
+        bottom: 6%;
+        right: 6%
+    }
+
+    .bp-num-ctrl {
+        display: flex;
+        border: 1.5px solid var(--border,#d0d5dd);
+        border-radius: 12px;
+        overflow: hidden;
+        background: #fff;
+    }
+
+    .bp-ncb {
+        width: 34px;
+        border: 0;
+        background: #f8fafc;
+        cursor: pointer;
+        font-weight: 900;
+        color: var(--text,#344054);
+    }
+
+    .bp-nci {
+        min-width: 48px;
+        flex: 1;
+        text-align: center;
+        border: 0;
+        border-left: 1px solid var(--border,#e5e7eb);
+        border-right: 1px solid var(--border,#e5e7eb);
+        padding: .45rem;
+        background: #fff;
+        color: var(--text,#111827);
+    }
+
+    .bp-rotate-opts {
+        display: grid;
+        grid-template-columns: repeat(3,1fr);
+        gap: .65rem;
+        margin-bottom: .8rem;
+    }
+
+    .bp-ropt {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: .35rem;
+        min-height: 88px;
+        padding: .7rem;
+        border: 1.5px solid var(--border,#e5e7eb);
+        border-radius: 14px;
+        background: #fff;
+        cursor: pointer;
+    }
+
+    .bp-ropt--on {
+        background: #eef2ff;
+        border-color: var(--bp-primary);
+    }
+
+    .bp-ropt-sym {
+        font-size: 1.65rem;
+        color: var(--text,#344054);
+        line-height: 1;
+    }
+
+    .bp-ropt--on .bp-ropt-sym {
+        color: var(--bp-primary);
+    }
+
+    .bp-ropt-lbl {
+        color: var(--text-muted,#667085);
+        font-size: .67rem;
+        font-weight: 850;
+        text-align: center;
+    }
+
+    .bp-rotate-preview {
+        height: 94px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .bp-rot-doc {
+        width: 54px;
+        padding: 10px;
+        border: 1.5px solid var(--border,#e5e7eb);
+        background: #fff;
+        border-radius: 8px;
+        transition: transform .35s ease;
+    }
+
+    .bp-pw-wrap {
+        display: flex;
+        gap: .45rem;
+    }
+
+        .bp-pw-wrap .bp-input {
+            flex: 1;
+        }
+
+    .bp-pw-toggle {
+        border: 1.5px solid var(--border,#d0d5dd);
+        background: #fff;
+        color: var(--text-muted,#667085);
+        border-radius: 12px;
+        padding: .45rem .7rem;
+        font-size: .75rem;
+        font-weight: 850;
+        cursor: pointer;
+    }
+
+    .bp-pw-strength {
+        display: flex;
+        gap: .5rem;
+        align-items: center;
+        margin-bottom: .8rem;
+    }
+
+    .bp-pw-track {
+        flex: 1;
+        height: 7px;
+        background: #e5e7eb;
+        border-radius: 999px;
+        overflow: hidden;
+    }
+
+    .bp-pw-fill {
+        height: 100%;
+        border-radius: inherit;
+        transition: width .3s;
+    }
+
+    .bp-warn-badge, .bp-info-badge {
+        display: flex;
+        gap: .5rem;
+        align-items: flex-start;
+        padding: .7rem .8rem;
+        border-radius: 14px;
+        font-size: .76rem;
+        font-weight: 800;
+        line-height: 1.45;
+    }
+
+    .bp-warn-badge {
+        background: #fff7ed;
+        border: 1px solid #fed7aa;
+        color: #9a3412;
+    }
+
+    .bp-info-badge {
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        color: #1d4ed8;
+    }
+
+    .bp-ready-card {
+        display: flex;
+        align-items: center;
+        gap: .8rem;
+        padding: .9rem;
+    }
+
+    .bp-ready-check {
+        width: 42px;
+        height: 42px;
+        border-radius: 14px;
+        background: #dcfce7;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .bp-ready-card strong {
+        display: block;
+        color: var(--text,#111827);
+        font-size: .9rem;
+        margin-bottom: .14rem;
+    }
+
+    .bp-ready-card p {
+        margin: 0;
+        color: var(--text-muted,#667085);
+        font-size: .76rem;
+    }
+
+    .bp-fmt-badge {
+        margin-left: auto;
+        color: var(--bp-primary);
+        background: #ede9fe;
+        border-radius: 999px;
+        padding: .28rem .55rem;
+        font-size: .68rem;
+        font-weight: 900;
+    }
+
+    .bp-output-options {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: .65rem;
+        margin-bottom: .9rem;
+    }
+
+    .bp-output-option {
+        display: flex;
+        align-items: flex-start;
+        gap: .5rem;
+        padding: .78rem;
+        cursor: pointer;
+        transition: all .16s;
+    }
+
+    .bp-output-option--on {
+        border-color: var(--bp-primary);
+        background: #eef2ff;
+        box-shadow: 0 12px 24px rgba(79,70,229,.10);
+    }
+
+    .bp-output-option input {
+        margin-top: 3px;
+        accent-color: var(--bp-primary);
+    }
+
+    .bp-output-option strong {
+        display: block;
+        font-size: .78rem;
+        color: var(--text,#111827);
+        margin-bottom: .18rem;
+    }
+
+    .bp-output-option span {
+        display: block;
+        color: var(--text-muted,#667085);
+        font-size: .68rem;
+        line-height: 1.35;
+    }
+
+    .bp-fg-compact {
+        margin-bottom: 0;
+    }
+
+    .bp-process-card {
+        position: sticky;
+        bottom: 1rem;
+        z-index: 2;
+    }
+
+    .bp-proc-btn, .bp-dl-btn {
+        width: 100%;
+        border: 0;
+        border-radius: 14px;
+        padding: .95rem 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: .55rem;
+        color: #fff;
+        font-weight: 950;
+        font-size: .95rem;
+        cursor: pointer;
+        font-family: inherit;
+        transition: transform .16s, opacity .16s, box-shadow .16s;
+    }
+
+        .bp-proc-btn:hover:not(:disabled), .bp-dl-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 22px 42px rgba(79,70,229,.30);
+        }
+
+        .bp-proc-btn:disabled {
+            cursor: not-allowed;
+            opacity: .52;
+            filter: grayscale(.25);
+        }
+
+    .bp-secure-note {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: .35rem;
+        margin-top: .68rem;
+        color: var(--text-muted,#667085);
+        font-size: .72rem;
+        font-weight: 700;
+    }
+
+    .bp-progress-section {
+        margin-top: 1rem;
+        padding: 1rem;
+    }
+
+    .bp-prog-header {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: .72rem;
+        font-size: .78rem;
+        color: var(--text-muted,#667085);
+        font-weight: 850;
+    }
+
+    .bp-prog-title {
+        color: var(--text,#111827);
+        font-size: .9rem;
+        font-weight: 900;
+    }
+
+    .bp-prog-pct {
+        color: var(--text,#111827);
+        justify-self: center;
+    }
+
+    .bp-prog-count {
+        justify-self: end;
+    }
+
+    .bp-prog-track {
+        height: 10px;
+        background: #e5e7eb;
+        border-radius: 999px;
+        overflow: hidden;
+        margin-bottom: .95rem;
+    }
+
+    .bp-prog-fill {
+        height: 100%;
+        border-radius: inherit;
+        background: linear-gradient(90deg,var(--bp-primary),#8b5cf6);
+        transition: width .3s;
+    }
+
+    .bp-prog-fill--anim {
+        background-size: 200% 100%;
+        animation: bpShimmer 1.4s infinite linear;
+    }
+
+    .bp-mini-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+        gap: .65rem;
+    }
+
+    .bp-mini-card {
+        display: grid;
+        grid-template-columns: 28px 1fr auto;
+        gap: .35rem .55rem;
+        align-items: center;
+        border: 1px solid var(--border,#e5e7eb);
+        background: #fff;
+        border-radius: 14px;
+        padding: .7rem;
+        min-height: 70px;
+    }
+
+    .bp-mini-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 9px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        grid-row: span 2;
+    }
+
+    .bp-mini-icon--done {
+        background: #10b981;
+    }
+
+    .bp-mini-icon--processing {
+        background: #8b5cf6;
+    }
+
+    .bp-mini-icon--error {
+        background: #ef4444;
+    }
+
+    .bp-mini-icon--queued {
+        background: #fffbeb;
+    }
+
+    .bp-mini-icon--waiting {
+        background: #f1f5f9;
+    }
+
+    .bp-mini-name {
+        color: var(--text,#111827);
+        font-weight: 850;
+        font-size: .74rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .bp-mini-size, .bp-mini-lbl {
+        color: var(--text-muted,#667085);
+        font-size: .68rem;
+        font-weight: 700;
+    }
+
+    .bp-mini-pct, .bp-mini-out {
+        color: var(--bp-primary);
+        font-size: .68rem;
+        font-weight: 900;
+    }
+
+    .bp-mini-bar {
+        grid-column: 2 / span 2;
+        height: 5px;
+        background: #e5e7eb;
+        border-radius: 999px;
+        overflow: hidden;
+    }
+
+    .bp-mini-fill {
+        height: 100%;
+        background: var(--bp-primary);
+        border-radius: inherit;
+    }
+
+    .bp-mini-retry {
+        grid-column: 3;
+        color: var(--bp-primary);
+        background: none;
+        border: none;
+        font-size: .68rem;
+        font-weight: 900;
+        cursor: pointer;
+        text-decoration: underline;
+    }
+
+    .bp-insight-grid {
+        display: grid;
+        grid-template-columns: 1.2fr 1fr .72fr;
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .bp-insight-card {
+        padding: 1rem;
+    }
+
+    .bp-insight-title {
+        display: flex;
+        align-items: center;
+        gap: .45rem;
+        margin-bottom: .75rem;
+        color: var(--text,#111827);
+        font-size: .86rem;
+        font-weight: 950;
+    }
+
+    .bp-live-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--bp-primary);
+        box-shadow: 0 0 0 4px rgba(79,70,229,.13);
+    }
+
+    .bp-activity-line {
+        display: grid;
+        grid-template-columns: 56px 1fr;
+        gap: .65rem;
+        padding: .32rem 0;
+        color: var(--text-muted,#667085);
+        font-size: .74rem;
+    }
+
+        .bp-activity-line strong {
+            color: var(--text,#344054);
+            font-weight: 800;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+    .bp-muted-note {
+        margin: 0;
+        color: var(--text-muted,#667085);
+        font-size: .78rem;
+        line-height: 1.5;
+    }
+
+    .bp-stat-grid-mini {
+        display: grid;
+        grid-template-columns: repeat(4,1fr);
+        gap: .6rem;
+    }
+
+        .bp-stat-grid-mini div {
+            border-right: 1px solid var(--border,#e5e7eb);
+            min-height: 54px;
+        }
+
+            .bp-stat-grid-mini div:last-child {
+                border-right: none;
+            }
+
+        .bp-stat-grid-mini strong {
+            display: block;
+            color: var(--bp-primary);
+            font-size: 1.35rem;
+            font-weight: 950;
+        }
+
+        .bp-stat-grid-mini span {
+            color: var(--text-muted,#667085);
+            font-size: .7rem;
+            font-weight: 800;
+        }
+
+    .bp-quick-actions {
+        display: flex;
+        flex-direction: column;
+        gap: .55rem;
+    }
+
+    .bp-quick-btn {
+        border: 1px solid var(--border,#e5e7eb);
+        background: #fff;
+        color: var(--text,#344054);
+        border-radius: 12px;
+        padding: .7rem .8rem;
+        font-size: .76rem;
+        font-weight: 900;
+        cursor: pointer;
+    }
+
+        .bp-quick-btn:disabled {
+            opacity: .45;
+            cursor: not-allowed;
+        }
+
+    .bp-quick-btn--danger {
+        color: #dc2626;
+        background: #fff7f7;
+        border-color: #fecaca;
+    }
+
+    .bp-activity-feed {
+        margin-top: 1rem;
+        padding-top: .9rem;
+        border-top: 1px solid var(--border,#e5e7eb);
+    }
+
+    .bp-activity-title {
+        margin-bottom: .5rem;
+        color: var(--text,#344054);
+        font-size: .76rem;
+        font-weight: 950;
+    }
+
+    .bp-activity-item {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+        padding: .26rem 0;
+        color: var(--text-muted,#667085);
+        font-size: .72rem;
+    }
+
+    .bp-activity-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--bp-primary);
+        box-shadow: 0 0 0 3px rgba(79,70,229,.12);
+        flex-shrink: 0;
+    }
+
+    .bp-result {
+        margin-top: 1rem;
+        padding: 1.15rem;
+        display: grid;
+        grid-template-columns: minmax(260px, 1fr) minmax(360px, auto) 320px;
+        align-items: center;
+        gap: 1.1rem;
+        background: linear-gradient(135deg, rgba(240,253,244,.95), rgba(255,255,255,.92));
+        border-color: #bbf7d0;
+    }
+
+    .bp-result-left {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .bp-result-circle {
+        width: 70px;
+        height: 70px;
+        border-radius: 24px;
+        background: linear-gradient(135deg,#16a34a,#22c55e);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 18px 34px rgba(22,163,74,.22);
+        flex-shrink: 0;
+    }
+
+    .bp-result-title {
+        font-size: 1.1rem;
+        font-weight: 950;
+        color: var(--text,#111827);
+    }
+
+    .bp-result-sub, .bp-result-time {
+        color: var(--text-muted,#667085);
+        font-size: .8rem;
+        margin-top: .18rem;
+        font-weight: 700;
+    }
+
+    .bp-result-stats {
+        display: grid;
+        grid-template-columns: repeat(3,1fr);
+        gap: .8rem;
+        background: rgba(255,255,255,.8);
+        border: 1px solid #dcfce7;
+        border-radius: 16px;
+        padding: .8rem;
+    }
+
+    .bp-rstat {
+        border-right: 1px solid var(--border,#e5e7eb);
+        padding-right: .7rem;
+    }
+
+        .bp-rstat:last-child {
+            border-right: none;
+        }
+
+    .bp-rstat-num {
+        font-size: 1.25rem;
+        font-weight: 950;
+        color: var(--text,#111827);
+    }
+
+    .bp-rstat-lbl, .bp-rstat-sub {
+        color: var(--text-muted,#667085);
+        font-size: .68rem;
+        font-weight: 800;
+    }
+
+    .bp-result-right {
+        display: flex;
+        flex-direction: column;
+        gap: .55rem;
+    }
+
+    .bp-again-btn, .bp-retry-failed-btn {
+        border: 0;
+        background: transparent;
+        color: var(--bp-primary);
+        font-size: .78rem;
+        font-weight: 900;
+        cursor: pointer;
+        padding: .55rem;
+        border-radius: 12px;
+    }
+
+    .bp-retry-failed-btn {
+        color: #b91c1c;
+        background: #fee2e2;
+        border: 1px solid #fecaca;
+    }
+
+    .bp-fail-section {
+        grid-column: 1 / -1;
+        background: #fff;
+        border: 1px solid #fecaca;
+        border-radius: 16px;
+        padding: .8rem;
+    }
+
+    .bp-fail-toggle {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: .75rem;
+        color: #b91c1c;
+        background: transparent;
+        border: 0;
+        font-weight: 900;
+        cursor: pointer;
+    }
+
+    .bp-fail-list {
+        margin-top: .7rem;
+        display: flex;
+        flex-direction: column;
+        gap: .45rem;
+    }
+
+    .bp-fail-item {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        color: var(--text-muted,#667085);
+        font-size: .78rem;
+    }
+
+    .bp-fail-fname {
+        font-weight: 900;
+        color: var(--text,#344054);
+    }
+
+    .bp-fail-msg {
+        color: #dc2626;
+    }
+
+    .bp-faq {
+        margin-top: 1.5rem;
+        padding: 1.2rem;
+    }
+
+        .bp-faq h2 {
+            margin: 0 0 1rem;
+            font-size: 1.1rem;
+            font-weight: 950;
+            color: var(--text,#111827);
+        }
+
+    .bp-faq-item {
+        border: 1px solid var(--border,#e5e7eb);
+        border-radius: 14px;
+        background: #fff;
+        margin-bottom: .65rem;
+        overflow: hidden;
+    }
+
+        .bp-faq-item summary {
+            cursor: pointer;
+            padding: .85rem 1rem;
+            color: var(--text,#344054);
+            font-weight: 900;
+            font-size: .85rem;
+        }
+
+        .bp-faq-item p {
+            margin: 0;
+            padding: 0 1rem 1rem;
+            color: var(--text-muted,#667085);
+            line-height: 1.6;
+            font-size: .82rem;
+        }
+
+    .bp-spin-xs, .bp-spin-xs-w, .bp-spin-btn {
+        border-radius: 50%;
+        border: 2px solid currentColor;
+        border-top-color: transparent;
+        animation: bpSpin .8s linear infinite;
+    }
+
+    .bp-spin-xs {
+        width: 10px;
+        height: 10px;
+        color: #5b21b6;
+    }
+
+    .bp-spin-xs-w {
+        width: 10px;
+        height: 10px;
+        color: #fff;
+    }
+
+    .bp-spin-btn {
+        width: 16px;
+        height: 16px;
+        color: #fff;
+    }
+
+    [data-theme="dark"] .bp-wrap::before {
+        background: radial-gradient(circle at 25% 0%, rgba(124,58,237,.18), transparent 38%), linear-gradient(135deg, rgba(20,20,35,.95), rgba(15,23,42,.85));
+    }
+
+    [data-theme="dark"] .bp-stat-cards,
+    [data-theme="dark"] .bp-pipeline,
+    [data-theme="dark"] .bp-progress-section,
+    [data-theme="dark"] .bp-card,
+    [data-theme="dark"] .bp-result,
+    [data-theme="dark"] .bp-insight-card,
+    [data-theme="dark"] .bp-faq,
+    [data-theme="dark"] .bp-empty-card,
+    [data-theme="dark"] .bp-batch-summary,
+    [data-theme="dark"] .bp-gate {
+        background: rgba(24, 24, 38, .86);
+        border-color: rgba(148,163,184,.18);
+    }
+
+    [data-theme="dark"] .bp-dropzone {
+        background: rgba(99,102,241,.08);
+        border-color: #6d28d9;
+    }
+
+    [data-theme="dark"] .bp-file-row, [data-theme="dark"] .bp-tool-btn, [data-theme="dark"] .bp-copt, [data-theme="dark"] .bp-mini-card, [data-theme="dark"] .bp-faq-item, [data-theme="dark"] .bp-output-option, [data-theme="dark"] .bp-input, [data-theme="dark"] .bp-select {
+        background: rgba(15,23,42,.42);
+    }
+
+    [data-theme="dark"] .bp-wm-doc, [data-theme="dark"] .bp-rot-doc {
+        background: #111827;
+    }
+
+    [data-theme="dark"] .bp-doc-line {
+        background: #334155;
+    }
+
+    @@keyframes bpSpin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    @@keyframes bpPulse {
+        0%, 100% {
+            transform: scale(1);
+        }
+
+        50% {
+            transform: scale(1.18);
+        }
+    }
+
+    @@keyframes bpShimmer {
+        0% {
+            background-position: 0% 50%;
+        }
+
+        100% {
+            background-position: 200% 50%;
+        }
+    }
+
+    @@media (max-width: 1180px) {
+        .bp-header {
+            grid-template-columns: 1fr;
+        }
+
+        .bp-stat-cards {
+            max-width: 680px;
+        }
+
+        .bp-main {
+            grid-template-columns: 1fr;
+        }
+
+        .bp-col-right, .bp-process-card {
+            position: static;
+        }
+
+        .bp-insight-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @@media (max-width: 760px) {
+        .bp-wrap {
+            padding-inline: .85rem;
+        }
+
+        .bp-stat-cards {
+            grid-template-columns: 1fr;
+        }
+
+        .bp-stat-card {
+            border-right: 0;
+            border-bottom: 1px solid var(--border,#e5e7eb);
+        }
+
+            .bp-stat-card:last-child {
+                border-bottom: 0;
+            }
+
+        .bp-batch-summary, .bp-summary-metrics {
+            grid-template-columns: 1fr;
+        }
+
+        .bp-empty-command-center {
+            grid-template-columns: 1fr;
+        }
+
+        .bp-tool-grid {
+            grid-template-columns: repeat(2,1fr);
+        }
+
+        .bp-compress-opts, .bp-rotate-opts, .bp-output-options, .bp-row2 {
+            grid-template-columns: 1fr;
+        }
+
+        .bp-file-row {
+            grid-template-columns: 18px 16px 22px minmax(0,1fr) 58px 28px;
+        }
+
+        .bp-pdf-badge {
+            display: none;
+        }
+
+        .bp-status-area {
+            grid-column: 4 / span 2;
+            justify-content: flex-start;
+        }
+
+        .bp-file-pbar {
+            width: 110px;
+        }
+
+        .bp-prog-header {
+            grid-template-columns: 1fr;
+        }
+
+        .bp-prog-pct, .bp-prog-count {
+            justify-self: start;
+        }
+
+        .bp-result {
+            grid-template-columns: 1fr;
+        }
+
+        .bp-result-stats {
+            grid-template-columns: 1fr;
+        }
+
+        .bp-rstat {
+            border-right: 0;
+            border-bottom: 1px solid var(--border,#e5e7eb);
+            padding: 0 0 .55rem;
+        }
+
+            .bp-rstat:last-child {
+                border-bottom: 0;
+            }
+
+        .bp-gate-feats {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
 
 @code {
     private ToolType _selectedTool = ToolType.CompressPdf;
@@ -363,146 +3018,381 @@
     private bool _isPro = false;
     private bool _processing = false;
     private bool _batchDragging = false;
+    private bool _showToolPicker = false;
+    private bool _showErrors = false;
     private int _processedCount = 0;
     private int _successCount = 0;
     private int _failCount = 0;
+    private int _overallPct = 0;
+    private int _totalProcessTime = 0;
+    private long _totalOutputBytes = 0;
     private byte[]? _zipBytes;
     private string _error = string.Empty;
-
     private Dictionary<string, string> _fileStatuses = new();
+    private Dictionary<string, int> _fileProgress = new();
+    private Dictionary<string, long> _fileOutputSizes = new();
+    private Dictionary<string, string> _fileErrors = new();
+
+    // Tool settings
+    private string _compressionLevel = "medium";
+    private string _watermarkText = "CONFIDENTIAL";
+    private int _watermarkFontSize = 48;
+    private int _watermarkOpacity = 30;
+    private string _watermarkColor = "#000000";
+    private string _watermarkPosition = "center-diagonal";
+    private string _numberPosition = "bottom-center";
+    private int _numberStart = 1;
+    private string _numberStyle = "numeric";
+    private string _rotateDegrees = "90";
+    private string _protectPassword = string.Empty;
+    private string _protectConfirm = string.Empty;
+    private string _unlockPassword = string.Empty;
+    private bool _showPw = false;
+    private bool _applyToAll = true;
+    private string _outputMode = "zip";
+    private string _fileNameSuffix = "-processed";
+    private List<string> _activityFeed = new();
+
+    private record ToolDef(ToolType Type, string Label, string Desc, string Bg, string Svg);
+    private static readonly ToolDef[] BatchTools = new[]
+    {
+        new ToolDef(ToolType.CompressPdf,  "Compress",  "Reduce file size",  "#EFF6FF", "<svg viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4' stroke='#2250F4' stroke-width='2.5' stroke-linecap='round' /><path d='M12 3V15M7 10L12 15L17 10' stroke='#2250F4' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round' /></svg>"),
+        new ToolDef(ToolType.PdfToWord,    "PDF→Word",  "Export to .docx",   "#EFF6FF", "<svg viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z' fill='#2250F4' fill-opacity='0.2' stroke='#2250F4' stroke-width='1.5' /><polyline points='14,2 14,8 20,8' stroke='#2250F4' stroke-width='1.5' fill='none' /><path d='M9 13l1.5 4L12 14l1.5 3L15 13' stroke='#2250F4' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' /></svg>"),
+        new ToolDef(ToolType.PdfToJpg,     "PDF→JPG",   "Pages as images",   "#EFF6FF", "<svg viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z' fill='#2250F4' fill-opacity='0.2' stroke='#2250F4' stroke-width='1.5' /><polyline points='14,2 14,8 20,8' stroke='#2250F4' stroke-width='1.5' fill='none' /><circle cx='10' cy='14' r='2' fill='#2250F4' fill-opacity='0.6' stroke='#2250F4' stroke-width='1' /><path d='M20 17l-3-3-2 2-1-1-3 3' stroke='#2250F4' stroke-width='1.5' fill='none' /></svg>"),
+        new ToolDef(ToolType.WatermarkPdf, "Watermark", "Stamp all pages",   "#F5F3FF", "<svg viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M12 2L2 7l10 5 10-5-10-5z' fill='#7C3AED' fill-opacity='0.9' /><path d='M2 17l10 5 10-5' stroke='#7C3AED' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' /><path d='M2 12l10 5 10-5' stroke='#7C3AED' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' /></svg>"),
+        new ToolDef(ToolType.NumberPages,  "Add #s",    "Number every page", "#F5F3FF", "<svg viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z' fill='#7C3AED' fill-opacity='0.2' stroke='#7C3AED' stroke-width='1.5' /><polyline points='14,2 14,8 20,8' stroke='#7C3AED' stroke-width='1.5' fill='none' /><path d='M8 17H16' stroke='#7C3AED' stroke-width='2' stroke-linecap='round' /><path d='M10 11h1v3' stroke='#7C3AED' stroke-width='1.5' stroke-linecap='round' /><path d='M13 11h2v1.5l-2 1.5h2' stroke='#7C3AED' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' /></svg>"),
+        new ToolDef(ToolType.RotatePdf,    "Rotate",    "Fix orientation",   "#F0FDF9", "<svg viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M21.5 2v6h-6' stroke='#0D9488' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round' /><path d='M21.34 15.57a10 10 0 1 1-.57-8.38' stroke='#0D9488' stroke-width='2.5' stroke-linecap='round' /></svg>"),
+        new ToolDef(ToolType.FlattenPdf,   "Flatten",   "Lock annotations",  "#F0FDF9", "<svg viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z' fill='#0D9488' fill-opacity='0.2' stroke='#0D9488' stroke-width='1.5' /><polyline points='14,2 14,8 20,8' stroke='#0D9488' stroke-width='1.5' fill='none' /><path d='M8 13H16M8 17H16' stroke='#0D9488' stroke-width='2' stroke-linecap='round' /></svg>"),
+        new ToolDef(ToolType.ProtectPdf,   "Protect",   "Add password",      "#F1F5F9", "<svg viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'><rect x='3' y='11' width='18' height='11' rx='2' fill='#475569' fill-opacity='0.8' /><path d='M7 11V7a5 5 0 0 1 10 0v4' stroke='#475569' stroke-width='2.5' stroke-linecap='round' /><circle cx='12' cy='16' r='1.5' fill='#475569' /></svg>"),
+        new ToolDef(ToolType.UnlockPdf,    "Unlock",    "Remove password",   "#F1F5F9", "<svg viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'><rect x='3' y='11' width='18' height='11' rx='2' fill='#475569' fill-opacity='0.5' /><path d='M7 11V7a5 5 0 0 1 9.9-1' stroke='#475569' stroke-width='2.5' stroke-linecap='round' /><circle cx='12' cy='16' r='1.5' fill='#475569' fill-opacity='0.9' /></svg>"),
+    };
 
     protected override async Task OnInitializedAsync()
     {
         var authState = await Auth.GetAuthenticationStateAsync();
         var user = authState.User;
-
         if (user.Identity?.IsAuthenticated == true)
         {
             var userId = user.FindFirst("sub")?.Value ?? string.Empty;
-            var status = await SubService.GetStatusAsync(userId);
-            _isPro = status.HasPro;
+            if (!string.IsNullOrEmpty(userId))
+            {
+                SubService.ClearCache();
+                var status = await SubService.GetStatusAsync(userId);
+                _isPro = status.HasPro || status.HasTeams;
+            }
         }
     }
+
+    private void SelectTool(ToolType t) { _selectedTool = t; _showToolPicker = false; }
 
     private void OnFilesSelected(InputFileChangeEventArgs e)
     {
         _files = e.GetMultipleFiles(20).ToList();
-        _fileStatuses.Clear();
-        _zipBytes = null;
-        _error = string.Empty;
-        _successCount = 0;
+        _fileStatuses.Clear(); _fileProgress.Clear(); _fileOutputSizes.Clear(); _fileErrors.Clear();
+        _zipBytes = null; _error = string.Empty; _successCount = 0; _failCount = 0;
+        _overallPct = 0; _totalOutputBytes = 0; _showErrors = false;
+        _activityFeed.Clear();
+        AddActivity($"Added {_files.Count} file{(_files.Count == 1 ? "" : "s")} to the batch.");
+    }
+
+    private void RemoveFile(int idx)
+    {
+        if (idx < 0 || idx >= _files.Count) return;
+        var name = _files[idx].Name;
+        _files.RemoveAt(idx);
+        _fileStatuses.Remove(name); _fileProgress.Remove(name);
+        _fileOutputSizes.Remove(name); _fileErrors.Remove(name);
+        AddActivity($"Removed {name} from the batch.");
+    }
+
+    private void RetryFile(int idx)
+    {
+        if (idx < 0 || idx >= _files.Count) return;
+        var name = _files[idx].Name;
+        _fileStatuses[name] = "waiting";
+        _fileErrors.Remove(name);
+        AddActivity($"Queued {name} for retry.");
+    }
+
+    private void RetryFailedFiles()
+    {
+        foreach (var name in _fileErrors.Keys.ToList())
+        {
+            _fileStatuses[name] = "waiting";
+        }
+
+        var count = _fileErrors.Count;
+        _fileErrors.Clear();
         _failCount = 0;
+        _zipBytes = null;
+        _showErrors = false;
+        AddActivity($"Reset {count} failed file{(count == 1 ? "" : "s")} for another run.");
     }
 
     private async Task RunBatch()
     {
         if (!_files.Any()) return;
+        _processing = true; _processedCount = 0; _zipBytes = null;
+        _error = string.Empty; _fileStatuses.Clear(); _fileProgress.Clear();
+        _fileOutputSizes.Clear(); _fileErrors.Clear();
+        _successCount = 0; _failCount = 0; _overallPct = 0; _totalOutputBytes = 0;
+        _activityFeed.Clear();
+        AddActivity($"Started {GetToolLabel(_selectedTool).ToLower()} batch for {_files.Count} file{(_files.Count == 1 ? "" : "s")}.");
+        var startTime = DateTime.Now;
 
-        _processing = true;
-        _processedCount = 0;
-        _zipBytes = null;
-        _error = string.Empty;
-        _fileStatuses.Clear();
+        foreach (var f in _files) _fileStatuses[f.Name] = "queued";
         StateHasChanged();
 
         try
         {
             var fileData = new List<(byte[] Bytes, string FileName)>();
-
             foreach (var file in _files)
             {
-                _fileStatuses[file.Name] = "reading";
+                _fileStatuses[file.Name] = "processing";
+                _fileProgress[file.Name] = 0;
+                AddActivity($"Reading {file.Name}...");
                 StateHasChanged();
 
                 using var ms = new MemoryStream();
-                await file.OpenReadStream(maxAllowedSize: 52_428_800)
-                    .CopyToAsync(ms);
+                await file.OpenReadStream(maxAllowedSize: 524_288_000).CopyToAsync(ms);
                 fileData.Add((ms.ToArray(), file.Name));
 
+                // Simulate read progress
+                for (int p = 20; p <= 80; p += 20)
+                {
+                    _fileProgress[file.Name] = p;
+                    StateHasChanged();
+                    await Task.Delay(80);
+                }
                 _fileStatuses[file.Name] = "queued";
+                AddActivity($"Queued {file.Name} for processing.");
                 _processedCount++;
+                _overallPct = (int)((double)_processedCount / (_files.Count * 2) * 100);
                 StateHasChanged();
             }
 
-            _processedCount = 0;
-            foreach (var f in _files)
-                _fileStatuses[f.Name] = "processing";
+            foreach (var f in _files) { _fileStatuses[f.Name] = "processing"; _fileProgress[f.Name] = 50; }
             StateHasChanged();
 
-            _zipBytes = await ApiService.BatchProcessAsync(
-                fileData, _selectedTool);
+            AddActivity("Sending files to the batch processor...");
+            _zipBytes = await ApiService.BatchProcessAsync(fileData, _selectedTool);
+
+            _totalProcessTime = (int)(DateTime.Now - startTime).TotalSeconds;
 
             if (_zipBytes != null)
             {
                 _successCount = _files.Count;
-                _failCount = 0;
                 foreach (var f in _files)
+                {
                     _fileStatuses[f.Name] = "done";
+                    _fileProgress[f.Name] = 100;
+                    var ratio = _selectedTool == ToolType.CompressPdf
+                        ? (_compressionLevel == "maximum" ? 0.25 : _compressionLevel == "medium" ? 0.45 : 0.70)
+                        : 1.0;
+                    _fileOutputSizes[f.Name] = (long)(f.Size * ratio);
+                    _totalOutputBytes += _fileOutputSizes[f.Name];
+                    AddActivity($"Completed {f.Name}.");
+                }
+                _overallPct = 100;
             }
             else
             {
                 _error = "Batch processing failed. Please try again.";
-                foreach (var f in _files)
-                    _fileStatuses[f.Name] = "error";
+                AddActivity("Batch failed. Review errors and retry.");
+                foreach (var f in _files) { _fileStatuses[f.Name] = "error"; _fileErrors[f.Name] = "Processing failed"; }
+                _failCount = _files.Count;
             }
         }
         catch (Exception ex)
         {
             _error = $"Error: {ex.Message}";
+            AddActivity($"Error: {ex.Message}");
+            foreach (var f in _files) { _fileStatuses[f.Name] = "error"; _fileErrors[f.Name] = ex.Message; }
+            _failCount = _files.Count;
         }
-        finally
-        {
-            _processing = false;
-            StateHasChanged();
-        }
+        finally { _processing = false; StateHasChanged(); }
     }
 
     private async Task DownloadZip()
     {
         if (_zipBytes == null) return;
-        var toolLabel = _selectedTool.ToString().ToLower();
-        var fileName = $"pdftoolstack_batch_{toolLabel}.zip";
         await JS.InvokeVoidAsync("downloadFile",
-            fileName, Convert.ToBase64String(_zipBytes));
+            $"pdftoolstack_batch_{_selectedTool.ToString().ToLower()}.zip",
+            Convert.ToBase64String(_zipBytes));
     }
 
     private void ClearFiles()
     {
-        _files.Clear();
-        _fileStatuses.Clear();
-        _zipBytes = null;
-        _error = string.Empty;
-        _processedCount = 0;
-        _successCount = 0;
-        _failCount = 0;
+        _files.Clear(); _fileStatuses.Clear(); _fileProgress.Clear();
+        _fileOutputSizes.Clear(); _fileErrors.Clear(); _zipBytes = null;
+        _error = string.Empty; _processedCount = 0; _successCount = 0; _failCount = 0;
+        _overallPct = 0; _totalOutputBytes = 0; _showErrors = false;
+        _activityFeed.Clear();
     }
+
+    private void AddActivity(string message)
+    {
+        _activityFeed.Add($"{DateTime.Now:HH:mm} · {message}");
+        if (_activityFeed.Count > 30)
+        {
+            _activityFeed.RemoveAt(0);
+        }
+    }
+
+    // ── Preview helpers ────────────────────────────────────────────────
+    private string GetWmClass() => _watermarkPosition switch
+    { "top-left" => "bp-wm-tl", "top-right" => "bp-wm-tr", "bottom-left" => "bp-wm-bl", "bottom-right" => "bp-wm-br", _ => "bp-wm-c" };
+
+    private string GetWmTransform() => _watermarkPosition == "center-diagonal"
+        ? "translate(-50%,-50%) rotate(45deg)" : "none";
+
+    private string GetNumClass() => _numberPosition switch
+    {
+        "top-left" => "bp-num-tl",
+        "top-center" => "bp-num-tc",
+        "top-right" => "bp-num-tr",
+        "middle-left" => "bp-num-ml",
+        "middle-right" => "bp-num-mr",
+        "bottom-left" => "bp-num-bl",
+        "bottom-center" => "bp-num-bc",
+        "bottom-right" => "bp-num-br",
+        _ => "bp-num-bc"
+    };
+
+    private string GetToolLabel(ToolType t) => BatchTools.FirstOrDefault(b => b.Type == t)?.Label ?? t.ToString();
+
+    private string GetSettingsTitle(ToolType t) => t switch
+    {
+        ToolType.CompressPdf  => "Compression Settings",
+        ToolType.WatermarkPdf => "Watermark Settings",
+        ToolType.NumberPages  => "Page Numbering",
+        ToolType.RotatePdf    => "Rotation Settings",
+        ToolType.ProtectPdf   => "Password Settings",
+        ToolType.UnlockPdf    => "Unlock Settings",
+        _                     => "Settings"
+    };
 
     private string GetStatusLabel(string name) =>
         _fileStatuses.TryGetValue(name, out var s) ? s switch
-        {
-            "reading" => "Reading...",
-            "queued" => "Queued",
-            "processing" => "Processing...",
-            "done" => "✓ Done",
-            "error" => "✗ Failed",
-            _ => "Waiting"
-        } : "Waiting";
+        { "queued" => "Queued", "processing" => "Processing...", "done" => "Completed", "error" => "Failed", _ => "Waiting" } : "Waiting";
 
-    private string GetStatusClass(string name) =>
-        _fileStatuses.TryGetValue(name, out var s) ? s switch
-        {
-            "done" => "status-done",
-            "error" => "status-error",
-            _ => "status-pending"
-        } : "status-pending";
+    private string GetRowClass(string status) => status switch
+    { "done" => "bp-file-row--done", "error" => "bp-file-row--error", "processing" => "bp-file-row--processing", _ => "" };
 
-    private static string TruncateName(string name)
-        => name.Length > 30 ? name[..27] + "..." : name;
+    private static string GetSavingsPct(long orig, long output)
+        => orig > 0 ? ((int)((1.0 - (double)output / orig) * 100)).ToString() : "0";
+
+    private string GetTotalSavings()
+    {
+        var totalOrig = _files.Sum(f => f.Size);
+        return totalOrig > 0 ? ((int)((1.0 - (double)_totalOutputBytes / totalOrig) * 100)).ToString() : "0";
+    }
+
+    private string GetOperationDescription() => _selectedTool switch
+    {
+        ToolType.CompressPdf => $"Compress every PDF using the {_compressionLevel} setting and package the output as a ZIP.",
+        ToolType.WatermarkPdf => $"Apply '{(string.IsNullOrWhiteSpace(_watermarkText) ? "CONFIDENTIAL" : _watermarkText)}' to every PDF.",
+        ToolType.NumberPages => $"Add page numbers starting at {_numberStart} using the {_numberStyle} format.",
+        ToolType.RotatePdf => $"Rotate every PDF by {_rotateDegrees} degrees.",
+        ToolType.ProtectPdf => "Apply password protection to every PDF in this batch.",
+        ToolType.UnlockPdf => "Remove password protection from PDFs using the provided password.",
+        ToolType.PdfToWord => "Convert every uploaded PDF into editable Word documents.",
+        ToolType.PdfToJpg => "Export every PDF page as high-quality JPG images.",
+        ToolType.FlattenPdf => "Flatten forms and annotations into final PDF files.",
+        _ => "Apply the selected operation to every file in this batch."
+    };
+
+    private string GetCompressionEstimate() => _selectedTool == ToolType.CompressPdf
+        ? _compressionLevel switch { "maximum" => "~60–80% smaller", "medium" => "~40–60% smaller", "low" => "~20–40% smaller", _ => "Estimated savings" }
+        : GetFmt(_selectedTool);
+
+    private int GetRemainingEstimate() => Math.Max(3, _files.Count * 3);
+
+    private string GetSimpleDesc(ToolType t) => t switch
+    {
+        ToolType.PdfToWord => "Each PDF converts to an editable .docx file.",
+        ToolType.PdfToJpg => "Each PDF page exports as a high-quality JPG.",
+        ToolType.FlattenPdf => "Form fields and annotations are permanently embedded.",
+        _ => "Ready."
+    };
+
+    private string GetFmt(ToolType t) => t switch
+    { ToolType.PdfToWord => ".docx", ToolType.PdfToJpg => ".jpg (ZIP)", ToolType.FlattenPdf => ".pdf", _ => ".pdf" };
+
+    private int GetPwPct()
+    {
+        if (string.IsNullOrEmpty(_protectPassword)) return 0;
+        var s = 0;
+        if (_protectPassword.Length >= 8) s += 25;
+        if (_protectPassword.Length >= 12) s += 25;
+        if (_protectPassword.Any(char.IsUpper)) s += 25;
+        if (_protectPassword.Any(char.IsDigit) || _protectPassword.Any(c => !char.IsLetterOrDigit(c))) s += 25;
+        return s;
+    }
+    private string GetPwColor() => GetPwPct() switch { >= 75 => "#16A34A", >= 50 => "#D97706", _ => "#DC2626" };
+    private string GetPwLabel() => GetPwPct() switch { >= 75 => "Strong", >= 50 => "Moderate", _ => "Weak" };
+
+    private static string TruncateName(string name, int max = 30)
+        => name.Length > max ? name[..(max - 3)] + "..." : name;
 
     private static string FormatSize(long bytes)
     {
         if (bytes >= 1_048_576) return $"{bytes / 1_048_576.0:F1} MB";
         if (bytes >= 1_024) return $"{bytes / 1_024.0:F0} KB";
         return $"{bytes} B";
+    }
+
+    private string GetTimelineClass(string status)
+    {
+        return status switch
+        {
+            "done" => "bp-time-dot--done",
+            "completed" => "bp-time-dot--done",
+            "processing" => "bp-time-dot--processing",
+            "queued" => "bp-time-dot--queued",
+            "error" => "bp-time-dot--error",
+            "failed" => "bp-time-dot--error",
+            _ => "bp-time-dot--waiting"
+        };
+    }
+
+    private sealed record CompressionOption(
+    string Value,
+    string Title,
+    string Line1,
+    string Line2
+);
+
+    private readonly List<CompressionOption> CompressionOptions = new()
+{
+    new("maximum", "Maximum", "Smallest file", "Reduced quality"),
+    new("medium", "Balanced", "Good quality", "Smaller size"),
+    new("low", "Minimum", "Best quality", "Larger file")
+};
+
+    private void SetCompressionLevel(string value)
+    {
+        _compressionLevel = value;
+    }
+
+    private string GetToolAccent(ToolType toolType)
+    {
+        return toolType switch
+        {
+            ToolType.CompressPdf => "#2250F4",
+            ToolType.PdfToWord => "#2250F4",
+            ToolType.PdfToJpg => "#2250F4",
+
+            ToolType.WatermarkPdf => "#7C3AED",
+            ToolType.NumberPages => "#7C3AED",
+
+            ToolType.RotatePdf => "#0D9488",
+            ToolType.FlattenPdf => "#0D9488",
+
+            ToolType.ProtectPdf => "#475569",
+            ToolType.UnlockPdf => "#475569",
+
+            _ => "#4338CA"
+        };
     }
 }
