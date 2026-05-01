@@ -81,7 +81,8 @@ namespace PdfToolStack.Infrastructure.Services
                     new() { Price = dto.PriceId, Quantity = 1 }
                 },
                 Mode = "subscription",
-                SuccessUrl = dto.SuccessUrl + "?session_id={CHECKOUT_SESSION_ID}",
+                SuccessUrl = dto.SuccessUrl + (dto.SuccessUrl.Contains('?') ? "&" : "?")
+                             + "session_id={CHECKOUT_SESSION_ID}",
                 CancelUrl = dto.CancelUrl,
                 CustomerEmail = dto.Email,
                 Metadata = new Dictionary<string, string>
@@ -108,8 +109,23 @@ namespace PdfToolStack.Infrastructure.Services
             string userId,
             string email,
             string successUrl,
-            string cancelUrl)
+            string cancelUrl,
+            Dictionary<string, string>? metadata = null)
         {
+            var sessionMetadata = new Dictionary<string, string>();
+
+            if (metadata != null)
+            {
+                foreach (var item in metadata)
+                {
+                    sessionMetadata[item.Key] = item.Value;
+                }
+            }
+
+            sessionMetadata["userId"] = userId;
+            sessionMetadata["checkout_type"] = "addon";
+            sessionMetadata["addon_type"] = addonType;
+
             var options = new SessionCreateOptions
             {
                 PaymentMethodTypes = new List<string> { "card" },
@@ -122,12 +138,7 @@ namespace PdfToolStack.Infrastructure.Services
                              + "session_id={CHECKOUT_SESSION_ID}&addon=" + addonType,
                 CancelUrl = cancelUrl,
                 CustomerEmail = email,
-                Metadata = new Dictionary<string, string>
-                {
-                    { "userId", userId },
-                    { "checkout_type", "addon" },
-                    { "addon_type", addonType }
-                }
+                Metadata = sessionMetadata
             };
 
             var service = new SessionService();
@@ -290,6 +301,24 @@ namespace PdfToolStack.Infrastructure.Services
                 CreatedAt = DateTime.UtcNow,
                 ExpiresAt = expiry
             });
+
+            if (addonType == "batch_unlock" &&
+                session.Metadata.TryGetValue("pendingBatchId", out var pendingBatchIdText) &&
+                Guid.TryParse(pendingBatchIdText, out var pendingBatchId))
+            {
+                var pendingBatch = await _db.PendingBatchJobs
+                    .FirstOrDefaultAsync(x => x.PendingBatchId == pendingBatchId);
+
+                if (pendingBatch != null &&
+                    pendingBatch.UserId == userId &&
+                    pendingBatch.Status == Domain.Enums.PendingBatchStatus.PendingPayment &&
+                    pendingBatch.ExpiresAtUtc > DateTime.UtcNow &&
+                    !pendingBatch.IsUsed)
+                {
+                    pendingBatch.Status = Domain.Enums.PendingBatchStatus.Paid;
+                    pendingBatch.PaymentSessionId = session.Id;
+                }
+            }
 
             // AI credit packs also top up AiCreditPurchases so AiUsageService can draw from them
             if (addonType == "ai_credit_pack")

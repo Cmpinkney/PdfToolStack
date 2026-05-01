@@ -106,13 +106,15 @@ namespace PdfToolStack.API.Controllers
 
             try
             {
+                var safeMetadata = GetSafeAddonMetadata(request);
                 var url = await _service.CreateOneTimeCheckoutAsync(
                     request.PriceId,
                     request.AddonType,
                     request.UserId,
                     request.Email,
                     request.SuccessUrl,
-                    request.CancelUrl);
+                    request.CancelUrl,
+                    safeMetadata);
 
                 if (string.IsNullOrEmpty(url))
                 {
@@ -132,6 +134,20 @@ namespace PdfToolStack.API.Controllers
                 _logger.LogError("Addon checkout error: {Message}", ex.Message);
                 return BadRequest(new { error = ex.Message });
             }
+        }
+
+        private static Dictionary<string, string> GetSafeAddonMetadata(AddonCheckoutRequest request)
+        {
+            var metadata = new Dictionary<string, string>();
+
+            if (request.AddonType == "batch_unlock" &&
+                request.Metadata?.TryGetValue("pendingBatchId", out var pendingBatchId) == true &&
+                Guid.TryParse(pendingBatchId, out _))
+            {
+                metadata["pendingBatchId"] = pendingBatchId;
+            }
+
+            return metadata;
         }
 
         // ── Portal ────────────────────────────────────────────────────────────────
