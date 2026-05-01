@@ -23,99 +23,146 @@
 <div class="tool-page">
     <AdSlot Size="banner" />
     <div class="tool-container">
-        <h1>Excel to PDF Converter</h1>
-        <p class="tool-subtitle">
-            Convert your Excel spreadsheet to PDF for free.
-            No signup required. Files deleted within 1 hour.
-        </p>
+        <section class="tool-hero">
+            <div class="trust-row">
+                <span>Spreadsheet conversion</span>
+                <span>PDF output</span>
+                <span>Deleted in 1 hour</span>
+            </div>
+            <h1>Convert Excel to PDF <span class="hero-gradient-text">cleanly</span></h1>
+            <p>Turn spreadsheets into clean PDFs for sharing, reporting, and archiving.</p>
+        </section>
 
-        @if (CurrentState == PageState.Upload)
-        {
-            <div class="upload-container">
-                <span class="upload-icon">📊</span>
-                <p>Upload your Excel file (.xlsx)</p>
-                <label class="upload-button">
-                    Browse File
-                    <InputFile OnChange="HandleFileSelected"
-                               accept=".xlsx,.xls"
-                               style="display:none" />
-                </label>
-                <div class="cloud-picker-row">
-                    <span class="cloud-picker-label">OR IMPORT FROM</span>
-                    <div class="cloud-picker-buttons">
-                        <button class="cloud-picker-btn" @onclick="PickGoogleDrive" disabled="@_cloudLoading">
-                            <svg width="16" height="16" viewBox="0 0 87.3 78" xmlns="http://www.w3.org/2000/svg"><path d="m6.6 66.85 3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8h-27.5c0 1.55.4 3.1 1.2 4.5z" fill="#0066da" /><path d="m43.65 25-13.75-23.8c-1.35.8-2.5 1.9-3.3 3.3l-25.4 44a9.06 9.06 0 0 0 -1.2 4.5h27.5z" fill="#00ac47" /><path d="m73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5h-27.502l5.852 11.5z" fill="#ea4335" /><path d="m43.65 25 13.75-23.8c-1.35-.8-2.9-1.2-4.5-1.2h-18.5c-1.6 0-3.15.45-4.5 1.2z" fill="#00832d" /><path d="m59.8 53h-32.3l-13.75 23.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2z" fill="#2684fc" /><path d="m73.4 26.5-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3l-13.75 23.8 16.15 28h27.45c0-1.55-.4-3.1-1.2-4.5z" fill="#ffba00" /></svg>
-                            Google Drive
-                        </button>
-                        <button class="cloud-picker-btn" @onclick="PickDropbox" disabled="@_cloudLoading">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="#0061FF"><path d="M6 2L0 6l6 4-6 4 6 4 6-4-6-4 6-4L6 2zm12 0l-6 4 6 4-6 4 6 4 6-4-6-4 6-4-6-4zm-6 13l-6 4 6 4 6-4-6-4z" /></svg>
-                            Dropbox
-                        </button>
+        <div class="stepper" aria-label="Excel to PDF workflow progress">
+            <div class="step @(SelectedFile != null || CurrentState != PageState.Upload ? "complete" : "active")">Upload</div>
+            <div class="step @(SelectedFile != null && CurrentState == PageState.Upload ? "active" : CurrentState == PageState.Processing || CurrentState == PageState.Complete ? "complete" : "")">Configure</div>
+            <div class="step @(CurrentState == PageState.Processing ? "active" : CurrentState == PageState.Complete ? "complete" : "")">Process</div>
+            <div class="step @(CurrentState == PageState.Complete ? "complete active" : "")">Download</div>
+        </div>
+
+        <section class="workflow-grid">
+            <div class="workspace-card">
+                @if (CurrentState == PageState.Upload)
+                {
+                    <div class="panel-header">
+                        <span class="panel-eyebrow">Excel upload</span>
+                        <h2>Start with your spreadsheet</h2>
+                        <p>Upload an XLS or XLSX file from your device, Google Drive, or Dropbox.</p>
                     </div>
-                </div>
-                @if (_cloudLoading)
-                {
-                    <p class="cloud-loading-hint">⏳ Downloading from cloud...</p>
+
+                    <div class="upload-container">
+                        <span class="upload-icon">XLSX</span>
+                        <p>Upload your Excel file (.xlsx)</p>
+                        <label class="upload-button">
+                            Browse File
+                            <InputFile OnChange="HandleFileSelected"
+                                       accept=".xlsx,.xls"
+                                       style="display:none" />
+                        </label>
+                        <div class="cloud-picker-row">
+                            <span class="cloud-picker-label">OR IMPORT FROM</span>
+                            <div class="cloud-picker-buttons">
+                                <button class="cloud-picker-btn" @onclick="PickGoogleDrive" disabled="@_cloudLoading">
+                                    <svg width="16" height="16" viewBox="0 0 87.3 78" xmlns="http://www.w3.org/2000/svg"><path d="m6.6 66.85 3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8h-27.5c0 1.55.4 3.1 1.2 4.5z" fill="#0066da" /><path d="m43.65 25-13.75-23.8c-1.35.8-2.5 1.9-3.3 3.3l-25.4 44a9.06 9.06 0 0 0 -1.2 4.5h27.5z" fill="#00ac47" /><path d="m73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5h-27.502l5.852 11.5z" fill="#ea4335" /><path d="m43.65 25 13.75-23.8c-1.35-.8-2.9-1.2-4.5-1.2h-18.5c-1.6 0-3.15.45-4.5 1.2z" fill="#00832d" /><path d="m59.8 53h-32.3l-13.75 23.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2z" fill="#2684fc" /><path d="m73.4 26.5-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3l-13.75 23.8 16.15 28h27.45c0-1.55-.4-3.1-1.2-4.5z" fill="#ffba00" /></svg>
+                                    Google Drive
+                                </button>
+                                <button class="cloud-picker-btn" @onclick="PickDropbox" disabled="@_cloudLoading">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="#0061FF"><path d="M6 2L0 6l6 4-6 4 6 4 6-4-6-4 6-4L6 2zm12 0l-6 4 6 4-6 4 6 4 6-4-6-4 6-4-6-4zm-6 13l-6 4 6 4 6-4-6-4z" /></svg>
+                                    Dropbox
+                                </button>
+                            </div>
+                        </div>
+                        @if (_cloudLoading)
+                        {
+                            <p class="cloud-loading-hint">Downloading from cloud...</p>
+                        }
+                        @if (!string.IsNullOrEmpty(_cloudError))
+                        {
+                            <p class="error-message">@_cloudError</p>
+                        }
+                        <p class="upload-hint">Supports .xlsx files up to 25MB</p>
+                    </div>
+
+                    @if (SelectedFile != null)
+                    {
+                        <div class="file-summary">
+                            <div>
+                                <span class="file-name">@SelectedFile.Name</span>
+                                <span class="file-size">@Validator.FormatSize(SelectedFile.Size)</span>
+                            </div>
+                            <span class="status-pill">Ready</span>
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(ErrorMessage))
+                    {
+                        <p class="error-message">@ErrorMessage</p>
+                    }
                 }
-                @if (!string.IsNullOrEmpty(_cloudError))
+
+                @if (CurrentState == PageState.LargeFile)
                 {
-                    <p class="error-message">@_cloudError</p>
+                    <LargeFileUpgrade FileSizeBytes="@(SelectedFile?.Size ?? 0)"
+                                      FileName="@(SelectedFile?.Name ?? "")"
+                                      ToolType="ExcelToPdf"
+                                      OnCancel="Reset" />
                 }
-                <p class="upload-hint">Supports .xlsx files up to 25MB</p>
+
+                @if (CurrentState == PageState.Processing)
+                {
+                    <div class="processing-container">
+                        <div class="spinner"></div>
+                        <h2>Converting your spreadsheet</h2>
+                        <p>Reading workbook... preparing pages... creating your PDF...</p>
+                    </div>
+                }
+
+                @if (CurrentState == PageState.Complete && ResultBytes != null)
+                {
+                    <AdSlot Size="rectangle" />
+                    <div class="result-container">
+                        <span class="result-icon">Done</span>
+                        <h2>Your PDF is ready</h2>
+                        <p>Your Excel spreadsheet has been converted to PDF successfully.</p>
+                        <button class="download-button" @onclick="DownloadFile">Download PDF</button>
+                        <button class="reset-button" @onclick="Reset">Convert Another Spreadsheet</button>
+                    </div>
+                }
+
+                @if (CurrentState == PageState.Error)
+                {
+                    <div class="error-container">
+                        <span class="error-icon">Issue</span>
+                        <h2>We could not convert this spreadsheet</h2>
+                        <p class="error-message">@ErrorMessage</p>
+                        <button class="reset-button" @onclick="Reset">Try Again</button>
+                    </div>
+                }
             </div>
 
-            @if (SelectedFile != null)
-            {
-                <div class="selected-file-info">
-                    <span>📊 @SelectedFile.Name</span>
+            <aside class="settings-card">
+                <div class="panel-header">
+                    <span class="panel-eyebrow">Conversion profile</span>
+                    <h2>Create a clean PDF</h2>
+                    <p>Convert spreadsheet content into a shareable PDF document.</p>
                 </div>
-                <button class="process-button" @onclick="ProcessFile">Convert to PDF</button>
-            }
 
-            @if (!string.IsNullOrEmpty(ErrorMessage))
-            {
-                <p class="error-message">@ErrorMessage</p>
-            }
-        }
+                <div class="value-list">
+                    <div><strong>Workbook to PDF</strong><span>Turns Excel spreadsheets into stable PDF output.</span></div>
+                    <div><strong>Report-ready sharing</strong><span>Useful for invoices, tables, and internal reports.</span></div>
+                    <div><strong>Cloud imports</strong><span>Use existing Google Drive and Dropbox options.</span></div>
+                </div>
 
-        @if (CurrentState == PageState.LargeFile)
-        {
-            <LargeFileUpgrade FileSizeBytes="@(SelectedFile?.Size ?? 0)"
-                              FileName="@(SelectedFile?.Name ?? "")"
-                              ToolType="ExcelToPdf"
-                              OnCancel="Reset" />
-        }
-
-        @if (CurrentState == PageState.Processing)
-        {
-            <div class="processing-container">
-                <div class="spinner"></div>
-                <p>Converting your spreadsheet to PDF...</p>
-            </div>
-        }
-
-        @if (CurrentState == PageState.Complete && ResultBytes != null)
-        {
-            <AdSlot Size="rectangle" />
-            <div class="result-container">
-                <span class="result-icon">✅</span>
-                <h2>Conversion Complete!</h2>
-                <p style="color: var(--gray); margin-bottom: 1.5rem;">
-                    Your Excel spreadsheet has been converted to PDF successfully.
-                </p>
-                <button class="download-button" @onclick="DownloadFile">Download PDF</button>
-                <button class="reset-button" @onclick="Reset">Convert Another Spreadsheet</button>
-            </div>
-        }
-
-        @if (CurrentState == PageState.Error)
-        {
-            <div class="error-container">
-                <span class="error-icon">❌</span>
-                <p class="error-message">@ErrorMessage</p>
-                <button class="reset-button" @onclick="Reset">Try Again</button>
-            </div>
-        }
+                @if (SelectedFile != null && CurrentState == PageState.Upload)
+                {
+                    <button class="process-button" @onclick="ProcessFile">Convert to PDF</button>
+                }
+                else if (CurrentState == PageState.Upload)
+                {
+                    <button class="process-button disabled" disabled>Upload an Excel file to continue</button>
+                }
+            </aside>
+        </section>
     </div>
 
     <div class="faq-section">
@@ -134,6 +181,59 @@
         </div>
     </div>
 </div>
+
+<style>
+    .tool-page { width: 100%; min-height: calc(100vh - 72px); padding: 48px 0 72px; background: radial-gradient(circle at top left, rgba(109,40,217,.12), transparent 32%), linear-gradient(135deg, #f8f7ff 0%, #eef5ff 100%); }
+    .tool-container { width: min(1320px, calc(100% - 64px)); max-width: 1320px; margin: 0 auto; }
+    .tool-hero { width: 100%; max-width: none; margin-bottom: 24px; text-align: left; }
+    .tool-hero h1 { max-width: 900px; margin: 0 0 14px; color: #111827; font-size: clamp(2.4rem, 3vw, 3.8rem); line-height: 1.02; letter-spacing: -0.04em; }
+    .tool-hero p { max-width: 760px; margin: 0; color: #526173; font-size: 1rem; line-height: 1.7; }
+    .hero-gradient-text { background: linear-gradient(135deg, #6d5dfc 0%, #2563eb 55%, #06b6d4 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .trust-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; }
+    .trust-row span { border: 1px solid rgba(37,99,235,.16); border-radius: 999px; background: rgba(255,255,255,.76); color: #334155; font-size: .83rem; font-weight: 800; padding: .48rem .78rem; box-shadow: 0 10px 30px rgba(15,23,42,.06); }
+    .stepper { width: 100%; max-width: none; margin: 0 0 24px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 8px; border-radius: 999px; background: rgba(255,255,255,.8); box-shadow: 0 18px 45px rgba(15,23,42,.08); }
+    .step { min-height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 999px; color: #64748b; font-size: .9rem; font-weight: 900; }
+    .step.active { background: linear-gradient(135deg, #6d5dfc, #2563eb); color: #fff; box-shadow: 0 12px 26px rgba(37,99,235,.24); }
+    .step.complete { background: #eef2ff; color: #3730a3; }
+    .workflow-grid { width: 100%; max-width: none; display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(360px, .75fr); gap: 28px; align-items: start; }
+    .workspace-card, .settings-card { width: 100%; max-width: none; min-width: 0; box-sizing: border-box; border: 1px solid rgba(148,163,184,.18); border-radius: 24px; background: rgba(255,255,255,.92); box-shadow: 0 20px 50px rgba(15,23,42,.08); padding: 28px; }
+    .settings-card { position: sticky; top: 24px; }
+    .panel-header { margin-bottom: 20px; }
+    .panel-eyebrow { display: inline-flex; margin-bottom: 10px; color: #4f46e5; font-size: .76rem; font-weight: 950; letter-spacing: .08em; text-transform: uppercase; }
+    .panel-header h2 { margin: 0 0 8px; color: #111827; font-size: 1.35rem; line-height: 1.2; }
+    .panel-header p { margin: 0; color: #64748b; line-height: 1.6; }
+    .upload-container { width: 100%; max-width: none; box-sizing: border-box; border: 1px dashed rgba(37,99,235,.28); border-radius: 22px; background: linear-gradient(135deg, #fff, #f8fbff); padding: 28px; text-align: center; }
+    .upload-icon { display: inline-flex; align-items: center; justify-content: center; width: 58px; height: 58px; margin-bottom: 12px; border-radius: 18px; background: #eef2ff; color: #3730a3; font-weight: 950; }
+    .upload-button { display: inline-flex; align-items: center; justify-content: center; margin: 10px 0; border-radius: 14px; background: linear-gradient(135deg, #6d5dfc, #2563eb); color: #fff; cursor: pointer; font-weight: 950; padding: .85rem 1.1rem; box-shadow: 0 16px 32px rgba(37,99,235,.22); }
+    .upload-hint, .cloud-loading-hint { color: #64748b; font-size: .9rem; }
+    .cloud-picker-row { margin-top: 18px; }
+    .cloud-picker-label { display: block; margin-bottom: 10px; color: #64748b; font-size: .72rem; font-weight: 950; letter-spacing: .08em; }
+    .cloud-picker-buttons { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+    .cloud-picker-btn { display: inline-flex; align-items: center; gap: 8px; border: 1px solid rgba(148,163,184,.24); border-radius: 999px; background: #fff; color: #334155; cursor: pointer; font-weight: 900; padding: .7rem .95rem; }
+    .file-summary, .value-list div { border: 1px solid rgba(148,163,184,.16); border-radius: 18px; background: #f8fafc; padding: 16px; }
+    .file-summary { display: flex; justify-content: space-between; gap: 16px; align-items: center; margin-top: 18px; }
+    .file-name, .file-size, .value-list strong, .value-list span { display: block; }
+    .file-name { color: #111827; font-weight: 900; word-break: break-word; }
+    .file-size, .value-list span { color: #64748b; font-size: .9rem; }
+    .status-pill { border-radius: 999px; background: #dcfce7; color: #166534; font-size: .78rem; font-weight: 900; padding: .35rem .6rem; white-space: nowrap; }
+    .value-list { display: grid; gap: 12px; margin: 18px 0; }
+    .value-list strong { color: #111827; margin-bottom: 4px; }
+    .process-button, .download-button { width: 100%; border: 0; border-radius: 16px; background: linear-gradient(135deg, #6d5dfc, #2563eb); color: #fff; cursor: pointer; font-weight: 950; padding: 1rem 1.15rem; box-shadow: 0 18px 36px rgba(37,99,235,.25); transition: transform .18s ease, box-shadow .18s ease; }
+    .process-button:hover, .download-button:hover { transform: translateY(-2px); box-shadow: 0 24px 45px rgba(37,99,235,.32); }
+    .process-button.disabled { cursor: not-allowed; opacity: .58; transform: none; box-shadow: none; }
+    .processing-container, .result-container, .error-container { text-align: center; padding: 34px 18px; }
+    .spinner { width: 46px; height: 46px; margin: 0 auto 18px; border: 4px solid #e0e7ff; border-top-color: #2563eb; border-radius: 50%; animation: spin 1s linear infinite; }
+    .result-icon, .error-icon { display: inline-flex; margin-bottom: 14px; border-radius: 999px; padding: .45rem .7rem; font-size: .82rem; font-weight: 950; }
+    .result-icon { background: #dcfce7; color: #166534; }
+    .error-icon { background: #fee2e2; color: #991b1b; }
+    .result-container h2, .error-container h2, .processing-container h2 { margin: 0 0 10px; color: #111827; }
+    .result-container p, .error-container p, .processing-container p { margin: 0 0 18px; color: #64748b; line-height: 1.6; }
+    .reset-button { border: 0; border-radius: 14px; background: #eef2ff; color: #3730a3; cursor: pointer; font-weight: 900; padding: .9rem 1rem; }
+    .download-button + .reset-button { width: 100%; margin-top: 12px; }
+    .error-message { color: #b91c1c; font-weight: 800; }
+    @@keyframes spin { to { transform: rotate(360deg); } }
+    @@media (max-width: 980px) { .tool-container { width: min(100%, calc(100% - 24px)); } .workflow-grid { grid-template-columns: 1fr; } .settings-card { position: static; } .stepper { overflow-x: auto; border-radius: 20px; grid-template-columns: repeat(4, minmax(130px, 1fr)); } .tool-hero h1 { font-size: clamp(2rem, 8vw, 3rem); } }
+</style>
 
 @code {
     private enum PageState { Upload, Processing, Complete, Error, LargeFile }

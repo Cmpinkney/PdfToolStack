@@ -1890,6 +1890,68 @@
             min-height: 520px;
         }
     }
+    /* ── Shared facelift normalization ───────────────────── */
+    .hero-gradient-text {
+        background: linear-gradient(135deg, #6d5dfc 0%, #2563eb 55%, #06b6d4 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+
+    .cp-trust-row {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: .55rem;
+        min-width: 320px;
+    }
+
+    .cp-trust-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: .42rem;
+        color: #334155;
+        background: rgba(255, 255, 255, .78);
+        border: 1px solid rgba(148, 163, 184, .34);
+        box-shadow: 0 10px 26px rgba(15, 23, 42, .06);
+        border-radius: 999px;
+        padding: .45rem .7rem;
+        font-size: .78rem;
+        font-weight: 700;
+    }
+
+    .cp-stepper {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: .65rem;
+        padding: .65rem;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, .72);
+        border: 1px solid rgba(148, 163, 184, .28);
+        box-shadow: 0 20px 55px rgba(15, 23, 42, .08);
+        backdrop-filter: blur(14px);
+    }
+
+    .cp-step--active {
+        color: #FFFFFF;
+        background: linear-gradient(135deg, #0F172A 0%, #2563eb 55%, #06b6d4 100%);
+        box-shadow: 0 12px 26px rgba(37, 99, 235, .22);
+    }
+
+    .cp-apply-btn,
+    .cp-download-btn {
+        border-radius: 14px;
+        background: linear-gradient(135deg, #6d5dfc 0%, #2563eb 55%, #06b6d4 100%);
+        box-shadow: 0 16px 34px rgba(37, 99, 235, .28);
+        transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease;
+    }
+
+    .cp-apply-btn:hover:not(:disabled),
+    .cp-download-btn:hover {
+        opacity: .95;
+        transform: translateY(-1px);
+        box-shadow: 0 22px 42px rgba(37, 99, 235, .3);
+    }
 </style>
 
 @code {

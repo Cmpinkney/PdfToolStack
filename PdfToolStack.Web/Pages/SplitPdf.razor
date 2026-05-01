@@ -17,74 +17,141 @@
 <div class="tool-page">
     <AdSlot Size="banner" />
     <div class="tool-container">
-        <h1>Split PDF Online</h1>
-        <p class="tool-subtitle">Extract a range of pages from your PDF for free. No signup required.</p>
+        <section class="tool-hero">
+            <div class="trust-row">
+                <span>Page range control</span>
+                <span>Fast extraction</span>
+                <span>Deleted in 1 hour</span>
+            </div>
+            <h1>Split PDF <span class="hero-gradient-text">precisely</span></h1>
+            <p>Extract exactly the pages you need with a clean workflow built for quick document cleanup.</p>
+        </section>
 
-        @if (CurrentState == PageState.Upload)
-        {
-            <FileUpload OnFileSelected="HandleFileSelected" OnFileRemoved="HandleFileRemoved" />
+        <div class="stepper" aria-label="Split workflow progress">
+            <div class="step @(SelectedFile != null || CurrentState != PageState.Upload ? "complete" : "active")">Upload</div>
+            <div class="step @(SelectedFile != null && CurrentState == PageState.Upload ? "active" : CurrentState == PageState.Processing || CurrentState == PageState.Complete ? "complete" : "")">Configure</div>
+            <div class="step @(CurrentState == PageState.Processing ? "active" : CurrentState == PageState.Complete ? "complete" : "")">Process</div>
+            <div class="step @(CurrentState == PageState.Complete ? "complete active" : "")">Download</div>
+        </div>
 
-            @if (SelectedFile != null)
-            {
-                @if (_loadingPageCount)
+        <section class="workflow-grid">
+            <div class="workspace-card">
+                @if (CurrentState == PageState.Upload)
                 {
-                    <div class="processing-container">
-                        <div class="spinner"></div>
-                        <p>Reading PDF...</p>
+                    <div class="panel-header">
+                        <span class="panel-eyebrow">PDF upload</span>
+                        <h2>Start with your document</h2>
+                        <p>Upload a PDF, then choose the exact page range you want to extract.</p>
+                    </div>
+
+                    <FileUpload OnFileSelected="HandleFileSelected" OnFileRemoved="HandleFileRemoved" />
+
+                    @if (SelectedFile != null)
+                    {
+                        <div class="file-summary">
+                            <div>
+                                <span class="file-name">@SelectedFile.Name</span>
+                                <span class="file-size">@Validator.FormatSize(SelectedFile.Size)</span>
+                            </div>
+                            <span class="status-pill">Ready</span>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="empty-state">
+                            <strong>Precise page extraction</strong>
+                            <span>Split out the pages you need without rebuilding the document manually.</span>
+                        </div>
+                    }
+                }
+
+                @if (CurrentState == PageState.LargeFile)
+                {
+                    <LargeFileUpgrade FileSizeBytes="@(SelectedFile?.Size ?? 0)" FileName="@(SelectedFile?.Name ?? "")" ToolType="SplitPdf" OnCancel="Reset" />
+                }
+
+                @if (CurrentState == PageState.Processing)
+                {
+                    <div class="processing-container"><div class="spinner"></div><h2>Splitting your PDF</h2><p>Extracting pages... rebuilding output... preparing your download...</p></div>
+                }
+
+                @if (CurrentState == PageState.Complete && ResultBytes != null)
+                {
+                    <AdSlot Size="rectangle" />
+                    <div class="result-container">
+                        <span class="result-icon">Done</span>
+                        <h2>Your split PDF is ready</h2>
+                        <p>Pages @FromPage to @ToPage were extracted successfully.</p>
+                        <button class="download-button" @onclick="DownloadFile">Download PDF</button>
+                        <button class="reset-button" @onclick="Reset">Split Another PDF</button>
                     </div>
                 }
-                else if (TotalPages > 0)
+
+                @if (CurrentState == PageState.Error)
                 {
-                    <div class="split-options">
-                        <h3>Select Page Range</h3>
-                        <p class="page-selector-hint">Your PDF has @TotalPages page@(TotalPages == 1 ? "" : "s").</p>
+                    <div class="error-container">
+                        <span class="error-icon">Issue</span>
+                        <h2>We could not split this PDF</h2>
+                        <p class="error-message">@ErrorMessage</p>
+                        <button class="reset-button" @onclick="Reset">Try Again</button>
+                    </div>
+                }
+            </div>
+
+            <aside class="settings-card">
+                <div class="panel-header">
+                    <span class="panel-eyebrow">Split settings</span>
+                    <h2>Choose page range</h2>
+                    <p>Select the first and last page for your extracted PDF.</p>
+                </div>
+
+                @if (SelectedFile != null && CurrentState == PageState.Upload)
+                {
+                    @if (_loadingPageCount)
+                    {
+                        <div class="processing-container compact">
+                            <div class="spinner"></div>
+                            <p>Reading PDF pages...</p>
+                        </div>
+                    }
+                    else if (TotalPages > 0)
+                    {
+                        <div class="estimate-card">
+                            <span>Total pages</span>
+                            <strong>@TotalPages page@(TotalPages == 1 ? "" : "s")</strong>
+                            <small>Extracted range becomes a new PDF.</small>
+                        </div>
                         <div class="split-range">
-                            <div class="form-group">
+                            <div class="field-card">
                                 <label>From Page</label>
                                 <input type="number" class="field-input" min="1" max="@TotalPages" @bind="FromPage" />
                             </div>
-                            <span class="split-to">to</span>
-                            <div class="form-group">
+                            <div class="field-card">
                                 <label>To Page</label>
                                 <input type="number" class="field-input" min="1" max="@TotalPages" @bind="ToPage" />
                             </div>
                         </div>
-                        <button class="process-button" @onclick="ProcessFile">Extract Pages @FromPage–@ToPage</button>
-                    </div>
+                    }
                 }
-            }
-        }
 
-        @if (CurrentState == PageState.LargeFile)
-        {
-            <LargeFileUpgrade FileSizeBytes="@(SelectedFile?.Size ?? 0)" FileName="@(SelectedFile?.Name ?? "")" ToolType="SplitPdf" OnCancel="Reset" />
-        }
+                <div class="value-list">
+                    <div><strong>Range extraction</strong><span>Pull out only the pages that matter.</span></div>
+                    <div><strong>Clean output</strong><span>Create a separate PDF from your selected range.</span></div>
+                    <div><strong>Secure processing</strong><span>Your files are handled privately and removed after processing.</span></div>
+                </div>
 
-        @if (CurrentState == PageState.Processing)
-        {
-            <div class="processing-container"><div class="spinner"></div><p>Splitting your PDF...</p></div>
-        }
-
-        @if (CurrentState == PageState.Complete && ResultBytes != null)
-        {
-            <AdSlot Size="rectangle" />
-            <div class="result-container">
-                <span class="result-icon">✅</span>
-                <h2>PDF Split!</h2>
-                <p style="color: var(--gray); margin-bottom: 1.5rem;">Pages @FromPage to @ToPage extracted successfully.</p>
-                <button class="download-button" @onclick="DownloadFile">Download PDF</button>
-                <button class="reset-button" @onclick="Reset">Split Another PDF</button>
-            </div>
-        }
-
-        @if (CurrentState == PageState.Error)
-        {
-            <div class="error-container">
-                <span class="error-icon">❌</span>
-                <p class="error-message">@ErrorMessage</p>
-                <button class="reset-button" @onclick="Reset">Try Again</button>
-            </div>
-        }
+                @if (SelectedFile != null && CurrentState == PageState.Upload && !_loadingPageCount && TotalPages > 0)
+                {
+                    <button class="process-button" @onclick="ProcessFile">Extract Pages @FromPage-@ToPage</button>
+                }
+                else if (CurrentState == PageState.Upload)
+                {
+                    <button class="process-button disabled" disabled>
+                        Upload a PDF to continue
+                    </button>
+                }
+            </aside>
+        </section>
     </div>
 
     <div class="faq-section">
@@ -99,6 +166,60 @@
         </div>
     </div>
 </div>
+
+<style>
+    .tool-page { width: 100%; min-height: calc(100vh - 72px); padding: 48px 0 72px; background: radial-gradient(circle at top left, rgba(109,40,217,.12), transparent 32%), linear-gradient(135deg, #f8f7ff 0%, #eef5ff 100%); }
+    .tool-container { width: min(1320px, calc(100% - 64px)); max-width: 1320px; margin: 0 auto; }
+    .tool-hero { width: 100%; max-width: none; margin-bottom: 24px; text-align: left; }
+    .tool-hero h1 { max-width: 900px; margin: 0 0 14px; color: #111827; font-size: clamp(2.4rem, 3vw, 3.8rem); line-height: 1.02; letter-spacing: -0.04em; }
+    .tool-hero p { max-width: 760px; margin: 0; color: #526173; font-size: 1rem; line-height: 1.7; }
+    .hero-gradient-text { background: linear-gradient(135deg, #6d5dfc 0%, #2563eb 55%, #06b6d4 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .trust-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; }
+    .trust-row span { border: 1px solid rgba(37,99,235,.16); border-radius: 999px; background: rgba(255,255,255,.76); color: #334155; font-size: .83rem; font-weight: 800; padding: .48rem .78rem; box-shadow: 0 10px 30px rgba(15,23,42,.06); }
+    .stepper { width: 100%; max-width: none; margin: 0 0 24px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 8px; border-radius: 999px; background: rgba(255,255,255,.8); box-shadow: 0 18px 45px rgba(15,23,42,.08); }
+    .step { min-height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 999px; color: #64748b; font-size: .9rem; font-weight: 900; }
+    .step.active { background: linear-gradient(135deg, #6d5dfc, #2563eb); color: #fff; box-shadow: 0 12px 26px rgba(37,99,235,.24); }
+    .step.complete { background: #eef2ff; color: #3730a3; }
+    .workflow-grid { width: 100%; max-width: none; display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(360px, .75fr); gap: 28px; align-items: start; }
+    .workspace-card, .settings-card { width: 100%; max-width: none; min-width: 0; box-sizing: border-box; border: 1px solid rgba(148,163,184,.18); border-radius: 24px; background: rgba(255,255,255,.92); box-shadow: 0 20px 50px rgba(15,23,42,.08); padding: 28px; }
+    .settings-card { position: sticky; top: 24px; }
+    .panel-header { margin-bottom: 20px; }
+    .panel-eyebrow { display: inline-flex; margin-bottom: 10px; color: #4f46e5; font-size: .76rem; font-weight: 950; letter-spacing: .08em; text-transform: uppercase; }
+    .panel-header h2 { margin: 0 0 8px; color: #111827; font-size: 1.35rem; line-height: 1.2; }
+    .panel-header p { margin: 0; color: #64748b; line-height: 1.6; }
+    .file-summary, .empty-state, .field-card, .estimate-card, .value-list div { border: 1px solid rgba(148,163,184,.16); border-radius: 18px; background: #f8fafc; padding: 16px; }
+    .file-summary { display: flex; justify-content: space-between; gap: 16px; align-items: center; margin-top: 18px; }
+    .file-name, .file-size, .empty-state strong, .empty-state span, .value-list strong, .value-list span, .estimate-card span, .estimate-card strong, .estimate-card small { display: block; }
+    .file-name { color: #111827; font-weight: 900; word-break: break-word; }
+    .file-size, .empty-state span, .value-list span, .estimate-card span, .estimate-card small { color: #64748b; font-size: .9rem; }
+    .status-pill { border-radius: 999px; background: #dcfce7; color: #166534; font-size: .78rem; font-weight: 900; padding: .35rem .6rem; white-space: nowrap; }
+    .empty-state { margin-top: 18px; }
+    .empty-state strong { color: #111827; margin-bottom: 4px; }
+    .field-card { margin-bottom: 14px; }
+    .field-card label { display: block; margin-bottom: 8px; color: #111827; font-weight: 900; }
+    .field-input { width: 100%; box-sizing: border-box; border: 1px solid rgba(148,163,184,.35); border-radius: 14px; background: #fff; color: #111827; padding: .85rem .95rem; }
+    .split-range { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .estimate-card { margin-bottom: 14px; background: linear-gradient(135deg, #eef2ff, #ecfeff); }
+    .estimate-card strong { color: #111827; font-size: 1.4rem; margin: 4px 0; }
+    .value-list { display: grid; gap: 12px; margin: 18px 0; }
+    .value-list strong { color: #111827; margin-bottom: 4px; }
+    .process-button, .download-button { width: 100%; border: 0; border-radius: 16px; background: linear-gradient(135deg, #6d5dfc, #2563eb); color: #fff; cursor: pointer; font-weight: 950; padding: 1rem 1.15rem; box-shadow: 0 18px 36px rgba(37,99,235,.25); transition: transform .18s ease, box-shadow .18s ease; }
+    .process-button:hover, .download-button:hover { transform: translateY(-2px); box-shadow: 0 24px 45px rgba(37,99,235,.32); }
+    .process-button.disabled { cursor: not-allowed; opacity: .58; transform: none; box-shadow: none; }
+    .processing-container, .result-container, .error-container { text-align: center; padding: 34px 18px; }
+    .processing-container.compact { padding: 12px 0 20px; }
+    .spinner { width: 46px; height: 46px; margin: 0 auto 18px; border: 4px solid #e0e7ff; border-top-color: #2563eb; border-radius: 50%; animation: spin 1s linear infinite; }
+    .result-icon, .error-icon { display: inline-flex; margin-bottom: 14px; border-radius: 999px; padding: .45rem .7rem; font-size: .82rem; font-weight: 950; }
+    .result-icon { background: #dcfce7; color: #166534; }
+    .error-icon { background: #fee2e2; color: #991b1b; }
+    .result-container h2, .error-container h2, .processing-container h2 { margin: 0 0 10px; color: #111827; }
+    .result-container p, .error-container p, .processing-container p { margin: 0 0 18px; color: #64748b; line-height: 1.6; }
+    .reset-button { border: 0; border-radius: 14px; background: #eef2ff; color: #3730a3; cursor: pointer; font-weight: 900; padding: .9rem 1rem; }
+    .download-button + .reset-button { width: 100%; margin-top: 12px; }
+    .error-message { color: #b91c1c; font-weight: 800; }
+    @@keyframes spin { to { transform: rotate(360deg); } }
+    @@media (max-width: 980px) { .tool-container { width: min(100%, calc(100% - 24px)); } .workflow-grid { grid-template-columns: 1fr; } .settings-card { position: static; } .stepper { overflow-x: auto; border-radius: 20px; grid-template-columns: repeat(4, minmax(130px, 1fr)); } .tool-hero h1 { font-size: clamp(2rem, 8vw, 3rem); } .split-range { grid-template-columns: 1fr; } }
+</style>
 
 @code {
     private enum PageState { Upload, Processing, Complete, Error, LargeFile }
