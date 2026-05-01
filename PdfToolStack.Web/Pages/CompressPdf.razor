@@ -22,96 +22,226 @@
     <AdSlot Size="banner" />
 
     <div class="tool-container">
-        <h1>@PageHeading</h1>
-        <p class="tool-subtitle">
-            @PageSubtitle
-        </p>
-
-        @if (CurrentState == PageState.Upload)
-        {
-            <FileUpload OnFileSelected="HandleFileSelected"
-                        OnFileRemoved="HandleFileRemoved"
-                        HintText="@UploadHintText" />
-
-            @if (SelectedFile != null)
-            {
-                <button class="process-button"
-                        @onclick="ProcessFile">
-                    @ProcessButtonText
-                </button>
-            }
-        }
-
-        @if (CurrentState == PageState.LargeFile)
-        {
-            <LargeFileUpgrade FileSizeBytes="@(SelectedFile?.Size ?? 0)"
-                              FileName="@(SelectedFile?.Name ?? "")"
-                              ToolType="CompressPdf"
-                              Title="This PDF is over the free limit"
-                              Message="This file is above the free processing limit."
-                              SecondaryButtonText="Return to upload"
-                              OnCancel="ResetToFreeMode" />
-        }
-
-        @if (CurrentState == PageState.Processing)
-        {
-            <div class="processing-container">
-                <div class="spinner"></div>
-                <p>Compressing your PDF...</p>
-            </div>
-        }
-
-        @if (CurrentState == PageState.Complete && Response != null)
-        {
-            <AdSlot Size="rectangle" />
-
-            <div class="result-container">
-                <span class="result-icon">✅</span>
-                <h2>Compression Complete!</h2>
-
-                <div class="stats">
-                    <div class="stat">
-                        <span class="stat-label">Original Size</span>
-                        <span class="stat-value">
-                            @FormatFileSize(Response.OriginalSizeBytes)
-                        </span>
-                    </div>
-                    <div class="stat">
-                        <span class="stat-label">Compressed Size</span>
-                        <span class="stat-value">
-                            @FormatFileSize(Response.OutputSizeBytes)
-                        </span>
-                    </div>
-                    <div class="stat highlight">
-                        <span class="stat-label">You Saved</span>
-                        <span class="stat-value">
-                            @Response.CompressionRatio%
-                        </span>
-                    </div>
+        <section class="tool-hero">
+            <div>
+                <div class="trust-row">
+                    <span>Secure processing</span>
+                    <span>Files deleted in 1 hour</span>
+                    <span>No signup required</span>
                 </div>
 
-                <button class="download-button"
-                        @onclick="DownloadFile">
-                    Download Compressed PDF
-                </button>
-
-                <button class="reset-button"
-                        @onclick="Reset">
-                    Compress Another PDF
-                </button>
+                @if (IsEmailMode)
+                {
+                    <h1>Fix PDF Too Large <span class="hero-gradient-text">for Email</span></h1>
+                }
+                else
+                {
+                    <h1>Compress PDF <span class="hero-gradient-text">instantly</span></h1>
+                }
+                <p class="tool-subtitle">
+                    @PageSubtitle
+                </p>
             </div>
-        }
+        </section>
 
-        @if (CurrentState == PageState.Error)
-        {
-            <div class="error-container">
-                <span class="error-icon">❌</span>
-                <p class="error-message">@ErrorMessage</p>
-                <button class="reset-button" @onclick="Reset">
-                    Try Again
-                </button>
+        <div class="stepper" aria-label="Compression progress">
+            <div class="step @(CurrentState == PageState.Upload && SelectedFile == null ? "active" : SelectedFile != null || CurrentState == PageState.Processing || CurrentState == PageState.Complete ? "complete" : "")">
+                <span>1</span>
+                <strong>Upload</strong>
             </div>
-        }
+            <div class="step @(CurrentState == PageState.Upload && SelectedFile != null ? "active" : CurrentState == PageState.Processing || CurrentState == PageState.Complete ? "complete" : "")">
+                <span>2</span>
+                <strong>Configure</strong>
+            </div>
+            <div class="step @(CurrentState == PageState.Processing ? "active" : CurrentState == PageState.Complete ? "complete" : "")">
+                <span>3</span>
+                <strong>Process</strong>
+            </div>
+            <div class="step @(CurrentState == PageState.Complete ? "active complete" : "")">
+                <span>4</span>
+                <strong>Download</strong>
+            </div>
+        </div>
+
+        <section class="workflow-grid">
+            <div class="workspace-card">
+                @if (CurrentState == PageState.Upload)
+                {
+                    <div class="panel-header">
+                        <span class="panel-eyebrow">Upload PDF</span>
+                        <h2>Start with your document</h2>
+                    </div>
+
+                    <FileUpload OnFileSelected="HandleFileSelected"
+                                OnFileRemoved="HandleFileRemoved"
+                                HintText="@UploadHintText" />
+
+                    @if (SelectedFile == null)
+                    {
+                        <div class="empty-state">
+                            <span class="empty-kicker">Ready when you are</span>
+                            <strong>Drop in a PDF to reveal your compression profiles.</strong>
+                            <span>Choose email-ready, balanced, or high-quality output before processing.</span>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="file-ready-card">
+                            <div>
+                                <span class="panel-eyebrow">File ready</span>
+                                <strong>@SelectedFile.Name</strong>
+                                <small>@FormatFileSize(SelectedFile.Size) selected for compression</small>
+                            </div>
+                            <div class="ready-metrics">
+                                <span>Smaller file size</span>
+                                <span>Email-ready output</span>
+                                <span>Quality retained</span>
+                            </div>
+                        </div>
+                    }
+                }
+
+                @if (CurrentState == PageState.LargeFile)
+                {
+                    <LargeFileUpgrade FileSizeBytes="@(SelectedFile?.Size ?? 0)"
+                                      FileName="@(SelectedFile?.Name ?? "")"
+                                      ToolType="CompressPdf"
+                                      Title="This PDF is over the free limit"
+                                      Message="This file is above the free processing limit."
+                                      SecondaryButtonText="Return to upload"
+                                      OnCancel="ResetToFreeMode" />
+                }
+
+                @if (CurrentState == PageState.Processing)
+                {
+                    <div class="processing-container">
+                        <div class="spinner"></div>
+                        <h2>Compressing your PDF</h2>
+                        <span>Optimizing file size while preserving readable text and layout.</span>
+                    </div>
+                }
+
+                @if (CurrentState == PageState.Complete && Response != null)
+                {
+                    <AdSlot Size="rectangle" />
+
+                    <div class="result-container">
+                        <span class="result-icon">Done</span>
+                        <h2>Your compressed PDF is ready</h2>
+                        <p class="result-copy">Download the smaller file now, or run another document through the same workflow.</p>
+
+                        <div class="stats">
+                            <div class="stat">
+                                <span class="stat-label">Original Size</span>
+                                <span class="stat-value">
+                                    @FormatFileSize(Response.OriginalSizeBytes)
+                                </span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-label">Compressed Size</span>
+                                <span class="stat-value">
+                                    @FormatFileSize(Response.OutputSizeBytes)
+                                </span>
+                            </div>
+                            <div class="stat highlight">
+                                <span class="stat-label">You Saved</span>
+                                <span class="stat-value">
+                                    @Response.CompressionRatio%
+                                </span>
+                            </div>
+                        </div>
+
+                        <button class="download-button"
+                                @onclick="DownloadFile">
+                            Download Compressed PDF
+                        </button>
+
+                        <button class="reset-button"
+                                @onclick="Reset">
+                            Compress Another PDF
+                        </button>
+                    </div>
+                }
+
+                @if (CurrentState == PageState.Error)
+                {
+                    <div class="error-container">
+                        <span class="error-icon">Compression failed</span>
+                        <h2>Something interrupted the workflow</h2>
+                        <p class="error-message">@ErrorMessage</p>
+                        <button class="reset-button" @onclick="Reset">
+                            Try Again
+                        </button>
+                    </div>
+                }
+            </div>
+
+            <aside class="settings-card">
+                @if (CurrentState == PageState.Upload && SelectedFile != null)
+                {
+                    <div class="panel-header">
+                        <span class="panel-eyebrow">Compression profile</span>
+                        <h2>Choose your output</h2>
+                        <p>Estimate savings before you process. Compression settings are preview-only for now.</p>
+                    </div>
+
+                    <div class="file-summary">
+                        <span class="file-name">@SelectedFile.Name</span>
+                        <span class="file-size">@FormatFileSize(SelectedFile.Size)</span>
+                    </div>
+
+                    <div class="preset-list" role="group" aria-label="Compression profile">
+                        <button type="button"
+                                class='preset @(SelectedPreset == "Email" ? "active" : "")'
+                                @onclick='@(() => SelectPreset("Email"))'>
+                            <span>📧 Email</span>
+                            <small>Smallest size, best for Gmail/Outlook</small>
+                        </button>
+                        <button type="button"
+                                class='preset @(SelectedPreset == "Balanced" ? "active" : "")'
+                                @onclick='@(() => SelectPreset("Balanced"))'>
+                            <span>⚖️ Balanced</span>
+                            <small>Recommended quality and size</small>
+                        </button>
+                        <button type="button"
+                                class='preset @(SelectedPreset == "HighQuality" ? "active" : "")'
+                                @onclick='@(() => SelectPreset("HighQuality"))'>
+                            <span>🖨 High quality</span>
+                            <small>Best for sharing or printing</small>
+                        </button>
+                    </div>
+
+                    <div class="estimate-card">
+                        <span>Estimated output</span>
+                        <strong>@FormatFileSize(EstimatedOutputBytes)</strong>
+                        <small>About @EstimatedSavingsPercent% smaller</small>
+                    </div>
+
+                    <button class="process-button"
+                            @onclick="ProcessFile">
+                        @ProcessButtonText
+                    </button>
+
+                    <div class="secure-note">
+                        Secure processing. Files are deleted within 1 hour.
+                    </div>
+                }
+                else
+                {
+                    <div class="panel-header">
+                        <span class="panel-eyebrow">Compression profile</span>
+                        <h2>Smart size reduction</h2>
+                        <p>Upload a PDF to compare estimated output sizes before processing.</p>
+                    </div>
+
+                    <div class="value-list">
+                        <span><strong>Smaller file size</strong><small>Reduce PDFs for upload forms, portals, and sharing.</small></span>
+                        <span><strong>Email-ready</strong><small>Pick the Email profile when attachment size matters.</small></span>
+                        <span><strong>Quality retained</strong><small>Keep text readable and layouts intact.</small></span>
+                    </div>
+                }
+            </aside>
+        </section>
     </div>
 
     <div class="faq-section">
@@ -164,6 +294,615 @@
     </div>
 </div>
 
+<style>
+    .tool-page {
+        width: 100%;
+        max-width: none;
+        min-height: calc(100vh - 72px);
+        min-width: 0;
+        margin: 0;
+        padding: 48px 0 72px;
+        box-sizing: border-box;
+        background:
+            radial-gradient(circle at top left, rgba(109, 40, 217, 0.12), transparent 32%),
+            linear-gradient(135deg, #f8f7ff 0%, #eef5ff 100%);
+        color: #172033;
+    }
+
+    .tool-container {
+        width: min(1320px, calc(100% - 64px));
+        max-width: 1320px;
+        margin: 0 auto;
+        padding: 0;
+        background: transparent !important;
+        border: 0 !important;
+        border-radius: 0;
+        box-shadow: none !important;
+        text-align: left;
+        box-sizing: border-box;
+    }
+
+    .tool-hero {
+        width: 100%;
+        max-width: none;
+        text-align: left;
+        margin-bottom: 24px;
+    }
+
+    .tool-hero h1 {
+        max-width: 900px;
+        margin: 0 0 14px;
+        color: #111827;
+        font-size: clamp(2.4rem, 3vw, 3.8rem);
+        line-height: 1.02;
+        letter-spacing: -0.04em;
+    }
+
+    .hero-gradient-text {
+        background: linear-gradient(135deg, #6d5dfc 0%, #2563eb 55%, #06b6d4 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+
+    .tool-subtitle {
+        max-width: 760px;
+        margin: 0;
+        color: #5b6475;
+        font-size: 1rem;
+        line-height: 1.7;
+    }
+
+    .trust-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 18px;
+    }
+
+    .trust-row span {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.78);
+        border: 1px solid rgba(148, 163, 184, 0.24);
+        box-shadow: 0 10px 26px rgba(37, 99, 235, 0.08);
+        color: #334155;
+        font-size: 0.85rem;
+        font-weight: 700;
+        padding: 0.45rem 0.8rem;
+    }
+
+    .trust-row span::before {
+        content: "";
+        width: 0.45rem;
+        height: 0.45rem;
+        border-radius: 999px;
+        background: linear-gradient(135deg, #6d5dfc 0%, #2563eb 55%, #06b6d4 100%);
+        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+    }
+
+    .stepper {
+        width: 100%;
+        max-width: none;
+        margin: 0 0 24px;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+        padding: 8px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.8);
+        box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+    }
+
+    .step {
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+        border-radius: 999px;
+        color: #64748b;
+        padding: 0.45rem 0.7rem 0.45rem 0.45rem;
+        transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease;
+    }
+
+    .step span {
+        display: grid;
+        place-items: center;
+        width: 1.7rem;
+        height: 1.7rem;
+        border-radius: 50%;
+        background: #eef2ff;
+        color: #4f46e5;
+        font-size: 0.82rem;
+        font-weight: 800;
+    }
+
+    .step strong {
+        font-size: 0.88rem;
+        white-space: nowrap;
+    }
+
+    .step.active {
+        background: linear-gradient(135deg, rgba(109, 93, 252, 0.15), rgba(37, 99, 235, 0.12));
+        color: #1e293b;
+        box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.12);
+    }
+
+    .step.complete {
+        background: linear-gradient(135deg, #6d5dfc 0%, #2563eb 55%, #06b6d4 100%);
+        color: #ffffff;
+    }
+
+    .step.complete span {
+        background: rgba(255, 255, 255, 0.22);
+        color: #ffffff;
+    }
+
+    .workflow-grid {
+        width: 100%;
+        max-width: none;
+        display: grid;
+        grid-template-columns: minmax(0, 1.55fr) minmax(360px, 0.75fr);
+        gap: 28px;
+        align-items: start;
+    }
+
+    .workspace-card,
+    .settings-card {
+        border-radius: 24px;
+        background: rgba(255, 255, 255, 0.92);
+        border: 1px solid rgba(148, 163, 184, 0.18);
+        box-shadow: 0 20px 50px rgba(15, 23, 42, 0.08);
+        width: 100%;
+        max-width: none;
+        min-width: 0;
+        padding: 28px;
+        box-sizing: border-box;
+    }
+
+    .upload-card,
+    .upload-zone,
+    .file-upload,
+    .dropzone,
+    .file-upload-container {
+        width: 100%;
+        max-width: none;
+    }
+
+    .settings-card {
+        position: sticky;
+        top: 1rem;
+    }
+
+    .panel-header {
+        margin-bottom: 1rem;
+    }
+
+    .panel-header h2 {
+        margin: 0.25rem 0 0;
+        color: #111827;
+        font-size: 1.25rem;
+        line-height: 1.2;
+    }
+
+    .panel-header p {
+        margin: 0.45rem 0 0;
+        color: #64748b;
+        font-size: 0.92rem;
+        line-height: 1.55;
+    }
+
+    .panel-eyebrow {
+        background: linear-gradient(135deg, #6d5dfc 0%, #2563eb 55%, #06b6d4 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        font-size: 0.78rem;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    .empty-state,
+    .value-list {
+        display: grid;
+        gap: 0.4rem;
+        margin-top: 1rem;
+        border-radius: 20px;
+        background: #f8fafc;
+        color: #64748b;
+        padding: 1rem;
+    }
+
+    .empty-state strong {
+        color: #1e293b;
+        font-size: 1.1rem;
+    }
+
+    .empty-kicker {
+        color: #2563eb;
+        font-size: 0.78rem;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    .value-list span {
+        display: grid;
+        gap: 0.2rem;
+        border-radius: 14px;
+        background: #f8fafc;
+        color: #475569;
+        padding: 0.8rem;
+    }
+
+    .value-list strong {
+        color: #172033;
+        font-size: 0.95rem;
+    }
+
+    .value-list small {
+        color: #64748b;
+        font-size: 0.82rem;
+        line-height: 1.45;
+    }
+
+    .file-ready-card {
+        display: grid;
+        gap: 1rem;
+        margin-top: 1rem;
+        border-radius: 22px;
+        background:
+            linear-gradient(135deg, rgba(109, 93, 252, 0.1), rgba(6, 182, 212, 0.08)),
+            #ffffff;
+        border: 1px solid rgba(109, 93, 252, 0.18);
+        padding: 1.1rem;
+    }
+
+    .file-ready-card strong,
+    .file-ready-card small {
+        display: block;
+    }
+
+    .file-ready-card strong {
+        margin-top: 0.3rem;
+        color: #111827;
+        font-size: 1.05rem;
+        overflow-wrap: anywhere;
+    }
+
+    .file-ready-card small {
+        margin-top: 0.2rem;
+        color: #64748b;
+        font-weight: 700;
+    }
+
+    .ready-metrics {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.55rem;
+    }
+
+    .ready-metrics span {
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.75);
+        color: #334155;
+        font-size: 0.8rem;
+        font-weight: 900;
+        padding: 0.7rem;
+        text-align: center;
+    }
+
+    .file-summary {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        border-radius: 18px;
+        background: #f8fafc;
+        padding: 0.9rem 1rem;
+        margin-bottom: 0.9rem;
+    }
+
+    .file-name {
+        color: #1e293b;
+        font-weight: 800;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .file-size {
+        color: #64748b;
+        flex: 0 0 auto;
+        font-size: 0.9rem;
+        font-weight: 700;
+    }
+
+    .preset-list {
+        display: grid;
+        gap: 0.75rem;
+    }
+
+    .preset {
+        width: 100%;
+        border: 0;
+        border-radius: 18px;
+        background: #f8fafc;
+        box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.18);
+        cursor: pointer;
+        display: grid;
+        gap: 0.25rem;
+        padding: 0.95rem 1rem;
+        text-align: left;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    }
+
+    .preset:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 16px 34px rgba(37, 99, 235, 0.12);
+    }
+
+    .preset.active {
+        background: linear-gradient(135deg, rgba(109, 93, 252, 0.13), rgba(6, 182, 212, 0.1));
+        box-shadow: inset 0 0 0 2px rgba(109, 93, 252, 0.36), 0 18px 36px rgba(37, 99, 235, 0.12);
+    }
+
+    .preset span {
+        color: #172033;
+        font-size: 1rem;
+        font-weight: 900;
+    }
+
+    .preset small {
+        color: #64748b;
+        font-size: 0.85rem;
+        line-height: 1.4;
+    }
+
+    .estimate-card {
+        display: grid;
+        gap: 0.25rem;
+        border-radius: 22px;
+        background: linear-gradient(135deg, #6d5dfc 0%, #2563eb 55%, #06b6d4 100%);
+        color: #ffffff;
+        margin: 1rem 0;
+        padding: 1rem;
+        box-shadow: 0 18px 36px rgba(37, 99, 235, 0.22);
+    }
+
+    .estimate-card span {
+        font-size: 0.82rem;
+        font-weight: 800;
+        opacity: 0.86;
+        text-transform: uppercase;
+    }
+
+    .estimate-card strong {
+        font-size: 2rem;
+        line-height: 1.1;
+    }
+
+    .estimate-card small {
+        font-size: 0.92rem;
+        opacity: 0.88;
+    }
+
+    .process-button,
+    .download-button {
+        width: 100%;
+        border: 0;
+        border-radius: 16px;
+        background: linear-gradient(135deg, #6d5dfc 0%, #2563eb 55%, #06b6d4 100%);
+        box-shadow: 0 18px 36px rgba(37, 99, 235, 0.24);
+        color: #ffffff;
+        cursor: pointer;
+        font-size: 1rem;
+        font-weight: 900;
+        padding: 1rem 1.2rem;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+    }
+
+    .process-button:hover:not(:disabled),
+    .download-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 22px 44px rgba(37, 99, 235, 0.3);
+        filter: saturate(1.08);
+    }
+
+    .processing-container,
+    .result-container,
+    .error-container {
+        display: grid;
+        justify-items: center;
+        gap: 0.9rem;
+        border-radius: 24px;
+        background: #f8fafc;
+        padding: 2rem;
+        text-align: center;
+    }
+
+    .processing-container span {
+        color: #64748b;
+    }
+
+    .processing-container h2,
+    .result-container h2,
+    .error-container h2 {
+        margin: 0;
+        color: #111827;
+        font-size: 1.35rem;
+    }
+
+    .result-icon,
+    .error-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 2.4rem;
+        border-radius: 999px;
+        font-size: 0.82rem;
+        font-weight: 900;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        padding: 0.55rem 0.8rem;
+    }
+
+    .result-icon {
+        background: #dcfce7;
+        color: #15803d;
+    }
+
+    .error-icon {
+        background: #fee2e2;
+        color: #b91c1c;
+    }
+
+    .result-copy {
+        margin: 0;
+        color: #64748b;
+        line-height: 1.55;
+    }
+
+    .error-message {
+        margin: 0;
+        color: #b91c1c;
+        font-weight: 750;
+        line-height: 1.55;
+    }
+
+    .spinner {
+        width: 3rem;
+        height: 3rem;
+        border: 4px solid #dbeafe;
+        border-top-color: #6d5dfc;
+        border-radius: 50%;
+        animation: spin 0.9s linear infinite;
+    }
+
+    .stats {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.75rem;
+        width: 100%;
+    }
+
+    .stat {
+        border-radius: 18px;
+        background: #ffffff;
+        padding: 1rem;
+    }
+
+    .stat.highlight {
+        background: linear-gradient(135deg, rgba(109, 93, 252, 0.13), rgba(6, 182, 212, 0.1));
+    }
+
+    .stat-label,
+    .stat-value {
+        display: block;
+    }
+
+    .stat-label {
+        color: #64748b;
+        font-size: 0.82rem;
+        font-weight: 800;
+    }
+
+    .stat-value {
+        color: #111827;
+        font-size: 1.35rem;
+        font-weight: 900;
+        margin-top: 0.25rem;
+    }
+
+    .reset-button {
+        border: 0;
+        border-radius: 14px;
+        background: #eef2ff;
+        color: #3730a3;
+        cursor: pointer;
+        font-weight: 900;
+        padding: 0.9rem 1rem;
+    }
+
+    .secure-note {
+        margin-top: 0.8rem;
+        color: #64748b;
+        font-size: 0.82rem;
+        font-weight: 800;
+        text-align: center;
+    }
+
+    .faq-section {
+        max-width: 980px;
+        margin: 3rem auto 0;
+        padding: 0 1.25rem;
+    }
+
+    .faq-item {
+        border-radius: 18px;
+        background: #ffffff;
+        box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+        margin-top: 0.9rem;
+        padding: 1rem 1.1rem;
+    }
+
+    @@keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    @@media (max-width: 980px) {
+        .tool-hero,
+        .workflow-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .tool-container {
+            width: min(100%, calc(100% - 24px));
+        }
+
+        .tool-hero h1 {
+            font-size: clamp(2rem, 8vw, 3rem);
+        }
+
+        .settings-card {
+            position: static;
+        }
+
+        .stepper {
+            overflow-x: auto;
+            border-radius: 20px;
+            grid-template-columns: repeat(4, minmax(130px, 1fr));
+        }
+    }
+
+    @@media (max-width: 640px) {
+        .workspace-card,
+        .settings-card {
+            border-radius: 22px;
+            padding: 1rem;
+        }
+
+        .stats {
+            grid-template-columns: 1fr;
+        }
+
+        .file-summary {
+            align-items: flex-start;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .ready-metrics {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
 @code {
     private enum PageState
     {
@@ -200,6 +939,39 @@
     private byte[]? ProcessedBytes;
     private byte[]? UploadedBytes;
     private string? ErrorMessage;
+    private string SelectedPreset = "Balanced";
+
+    private void SelectPreset(string preset)
+    {
+        SelectedPreset = preset;
+    }
+
+    private int EstimatedSavingsPercent =>
+        SelectedPreset switch
+        {
+            "Email" => 65,
+            "HighQuality" => 25,
+            _ => 45
+        };
+
+    private long EstimatedOutputBytes =>
+        SelectedFile == null
+            ? 0
+            : Math.Max(1, SelectedFile.Size * (100 - EstimatedSavingsPercent) / 100);
+
+    private string GetStepClass(PageState state)
+    {
+        if (CurrentState == PageState.Complete)
+            return "step complete";
+
+        if (state == CurrentState)
+            return "step active";
+
+        if (CurrentState == PageState.Processing && state == PageState.Upload)
+            return "step complete";
+
+        return "step";
+    }
 
     [SupplyParameterFromQuery]
     private string? Paid { get; set; }
