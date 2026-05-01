@@ -17,6 +17,9 @@ namespace PdfToolStack.API.Controllers
     [Route("api/pending-batch")]
     public class PendingBatchController : ControllerBase
     {
+        private const int MaxBatchFileCount = 10;
+        private const long MaxBatchTotalBytes = 100L * 1024 * 1024;
+
         private readonly AppDbContext _db;
         private readonly IBlobStorageService _blobStorage;
         private readonly IPdfService _pdfService;
@@ -54,8 +57,9 @@ namespace PdfToolStack.API.Controllers
             if (files == null || files.Count == 0)
                 return BadRequest(new { error = "No files provided." });
 
-            if (files.Count > 20)
-                return BadRequest(new { error = "Maximum 20 files per batch." });
+            var validationError = ValidateBatchUpload(files);
+            if (validationError != null)
+                return BadRequest(new { error = validationError });
 
             if (!Enum.TryParse<ToolType>(toolType, ignoreCase: true, out var parsedToolType))
                 return BadRequest(new { error = $"Invalid tool type: {toolType}" });
@@ -216,6 +220,14 @@ namespace PdfToolStack.API.Controllers
                 });
             }
 
+            var fileNames = ReadJsonList(pending.OriginalFileNames);
+            var blobReferences = ReadJsonList(pending.StoredFileReferences);
+            if (pending.FileCount > MaxBatchFileCount || blobReferences.Count > MaxBatchFileCount)
+            {
+                await _db.SaveChangesAsync(cancellationToken);
+                return BadRequest(new { error = $"Maximum {MaxBatchFileCount} files per batch." });
+            }
+
             if (!await TryMarkProcessingAsync(pending, cancellationToken))
             {
                 await _db.Entry(pending).ReloadAsync(cancellationToken);
@@ -226,9 +238,8 @@ namespace PdfToolStack.API.Controllers
                 });
             }
 
-            var fileNames = ReadJsonList(pending.OriginalFileNames);
-            var blobReferences = ReadJsonList(pending.StoredFileReferences);
             var results = new List<(string FileName, byte[] Bytes, string? Error)>();
+            long totalInputBytes = 0;
 
             try
             {
@@ -241,6 +252,11 @@ namespace PdfToolStack.API.Controllers
                         results.Add((fileName, Array.Empty<byte>(), "Stored file could not be loaded."));
                         continue;
                     }
+
+                    totalInputBytes += bytes.Length;
+                    if (totalInputBytes > MaxBatchTotalBytes)
+                        throw new BatchLimitExceededException(
+                            $"Maximum total batch size is {FormatBytes(MaxBatchTotalBytes)}.");
 
                     var response = await _pdfService.ProcessAsync(new ProcessRequest
                     {
@@ -266,6 +282,14 @@ namespace PdfToolStack.API.Controllers
 
                 return File(zipBytes, "application/zip",
                     $"pdftoolstack_batch_{pending.ToolType.ToString().ToLower()}.zip");
+            }
+            catch (BatchLimitExceededException ex)
+            {
+                pending.Status = PendingBatchStatus.Failed;
+                pending.ErrorMessage = ex.Message;
+                await _db.SaveChangesAsync(cancellationToken);
+                await CleanupInputBlobsAsync(pending.PendingBatchId, blobReferences);
+                return BadRequest(new { error = pending.ErrorMessage });
             }
             catch (Exception ex)
             {
@@ -308,6 +332,33 @@ namespace PdfToolStack.API.Controllers
             User.FindFirst(ClaimTypes.NameIdentifier)?.Value ??
             User.FindFirst("sub")?.Value ??
             string.Empty;
+
+        private static string? ValidateBatchUpload(IReadOnlyCollection<IFormFile> files)
+        {
+            if (files.Count > MaxBatchFileCount)
+                return $"Maximum {MaxBatchFileCount} files per batch.";
+
+            var totalBytes = files.Sum(file => file.Length);
+            if (totalBytes > MaxBatchTotalBytes)
+                return $"Maximum total batch size is {FormatBytes(MaxBatchTotalBytes)}.";
+
+            return null;
+        }
+
+        private static string FormatBytes(long bytes)
+        {
+            const long mb = 1024 * 1024;
+            return bytes % mb == 0
+                ? $"{bytes / mb}MB"
+                : $"{bytes / (double)mb:0.#}MB";
+        }
+
+        private sealed class BatchLimitExceededException : Exception
+        {
+            public BatchLimitExceededException(string message) : base(message)
+            {
+            }
+        }
 
         private static void ExpireIfNeeded(PendingBatchJob pending)
         {
