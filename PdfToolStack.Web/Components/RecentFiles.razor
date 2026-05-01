@@ -3,11 +3,11 @@
 
 @if (_recentFiles.Count > 0)
 {
-    <section class="recent-files-card" aria-label="Recent files">
+    <section class="recent-files-card @(DisplayOnly ? "recent-files-card--display" : "")" aria-label="@Title">
         <div class="recent-files-header">
             <div>
-                <span>Recent Files</span>
-                <p>Your last processed documents on this browser.</p>
+                <span>@Title</span>
+                <p>@Description</p>
             </div>
         </div>
 
@@ -17,14 +17,18 @@
                 <div class="recent-file-item">
                     <div class="recent-file-main">
                         <strong>@item.FileName</strong>
-                        <span>@item.ToolName • @FormatTimestamp(item.Timestamp)</span>
+                        <span>@item.ToolName &middot; @FormatTimestamp(item.Timestamp)</span>
                     </div>
-                    <button class="recent-file-action"
-                            type="button"
-                            disabled="@(!CanDownloadAgain(item))"
-                            @onclick="() => OnDownloadAgain.InvokeAsync()">
-                        Download again
-                    </button>
+
+                    @if (!DisplayOnly)
+                    {
+                        <button class="recent-file-action"
+                                type="button"
+                                disabled="@(!CanDownloadAgain(item))"
+                                @onclick="() => OnDownloadAgain.InvokeAsync()">
+                            Download again
+                        </button>
+                    }
                 </div>
             }
         </div>
@@ -39,6 +43,9 @@
 
     [Parameter] public string FileName { get; set; } = string.Empty;
     [Parameter] public string ToolName { get; set; } = string.Empty;
+    [Parameter] public string Title { get; set; } = "Recent Files";
+    [Parameter] public string Description { get; set; } = "Your last processed documents on this browser.";
+    [Parameter] public bool DisplayOnly { get; set; } = false;
     [Parameter] public EventCallback OnDownloadAgain { get; set; }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -133,6 +140,17 @@
         text-align: left;
     }
 
+    .recent-files-card--display {
+        width: min(1100px, calc(100% - 32px));
+        margin: 28px auto 32px;
+        padding: 24px;
+        border-radius: 24px;
+        background:
+            radial-gradient(circle at top left, rgba(109, 93, 252, 0.16), transparent 34%),
+            linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.92));
+        box-shadow: 0 20px 55px rgba(15, 23, 42, 0.08);
+    }
+
     .recent-files-header {
         display: flex;
         justify-content: space-between;
@@ -147,6 +165,11 @@
         font-weight: 900;
     }
 
+    .recent-files-card--display .recent-files-header span {
+        font-size: 1.25rem;
+        letter-spacing: -0.02em;
+    }
+
     .recent-files-header p {
         margin: 4px 0 0;
         color: #64748b;
@@ -159,6 +182,10 @@
         gap: 10px;
     }
 
+    .recent-files-card--display .recent-files-list {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
     .recent-file-item {
         display: flex;
         align-items: center;
@@ -168,6 +195,11 @@
         border: 1px solid rgba(148, 163, 184, 0.16);
         border-radius: 14px;
         background: rgba(255, 255, 255, 0.8);
+    }
+
+    .recent-files-card--display .recent-file-item {
+        align-items: flex-start;
+        min-width: 0;
     }
 
     .recent-file-main {
@@ -216,7 +248,17 @@
         box-shadow: none;
     }
 
-    @@media (max-width: 640px) {
+    @@media (max-width: 720px) {
+        .recent-files-card--display {
+            width: min(100% - 20px, 100%);
+            margin: 22px auto 28px;
+            padding: 18px;
+        }
+
+        .recent-files-card--display .recent-files-list {
+            grid-template-columns: 1fr;
+        }
+
         .recent-file-item {
             align-items: stretch;
             flex-direction: column;
