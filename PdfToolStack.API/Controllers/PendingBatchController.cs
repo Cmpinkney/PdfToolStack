@@ -216,8 +216,15 @@ namespace PdfToolStack.API.Controllers
                 });
             }
 
-            pending.Status = PendingBatchStatus.Processing;
-            await _db.SaveChangesAsync(cancellationToken);
+            if (!await TryMarkProcessingAsync(pending, cancellationToken))
+            {
+                await _db.Entry(pending).ReloadAsync(cancellationToken);
+                return Conflict(new
+                {
+                    error = "This pending batch is already being processed or can no longer be processed.",
+                    status = pending.Status.ToString()
+                });
+            }
 
             var fileNames = ReadJsonList(pending.OriginalFileNames);
             var blobReferences = ReadJsonList(pending.StoredFileReferences);
@@ -267,9 +274,9 @@ namespace PdfToolStack.API.Controllers
             {
                 _logger.LogError(ex, "Pending batch processing failed for {PendingBatchId}", pendingBatchId);
                 pending.Status = PendingBatchStatus.Failed;
-                pending.ErrorMessage = ex.Message;
+                pending.ErrorMessage = GetErrorMessage(ex);
                 await _db.SaveChangesAsync(cancellationToken);
-                return UnprocessableEntity(new { error = ex.Message });
+                return UnprocessableEntity(new { error = pending.ErrorMessage });
             }
         }
 
@@ -332,6 +339,40 @@ namespace PdfToolStack.API.Controllers
                 or PendingBatchStatus.Failed
                 or PendingBatchStatus.Completed
                 or PendingBatchStatus.Processing;
+
+        private async Task<bool> TryMarkProcessingAsync(
+            PendingBatchJob pending,
+            CancellationToken cancellationToken)
+        {
+            var now = DateTime.UtcNow;
+            var updated = await _db.PendingBatchJobs
+                .Where(x =>
+                    x.PendingBatchId == pending.PendingBatchId &&
+                    !x.IsUsed &&
+                    x.ExpiresAtUtc > now &&
+                    (x.Status == PendingBatchStatus.PendingPayment ||
+                     x.Status == PendingBatchStatus.Paid))
+                .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(x => x.Status, PendingBatchStatus.Processing),
+                    cancellationToken);
+
+            if (updated != 1)
+                return false;
+
+            pending.Status = PendingBatchStatus.Processing;
+            return true;
+        }
+
+        private static string GetErrorMessage(Exception ex)
+        {
+            var message = string.IsNullOrWhiteSpace(ex.Message)
+                ? "Pending batch processing failed."
+                : ex.Message;
+
+            return message.Length <= 2000
+                ? message
+                : message[..2000];
+        }
 
         private async Task<bool> IsAuthorizedForProcessingAsync(
             PendingBatchJob pending,
