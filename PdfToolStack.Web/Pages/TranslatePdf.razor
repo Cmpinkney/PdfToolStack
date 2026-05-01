@@ -382,6 +382,21 @@
                     Download .txt
                 </button>
             </div>
+            <div class="post-success-upsell">
+                <div class="post-success-accent"></div>
+                <div class="post-success-copy">
+                    <strong>Need to process more files?</strong>
+                    <p>Upgrade to Pro for larger files, faster processing, and batch workflows.</p>
+                    <div class="post-success-benefits">
+                        <span>Larger files</span>
+                        <span>Faster processing</span>
+                        <span>Batch workflows</span>
+                    </div>
+                </div>
+                <a class="post-success-link" href="/pricing">
+                    View Pro options
+                </a>
+            </div>
         </div>
     }
 
@@ -2026,6 +2041,152 @@
         .tp-preview-swap {
             display: none;
         }
+    }
+    /* ── Shared facelift normalization ───────────────────── */
+    .hero-gradient-text {
+        background: linear-gradient(135deg, #6d5dfc 0%, #2563eb 55%, #06b6d4 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+
+    .tp-trust-badges {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: .55rem;
+        min-width: 320px;
+    }
+
+    .tp-trust-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: .42rem;
+        color: #334155;
+        background: rgba(255, 255, 255, .78);
+        border: 1px solid rgba(148, 163, 184, .34);
+        box-shadow: 0 10px 26px rgba(15, 23, 42, .06);
+        border-radius: 999px;
+        padding: .45rem .7rem;
+        font-size: .78rem;
+        font-weight: 700;
+    }
+
+    .tp-stepper {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: .65rem;
+        padding: .65rem;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, .72);
+        border: 1px solid rgba(148, 163, 184, .28);
+        box-shadow: 0 20px 55px rgba(15, 23, 42, .08);
+        backdrop-filter: blur(14px);
+    }
+
+    .tp-step--active {
+        color: #FFFFFF;
+        background: linear-gradient(135deg, #0F172A 0%, #2563eb 55%, #06b6d4 100%);
+        box-shadow: 0 12px 26px rgba(37, 99, 235, .22);
+    }
+
+    .tp-primary-btn,
+    .tp-translate-btn,
+    .tp-download-btn {
+        border-radius: 14px;
+        background: linear-gradient(135deg, #6d5dfc 0%, #2563eb 55%, #06b6d4 100%);
+        box-shadow: 0 16px 34px rgba(37, 99, 235, .28);
+        transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease;
+    }
+
+    .tp-primary-btn:hover,
+    .tp-translate-btn:hover:not(:disabled),
+    .tp-download-btn:hover {
+        opacity: .95;
+        transform: translateY(-1px);
+        box-shadow: 0 22px 42px rgba(37, 99, 235, .3);
+    }
+    .post-success-upsell {
+        position: relative;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 1rem;
+        align-items: center;
+        overflow: hidden;
+        width: 100%;
+        box-sizing: border-box;
+        margin-top: 1rem;
+        border: 1px solid rgba(109, 93, 252, 0.18);
+        border-radius: 18px;
+        background:
+            radial-gradient(circle at top left, rgba(109, 93, 252, 0.12), transparent 38%),
+            linear-gradient(135deg, rgba(255, 255, 255, 0.94), rgba(239, 246, 255, 0.86));
+        box-shadow: 0 14px 34px rgba(37, 99, 235, 0.08);
+        padding: 1rem 1rem 1rem 1.15rem;
+        text-align: left;
+    }
+
+    .post-success-accent {
+        position: absolute;
+        inset: 0 auto 0 0;
+        width: 4px;
+        background: linear-gradient(180deg, #6d5dfc 0%, #2563eb 58%, #06b6d4 100%);
+    }
+
+    .post-success-copy {
+        position: relative;
+        min-width: 0;
+    }
+
+    .post-success-copy strong {
+        display: block;
+        color: #111827;
+        font-size: 0.98rem;
+        font-weight: 950;
+        letter-spacing: -0.01em;
+        margin-bottom: 0.25rem;
+    }
+
+    .post-success-copy p {
+        margin: 0 0 0.7rem;
+        color: #64748b;
+        font-size: 0.88rem;
+        line-height: 1.5;
+    }
+
+    .post-success-benefits {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.45rem;
+    }
+
+    .post-success-benefits span {
+        border: 1px solid rgba(37, 99, 235, 0.14);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.78);
+        color: #334155;
+        font-size: 0.74rem;
+        font-weight: 850;
+        padding: 0.3rem 0.5rem;
+    }
+
+    .post-success-link {
+        position: relative;
+        border-radius: 14px;
+        background: linear-gradient(135deg, #6d5dfc 0%, #2563eb 65%, #06b6d4 100%);
+        box-shadow: 0 14px 28px rgba(37, 99, 235, 0.22);
+        color: #fff;
+        font-size: 0.84rem;
+        font-weight: 950;
+        padding: 0.78rem 0.95rem;
+        text-decoration: none;
+        white-space: nowrap;
+        transition: transform 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .post-success-link:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 18px 34px rgba(37, 99, 235, 0.28);
     }
 </style>
 
