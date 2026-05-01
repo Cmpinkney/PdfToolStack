@@ -255,7 +255,7 @@ namespace PdfToolStack.API.Controllers
                         : (fileName, Array.Empty<byte>(), response.ErrorMessage));
                 }
 
-                var zipBytes = BuildZip(results);
+                var zipBytes = BuildZip(pending.ToolType, results);
 
                 pending.Status = PendingBatchStatus.Completed;
                 pending.IsUsed = true;
@@ -447,7 +447,7 @@ namespace PdfToolStack.API.Controllers
                 ? new List<string>()
                 : JsonSerializer.Deserialize<List<string>>(json) ?? new List<string>();
 
-        private static byte[] BuildZip(List<(string FileName, byte[] Bytes, string? Error)> results)
+        private static byte[] BuildZip(ToolType toolType, List<(string FileName, byte[] Bytes, string? Error)> results)
         {
             using var zipStream = new MemoryStream();
             using (var writer = new SharpCompress.Writers.Zip.ZipWriter(
@@ -461,7 +461,7 @@ namespace PdfToolStack.API.Controllers
                 foreach (var (fileName, bytes, error) in results)
                 {
                     if (bytes.Length == 0) continue;
-                    var outName = $"processed_{Path.GetFileNameWithoutExtension(fileName)}.pdf";
+                    var outName = GetZipEntryName(toolType, fileName, bytes);
                     using var entryStream = new MemoryStream(bytes);
                     writer.Write(outName, entryStream, DateTime.UtcNow);
                 }
@@ -478,6 +478,42 @@ namespace PdfToolStack.API.Controllers
             }
 
             return zipStream.ToArray();
+        }
+
+        private static string GetZipEntryName(ToolType toolType, string fileName, byte[] outputBytes)
+        {
+            var baseName = SanitizeFileName(Path.GetFileNameWithoutExtension(fileName));
+            if (string.IsNullOrWhiteSpace(baseName))
+                baseName = "file";
+
+            return $"processed_{baseName}{GetOutputExtension(toolType, outputBytes)}";
+        }
+
+        private static string GetOutputExtension(ToolType toolType, byte[] outputBytes) =>
+            toolType switch
+            {
+                ToolType.PdfToWord => ".docx",
+                ToolType.PdfToExcel => ".xlsx",
+                ToolType.PdfToJpg => IsZip(outputBytes) ? ".zip" : ".jpg",
+                ToolType.SplitPdf => IsZip(outputBytes) ? ".zip" : ".pdf",
+                _ => ".pdf"
+            };
+
+        private static bool IsZip(byte[] bytes) =>
+            bytes.Length >= 4 &&
+            bytes[0] == 0x50 &&
+            bytes[1] == 0x4B &&
+            bytes[2] is 0x03 or 0x05 or 0x07 &&
+            bytes[3] is 0x04 or 0x06 or 0x08;
+
+        private static string SanitizeFileName(string fileName)
+        {
+            foreach (var invalidChar in Path.GetInvalidFileNameChars())
+            {
+                fileName = fileName.Replace(invalidChar, '_');
+            }
+
+            return fileName.Trim();
         }
     }
 }
