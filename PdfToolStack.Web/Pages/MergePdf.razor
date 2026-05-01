@@ -27,162 +27,252 @@
     <AdSlot Size="banner" />
 
     <div class="tool-container">
-        <h1>@(IsSubmissionMode ? "Merge PDFs for Submission" : "Merge PDF Files Online")</h1>
-        <p class="tool-subtitle">
-            @(IsSubmissionMode
-                        ? "Combine all your documents into one PDF — ready for tax filing, job applications, court submissions, or client handoffs. Free, files deleted within 1 hour."
-                        : "Combine multiple PDF files into one document for free. No signup required. Files deleted within 1 hour.")
-        </p>
+        <section class="tool-hero">
+            <div>
+                <div class="trust-row">
+                    <span>Secure processing</span>
+                    <span>Reorder before merging</span>
+                    <span>Deleted in 1 hour</span>
+                </div>
 
-        @if (CurrentState == PageState.Upload)
-        {
-            <div class="merge-upload-area">
-                @for (int i = 0; i < UploadedFiles.Count; i++)
-                {
-                    var index = i;
-                    <div class="merge-file-item">
-                        <span class="merge-file-number">
-                            @(index + 1)
-                        </span>
-                        <span class="merge-file-name">
-                            @UploadedFiles[index].Name
-                        </span>
-                        <span class="merge-file-size">
-                            @FormatFileSize(
-                            UploadedFileBytes[index].Length)
-                </span>
-                <button class="remove-button"
-                        @onclick="() => RemoveFile(index)">
-                    ✕
-                </button>
+                <h1>Merge PDFs <span class="hero-gradient-text">smoothly</span></h1>
+                <p class="tool-subtitle">
+                    Combine multiple PDFs in the exact order you need. Secure processing,
+                    fast download, and files deleted within 1 hour.
+                </p>
             </div>
-                        }
+        </section>
 
-            @if (UploadedFiles.Count < 10)
-            {
-                <div class="upload-container">
-                    <span class="upload-icon">📄</span>
-                    <p>
-                        @(UploadedFiles.Count == 0
-                                            ? "Upload your first PDF"
-                                            : "Add another PDF")
-                </p>
-                <label class="upload-button">
-                    Browse File
-                    <InputFile OnChange="HandleFileSelected"
-                               accept=".pdf"
-                               style="display:none" />
-                </label>
-                <p class="upload-hint">
-                    Maximum 10 files, 25MB each
-                </p>
-                <div class="cloud-picker-row">
-                    <span class="cloud-picker-label">OR IMPORT FROM</span>
-                    <div class="cloud-picker-buttons">
-                        <button class="cloud-picker-btn" @onclick="PickGoogleDrive" disabled="@_cloudLoading">
-                            <svg width="16" height="16" viewBox="0 0 87.3 78" xmlns="http://www.w3.org/2000/svg"><path d="m6.6 66.85 3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8h-27.5c0 1.55.4 3.1 1.2 4.5z" fill="#0066da" /><path d="m43.65 25-13.75-23.8c-1.35.8-2.5 1.9-3.3 3.3l-25.4 44a9.06 9.06 0 0 0 -1.2 4.5h27.5z" fill="#00ac47" /><path d="m73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5h-27.502l5.852 11.5z" fill="#ea4335" /><path d="m43.65 25 13.75-23.8c-1.35-.8-2.9-1.2-4.5-1.2h-18.5c-1.6 0-3.15.45-4.5 1.2z" fill="#00832d" /><path d="m59.8 53h-32.3l-13.75 23.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2z" fill="#2684fc" /><path d="m73.4 26.5-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3l-13.75 23.8 16.15 28h27.45c0-1.55-.4-3.1-1.2-4.5z" fill="#ffba00" /></svg>
-                            Google Drive
+        <div class="stepper" aria-label="Merge workflow progress">
+            <div class="@GetStepClass("Upload")">
+                <span>1</span>
+                <strong>Upload</strong>
+            </div>
+            <div class="@GetStepClass("Arrange")">
+                <span>2</span>
+                <strong>Arrange</strong>
+            </div>
+            <div class="@GetStepClass("Merge")">
+                <span>3</span>
+                <strong>Merge</strong>
+            </div>
+            <div class="@GetStepClass("Download")">
+                <span>4</span>
+                <strong>Download</strong>
+            </div>
+        </div>
+
+        <section class="workflow-grid">
+            <div class="workspace-card">
+                @if (CurrentState == PageState.Upload)
+                {
+                    <div class="panel-header">
+                        <span class="panel-eyebrow">File queue</span>
+                        <h2>Build your merge order</h2>
+                    </div>
+
+                    @if (UploadedFiles.Count > 0)
+                    {
+                        <div class="queue-helper">
+                            <span class="empty-kicker">Merge queue</span>
+                            <strong>Files will be merged in this order.</strong>
+                            <span>Order files before upload/removal for now.</span>
+                        </div>
+
+                        <div class="file-queue">
+                            @for (int i = 0; i < UploadedFiles.Count; i++)
+                            {
+                                var index = i;
+                                <div class="file-item">
+                                    <span class="file-number">
+                                        @(index + 1)
+                                    </span>
+                                    <div class="file-details">
+                                        <span class="file-name">
+                                            @UploadedFiles[index].Name
+                                        </span>
+                                        <span class="file-size">
+                                            @FormatFileSize(UploadedFileBytes[index].Length)
+                                        </span>
+                                    </div>
+                                    <span class="file-status">Ready</span>
+                                    <button class="remove-button"
+                                            aria-label="Remove file"
+                                            @onclick="() => RemoveFile(index)">
+                                        x
+                                    </button>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="empty-state">
+                            <span class="empty-kicker">Document assembly</span>
+                            <strong>Upload two or more PDFs to start.</strong>
+                            <span>Your files will appear here as a clean merge queue.</span>
+                        </div>
+                    }
+
+                    @if (UploadedFiles.Count < 10)
+                    {
+                        <div class="upload-container">
+                            <span class="upload-icon">PDF</span>
+                            <p>
+                                @(UploadedFiles.Count == 0
+                                    ? "Upload your first PDF"
+                                    : "Add another PDF")
+                            </p>
+                            <label class="upload-button">
+                                Browse File
+                                <InputFile OnChange="HandleFileSelected"
+                                           accept=".pdf"
+                                           style="display:none" />
+                            </label>
+                            <p class="upload-hint">
+                                Maximum 10 files, 25MB each
+                            </p>
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(ErrorMessage))
+                    {
+                        <p class="error-message">@ErrorMessage</p>
+                    }
+                }
+
+                @if (CurrentState == PageState.Processing)
+                {
+                    <div class="processing-container">
+                        <div class="spinner"></div>
+                        <h2>Combining your PDFs</h2>
+                        <p>Preserving order, keeping original quality, and preparing one polished download.</p>
+                    </div>
+                }
+
+                @if (CurrentState == PageState.Complete
+                        && Response != null)
+                {
+                    <AdSlot Size="rectangle" />
+
+                    <div class="result-container">
+                        <span class="result-icon">Ready</span>
+                        <h2>Your merged PDF is ready</h2>
+                        <p class="result-copy">@MergedFileCount files combined into a single clean PDF.</p>
+
+                        <div class="stats">
+                            <div class="stat">
+                                <span class="stat-label">Files Merged</span>
+                                <span class="stat-value">
+                                    @MergedFileCount
+                                </span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-label">Final Size</span>
+                                <span class="stat-value">
+                                    @FormatFileSize(Response.OutputSizeBytes)
+                                </span>
+                            </div>
+                        </div>
+
+                        <button class="download-button"
+                                @onclick="DownloadFile">
+                            Download Merged PDF
                         </button>
-                        <button class="cloud-picker-btn" @onclick="PickDropbox" disabled="@_cloudLoading">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="#0061FF"><path d="M6 2L0 6l6 4-6 4 6 4 6-4-6-4 6-4L6 2zm12 0l-6 4 6 4-6 4 6 4 6-4-6-4 6-4-6-4zm-6 13l-6 4 6 4 6-4-6-4z" /></svg>
-                            Dropbox
+
+                        <button class="reset-button"
+                                @onclick="Reset">
+                            Merge another set
                         </button>
                     </div>
-                </div>
-                @if (_cloudLoading)
+                }
+
+                @if (CurrentState == PageState.Error)
+                {
+                    <div class="error-container">
+                        <span class="error-icon">Merge failed</span>
+                        <h2>We could not finish the merge</h2>
+                        <p class="error-message">@ErrorMessage</p>
+                        <button class="reset-button" @onclick="Reset">
+                            Try Again
+                        </button>
+                    </div>
+                }
+            </div>
+
+            <aside class="settings-card">
+                @if (CurrentState == PageState.LargeFile)
+                {
+                    <LargeFileUpgrade FileSizeBytes="@_largeFileSize"
+                                      FileName="@_largeFileName"
+                                      ToolType="MergePdf"
+                                      OnCancel="Reset" />
+                }
+                else
+                {
+                    <div class="panel-header">
+                        <span class="panel-eyebrow">Merge workflow</span>
+                        <h2>Ready to combine</h2>
+                        <p>Build a controlled document package with preserved order, secure processing, and one final PDF output.</p>
+                    </div>
+
+                    <div class="estimate-card">
+                        <span>Estimated final output</span>
+                        <strong>@FormatFileSize(EstimatedOutputBytes)</strong>
+                        <small>@UploadedFiles.Count file@(UploadedFiles.Count == 1 ? "" : "s") selected</small>
+                    </div>
+
+                    <div class="option-list">
+                        <span><strong>Order control</strong><small>Files merge in the queue order shown in the workspace.</small></span>
+                        <span><strong>Combined output</strong><small>Multiple PDFs become one clean document for submission or sharing.</small></span>
+                        <span><strong>Secure processing</strong><small>Files are processed privately and deleted within 1 hour.</small></span>
+                    </div>
+
+                    <div class="cloud-picker-row">
+                        <span class="cloud-picker-label">Import from cloud</span>
+                        <div class="cloud-picker-buttons">
+                            <button class="cloud-picker-btn" @onclick="PickGoogleDrive" disabled="@_cloudLoading">
+                                <svg width="16" height="16" viewBox="0 0 87.3 78" xmlns="http://www.w3.org/2000/svg"><path d="m6.6 66.85 3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8h-27.5c0 1.55.4 3.1 1.2 4.5z" fill="#0066da" /><path d="m43.65 25-13.75-23.8c-1.35.8-2.5 1.9-3.3 3.3l-25.4 44a9.06 9.06 0 0 0 -1.2 4.5h27.5z" fill="#00ac47" /><path d="m73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5h-27.502l5.852 11.5z" fill="#ea4335" /><path d="m43.65 25 13.75-23.8c-1.35-.8-2.9-1.2-4.5-1.2h-18.5c-1.6 0-3.15.45-4.5 1.2z" fill="#00832d" /><path d="m59.8 53h-32.3l-13.75 23.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2z" fill="#2684fc" /><path d="m73.4 26.5-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3l-13.75 23.8 16.15 28h27.45c0-1.55-.4-3.1-1.2-4.5z" fill="#ffba00" /></svg>
+                                Google Drive
+                            </button>
+                            <button class="cloud-picker-btn" @onclick="PickDropbox" disabled="@_cloudLoading">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="#0061FF"><path d="M6 2L0 6l6 4-6 4 6 4 6-4-6-4 6-4L6 2zm12 0l-6 4 6 4-6 4 6 4 6-4-6-4 6-4-6-4zm-6 13l-6 4 6 4 6-4-6-4z" /></svg>
+                                Dropbox
+                            </button>
+                        </div>
+                    </div>
+
+                    @if (_cloudLoading)
                     {
-                        <p class="cloud-loading-hint">⏳ Downloading from cloud...</p>
+                        <p class="cloud-loading-hint">Downloading from cloud...</p>
                     }
                     @if (!string.IsNullOrEmpty(_cloudError))
                     {
                         <p class="error-message">@_cloudError</p>
                     }
-            </div>
-                        }
-        </div>
 
-        @if (!string.IsNullOrEmpty(ErrorMessage))
-        {
-            <p class="error-message">@ErrorMessage</p>
-        }
-
-        @if (UploadedFiles.Count >= 2)
-        {
-            <button class="process-button"
-                    @onclick="ProcessFiles">
-                Merge @UploadedFiles.Count PDFs
-            </button>
-        }
-        else if (UploadedFiles.Count == 1)
-        {
-            <p style="color: var(--gray); margin-top: 1rem;">
-                Add at least one more PDF to merge
-            </p>
-        }
+                    @if (CurrentState == PageState.Upload && UploadedFiles.Count >= 2)
+                    {
+                        <button class="process-button"
+                                @onclick="ProcessFiles">
+                            Merge PDFs
+                        </button>
+                        <div class="secure-note">
+                            Secure processing. Files are deleted within 1 hour.
+                        </div>
+                    }
+                    else if (CurrentState == PageState.Upload)
+                    {
+                        <button class="process-button disabled" disabled>
+                            Merge PDFs
+                        </button>
+                        <p class="action-hint">
+                            Add at least two PDFs to enable merging.
+                        </p>
+                    }
                 }
-
-        @if (CurrentState == PageState.LargeFile)
-        {
-            <LargeFileUpgrade FileSizeBytes="@_largeFileSize"
-                              FileName="@_largeFileName"
-                              ToolType="MergePdf"
-                              OnCancel="Reset" />
-        }
-
-        @if (CurrentState == PageState.Processing)
-        {
-            <div class="processing-container">
-                <div class="spinner"></div>
-                <p>Merging your PDFs...</p>
-            </div>
-        }
-
-        @if (CurrentState == PageState.Complete
-                && Response != null)
-        {
-            <AdSlot Size="rectangle" />
-
-            <div class="result-container">
-                <span class="result-icon">✅</span>
-                <h2>Merge Complete!</h2>
-
-                <div class="stats">
-                    <div class="stat">
-                        <span class="stat-label">Files Merged</span>
-                        <span class="stat-value">
-                            @MergedFileCount
-                        </span>
-                    </div>
-                    <div class="stat">
-                        <span class="stat-label">Final Size</span>
-                        <span class="stat-value">
-                            @FormatFileSize(Response.OutputSizeBytes)
-                        </span>
-                    </div>
-                </div>
-
-                <button class="download-button"
-                        @onclick="DownloadFile">
-                    Download Merged PDF
-                </button>
-
-                <button class="reset-button"
-                        @onclick="Reset">
-                    Merge More PDFs
-                </button>
-            </div>
-        }
-
-        @if (CurrentState == PageState.Error)
-        {
-            <div class="error-container">
-                <span class="error-icon">❌</span>
-                <p class="error-message">@ErrorMessage</p>
-                <button class="reset-button" @onclick="Reset">
-                    Try Again
-                </button>
-            </div>
-        }
+            </aside>
+        </section>
     </div>
 
     <div class="faq-section">
@@ -233,6 +323,673 @@
     </div>
 </div>
 
+<style>
+    .tool-page {
+        width: 100%;
+        max-width: none;
+        min-height: calc(100vh - 72px);
+        min-width: 0;
+        margin: 0;
+        padding: 48px 0 72px;
+        box-sizing: border-box;
+        background:
+            radial-gradient(circle at top left, rgba(109, 40, 217, 0.12), transparent 32%),
+            linear-gradient(135deg, #f8f7ff 0%, #eef5ff 100%);
+        color: #172033;
+    }
+
+    .tool-container {
+        width: min(1320px, calc(100% - 64px));
+        max-width: 1320px;
+        margin: 0 auto;
+        padding: 0;
+        background: transparent !important;
+        border: 0 !important;
+        border-radius: 0;
+        box-shadow: none !important;
+        text-align: left;
+        box-sizing: border-box;
+    }
+
+    .tool-hero {
+        width: 100%;
+        max-width: none;
+        text-align: left;
+        margin-bottom: 24px;
+    }
+
+    .tool-hero h1 {
+        max-width: 900px;
+        margin: 0 0 14px;
+        color: #111827;
+        font-size: clamp(2.4rem, 3vw, 3.8rem);
+        line-height: 1.02;
+        letter-spacing: -0.04em;
+    }
+
+    .hero-gradient-text {
+        background: linear-gradient(135deg, #6d5dfc 0%, #2563eb 55%, #06b6d4 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+
+    .tool-subtitle {
+        max-width: 760px;
+        margin: 0;
+        color: #5b6475;
+        font-size: 1rem;
+        line-height: 1.7;
+    }
+
+    .trust-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 18px;
+    }
+
+    .trust-row span {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.78);
+        border: 1px solid rgba(148, 163, 184, 0.24);
+        box-shadow: 0 10px 26px rgba(37, 99, 235, 0.08);
+        color: #334155;
+        font-size: 0.85rem;
+        font-weight: 700;
+        padding: 0.45rem 0.8rem;
+    }
+
+    .trust-row span::before {
+        content: "";
+        width: 0.45rem;
+        height: 0.45rem;
+        border-radius: 999px;
+        background: linear-gradient(135deg, #6d5dfc 0%, #2563eb 55%, #06b6d4 100%);
+        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+    }
+
+    .stepper {
+        width: 100%;
+        max-width: none;
+        margin: 0 0 24px;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+        padding: 8px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.8);
+        box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+    }
+
+    .step {
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+        border-radius: 999px;
+        color: #64748b;
+        padding: 0.45rem 0.7rem 0.45rem 0.45rem;
+        transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease;
+    }
+
+    .step span {
+        display: grid;
+        place-items: center;
+        width: 1.7rem;
+        height: 1.7rem;
+        border-radius: 50%;
+        background: #eef2ff;
+        color: #4f46e5;
+        font-size: 0.82rem;
+        font-weight: 800;
+    }
+
+    .step strong {
+        font-size: 0.88rem;
+        white-space: nowrap;
+    }
+
+    .step.active {
+        background: linear-gradient(135deg, rgba(109, 93, 252, 0.15), rgba(37, 99, 235, 0.12));
+        color: #1e293b;
+        box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.12);
+    }
+
+    .step.complete {
+        background: linear-gradient(135deg, #6d5dfc 0%, #2563eb 55%, #06b6d4 100%);
+        color: #ffffff;
+    }
+
+    .step.complete span {
+        background: rgba(255, 255, 255, 0.22);
+        color: #ffffff;
+    }
+
+    .workflow-grid {
+        width: 100%;
+        max-width: none;
+        display: grid;
+        grid-template-columns: minmax(0, 1.55fr) minmax(360px, 0.75fr);
+        gap: 28px;
+        align-items: start;
+    }
+
+    .workspace-card,
+    .settings-card {
+        border-radius: 24px;
+        background: rgba(255, 255, 255, 0.92);
+        border: 1px solid rgba(148, 163, 184, 0.18);
+        box-shadow: 0 20px 50px rgba(15, 23, 42, 0.08);
+        width: 100%;
+        max-width: none;
+        min-width: 0;
+        padding: 28px;
+        box-sizing: border-box;
+    }
+
+    .upload-card,
+    .upload-zone,
+    .file-upload,
+    .dropzone,
+    .file-upload-container {
+        width: 100%;
+        max-width: none;
+    }
+
+    .settings-card {
+        position: sticky;
+        top: 1rem;
+    }
+
+    .panel-header {
+        margin-bottom: 1rem;
+    }
+
+    .panel-header h2 {
+        margin: 0.25rem 0 0;
+        color: #111827;
+        font-size: 1.25rem;
+        line-height: 1.2;
+    }
+
+    .panel-header p {
+        margin: 0.45rem 0 0;
+        color: #64748b;
+        font-size: 0.92rem;
+        line-height: 1.55;
+    }
+
+    .panel-eyebrow {
+        background: linear-gradient(135deg, #6d5dfc 0%, #2563eb 55%, #06b6d4 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        font-size: 0.78rem;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    .empty-state,
+    .queue-helper {
+        display: grid;
+        gap: 0.35rem;
+        border-radius: 20px;
+        background: #f8fafc;
+        color: #64748b;
+        margin-bottom: 1rem;
+        padding: 1rem;
+    }
+
+    .empty-state strong,
+    .queue-helper strong {
+        color: #1e293b;
+        font-size: 1.05rem;
+    }
+
+    .empty-kicker {
+        color: #2563eb;
+        font-size: 0.78rem;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    .file-queue {
+        display: grid;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+
+    .file-item {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto auto;
+        align-items: center;
+        gap: 0.8rem;
+        border-radius: 18px;
+        background:
+            linear-gradient(135deg, rgba(109, 93, 252, 0.045), rgba(6, 182, 212, 0.035)),
+            #ffffff;
+        box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.16), 0 12px 28px rgba(15, 23, 42, 0.05);
+        padding: 0.85rem;
+    }
+
+    .file-number {
+        display: grid;
+        place-items: center;
+        width: 2rem;
+        height: 2rem;
+        border-radius: 50%;
+        background: #eef2ff;
+        color: #4f46e5;
+        font-weight: 900;
+    }
+
+    .file-details {
+        display: grid;
+        gap: 0.2rem;
+        min-width: 0;
+    }
+
+    .file-name {
+        color: #172033;
+        font-weight: 850;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .file-size {
+        color: #64748b;
+        font-size: 0.85rem;
+        font-weight: 700;
+    }
+
+    .file-status {
+        border-radius: 999px;
+        background: rgba(6, 182, 212, 0.1);
+        color: #0e7490;
+        font-size: 0.78rem;
+        font-weight: 900;
+        padding: 0.35rem 0.65rem;
+    }
+
+    .remove-button {
+        display: grid;
+        place-items: center;
+        width: 2rem;
+        height: 2rem;
+        border: 0;
+        border-radius: 50%;
+        background: #f1f5f9;
+        color: #475569;
+        cursor: pointer;
+        font-weight: 900;
+        transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+    }
+
+    .remove-button:hover {
+        background: #fee2e2;
+        color: #b91c1c;
+        transform: translateY(-1px);
+    }
+
+    .upload-container {
+        display: grid;
+        justify-items: center;
+        gap: 0.75rem;
+        border-radius: 24px;
+        background: #f8fafc;
+        box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.16);
+        padding: 1.5rem;
+        text-align: center;
+    }
+
+    .upload-icon {
+        display: grid;
+        place-items: center;
+        width: 3.25rem;
+        height: 3.25rem;
+        border-radius: 18px;
+        background: linear-gradient(135deg, rgba(109, 93, 252, 0.14), rgba(6, 182, 212, 0.12));
+        color: #3730a3;
+        font-size: 0.88rem;
+        font-weight: 900;
+    }
+
+    .upload-container p {
+        margin: 0;
+        color: #475569;
+        font-weight: 750;
+    }
+
+    .upload-button {
+        border-radius: 14px;
+        background: #111827;
+        color: #ffffff;
+        cursor: pointer;
+        font-weight: 900;
+        padding: 0.8rem 1rem;
+    }
+
+    .upload-hint,
+    .action-hint,
+    .cloud-loading-hint {
+        color: #64748b;
+        font-size: 0.9rem;
+        margin: 0.75rem 0 0;
+    }
+
+    .estimate-card {
+        display: grid;
+        gap: 0.25rem;
+        border-radius: 22px;
+        background: linear-gradient(135deg, #6d5dfc 0%, #2563eb 55%, #06b6d4 100%);
+        color: #ffffff;
+        margin-bottom: 1rem;
+        padding: 1rem;
+        box-shadow: 0 18px 36px rgba(37, 99, 235, 0.22);
+    }
+
+    .estimate-card span {
+        font-size: 0.82rem;
+        font-weight: 800;
+        opacity: 0.86;
+        text-transform: uppercase;
+    }
+
+    .estimate-card strong {
+        font-size: 2rem;
+        line-height: 1.1;
+    }
+
+    .estimate-card small {
+        font-size: 0.92rem;
+        opacity: 0.88;
+    }
+
+    .option-list {
+        display: grid;
+        gap: 0.65rem;
+        margin-bottom: 1rem;
+    }
+
+    .option-list span {
+        display: grid;
+        gap: 0.2rem;
+        border-radius: 16px;
+        background: #f8fafc;
+        color: #475569;
+        padding: 0.8rem 0.9rem;
+    }
+
+    .option-list strong {
+        color: #172033;
+        font-size: 0.95rem;
+    }
+
+    .option-list small {
+        color: #64748b;
+        font-size: 0.82rem;
+        line-height: 1.45;
+    }
+
+    .cloud-picker-row {
+        border-radius: 20px;
+        background: #f8fafc;
+        margin-bottom: 1rem;
+        padding: 1rem;
+    }
+
+    .cloud-picker-label {
+        display: block;
+        color: #64748b;
+        font-size: 0.78rem;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        margin-bottom: 0.75rem;
+        text-transform: uppercase;
+    }
+
+    .cloud-picker-buttons {
+        display: grid;
+        gap: 0.6rem;
+    }
+
+    .cloud-picker-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        border: 0;
+        border-radius: 14px;
+        background: #ffffff;
+        box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.18);
+        color: #1e293b;
+        cursor: pointer;
+        font-weight: 850;
+        padding: 0.75rem;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .cloud-picker-btn:hover:not(:disabled) {
+        transform: translateY(-1px);
+        box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.22), 0 12px 24px rgba(37, 99, 235, 0.1);
+    }
+
+    .cloud-picker-btn:disabled,
+    .process-button.disabled {
+        cursor: not-allowed;
+        filter: grayscale(0.45);
+        opacity: 0.58;
+    }
+
+    .process-button,
+    .download-button {
+        width: 100%;
+        border: 0;
+        border-radius: 16px;
+        background: linear-gradient(135deg, #6d5dfc 0%, #2563eb 55%, #06b6d4 100%);
+        box-shadow: 0 18px 36px rgba(37, 99, 235, 0.24);
+        color: #ffffff;
+        cursor: pointer;
+        font-size: 1rem;
+        font-weight: 900;
+        padding: 1rem 1.2rem;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+    }
+
+    .process-button:hover:not(:disabled),
+    .download-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 22px 44px rgba(37, 99, 235, 0.3);
+        filter: saturate(1.08);
+    }
+
+    .processing-container,
+    .result-container,
+    .error-container {
+        display: grid;
+        justify-items: center;
+        gap: 0.9rem;
+        border-radius: 24px;
+        background: #f8fafc;
+        padding: 2rem;
+        text-align: center;
+    }
+
+    .processing-container h2,
+    .result-container h2,
+    .error-container h2 {
+        margin: 0;
+        color: #111827;
+    }
+
+    .processing-container p,
+    .result-container p,
+    .error-container p {
+        max-width: 520px;
+        margin: 0;
+        color: #64748b;
+    }
+
+    .spinner {
+        width: 3rem;
+        height: 3rem;
+        border: 4px solid #dbeafe;
+        border-top-color: #6d5dfc;
+        border-radius: 50%;
+        animation: spin 0.9s linear infinite;
+    }
+
+    .result-icon,
+    .error-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 2.4rem;
+        border-radius: 999px;
+        font-size: 0.82rem;
+        font-weight: 900;
+        letter-spacing: 0.04em;
+        padding: 0.55rem 0.8rem;
+        text-transform: uppercase;
+    }
+
+    .result-icon {
+        background: rgba(6, 182, 212, 0.1);
+        color: #0e7490;
+    }
+
+    .error-icon {
+        background: #fee2e2;
+        color: #b91c1c;
+    }
+
+    .stats {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.75rem;
+        width: 100%;
+    }
+
+    .stat {
+        border-radius: 18px;
+        background: #ffffff;
+        padding: 1rem;
+    }
+
+    .stat-label,
+    .stat-value {
+        display: block;
+    }
+
+    .stat-label {
+        color: #64748b;
+        font-size: 0.82rem;
+        font-weight: 800;
+    }
+
+    .stat-value {
+        color: #111827;
+        font-size: 1.35rem;
+        font-weight: 900;
+        margin-top: 0.25rem;
+    }
+
+    .reset-button {
+        border: 0;
+        border-radius: 14px;
+        background: #eef2ff;
+        color: #3730a3;
+        cursor: pointer;
+        font-weight: 900;
+        padding: 0.9rem 1rem;
+    }
+
+    .error-message {
+        color: #b91c1c;
+        font-weight: 750;
+    }
+
+    .secure-note {
+        margin-top: 0.8rem;
+        color: #64748b;
+        font-size: 0.82rem;
+        font-weight: 800;
+        text-align: center;
+    }
+
+    .faq-section {
+        max-width: 980px;
+        margin: 3rem auto 0;
+        padding: 0 1.25rem;
+    }
+
+    .faq-item {
+        border-radius: 18px;
+        background: #ffffff;
+        box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+        margin-top: 0.9rem;
+        padding: 1rem 1.1rem;
+    }
+
+    @@keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    @@media (max-width: 980px) {
+        .tool-hero,
+        .workflow-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .tool-container {
+            width: min(100%, calc(100% - 24px));
+        }
+
+        .tool-hero h1 {
+            font-size: clamp(2rem, 8vw, 3rem);
+        }
+
+        .settings-card {
+            position: static;
+        }
+
+        .stepper {
+            overflow-x: auto;
+            border-radius: 20px;
+            grid-template-columns: repeat(4, minmax(130px, 1fr));
+        }
+    }
+
+    @@media (max-width: 640px) {
+        .workspace-card,
+        .settings-card {
+            border-radius: 22px;
+            padding: 1rem;
+        }
+
+        .file-item {
+            grid-template-columns: auto minmax(0, 1fr) auto;
+        }
+
+        .file-status {
+            grid-column: 2;
+            justify-self: start;
+        }
+
+        .stats {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
 @code {
     private enum PageState
     {
@@ -245,12 +1002,39 @@
     private ProcessResponse? Response;
     private byte[]? MergedBytes;
     private string? ErrorMessage;
-    private bool IsDragging = false;
     private int MergedFileCount = 0;
     private long _largeFileSize = 0;
     private string _largeFileName = string.Empty;
     private bool _cloudLoading = false;
     private string _cloudError = string.Empty;
+
+    private long EstimatedOutputBytes =>
+        UploadedFileBytes.Sum(bytes => (long)bytes.Length);
+
+    private string GetStepClass(string step)
+    {
+        if (CurrentState == PageState.Complete)
+            return "step complete";
+
+        if (CurrentState == PageState.Processing)
+            return step == "Merge" ? "step active" : "step complete";
+
+        if (CurrentState == PageState.Upload && UploadedFiles.Count == 0)
+            return step == "Upload" ? "step active" : "step";
+
+        if (CurrentState == PageState.Upload && UploadedFiles.Count > 0)
+        {
+            if (step == "Upload")
+                return "step complete";
+
+            return step == "Arrange" ? "step active" : "step";
+        }
+
+        if (CurrentState == PageState.LargeFile)
+            return step == "Upload" ? "step active" : "step";
+
+        return "step";
+    }
 
     [SupplyParameterFromQuery]
     private string? Paid { get; set; }
