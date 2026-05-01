@@ -175,6 +175,10 @@
                                 View Pro options
                             </a>
                         </div>
+
+                        <RecentFiles FileName="@(SelectedFile?.Name ?? "Compressed PDF")"
+                                     ToolName="Compress PDF"
+                                     OnDownloadAgain="@DownloadFile" />
                     </div>
                 }
 

@@ -184,6 +184,10 @@
                                 @onclick="Reset">
                             Merge another set
                         </button>
+
+                        <RecentFiles FileName="@($"Merged PDF ({MergedFileCount} files)")"
+                                     ToolName="Merge PDF"
+                                     OnDownloadAgain="@DownloadFile" />
                     </div>
                 }
 

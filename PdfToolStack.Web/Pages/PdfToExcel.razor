@@ -133,6 +133,10 @@
                                 View Pro options
                             </a>
                         </div>
+
+                        <RecentFiles FileName="@(SelectedFile?.Name ?? "Extracted PDF")"
+                                     ToolName="PDF to Excel"
+                                     OnDownloadAgain="@DownloadFile" />
                     </div>
                 }
 

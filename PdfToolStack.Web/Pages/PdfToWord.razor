@@ -158,6 +158,10 @@
                                 View Pro options
                             </a>
                         </div>
+
+                        <RecentFiles FileName="@(SelectedFile?.Name ?? "Converted PDF")"
+                                     ToolName="PDF to Word"
+                                     OnDownloadAgain="@DownloadFile" />
                     </div>
                 }
 

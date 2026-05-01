@@ -1,0 +1,229 @@
+@inject IJSRuntime JS
+@using System.Text.Json
+
+@if (_recentFiles.Count > 0)
+{
+    <section class="recent-files-card" aria-label="Recent files">
+        <div class="recent-files-header">
+            <div>
+                <span>Recent Files</span>
+                <p>Your last processed documents on this browser.</p>
+            </div>
+        </div>
+
+        <div class="recent-files-list">
+            @foreach (var item in _recentFiles)
+            {
+                <div class="recent-file-item">
+                    <div class="recent-file-main">
+                        <strong>@item.FileName</strong>
+                        <span>@item.ToolName • @FormatTimestamp(item.Timestamp)</span>
+                    </div>
+                    <button class="recent-file-action"
+                            type="button"
+                            disabled="@(!CanDownloadAgain(item))"
+                            @onclick="() => OnDownloadAgain.InvokeAsync()">
+                        Download again
+                    </button>
+                </div>
+            }
+        </div>
+    </section>
+}
+
+@code {
+    private const string StorageKey = "pdftoolstack.recentFiles";
+    private readonly JsonSerializerOptions _jsonOptions = new() { PropertyNameCaseInsensitive = true };
+    private List<RecentFileEntry> _recentFiles = new();
+    private string? _lastSavedKey;
+
+    [Parameter] public string FileName { get; set; } = string.Empty;
+    [Parameter] public string ToolName { get; set; } = string.Empty;
+    [Parameter] public EventCallback OnDownloadAgain { get; set; }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        var saveKey = $"{ToolName}|{FileName}";
+
+        if (firstRender || _lastSavedKey != saveKey)
+        {
+            _lastSavedKey = saveKey;
+            await SaveAndLoadRecentFiles();
+            StateHasChanged();
+        }
+    }
+
+    private async Task SaveAndLoadRecentFiles()
+    {
+        var existing = await ReadRecentFiles();
+
+        if (!string.IsNullOrWhiteSpace(FileName) && !string.IsNullOrWhiteSpace(ToolName))
+        {
+            existing.RemoveAll(item =>
+                string.Equals(item.FileName, FileName, StringComparison.OrdinalIgnoreCase)
+                && string.Equals(item.ToolName, ToolName, StringComparison.OrdinalIgnoreCase));
+
+            existing.Insert(0, new RecentFileEntry
+            {
+                FileName = FileName,
+                ToolName = ToolName,
+                Timestamp = DateTimeOffset.Now
+            });
+
+            existing = existing.Take(5).ToList();
+            await JS.InvokeVoidAsync("localStorage.setItem", StorageKey, JsonSerializer.Serialize(existing));
+        }
+
+        _recentFiles = existing.Take(5).ToList();
+    }
+
+    private async Task<List<RecentFileEntry>> ReadRecentFiles()
+    {
+        var json = await JS.InvokeAsync<string?>("localStorage.getItem", StorageKey);
+
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return new List<RecentFileEntry>();
+        }
+
+        try
+        {
+            return JsonSerializer.Deserialize<List<RecentFileEntry>>(json, _jsonOptions)
+                ?? new List<RecentFileEntry>();
+        }
+        catch
+        {
+            return new List<RecentFileEntry>();
+        }
+    }
+
+    private static string FormatTimestamp(DateTimeOffset timestamp)
+    {
+        if (timestamp == default)
+        {
+            return "Recently";
+        }
+
+        return timestamp.ToLocalTime().ToString("MMM d, h:mm tt");
+    }
+
+    private bool CanDownloadAgain(RecentFileEntry item) =>
+        OnDownloadAgain.HasDelegate
+        && string.Equals(item.FileName, FileName, StringComparison.OrdinalIgnoreCase)
+        && string.Equals(item.ToolName, ToolName, StringComparison.OrdinalIgnoreCase);
+
+    private class RecentFileEntry
+    {
+        public string FileName { get; set; } = string.Empty;
+        public string ToolName { get; set; } = string.Empty;
+        public DateTimeOffset Timestamp { get; set; }
+    }
+}
+
+<style>
+    .recent-files-card {
+        margin-top: 18px;
+        padding: 18px;
+        border: 1px solid rgba(148, 163, 184, 0.18);
+        border-radius: 20px;
+        background:
+            linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.9)),
+            radial-gradient(circle at top left, rgba(109, 93, 252, 0.12), transparent 32%);
+        box-shadow: 0 16px 38px rgba(15, 23, 42, 0.07);
+        text-align: left;
+    }
+
+    .recent-files-header {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 14px;
+    }
+
+    .recent-files-header span {
+        display: block;
+        color: #0f172a;
+        font-size: 0.98rem;
+        font-weight: 900;
+    }
+
+    .recent-files-header p {
+        margin: 4px 0 0;
+        color: #64748b;
+        font-size: 0.86rem;
+        line-height: 1.45;
+    }
+
+    .recent-files-list {
+        display: grid;
+        gap: 10px;
+    }
+
+    .recent-file-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 12px;
+        border: 1px solid rgba(148, 163, 184, 0.16);
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.8);
+    }
+
+    .recent-file-main {
+        min-width: 0;
+        display: grid;
+        gap: 3px;
+    }
+
+    .recent-file-main strong {
+        overflow: hidden;
+        color: #1e293b;
+        font-size: 0.9rem;
+        font-weight: 850;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .recent-file-main span {
+        color: #64748b;
+        font-size: 0.78rem;
+    }
+
+    .recent-file-action {
+        flex: 0 0 auto;
+        border: 0;
+        border-radius: 999px;
+        padding: 8px 12px;
+        background: linear-gradient(135deg, #6d5dfc 0%, #2563eb 55%, #06b6d4 100%);
+        color: #fff;
+        cursor: pointer;
+        font-size: 0.78rem;
+        font-weight: 850;
+        box-shadow: 0 10px 24px rgba(37, 99, 235, 0.18);
+        transition: transform 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .recent-file-action:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 14px 30px rgba(37, 99, 235, 0.24);
+    }
+
+    .recent-file-action:disabled {
+        cursor: not-allowed;
+        opacity: 0.48;
+        transform: none;
+        box-shadow: none;
+    }
+
+    @@media (max-width: 640px) {
+        .recent-file-item {
+            align-items: stretch;
+            flex-direction: column;
+        }
+
+        .recent-file-action {
+            width: 100%;
+        }
+    }
+</style>

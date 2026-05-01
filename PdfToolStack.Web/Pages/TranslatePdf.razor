@@ -397,6 +397,10 @@
                     View Pro options
                 </a>
             </div>
+
+            <RecentFiles FileName="@(_fileName ?? "Translated PDF")"
+                         ToolName="Translate PDF"
+                         OnDownloadAgain="@DownloadTranslation" />
         </div>
     }
 

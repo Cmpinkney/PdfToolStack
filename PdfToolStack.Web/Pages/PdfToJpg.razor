@@ -135,6 +135,10 @@
                                 View Pro options
                             </a>
                         </div>
+
+                        <RecentFiles FileName="@(SelectedFile?.Name ?? "Converted PDF")"
+                                     ToolName="PDF to JPG"
+                                     OnDownloadAgain="@DownloadFile" />
                     </div>
                 }
 
