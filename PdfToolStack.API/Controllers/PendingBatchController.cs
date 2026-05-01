@@ -262,10 +262,7 @@ namespace PdfToolStack.API.Controllers
                 pending.CompletedAtUtc = DateTime.UtcNow;
                 await _db.SaveChangesAsync(cancellationToken);
 
-                foreach (var blobReference in blobReferences)
-                {
-                    await _blobStorage.DeleteAsync(blobReference, cancellationToken);
-                }
+                await CleanupInputBlobsAsync(pending.PendingBatchId, blobReferences);
 
                 return File(zipBytes, "application/zip",
                     $"pdftoolstack_batch_{pending.ToolType.ToString().ToLower()}.zip");
@@ -276,6 +273,7 @@ namespace PdfToolStack.API.Controllers
                 pending.Status = PendingBatchStatus.Failed;
                 pending.ErrorMessage = GetErrorMessage(ex);
                 await _db.SaveChangesAsync(cancellationToken);
+                await CleanupInputBlobsAsync(pending.PendingBatchId, blobReferences);
                 return UnprocessableEntity(new { error = pending.ErrorMessage });
             }
         }
@@ -372,6 +370,25 @@ namespace PdfToolStack.API.Controllers
             return message.Length <= 2000
                 ? message
                 : message[..2000];
+        }
+
+        private async Task CleanupInputBlobsAsync(Guid pendingBatchId, IEnumerable<string> blobReferences)
+        {
+            foreach (var blobReference in blobReferences.Where(x => !string.IsNullOrWhiteSpace(x)))
+            {
+                try
+                {
+                    await _blobStorage.DeleteAsync(blobReference, CancellationToken.None);
+                }
+                catch (Exception cleanupEx)
+                {
+                    _logger.LogWarning(
+                        cleanupEx,
+                        "Failed to delete pending batch input blob for {PendingBatchId}. BlobReference={BlobReference}",
+                        pendingBatchId,
+                        blobReference);
+                }
+            }
         }
 
         private async Task<bool> IsAuthorizedForProcessingAsync(
