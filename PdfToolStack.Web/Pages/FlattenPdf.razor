@@ -22,77 +22,134 @@
 <div class="tool-page">
     <AdSlot Size="banner" />
     <div class="tool-container">
-        <h1>Flatten PDF Online</h1>
-        <p class="tool-subtitle">
-            Make your PDF uneditable by flattening all form
-            fields and annotations. No signup required.
-        </p>
-
-        @if (CurrentState == PageState.Upload)
-        {
-            <FileUpload OnFileSelected="HandleFileSelected"
-                        OnFileRemoved="HandleFileRemoved" />
-
-            @if (SelectedFile != null)
-            {
-                <button class="process-button"
-                        @onclick="ProcessFile">
-                    Flatten PDF
-                </button>
-            }
-        }
-
-        @if (CurrentState == PageState.LargeFile)
-        {
-            <LargeFileUpgrade
-                FileSizeBytes="@(SelectedFile?.Size ?? 0)"
-                FileName="@(SelectedFile?.Name ?? "")"
-                ToolType="FlattenPdf"
-                OnCancel="Reset" />
-        }
-
-        @if (CurrentState == PageState.Processing)
-        {
-            <div class="processing-container">
-                <div class="spinner"></div>
-                <p>Flattening your PDF...</p>
+        <section class="tool-hero">
+            <div class="trust-row">
+                <span>Secure processing</span>
+                <span>Make content permanent</span>
+                <span>Deleted in 1 hour</span>
             </div>
-        }
+            <h1>Flatten PDF <span class="hero-gradient-text">securely</span></h1>
+            <p class="tool-subtitle">
+                Make your PDF uneditable by flattening form fields and annotations into permanent page content.
+            </p>
+        </section>
 
-        @if (CurrentState == PageState.Complete
-             && ResultBytes != null)
-        {
-            <AdSlot Size="rectangle" />
-            <div class="result-container">
-                <span class="result-icon">✅</span>
-                <h2>PDF Flattened!</h2>
-                <p style="color: var(--gray);
-                           margin-bottom: 1.5rem;">
-                    All form fields and annotations have
-                    been permanently flattened.
-                </p>
-                <button class="download-button"
-                        @onclick="DownloadFile">
-                    Download Flattened PDF
-                </button>
-                <button class="reset-button"
-                        @onclick="Reset">
-                    Flatten Another PDF
-                </button>
-            </div>
-        }
+        <div class="stepper" aria-label="Flatten workflow progress">
+            <div class="step @(CurrentState == PageState.Upload && SelectedFile == null ? "active" : SelectedFile != null || CurrentState == PageState.Processing || CurrentState == PageState.Complete ? "complete" : "")"><span>1</span><strong>Upload</strong></div>
+            <div class="step @(CurrentState == PageState.Upload && SelectedFile != null ? "active" : CurrentState == PageState.Processing || CurrentState == PageState.Complete ? "complete" : "")"><span>2</span><strong>Configure</strong></div>
+            <div class="step @(CurrentState == PageState.Processing ? "active" : CurrentState == PageState.Complete ? "complete" : "")"><span>3</span><strong>Process</strong></div>
+            <div class="step @(CurrentState == PageState.Complete ? "active complete" : "")"><span>4</span><strong>Download</strong></div>
+        </div>
 
-        @if (CurrentState == PageState.Error)
-        {
-            <div class="error-container">
-                <span class="error-icon">❌</span>
-                <p class="error-message">@ErrorMessage</p>
-                <button class="reset-button"
-                        @onclick="Reset">
-                    Try Again
-                </button>
+        <section class="workflow-grid">
+            <div class="workspace-card">
+                @if (CurrentState == PageState.Upload)
+                {
+                    <div class="panel-header">
+                        <span class="panel-eyebrow">Upload PDF</span>
+                        <h2>Start with your document</h2>
+                    </div>
+
+                    <FileUpload OnFileSelected="HandleFileSelected"
+                                OnFileRemoved="HandleFileRemoved" />
+
+                    @if (SelectedFile == null)
+                    {
+                        <div class="empty-state">
+                            <span class="empty-kicker">Permanent output</span>
+                            <strong>Upload a PDF with forms or annotations.</strong>
+                            <span>Flattening locks visible fields and markups into the PDF pages.</span>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="file-ready-card">
+                            <span class="panel-eyebrow">File ready</span>
+                            <strong>@SelectedFile.Name</strong>
+                            <small>Ready to flatten into a final, uneditable PDF.</small>
+                        </div>
+                    }
+                }
+
+                @if (CurrentState == PageState.LargeFile)
+                {
+                    <LargeFileUpgrade
+                        FileSizeBytes="@(SelectedFile?.Size ?? 0)"
+                        FileName="@(SelectedFile?.Name ?? "")"
+                        ToolType="FlattenPdf"
+                        OnCancel="Reset" />
+                }
+
+                @if (CurrentState == PageState.Processing)
+                {
+                    <div class="processing-container">
+                        <div class="spinner"></div>
+                        <h2>Flattening your PDF</h2>
+                        <p>Embedding form fields and annotations into the final page content.</p>
+                    </div>
+                }
+
+                @if (CurrentState == PageState.Complete
+                     && ResultBytes != null)
+                {
+                    <AdSlot Size="rectangle" />
+                    <div class="result-container">
+                        <span class="result-icon">Ready</span>
+                        <h2>Your flattened PDF is ready</h2>
+                        <p>All form fields and annotations have been permanently flattened.</p>
+                        <button class="download-button"
+                                @onclick="DownloadFile">
+                            Download Flattened PDF
+                        </button>
+                        <button class="reset-button"
+                                @onclick="Reset">
+                            Flatten Another PDF
+                        </button>
+                    </div>
+                }
+
+                @if (CurrentState == PageState.Error)
+                {
+                    <div class="error-container">
+                        <span class="error-icon">Flatten failed</span>
+                        <h2>We could not finish flattening</h2>
+                        <p class="error-message">@ErrorMessage</p>
+                        <button class="reset-button"
+                                @onclick="Reset">
+                            Try Again
+                        </button>
+                    </div>
+                }
             </div>
-        }
+
+            <aside class="settings-card">
+                <div class="panel-header">
+                    <span class="panel-eyebrow">Flatten settings</span>
+                    <h2>Prepare final output</h2>
+                    <p>Flattening is designed for final, shareable PDFs where visible content should stay fixed.</p>
+                </div>
+
+                <div class="option-list">
+                    <span><strong>Lock visible fields</strong><small>Turn filled form fields into page content.</small></span>
+                    <span><strong>Keep annotations</strong><small>Make comments, stamps, and markups permanent.</small></span>
+                    <span><strong>Final PDF output</strong><small>Create a clean file for sharing or archiving.</small></span>
+                </div>
+
+                @if (CurrentState == PageState.Upload && SelectedFile != null)
+                {
+                    <button class="process-button"
+                            @onclick="ProcessFile">
+                        Flatten PDF
+                    </button>
+                    <div class="secure-note">Secure processing. Files are deleted within 1 hour.</div>
+                }
+                else if (CurrentState == PageState.Upload)
+                {
+                    <button class="process-button disabled" disabled>Flatten PDF</button>
+                    <p class="action-hint">Upload a PDF to enable flattening.</p>
+                }
+            </aside>
+        </section>
     </div>
 
     <div class="faq-section">
@@ -116,6 +173,57 @@
         </div>
     </div>
 </div>
+
+<style>
+    .tool-page { width: 100%; min-height: calc(100vh - 72px); padding: 48px 0 72px; box-sizing: border-box; background: radial-gradient(circle at top left, rgba(109, 40, 217, 0.12), transparent 32%), linear-gradient(135deg, #f8f7ff 0%, #eef5ff 100%); color: #172033; }
+    .tool-container { width: min(1320px, calc(100% - 64px)); max-width: 1320px; margin: 0 auto; }
+    .tool-hero { margin-bottom: 24px; text-align: left; }
+    .tool-hero h1 { max-width: 900px; margin: 0 0 14px; color: #111827; font-size: clamp(2.4rem, 3vw, 3.8rem); line-height: 1.02; letter-spacing: -0.04em; }
+    .hero-gradient-text { background: linear-gradient(135deg, #6d5dfc 0%, #2563eb 55%, #06b6d4 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .tool-subtitle { max-width: 760px; margin: 0; color: #5b6475; font-size: 1rem; line-height: 1.7; }
+    .trust-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; }
+    .trust-row span { display: inline-flex; align-items: center; gap: .4rem; border-radius: 999px; background: rgba(255,255,255,.78); border: 1px solid rgba(148,163,184,.24); box-shadow: 0 10px 26px rgba(37,99,235,.08); color: #334155; font-size: .85rem; font-weight: 700; padding: .45rem .8rem; }
+    .trust-row span::before { content: ""; width: .45rem; height: .45rem; border-radius: 999px; background: linear-gradient(135deg, #6d5dfc 0%, #2563eb 55%, #06b6d4 100%); box-shadow: 0 0 0 4px rgba(37,99,235,.1); }
+    .stepper { width: 100%; margin: 0 0 24px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 8px; border-radius: 999px; background: rgba(255,255,255,.8); box-shadow: 0 18px 45px rgba(15,23,42,.08); }
+    .step { display: flex; align-items: center; gap: .45rem; border-radius: 999px; color: #64748b; padding: .45rem .7rem .45rem .45rem; }
+    .step span { display: grid; place-items: center; width: 1.7rem; height: 1.7rem; border-radius: 50%; background: #eef2ff; color: #4f46e5; font-size: .82rem; font-weight: 800; }
+    .step strong { font-size: .88rem; white-space: nowrap; }
+    .step.active { background: linear-gradient(135deg, rgba(109,93,252,.15), rgba(37,99,235,.12)); color: #1e293b; box-shadow: inset 0 0 0 1px rgba(37,99,235,.12); }
+    .step.complete { background: linear-gradient(135deg, #6d5dfc 0%, #2563eb 55%, #06b6d4 100%); color: #fff; }
+    .step.complete span { background: rgba(255,255,255,.22); color: #fff; }
+    .workflow-grid { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(360px, .75fr); gap: 28px; align-items: start; }
+    .workspace-card, .settings-card { width: 100%; min-width: 0; box-sizing: border-box; border-radius: 24px; background: rgba(255,255,255,.92); border: 1px solid rgba(148,163,184,.18); box-shadow: 0 20px 50px rgba(15,23,42,.08); padding: 28px; }
+    .settings-card { position: sticky; top: 1rem; }
+    .upload-card, .upload-zone, .file-upload, .dropzone, .file-upload-container { width: 100%; max-width: none; }
+    .panel-header { margin-bottom: 1rem; }
+    .panel-header h2 { margin: .25rem 0 0; color: #111827; font-size: 1.25rem; line-height: 1.2; }
+    .panel-header p { margin: .45rem 0 0; color: #64748b; font-size: .92rem; line-height: 1.55; }
+    .panel-eyebrow, .empty-kicker { color: #2563eb; font-size: .78rem; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+    .empty-state, .file-ready-card, .option-list span { display: grid; gap: .35rem; border-radius: 20px; background: #f8fafc; color: #64748b; padding: 1rem; }
+    .empty-state { margin-top: 1rem; }
+    .empty-state strong, .file-ready-card strong, .option-list strong { color: #172033; }
+    .file-ready-card { margin-top: 1rem; background: linear-gradient(135deg, rgba(109,93,252,.1), rgba(6,182,212,.08)), #fff; border: 1px solid rgba(109,93,252,.18); }
+    .file-ready-card small, .option-list small { color: #64748b; font-size: .82rem; line-height: 1.45; }
+    .option-list { display: grid; gap: .65rem; margin-bottom: 1rem; }
+    .process-button, .download-button { width: 100%; border: 0; border-radius: 16px; background: linear-gradient(135deg, #6d5dfc 0%, #2563eb 55%, #06b6d4 100%); box-shadow: 0 18px 36px rgba(37,99,235,.24); color: #fff; cursor: pointer; font-size: 1rem; font-weight: 900; padding: 1rem 1.2rem; transition: transform .2s ease, box-shadow .2s ease, filter .2s ease; }
+    .process-button:hover:not(:disabled), .download-button:hover { transform: translateY(-2px); box-shadow: 0 22px 44px rgba(37,99,235,.3); filter: saturate(1.08); }
+    .process-button.disabled { cursor: not-allowed; filter: grayscale(.45); opacity: .58; }
+    .action-hint, .secure-note { color: #64748b; font-size: .84rem; font-weight: 800; text-align: center; }
+    .processing-container, .result-container, .error-container { display: grid; justify-items: center; gap: .9rem; border-radius: 24px; background: #f8fafc; padding: 2rem; text-align: center; }
+    .processing-container h2, .result-container h2, .error-container h2 { margin: 0; color: #111827; font-size: 1.35rem; }
+    .processing-container p, .result-container p, .error-message { max-width: 520px; margin: 0; color: #64748b; line-height: 1.55; }
+    .error-message { color: #b91c1c; font-weight: 750; }
+    .spinner { width: 3rem; height: 3rem; border: 4px solid #dbeafe; border-top-color: #6d5dfc; border-radius: 50%; animation: spin .9s linear infinite; }
+    .result-icon, .error-icon { display: inline-flex; align-items: center; justify-content: center; min-height: 2.4rem; border-radius: 999px; font-size: .82rem; font-weight: 900; letter-spacing: .04em; padding: .55rem .8rem; text-transform: uppercase; }
+    .result-icon { background: #dcfce7; color: #15803d; }
+    .error-icon { background: #fee2e2; color: #b91c1c; }
+    .reset-button { border: 0; border-radius: 14px; background: #eef2ff; color: #3730a3; cursor: pointer; font-weight: 900; padding: .9rem 1rem; }
+    .faq-section { max-width: 980px; margin: 3rem auto 0; padding: 0 1.25rem; }
+    .faq-item { border-radius: 18px; background: #fff; box-shadow: 0 12px 30px rgba(15,23,42,.06); margin-top: .9rem; padding: 1rem 1.1rem; }
+    @@keyframes spin { to { transform: rotate(360deg); } }
+    @@media (max-width: 980px) { .tool-container { width: min(100%, calc(100% - 24px)); } .workflow-grid { grid-template-columns: 1fr; } .settings-card { position: static; } .stepper { overflow-x: auto; border-radius: 20px; grid-template-columns: repeat(4, minmax(130px, 1fr)); } .tool-hero h1 { font-size: clamp(2rem, 8vw, 3rem); } }
+    @@media (max-width: 640px) { .workspace-card, .settings-card { border-radius: 22px; padding: 1rem; } }
+</style>
 
 @code {
     private enum PageState

@@ -17,76 +17,135 @@
 <div class="tool-page">
     <AdSlot Size="banner" />
     <div class="tool-container">
-        <h1>Rotate PDF Pages</h1>
-        <p class="tool-subtitle">Rotate one or all pages in your PDF for free. No signup required.</p>
+        <section class="tool-hero">
+            <div class="trust-row">
+                <span>Secure processing</span>
+                <span>All or selected pages</span>
+                <span>Deleted in 1 hour</span>
+            </div>
+            <h1>Rotate PDF <span class="hero-gradient-text">precisely</span></h1>
+            <p class="tool-subtitle">Fix page orientation across an entire PDF or target specific pages.</p>
+        </section>
 
-        @if (CurrentState == PageState.Upload)
-        {
-            <FileUpload OnFileSelected="HandleFileSelected" OnFileRemoved="HandleFileRemoved" />
+        <div class="stepper" aria-label="Rotate workflow progress">
+            <div class="step @(CurrentState == PageState.Upload && SelectedFile == null ? "active" : SelectedFile != null || CurrentState == PageState.Processing || CurrentState == PageState.Complete ? "complete" : "")"><span>1</span><strong>Upload</strong></div>
+            <div class="step @(CurrentState == PageState.Upload && SelectedFile != null ? "active" : CurrentState == PageState.Processing || CurrentState == PageState.Complete ? "complete" : "")"><span>2</span><strong>Configure</strong></div>
+            <div class="step @(CurrentState == PageState.Processing ? "active" : CurrentState == PageState.Complete ? "complete" : "")"><span>3</span><strong>Process</strong></div>
+            <div class="step @(CurrentState == PageState.Complete ? "active complete" : "")"><span>4</span><strong>Download</strong></div>
+        </div>
 
-            @if (SelectedFile != null)
-            {
-                <div class="rotate-options">
-                    <h3>Rotation Options</h3>
-                    <div class="rotate-controls">
-                        <div class="form-group">
-                            <label>Rotation Angle</label>
-                            <select class="field-input" @bind="RotationAngle">
-                                <option value="90">90° Clockwise</option>
-                                <option value="180">180°</option>
-                                <option value="270">270° (90° Counter-clockwise)</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Apply To</label>
-                            <select class="field-input" @bind="RotateMode">
-                                <option value="all">All Pages</option>
-                                <option value="specific">Specific Pages</option>
-                            </select>
-                        </div>
-                        @if (RotateMode == "specific")
-                        {
-                            <div class="form-group">
-                                <label>Page Numbers (comma separated)</label>
-                                <input type="text" class="field-input" placeholder="e.g. 1,3,5" @bind="SpecificPages" />
-                            </div>
-                        }
+        <section class="workflow-grid">
+            <div class="workspace-card">
+                @if (CurrentState == PageState.Upload)
+                {
+                    <div class="panel-header">
+                        <span class="panel-eyebrow">Upload PDF</span>
+                        <h2>Start with your document</h2>
                     </div>
-                    <button class="process-button" @onclick="ProcessFile">Rotate PDF</button>
+
+                    <FileUpload OnFileSelected="HandleFileSelected" OnFileRemoved="HandleFileRemoved" />
+
+                    @if (SelectedFile == null)
+                    {
+                        <div class="empty-state">
+                            <span class="empty-kicker">Orientation fix</span>
+                            <strong>Upload a PDF to configure page rotation.</strong>
+                            <span>Rotate all pages or enter specific page numbers after upload.</span>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="file-ready-card">
+                            <span class="panel-eyebrow">File ready</span>
+                            <strong>@SelectedFile.Name</strong>
+                            <small>Ready for rotation settings.</small>
+                        </div>
+                    }
+                }
+
+                @if (CurrentState == PageState.LargeFile)
+                {
+                    <LargeFileUpgrade FileSizeBytes="@(SelectedFile?.Size ?? 0)" FileName="@(SelectedFile?.Name ?? "")" ToolType="RotatePdf" OnCancel="Reset" />
+                }
+
+                @if (CurrentState == PageState.Processing)
+                {
+                    <div class="processing-container"><div class="spinner"></div><h2>Rotating your PDF</h2><p>Applying the selected orientation settings and preparing your download.</p></div>
+                }
+
+                @if (CurrentState == PageState.Complete && ResultBytes != null)
+                {
+                    <AdSlot Size="rectangle" />
+                    <div class="result-container">
+                        <span class="result-icon">Ready</span>
+                        <h2>Your rotated PDF is ready</h2>
+                        <p>Your PDF pages have been rotated successfully.</p>
+                        <button class="download-button" @onclick="DownloadFile">Download PDF</button>
+                        <button class="reset-button" @onclick="Reset">Rotate Another PDF</button>
+                    </div>
+                }
+
+                @if (CurrentState == PageState.Error)
+                {
+                    <div class="error-container">
+                        <span class="error-icon">Rotation failed</span>
+                        <h2>We could not rotate this PDF</h2>
+                        <p class="error-message">@ErrorMessage</p>
+                        <button class="reset-button" @onclick="Reset">Try Again</button>
+                    </div>
+                }
+            </div>
+
+            <aside class="settings-card">
+                <div class="panel-header">
+                    <span class="panel-eyebrow">Rotation settings</span>
+                    <h2>Choose orientation</h2>
+                    <p>Set the rotation angle and decide whether to apply it to every page or selected pages.</p>
                 </div>
-            }
-        }
 
-        @if (CurrentState == PageState.LargeFile)
-        {
-            <LargeFileUpgrade FileSizeBytes="@(SelectedFile?.Size ?? 0)" FileName="@(SelectedFile?.Name ?? "")" ToolType="RotatePdf" OnCancel="Reset" />
-        }
+                <div class="settings-form">
+                    <div class="form-group">
+                        <label>Rotation Angle</label>
+                        <select class="field-input" @bind="RotationAngle">
+                            <option value="90">90° Clockwise</option>
+                            <option value="180">180°</option>
+                            <option value="270">270° (90° Counter-clockwise)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Apply To</label>
+                        <select class="field-input" @bind="RotateMode">
+                            <option value="all">All Pages</option>
+                            <option value="specific">Specific Pages</option>
+                        </select>
+                    </div>
+                    @if (RotateMode == "specific")
+                    {
+                        <div class="form-group">
+                            <label>Page Numbers (comma separated)</label>
+                            <input type="text" class="field-input" placeholder="e.g. 1,3,5" @bind="SpecificPages" />
+                        </div>
+                    }
+                </div>
 
-        @if (CurrentState == PageState.Processing)
-        {
-            <div class="processing-container"><div class="spinner"></div><p>Rotating your PDF...</p></div>
-        }
+                <div class="option-list">
+                    <span><strong>Precise rotation</strong><small>Choose 90, 180, or 270 degree adjustments.</small></span>
+                    <span><strong>Page targeting</strong><small>Apply rotation to all pages or selected pages.</small></span>
+                    <span><strong>Clean PDF output</strong><small>Download the corrected document when processing finishes.</small></span>
+                </div>
 
-        @if (CurrentState == PageState.Complete && ResultBytes != null)
-        {
-            <AdSlot Size="rectangle" />
-            <div class="result-container">
-                <span class="result-icon">✅</span>
-                <h2>PDF Rotated!</h2>
-                <p style="color: var(--gray); margin-bottom: 1.5rem;">Your PDF pages have been rotated successfully.</p>
-                <button class="download-button" @onclick="DownloadFile">Download PDF</button>
-                <button class="reset-button" @onclick="Reset">Rotate Another PDF</button>
-            </div>
-        }
-
-        @if (CurrentState == PageState.Error)
-        {
-            <div class="error-container">
-                <span class="error-icon">❌</span>
-                <p class="error-message">@ErrorMessage</p>
-                <button class="reset-button" @onclick="Reset">Try Again</button>
-            </div>
-        }
+                @if (CurrentState == PageState.Upload && SelectedFile != null)
+                {
+                    <button class="process-button" @onclick="ProcessFile">Rotate PDF</button>
+                    <div class="secure-note">Secure processing. Files are deleted within 1 hour.</div>
+                }
+                else if (CurrentState == PageState.Upload)
+                {
+                    <button class="process-button disabled" disabled>Rotate PDF</button>
+                    <p class="action-hint">Upload a PDF to enable rotation.</p>
+                }
+            </aside>
+        </section>
     </div>
 
     <div class="faq-section">
@@ -101,6 +160,58 @@
         </div>
     </div>
 </div>
+
+<style>
+    .tool-page { width: 100%; min-height: calc(100vh - 72px); padding: 48px 0 72px; box-sizing: border-box; background: radial-gradient(circle at top left, rgba(109, 40, 217, 0.12), transparent 32%), linear-gradient(135deg, #f8f7ff 0%, #eef5ff 100%); color: #172033; }
+    .tool-container { width: min(1320px, calc(100% - 64px)); max-width: 1320px; margin: 0 auto; }
+    .tool-hero { margin-bottom: 24px; text-align: left; }
+    .tool-hero h1 { max-width: 900px; margin: 0 0 14px; color: #111827; font-size: clamp(2.4rem, 3vw, 3.8rem); line-height: 1.02; letter-spacing: -0.04em; }
+    .hero-gradient-text { background: linear-gradient(135deg, #6d5dfc 0%, #2563eb 55%, #06b6d4 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .tool-subtitle { max-width: 760px; margin: 0; color: #5b6475; font-size: 1rem; line-height: 1.7; }
+    .trust-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; }
+    .trust-row span { display: inline-flex; align-items: center; gap: .4rem; border-radius: 999px; background: rgba(255,255,255,.78); border: 1px solid rgba(148,163,184,.24); box-shadow: 0 10px 26px rgba(37,99,235,.08); color: #334155; font-size: .85rem; font-weight: 700; padding: .45rem .8rem; }
+    .trust-row span::before { content: ""; width: .45rem; height: .45rem; border-radius: 999px; background: linear-gradient(135deg, #6d5dfc 0%, #2563eb 55%, #06b6d4 100%); box-shadow: 0 0 0 4px rgba(37,99,235,.1); }
+    .stepper { width: 100%; margin: 0 0 24px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 8px; border-radius: 999px; background: rgba(255,255,255,.8); box-shadow: 0 18px 45px rgba(15,23,42,.08); }
+    .step { display: flex; align-items: center; gap: .45rem; border-radius: 999px; color: #64748b; padding: .45rem .7rem .45rem .45rem; }
+    .step span { display: grid; place-items: center; width: 1.7rem; height: 1.7rem; border-radius: 50%; background: #eef2ff; color: #4f46e5; font-size: .82rem; font-weight: 800; }
+    .step strong { font-size: .88rem; white-space: nowrap; }
+    .step.active { background: linear-gradient(135deg, rgba(109,93,252,.15), rgba(37,99,235,.12)); color: #1e293b; box-shadow: inset 0 0 0 1px rgba(37,99,235,.12); }
+    .step.complete { background: linear-gradient(135deg, #6d5dfc 0%, #2563eb 55%, #06b6d4 100%); color: #fff; }
+    .step.complete span { background: rgba(255,255,255,.22); color: #fff; }
+    .workflow-grid { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(360px, .75fr); gap: 28px; align-items: start; }
+    .workspace-card, .settings-card { width: 100%; min-width: 0; box-sizing: border-box; border-radius: 24px; background: rgba(255,255,255,.92); border: 1px solid rgba(148,163,184,.18); box-shadow: 0 20px 50px rgba(15,23,42,.08); padding: 28px; }
+    .settings-card { position: sticky; top: 1rem; }
+    .upload-card, .upload-zone, .file-upload, .dropzone, .file-upload-container { width: 100%; max-width: none; }
+    .panel-header { margin-bottom: 1rem; }
+    .panel-header h2 { margin: .25rem 0 0; color: #111827; font-size: 1.25rem; line-height: 1.2; }
+    .panel-header p { margin: .45rem 0 0; color: #64748b; font-size: .92rem; line-height: 1.55; }
+    .panel-eyebrow, .empty-kicker { color: #2563eb; font-size: .78rem; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+    .empty-state, .file-ready-card, .option-list span, .form-group { display: grid; gap: .35rem; border-radius: 20px; background: #f8fafc; color: #64748b; padding: 1rem; }
+    .empty-state, .file-ready-card { margin-top: 1rem; }
+    .empty-state strong, .file-ready-card strong, .option-list strong, .form-group label { color: #172033; }
+    .file-ready-card { background: linear-gradient(135deg, rgba(109,93,252,.1), rgba(6,182,212,.08)), #fff; border: 1px solid rgba(109,93,252,.18); }
+    .file-ready-card small, .option-list small { color: #64748b; font-size: .82rem; line-height: 1.45; }
+    .settings-form, .option-list { display: grid; gap: .65rem; margin-bottom: 1rem; }
+    .field-input { width: 100%; border: 1px solid rgba(148,163,184,.32); border-radius: 14px; background: #fff; box-sizing: border-box; color: #111827; padding: .85rem 1rem; }
+    .process-button, .download-button { width: 100%; border: 0; border-radius: 16px; background: linear-gradient(135deg, #6d5dfc 0%, #2563eb 55%, #06b6d4 100%); box-shadow: 0 18px 36px rgba(37,99,235,.24); color: #fff; cursor: pointer; font-size: 1rem; font-weight: 900; padding: 1rem 1.2rem; transition: transform .2s ease, box-shadow .2s ease, filter .2s ease; }
+    .process-button:hover:not(:disabled), .download-button:hover { transform: translateY(-2px); box-shadow: 0 22px 44px rgba(37,99,235,.3); filter: saturate(1.08); }
+    .process-button.disabled { cursor: not-allowed; filter: grayscale(.45); opacity: .58; }
+    .action-hint, .secure-note { color: #64748b; font-size: .84rem; font-weight: 800; text-align: center; }
+    .processing-container, .result-container, .error-container { display: grid; justify-items: center; gap: .9rem; border-radius: 24px; background: #f8fafc; padding: 2rem; text-align: center; }
+    .processing-container h2, .result-container h2, .error-container h2 { margin: 0; color: #111827; font-size: 1.35rem; }
+    .processing-container p, .result-container p, .error-message { max-width: 520px; margin: 0; color: #64748b; line-height: 1.55; }
+    .error-message { color: #b91c1c; font-weight: 750; }
+    .spinner { width: 3rem; height: 3rem; border: 4px solid #dbeafe; border-top-color: #6d5dfc; border-radius: 50%; animation: spin .9s linear infinite; }
+    .result-icon, .error-icon { display: inline-flex; align-items: center; justify-content: center; min-height: 2.4rem; border-radius: 999px; font-size: .82rem; font-weight: 900; letter-spacing: .04em; padding: .55rem .8rem; text-transform: uppercase; }
+    .result-icon { background: #dcfce7; color: #15803d; }
+    .error-icon { background: #fee2e2; color: #b91c1c; }
+    .reset-button { border: 0; border-radius: 14px; background: #eef2ff; color: #3730a3; cursor: pointer; font-weight: 900; padding: .9rem 1rem; }
+    .faq-section { max-width: 980px; margin: 3rem auto 0; padding: 0 1.25rem; }
+    .faq-item { border-radius: 18px; background: #fff; box-shadow: 0 12px 30px rgba(15,23,42,.06); margin-top: .9rem; padding: 1rem 1.1rem; }
+    @@keyframes spin { to { transform: rotate(360deg); } }
+    @@media (max-width: 980px) { .tool-container { width: min(100%, calc(100% - 24px)); } .workflow-grid { grid-template-columns: 1fr; } .settings-card { position: static; } .stepper { overflow-x: auto; border-radius: 20px; grid-template-columns: repeat(4, minmax(130px, 1fr)); } .tool-hero h1 { font-size: clamp(2rem, 8vw, 3rem); } }
+    @@media (max-width: 640px) { .workspace-card, .settings-card { border-radius: 22px; padding: 1rem; } }
+</style>
 
 @code {
     private enum PageState { Upload, Processing, Complete, Error, LargeFile }
