@@ -10,55 +10,75 @@
     <link rel="canonical" href="https://pdftoolstack.com/edit-pdf" />
 </HeadContent>
 
-<div class="tool-page">
+<div class="tool-page edit-tool-page">
     <AdSlot Size="banner" />
-    <div class="tool-container">
+    <div class="tool-container edit-tool-container">
 
-        <div class="ai-tool-header">
-            <div class="ai-tool-badge">✏️ Free Tool</div>
-            <h1>Edit PDF Online</h1>
-            <p class="tool-subtitle">
-                Add text, shapes, highlights and drawings to any PDF.
-                Full annotation toolbar with undo/redo built in. No signup required.
+        <section class="edit-hero">
+            <div class="edit-trust-row" aria-label="Edit PDF trust badges">
+                <span>Secure upload</span>
+                <span>Private editing</span>
+                <span>Auto-delete</span>
+            </div>
+            <h1>Edit PDF <span class="hero-gradient-text">confidently</span></h1>
+            <p>
+                Add text, shapes, highlights and drawings to any PDF. Use the editor tools to make changes, then download your updated PDF.
             </p>
+        </section>
+
+        <div class="edit-stepper" aria-label="Edit PDF workflow">
+            <div class="edit-step active"><span>1</span>Upload</div>
+            <div class="edit-step"><span>2</span>Edit</div>
+            <div class="edit-step"><span>3</span>Review</div>
+            <div class="edit-step"><span>4</span>Download</div>
         </div>
 
-        <div class="how-it-works">
-            <div class="hiw-step">
-                <div class="hiw-num">1</div>
-                <div class="hiw-text"><strong>Upload your PDF</strong><span>Up to 25MB free</span></div>
-            </div>
-            <div class="hiw-arrow">→</div>
-            <div class="hiw-step">
-                <div class="hiw-num">2</div>
-                <div class="hiw-text"><strong>Edit with toolbar</strong><span>Text, shapes, highlights</span></div>
-            </div>
-            <div class="hiw-arrow">→</div>
-            <div class="hiw-step">
-                <div class="hiw-num">3</div>
-                <div class="hiw-text"><strong>Download edited PDF</strong><span>Edits saved permanently</span></div>
-            </div>
-        </div>
+        @if (!_viewerActive)
+        {
+            <section class="edit-workflow-grid">
+                <div class="edit-workspace-card">
+                    @if (CurrentState == PageState.LargeFile)
+                    {
+                        <LargeFileUpgrade FileSizeBytes="@_largeFileSize"
+                                          FileName="@_largeFileName"
+                                          ToolType="EditPdf"
+                                          OnCancel="ResetAll" />
+                    }
+                    else
+                    {
+                        <FileUpload OnFileSelected="HandleFileSelected"
+                                    OnFileRemoved="HandleFileRemoved" />
+                    }
+                </div>
 
-        @if (CurrentState == PageState.LargeFile)
-        {
-            <LargeFileUpgrade FileSizeBytes="@_largeFileSize"
-                              FileName="@_largeFileName"
-                              ToolType="EditPdf"
-                              OnCancel="ResetAll" />
-        }
-        else if (!_viewerActive)
-        {
-            <FileUpload OnFileSelected="HandleFileSelected"
-                        OnFileRemoved="HandleFileRemoved" />
+                <aside class="edit-side-card">
+                    <div class="edit-panel-eyebrow">Editor workspace</div>
+                    <h2>Make PDF changes in your browser</h2>
+                    <p>Upload a PDF, open the editor toolbar, and download the finished document when your edits are ready.</p>
+                    <div class="edit-value-list">
+                        <span>Text, shapes, highlights, and drawing tools</span>
+                        <span>Undo and redo support in the viewer toolbar</span>
+                        <span>Your PDF stays private while you edit</span>
+                    </div>
+                </aside>
+            </section>
         }
 
         <div id="edit-pdf-viewer-anchor" class="viewer-scroll-anchor"></div>
-        
-        <SfPdfViewerShell @ref="_viewer"
-                          ResetLabel="Edit Another PDF"
-                          Height="85vh"
-                          OnReset="ResetAll" />
+
+        <section class="edit-viewer-stage @(_viewerActive ? "is-active" : "")">
+            @if (_viewerActive)
+            {
+                <div class="edit-viewer-helper">
+                    Use the editor tools to make changes, then download your updated PDF.
+                </div>
+            }
+
+            <SfPdfViewerShell @ref="_viewer"
+                              ResetLabel="Edit Another PDF"
+                              Height="85vh"
+                              OnReset="ResetAll" />
+        </section>
 
         @if (CurrentState == PageState.Error)
         {
