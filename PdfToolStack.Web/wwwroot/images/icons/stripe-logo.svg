@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">PdfToolStack</title>
+  <desc id="desc">Square PdfToolStack payment logo for Stripe checkout.</desc>
+  <defs>
+    <linearGradient id="ptsStripeLogoGradient" x1="116" y1="70" x2="396" y2="442" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6D5DFC"/>
+      <stop offset="0.55" stop-color="#2563EB"/>
+      <stop offset="1" stop-color="#06B6D4"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="#F8FAFC"/>
+  <rect x="222" y="100" width="146" height="196" rx="34" fill="#A5B4FC" opacity="0.58"/>
+  <rect x="144" y="70" width="160" height="214" rx="34" fill="url(#ptsStripeLogoGradient)"/>
+  <path d="M184 132h80M184 188h58" stroke="#FFFFFF" stroke-width="22" stroke-linecap="round" opacity="0.92"/>
+  <path d="M350 280l82 32.8v52.3c0 49.2-34.4 75.9-82 90.3-47.6-14.4-82-41.1-82-90.3v-52.3L350 280Z" fill="#10B981"/>
+  <path d="M309 363l28 28 56-62" stroke="#FFFFFF" stroke-width="24" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>
