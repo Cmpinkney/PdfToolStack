@@ -50,299 +50,312 @@
 
         <div class="hero-split-illustration" aria-hidden="true">
             <svg width="100%" viewBox="0 0 780 480" role="img" xmlns="http://www.w3.org/2000/svg">
-                <title>PdfToolStack — all your PDF tools in one place</title>
-                <desc>PDF tools orbiting a central document hub</desc>
+                <title>Upload, process, and download PDFs with PdfToolStack</title>
+                <desc>A workflow board showing a PDF upload, workflow choice, secure processing, and a finished download.</desc>
 
                 <defs>
-                    <marker id="ap" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
-                        <path d="M2 2L8 5L2 8" fill="none" stroke="#7F77DD" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-                    </marker>
-                    <pattern id="dot" width="28" height="28" patternUnits="userSpaceOnUse">
-                        <circle cx="14" cy="14" r="1" fill="#C8C6C0" opacity="0.45" />
+                    <linearGradient id="workflow-bg" x1="76" y1="50" x2="704" y2="430" gradientUnits="userSpaceOnUse">
+                        <stop stop-color="#FFFFFF" stop-opacity="0.92" />
+                        <stop offset="0.5" stop-color="#EEF2FF" stop-opacity="0.86" />
+                        <stop offset="1" stop-color="#E0F2FE" stop-opacity="0.9" />
+                    </linearGradient>
+                    <linearGradient id="workflow-gradient" x1="0" y1="0" x2="1" y2="1">
+                        <stop stop-color="#6D5DFC" />
+                        <stop offset="0.55" stop-color="#2563EB" />
+                        <stop offset="1" stop-color="#06B6D4" />
+                    </linearGradient>
+                    <linearGradient id="workflow-soft" x1="0" y1="0" x2="1" y2="1">
+                        <stop stop-color="#F8FAFC" />
+                        <stop offset="1" stop-color="#EEF2FF" />
+                    </linearGradient>
+                    <filter id="workflow-shadow" x="-20%" y="-30%" width="140%" height="170%" color-interpolation-filters="sRGB">
+                        <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#1E1B4B" flood-opacity="0.14" />
+                    </filter>
+                    <filter id="workflow-soft-shadow" x="-30%" y="-40%" width="160%" height="190%" color-interpolation-filters="sRGB">
+                        <feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#2563EB" flood-opacity="0.12" />
+                    </filter>
+                    <pattern id="workflow-dot-grid" width="28" height="28" patternUnits="userSpaceOnUse">
+                        <circle cx="14" cy="14" r="1" fill="#A5B4FC" opacity="0.32" />
                     </pattern>
                 </defs>
 
                 <style>
-                    @@keyframes spin-cw {
-                        from {
-                            transform: rotate(0deg);
-                        }
-
-                        to {
-                            transform: rotate(360deg);
-                        }
-                    }
-
-                    @@keyframes spin-ccw {
-                        from {
-                            transform: rotate(0deg);
-                        }
-
-                        to {
-                            transform: rotate(-360deg);
-                        }
-                    }
-
-                    @@keyframes pulse {
-                        0%, 100% {
-                            opacity: .12;
-                        }
-
-                        50% {
-                            opacity: .22;
-                        }
-                    }
-
-                    @@keyframes fadein {
-                        from {
-                            opacity: 0;
-                            transform: translateY(5px);
-                        }
-
-                        to {
+                    @@keyframes workflow-chip-cycle {
+                        0%, 18% {
                             opacity: 1;
+                            transform: translateY(-3px);
+                        }
+
+                        24%, 100% {
+                            opacity: .62;
                             transform: translateY(0);
                         }
                     }
 
-                    @@keyframes ring-cw {
-                        from {
+                    @@keyframes workflow-progress {
+                        0% {
+                            transform: scaleX(0.08);
+                        }
+
+                        58% {
+                            transform: scaleX(1);
+                        }
+
+                        100% {
+                            transform: scaleX(1);
+                        }
+                    }
+
+                    @@keyframes workflow-pulse {
+                        0%, 100% {
+                            opacity: .2;
+                            transform: scale(.98);
+                        }
+
+                        50% {
+                            opacity: .42;
+                            transform: scale(1.04);
+                        }
+                    }
+
+                    @@keyframes workflow-check {
+                        0%, 68% {
+                            opacity: 0;
+                            transform: translateY(8px) scale(.92);
+                        }
+
+                        76%, 100% {
+                            opacity: 1;
+                            transform: translateY(0) scale(1);
+                        }
+                    }
+
+                    @@keyframes workflow-line {
+                        0% {
+                            stroke-dashoffset: 420;
+                        }
+
+                        70%, 100% {
                             stroke-dashoffset: 0;
                         }
+                    }
 
-                        to {
-                            stroke-dashoffset: -660;
+                    @@keyframes workflow-shimmer {
+                        0% {
+                            transform: translateX(-140px);
+                            opacity: 0;
+                        }
+
+                        30% {
+                            opacity: .62;
+                        }
+
+                        70%, 100% {
+                            transform: translateX(170px);
+                            opacity: 0;
                         }
                     }
 
-                    @@keyframes ring-ccw {
-                        from {
-                            stroke-dashoffset: 0;
+                    @@keyframes workflow-float {
+                        0%, 100% {
+                            transform: translateY(0);
                         }
 
-                        to {
-                            stroke-dashoffset: 970;
+                        50% {
+                            transform: translateY(-6px);
                         }
                     }
 
-                    .inner-orbit {
-                        animation: spin-cw 11s linear infinite;
-                        transform-origin: 340px 190px;
+                    .workflow-card {
+                        filter: url(#workflow-shadow);
                     }
 
-                    .inner-card {
-                        animation: spin-ccw 11s linear infinite;
-                        transform-origin: 0px 0px;
+                    .workflow-stage {
+                        animation: workflow-float 6.4s ease-in-out infinite;
                     }
 
-                    .outer-orbit {
-                        animation: spin-ccw 18s linear infinite;
-                        transform-origin: 340px 190px;
+                    .workflow-stage-upload {
+                        animation-delay: 0s;
                     }
 
-                    .outer-card {
-                        animation: spin-cw 18s linear infinite;
-                        transform-origin: 0px 0px;
+                    .workflow-stage-process {
+                        animation-delay: .35s;
                     }
 
-                    .ring-a {
-                        animation: ring-cw 22s linear infinite;
-                        transform-origin: 340px 190px;
+                    .workflow-stage-output {
+                        animation-delay: .7s;
                     }
 
-                    .ring-b {
-                        animation: ring-ccw 34s linear infinite;
-                        transform-origin: 340px 190px;
+                    .workflow-connector {
+                        stroke-dasharray: 420;
+                        stroke-dashoffset: 420;
+                        animation: workflow-line 6.4s ease-in-out infinite;
                     }
 
-                    .glow {
-                        animation: pulse 3.2s ease-in-out infinite;
+                    .workflow-chip {
+                        opacity: .62;
+                        transform-box: fill-box;
+                        transform-origin: center;
                     }
 
-                    .badge {
-                        animation: fadein .5s ease-out both;
+                    .workflow-chip-1 {
+                        animation: workflow-chip-cycle 6.4s ease-in-out infinite;
                     }
 
-                    .b1 {
-                        animation-delay: .05s;
+                    .workflow-chip-2 {
+                        animation: workflow-chip-cycle 6.4s ease-in-out infinite;
+                        animation-delay: 1.6s;
                     }
 
-                    .b2 {
-                        animation-delay: .15s;
+                    .workflow-chip-3 {
+                        animation: workflow-chip-cycle 6.4s ease-in-out infinite;
+                        animation-delay: 3.2s;
                     }
 
-                    .b3 {
-                        animation-delay: .28s;
+                    .workflow-chip-4 {
+                        animation: workflow-chip-cycle 6.4s ease-in-out infinite;
+                        animation-delay: 4.8s;
                     }
 
-                    .b4 {
-                        animation-delay: .42s;
+                    .workflow-progress-fill {
+                        transform-box: fill-box;
+                        transform-origin: left center;
+                        animation: workflow-progress 6.4s ease-in-out infinite;
+                    }
+
+                    .workflow-secure-glow {
+                        animation: workflow-pulse 3.2s ease-in-out infinite;
+                        transform-box: fill-box;
+                        transform-origin: center;
+                    }
+
+                    .workflow-checkmark {
+                        animation: workflow-check 6.4s ease-in-out infinite;
+                        transform-box: fill-box;
+                        transform-origin: center;
+                    }
+
+                    .workflow-shimmer {
+                        animation: workflow-shimmer 3.2s ease-in-out infinite;
+                    }
+
+                    .workflow-badge {
+                        filter: url(#workflow-soft-shadow);
+                    }
+
+                    @@media (prefers-reduced-motion: reduce) {
+                        .workflow-stage,
+                        .workflow-connector,
+                        .workflow-chip,
+                        .workflow-progress-fill,
+                        .workflow-secure-glow,
+                        .workflow-checkmark,
+                        .workflow-shimmer {
+                            animation: none !important;
+                        }
+
+                        .workflow-chip-1,
+                        .workflow-checkmark {
+                            opacity: 1;
+                        }
                     }
                 </style>
 
-                <!-- Background dot grid -->
-                <rect width="680" height="400" fill="url(#dot)" />
-                <line x1="0" y1="60" x2="680" y2="60" stroke="#E0EEF8" stroke-width="0.4" />
-                <line x1="0" y1="340" x2="680" y2="340" stroke="#E0EEF8" stroke-width="0.4" />
-                <line x1="100" y1="0" x2="100" y2="400" stroke="#E0EEF8" stroke-width="0.4" />
-                <line x1="580" y1="0" x2="580" y2="400" stroke="#E0EEF8" stroke-width="0.4" />
+                <rect x="28" y="26" width="724" height="428" rx="36" fill="url(#workflow-bg)" stroke="rgba(109, 93, 252, 0.18)" />
+                <rect x="58" y="54" width="664" height="372" rx="28" fill="url(#workflow-dot-grid)" opacity="0.85" />
+                <circle cx="138" cy="74" r="72" fill="#6D5DFC" opacity="0.12" />
+                <circle cx="676" cy="382" r="86" fill="#06B6D4" opacity="0.12" />
 
-                <!-- Glow rings -->
-                <circle class="glow" cx="340" cy="190" r="170" fill="#534AB7" opacity="0.07" />
-                <circle class="glow" cx="340" cy="190" r="115" fill="#185FA5" opacity="0.09" style="animation-delay:.9s" />
-                <circle class="glow" cx="340" cy="190" r="68" fill="#534AB7" opacity="0.11" style="animation-delay:1.8s" />
+                <path class="workflow-connector" d="M218 242 C276 204 314 202 370 224 S486 272 548 234" fill="none" stroke="url(#workflow-gradient)" stroke-width="5" stroke-linecap="round" opacity="0.9" />
+                <path d="M218 242 C276 204 314 202 370 224 S486 272 548 234" fill="none" stroke="#CBD5E1" stroke-width="1.5" stroke-linecap="round" opacity="0.65" />
 
-                <!-- Spinning dashed rings -->
-                <circle class="ring-a" cx="340" cy="190" r="105" fill="none" stroke="#85B7EB" stroke-width="1" stroke-dasharray="4 10" stroke-linecap="round" />
-                <circle class="ring-b" cx="340" cy="190" r="154" fill="none" stroke="#AFA9EC" stroke-width="1" stroke-dasharray="4 14" stroke-linecap="round" />
-                <!-- Static reference circles -->
-                <circle cx="340" cy="190" r="105" fill="none" stroke="#D3D1C7" stroke-width="0.35" />
-                <circle cx="340" cy="190" r="154" fill="none" stroke="#D3D1C7" stroke-width="0.35" />
-
-                <!-- ═══════════════════════════════════════
-                     INNER ORBIT — Compress · Sign · Merge
-                     r=105, CW 11s, cards counter-rotate CCW
-                     Compress (340, 85) · Sign (431,243) · Merge (249,243)
-                ═══════════════════════════════════════ -->
-                <g class="inner-orbit">
-
-                    <!-- Compress -->
-                    <g transform="translate(340,85)">
-                        <g class="inner-card">
-                            <rect x="-34" y="-28" width="68" height="56" rx="13" fill="white" stroke="#B5D4F4" stroke-width="1.5" />
-                            <g stroke="#378ADD" stroke-width="1.8" stroke-linecap="round" fill="none">
-                                <line x1="-13" y1="-11" x2="-5" y2="-4" />
-                                <line x1=" 13" y1="-11" x2=" 5" y2="-4" />
-                                <line x1="-13" y1=" 11" x2="-5" y2=" 4" />
-                                <line x1=" 13" y1=" 11" x2=" 5" y2=" 4" />
-                            </g>
-                            <polygon points="-15,-14 -7,-14 -15,-6" fill="#378ADD" />
-                            <polygon points=" 15,-14  7,-14  15,-6" fill="#378ADD" />
-                            <polygon points="-15, 14 -7, 14 -15, 6" fill="#378ADD" />
-                            <polygon points=" 15, 14  7, 14  15, 6" fill="#378ADD" />
-                            <text x="0" y="24" font-family="system-ui,sans-serif" font-size="9.5" font-weight="600" fill="#185FA5" text-anchor="middle">Compress</text>
-                        </g>
-                    </g>
-
-                    <!-- Sign -->
-                    <g transform="translate(431,243)">
-                        <g class="inner-card">
-                            <rect x="-34" y="-28" width="68" height="56" rx="13" fill="white" stroke="#FAC775" stroke-width="1.5" />
-                            <path d="M-16,4 Q-6,-10 2,4 Q10,16 18,4" stroke="#EF9F27" stroke-width="2.2" fill="none" stroke-linecap="round" />
-                            <line x1="-18" y1="12" x2="18" y2="12" stroke="#FAC775" stroke-width="1.2" />
-                            <text x="0" y="24" font-family="system-ui,sans-serif" font-size="9.5" font-weight="600" fill="#854F0B" text-anchor="middle">Sign</text>
-                        </g>
-                    </g>
-
-                    <!-- Merge -->
-                    <g transform="translate(249,243)">
-                        <g class="inner-card">
-                            <rect x="-34" y="-28" width="68" height="56" rx="13" fill="white" stroke="#9FE1CB" stroke-width="1.5" />
-                            <rect x="-18" y="-14" width="13" height="18" rx="3" fill="#9FE1CB" />
-                            <rect x="-5" y="-14" width="13" height="18" rx="3" fill="#5DCAA5" />
-                            <path d="M-11,4 L0,12 L11,4" stroke="#1D9E75" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round" />
-                            <rect x="-7" y="11" width="14" height="4" rx="2" fill="#1D9E75" />
-                            <text x="0" y="24" font-family="system-ui,sans-serif" font-size="9.5" font-weight="600" fill="#0F6E56" text-anchor="middle">Merge</text>
-                        </g>
-                    </g>
-
+                <g class="workflow-stage workflow-stage-upload">
+                    <rect class="workflow-card" x="86" y="134" width="154" height="196" rx="24" fill="#FFFFFF" stroke="#E2E8F0" />
+                    <rect x="111" y="158" width="72" height="92" rx="12" fill="#F8FAFC" stroke="#C7D2FE" stroke-width="1.5" />
+                    <path d="M111 158H162L183 179V250H111Z" fill="#FFFFFF" stroke="#A5B4FC" stroke-width="1.5" />
+                    <path d="M162 158V179H183" fill="#E0E7FF" />
+                    <rect x="127" y="197" width="40" height="7" rx="3.5" fill="#CBD5E1" />
+                    <rect x="127" y="213" width="30" height="7" rx="3.5" fill="#E2E8F0" />
+                    <rect x="127" y="229" width="46" height="7" rx="3.5" fill="#E2E8F0" />
+                    <rect x="118" y="265" width="90" height="34" rx="17" fill="#EEF2FF" stroke="#C7D2FE" />
+                    <path d="M151 283L163 271L175 283" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+                    <path d="M163 272V292" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linecap="round" />
+                    <text x="163" y="116" font-family="Inter, system-ui, sans-serif" font-size="13" font-weight="700" fill="#334155" text-anchor="middle">Upload PDF</text>
+                    <text x="163" y="322" font-family="Inter, system-ui, sans-serif" font-size="11" font-weight="600" fill="#64748B" text-anchor="middle">Drop your file</text>
                 </g>
 
-                <!-- ═══════════════════════════════════════
-                     OUTER ORBIT — AI Review · Convert · Extract · Split
-                     r=154, CCW 18s, cards counter-rotate CW
-                     Top(340,36) · Right(494,190) · Bottom(340,344) · Left(186,190)
-                ═══════════════════════════════════════ -->
-                <g class="outer-orbit">
+                <g>
+                    <rect class="workflow-card" x="278" y="96" width="224" height="182" rx="26" fill="#FFFFFF" stroke="#E2E8F0" />
+                    <text x="390" y="126" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="800" fill="#1E293B" text-anchor="middle">Choose workflow</text>
+                    <text x="390" y="146" font-family="Inter, system-ui, sans-serif" font-size="10.5" font-weight="600" fill="#64748B" text-anchor="middle">Pick the outcome you need</text>
 
-                    <!-- AI Review -->
-                    <g transform="translate(340,36)">
-                        <g class="outer-card">
-                            <rect x="-36" y="-27" width="72" height="54" rx="13" fill="white" stroke="#C0DD97" stroke-width="1.5" />
-                            <circle cx="-4" cy="-5" r="10" fill="none" stroke="#639922" stroke-width="1.8" />
-                            <line x1="4" y1="3" x2="12" y2="10" stroke="#639922" stroke-width="2.2" stroke-linecap="round" />
-                            <circle cx="7" cy="-15" r="2.5" fill="#EF9F27" />
-                            <circle cx="12" cy="-10" r="1.5" fill="#EF9F27" opacity=".6" />
-                            <text x="0" y="23" font-family="system-ui,sans-serif" font-size="9.5" font-weight="600" fill="#3B6D11" text-anchor="middle">AI review</text>
-                        </g>
+                    <g class="workflow-chip workflow-chip-1">
+                        <rect x="302" y="164" width="82" height="34" rx="17" fill="#EEF2FF" stroke="#A5B4FC" />
+                        <text x="343" y="186" font-family="Inter, system-ui, sans-serif" font-size="11" font-weight="800" fill="#4338CA" text-anchor="middle">Compress</text>
                     </g>
-
-                    <!-- Convert -->
-                    <g transform="translate(494,190)">
-                        <g class="outer-card">
-                            <rect x="-36" y="-27" width="72" height="54" rx="13" fill="white" stroke="#CECBF6" stroke-width="1.5" />
-                            <path d="M-10,-10 A13,13 0 0,1 13,3" stroke="#7F77DD" stroke-width="1.8" fill="none" stroke-linecap="round" marker-end="url(#ap)" />
-                            <path d="M10,10  A13,13 0 0,1 -13,-3" stroke="#7F77DD" stroke-width="1.8" fill="none" stroke-linecap="round" marker-end="url(#ap)" />
-                            <text x="0" y="23" font-family="system-ui,sans-serif" font-size="9.5" font-weight="600" fill="#3C3489" text-anchor="middle">Convert</text>
-                        </g>
+                    <g class="workflow-chip workflow-chip-2">
+                        <rect x="394" y="164" width="78" height="34" rx="17" fill="#F0F9FF" stroke="#7DD3FC" />
+                        <text x="433" y="186" font-family="Inter, system-ui, sans-serif" font-size="11" font-weight="800" fill="#0369A1" text-anchor="middle">Convert</text>
                     </g>
-
-                    <!-- Extract -->
-                    <g transform="translate(340,344)">
-                        <g class="outer-card">
-                            <rect x="-36" y="-27" width="72" height="54" rx="13" fill="white" stroke="#F5C4B3" stroke-width="1.5" />
-                            <rect x="-18" y="-16" width="36" height="24" rx="3" fill="#FAECE7" stroke="#F0997B" stroke-width="1" />
-                            <line x1="-18" y1="-8" x2="18" y2="-8" stroke="#F0997B" stroke-width="0.8" />
-                            <line x1="-18" y1="0" x2="18" y2="0" stroke="#F0997B" stroke-width="0.8" />
-                            <line x1="0" y1="-16" x2="0" y2="8" stroke="#F0997B" stroke-width="0.8" />
-                            <text x="0" y="23" font-family="system-ui,sans-serif" font-size="9.5" font-weight="600" fill="#993C1D" text-anchor="middle">Extract</text>
-                        </g>
+                    <g class="workflow-chip workflow-chip-3">
+                        <rect x="302" y="211" width="76" height="34" rx="17" fill="#FAF5FF" stroke="#D8B4FE" />
+                        <text x="340" y="233" font-family="Inter, system-ui, sans-serif" font-size="11" font-weight="800" fill="#7E22CE" text-anchor="middle">Redact</text>
                     </g>
-
-                    <!-- Split -->
-                    <g transform="translate(186,190)">
-                        <g class="outer-card">
-                            <rect x="-36" y="-27" width="72" height="54" rx="13" fill="white" stroke="#B5D4F4" stroke-width="1.5" />
-                            <rect x="-8" y="-16" width="16" height="20" rx="3" fill="#85B7EB" />
-                            <path d="M0,4 L-14,14 M0,4 L14,14" stroke="#378ADD" stroke-width="1.8" fill="none" stroke-linecap="round" />
-                            <rect x="-20" y="13" width="14" height="10" rx="2" fill="#B5D4F4" />
-                            <rect x="6" y="13" width="14" height="10" rx="2" fill="#B5D4F4" />
-                            <text x="0" y="23" font-family="system-ui,sans-serif" font-size="9.5" font-weight="600" fill="#185FA5" text-anchor="middle">Split</text>
-                        </g>
+                    <g class="workflow-chip workflow-chip-4">
+                        <rect x="392" y="211" width="72" height="34" rx="17" fill="#ECFDF5" stroke="#86EFAC" />
+                        <text x="428" y="233" font-family="Inter, system-ui, sans-serif" font-size="11" font-weight="800" fill="#047857" text-anchor="middle">Sign</text>
                     </g>
-
                 </g>
 
-                <!-- Center hub -->
-                <circle cx="340" cy="190" r="62" fill="#F0EFFE" stroke="#AFA9EC" stroke-width="1.5" />
-                <circle cx="340" cy="190" r="55" fill="white" stroke="#CECBF6" stroke-width="1" />
-                <rect x="316" y="162" width="36" height="46" rx="6" fill="white" stroke="#AFA9EC" stroke-width="1.2" />
-                <path d="M316,162 L316,174 L328,174 L328,162 Z" fill="#7F77DD" />
-                <path d="M340,162 L340,174 L328,174 Z" fill="#534AB7" opacity=".5" />
-                <rect x="322" y="179" width="24" height="3" rx="1.5" fill="#AFA9EC" />
-                <rect x="322" y="186" width="20" height="3" rx="1.5" fill="#D3D1C7" />
-                <rect x="322" y="193" width="22" height="3" rx="1.5" fill="#D3D1C7" />
-                <rect x="322" y="200" width="16" height="3" rx="1.5" fill="#D3D1C7" />
-                <text x="340" y="222" font-family="system-ui,sans-serif" font-size="10" font-weight="600" fill="#534AB7" text-anchor="middle">your docs</text>
-
-                <!-- Corner badges -->
-                <g class="badge b1">
-                    <rect x="18" y="18" width="132" height="30" rx="15" fill="white" stroke="#B5D4F4" stroke-width="1.2" />
-                    <circle cx="38" cy="33" r="9" fill="#E6F1FB" />
-                    <rect x="33" y="30" width="10" height="2.5" rx="1.2" fill="#378ADD" />
-                    <rect x="33" y="34.5" width="7" height="2.5" rx="1.2" fill="#85B7EB" />
-                    <text x="54" y="38" font-family="system-ui,sans-serif" font-size="10.5" font-weight="600" fill="#185FA5">35+ PDF tools</text>
-                </g>
-                <g class="badge b2">
-                    <rect x="530" y="18" width="132" height="30" rx="15" fill="white" stroke="#C0DD97" stroke-width="1.2" />
-                    <circle cx="550" cy="33" r="9" fill="#EAF3DE" />
-                    <path d="M545,33 L549,37 L556,28" stroke="#639922" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" />
-                    <text x="566" y="38" font-family="system-ui,sans-serif" font-size="10.5" font-weight="600" fill="#3B6D11">Privacy-first</text>
-                </g>
-                <g class="badge b3">
-                    <rect x="18" y="352" width="148" height="30" rx="15" fill="white" stroke="#9FE1CB" stroke-width="1.2" />
-                    <circle cx="38" cy="367" r="9" fill="#E1F5EE" />
-                    <path d="M33,367 L38,362 L43,367" stroke="#1D9E75" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round" />
-                    <text x="54" y="372" font-family="system-ui,sans-serif" font-size="10.5" font-weight="600" fill="#0F6E56">No signup needed</text>
-                </g>
-                <g class="badge b4">
-                    <rect x="514" y="352" width="148" height="30" rx="15" fill="white" stroke="#FAC775" stroke-width="1.2" />
-                    <circle cx="534" cy="367" r="9" fill="#FAEEDA" />
-                    <rect x="529" y="363" width="10" height="8" rx="2" fill="none" stroke="#EF9F27" stroke-width="1.4" />
-                    <line x1="529" y1="367" x2="539" y2="367" stroke="#EF9F27" stroke-width="0.9" />
-                    <text x="550" y="372" font-family="system-ui,sans-serif" font-size="10.5" font-weight="600" fill="#854F0B">Deleted in 1hr</text>
+                <g class="workflow-stage workflow-stage-process">
+                    <rect class="workflow-card" x="300" y="310" width="224" height="88" rx="24" fill="#0F172A" opacity="0.96" />
+                    <circle class="workflow-secure-glow" cx="331" cy="342" r="21" fill="#38BDF8" opacity="0.42" />
+                    <rect x="320" y="336" width="22" height="18" rx="5" fill="none" stroke="#BAE6FD" stroke-width="2" />
+                    <path d="M324 336V329C324 323 328 320 331 320C336 320 339 323 339 329V336" fill="none" stroke="#BAE6FD" stroke-width="2" stroke-linecap="round" />
+                    <text x="361" y="341" font-family="Inter, system-ui, sans-serif" font-size="13" font-weight="800" fill="#FFFFFF">Processing securely</text>
+                    <text x="361" y="361" font-family="Inter, system-ui, sans-serif" font-size="10.5" font-weight="600" fill="#CBD5E1">Encrypted transfer. Auto-delete ready.</text>
+                    <rect x="326" y="377" width="164" height="8" rx="4" fill="#1E293B" />
+                    <rect class="workflow-progress-fill" x="326" y="377" width="164" height="8" rx="4" fill="url(#workflow-gradient)" />
+                    <rect class="workflow-shimmer" x="326" y="377" width="48" height="8" rx="4" fill="#FFFFFF" opacity="0.35" />
                 </g>
 
+                <g class="workflow-stage workflow-stage-output">
+                    <rect class="workflow-card" x="540" y="116" width="166" height="216" rx="26" fill="#FFFFFF" stroke="#E2E8F0" />
+                    <rect x="570" y="150" width="76" height="96" rx="13" fill="#F8FAFC" stroke="#BAE6FD" stroke-width="1.5" />
+                    <path d="M570 150H625L646 171V246H570Z" fill="#FFFFFF" stroke="#7DD3FC" stroke-width="1.5" />
+                    <path d="M625 150V171H646" fill="#E0F2FE" />
+                    <rect x="587" y="191" width="42" height="7" rx="3.5" fill="#CBD5E1" />
+                    <rect x="587" y="207" width="35" height="7" rx="3.5" fill="#E2E8F0" />
+                    <rect x="587" y="223" width="46" height="7" rx="3.5" fill="#E2E8F0" />
+                    <g class="workflow-checkmark">
+                        <circle cx="664" cy="166" r="22" fill="url(#workflow-gradient)" />
+                        <path d="M654 166L661 173L676 158" fill="none" stroke="#FFFFFF" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" />
+                    </g>
+                    <rect x="570" y="265" width="106" height="35" rx="17.5" fill="url(#workflow-gradient)" />
+                    <text x="623" y="287" font-family="Inter, system-ui, sans-serif" font-size="11" font-weight="800" fill="#FFFFFF" text-anchor="middle">Download</text>
+                    <text x="623" y="116" font-family="Inter, system-ui, sans-serif" font-size="13" font-weight="700" fill="#334155" text-anchor="middle">Ready to download</text>
+                    <text x="623" y="322" font-family="Inter, system-ui, sans-serif" font-size="10.5" font-weight="600" fill="#64748B" text-anchor="middle">Clean result file</text>
+                </g>
+
+                <g class="workflow-badge">
+                    <rect x="72" y="386" width="124" height="34" rx="17" fill="#FFFFFF" stroke="#C7D2FE" />
+                    <circle cx="92" cy="403" r="9" fill="#EEF2FF" />
+                    <path d="M88 403L92 407L98 398" fill="none" stroke="#4F46E5" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                    <text x="108" y="407" font-family="Inter, system-ui, sans-serif" font-size="10.5" font-weight="700" fill="#4338CA">Privacy-first</text>
+                </g>
+                <g class="workflow-badge">
+                    <rect x="214" y="386" width="130" height="34" rx="17" fill="#FFFFFF" stroke="#BAE6FD" />
+                    <circle cx="234" cy="403" r="9" fill="#E0F2FE" />
+                    <path d="M231 399H237V407H231Z" fill="none" stroke="#0284C7" stroke-width="1.5" />
+                    <path d="M232 399V396C232 393 234 392 235 392C237 392 238 393 238 396V399" fill="none" stroke="#0284C7" stroke-width="1.5" stroke-linecap="round" />
+                    <text x="250" y="407" font-family="Inter, system-ui, sans-serif" font-size="10.5" font-weight="700" fill="#0369A1">Deleted in 1hr</text>
+                </g>
+                <g class="workflow-badge">
+                    <rect x="362" y="386" width="142" height="34" rx="17" fill="#FFFFFF" stroke="#DDD6FE" />
+                    <circle cx="382" cy="403" r="9" fill="#F5F3FF" />
+                    <path d="M377 403H387M382 398V408" stroke="#7C3AED" stroke-width="1.7" stroke-linecap="round" />
+                    <text x="398" y="407" font-family="Inter, system-ui, sans-serif" font-size="10.5" font-weight="700" fill="#6D28D9">No signup needed</text>
+                </g>
             </svg>
         </div>
     </div>
@@ -452,31 +465,36 @@
                     <a href="/compress-for-email" class="popular-workflow-card">
                         <span class="popular-workflow-icon">Email</span>
                         <h3>Fix file too large for email</h3>
-                        <p>Shrink large PDFs so they are easier to send.</p>
+                        <p>Get oversized PDFs under control before you send.</p>
+                        <span class="popular-workflow-action">Compress now →</span>
                     </a>
 
                     <a href="/redact-pdf" class="popular-workflow-card">
                         <span class="popular-workflow-icon">Secure</span>
                         <h3>Hide sensitive information</h3>
-                        <p>Permanently cover private details before sharing.</p>
+                        <p>Cover private details before a document leaves your hands.</p>
+                        <span class="popular-workflow-action">Redact securely →</span>
                     </a>
 
                     <a href="/translate-pdf" class="popular-workflow-card">
                         <span class="popular-workflow-icon">Global</span>
                         <h3>Understand another language</h3>
-                        <p>Translate PDFs while keeping the workflow simple.</p>
+                        <p>Turn foreign-language PDFs into something you can act on.</p>
+                        <span class="popular-workflow-action">Translate PDF →</span>
                     </a>
 
                     <a href="/batch" class="popular-workflow-card">
                         <span class="popular-workflow-icon">Batch</span>
                         <h3>Process many files at once</h3>
-                        <p>Apply one action across multiple PDFs at once.</p>
+                        <p>Save time when the same job needs to hit a whole set.</p>
+                        <span class="popular-workflow-action">Build batch →</span>
                     </a>
 
                     <a href="/pdf-to-excel" class="popular-workflow-card">
                         <span class="popular-workflow-icon">Data</span>
                         <h3>Turn tables into Excel</h3>
-                        <p>Extract tables into editable spreadsheets.</p>
+                        <p>Pull table data into a spreadsheet you can clean up fast.</p>
+                        <span class="popular-workflow-action">Extract tables →</span>
                     </a>
                 </div>
             </div>
@@ -892,6 +910,22 @@
         color: var(--text-muted, #667085);
         font-size: 0.88rem;
         line-height: 1.55;
+    }
+
+    .popular-workflow-action {
+        display: inline-flex;
+        align-items: center;
+        margin-top: auto;
+        color: #4f46e5;
+        font-size: 0.84rem;
+        font-weight: 850;
+        letter-spacing: -0.01em;
+        transition: color 0.18s ease, transform 0.18s ease;
+    }
+
+    .popular-workflow-card:hover .popular-workflow-action {
+        color: #2563eb;
+        transform: translateX(3px);
     }
 
     @@media (max-width: 1100px) {

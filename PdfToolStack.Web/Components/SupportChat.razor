@@ -12,10 +12,10 @@
                 <div class="support-chat-header-info">
                     <div class="support-chat-avatar">AI</div>
                     <div>
-                        <div class="support-chat-name">PdfToolStack Support</div>
+                        <div class="support-chat-name">PDF Assistant</div>
                         <div class="support-chat-status">
                             <span class="support-chat-status-dot"></span>
-                            Online — typically replies instantly
+                            Tell me what you want to do — I'll take you there.
                         </div>
                     </div>
                 </div>
@@ -48,17 +48,19 @@
             @if (_messages.Count == 1 && !_thinking)
             {
                 <div class="support-suggestions">
-                    @foreach (var s in _suggestions)
-                    {
-                        <button class="support-suggestion-btn" @onclick="() => QuickAsk(s)">@s</button>
-                    }
+                    <div class="support-suggestions-label">Popular workflows</div>
+                    <a class="support-suggestion-btn support-action-chip" href="/compress-for-email">Compress a PDF →</a>
+                    <a class="support-suggestion-btn support-action-chip" href="/pdf-to-excel">Convert to Excel →</a>
+                    <a class="support-suggestion-btn support-action-chip" href="/redact-pdf">Redact sensitive info →</a>
+                    <a class="support-suggestion-btn support-action-chip" href="/sign-pdf">Sign a document →</a>
+                    <a class="support-suggestion-btn support-action-chip" href="/batch">Process multiple files →</a>
                 </div>
             }
 
             <div class="support-chat-input-row">
                 <input class="support-chat-input"
                        type="text"
-                       placeholder="Ask anything..."
+                       placeholder="What do you want to do with your PDF?"
                        @bind="_input"
                        @bind:event="oninput"
                        @onkeydown="OnKeyDown"
@@ -84,7 +86,7 @@
 
     <button class="support-chat-bubble @(_open ? "open" : "")"
             @onclick="Toggle"
-            aria-label="Support chat">
+            aria-label="PDF Assistant">
         @if (_open)
         {
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
@@ -117,7 +119,7 @@
     private int _unread = 0;
     private List<ChatMsg> _messages = new()
     {
-        new("👋 Hi! I'm the PdfToolStack support assistant. Ask me anything about our tools, pricing, or how to get started.", false)
+        new("Hi! Tell me what you want to do with your PDF and I'll point you to the right workflow.", false)
     };
     private List<HistoryMsg> _history = new();
 
