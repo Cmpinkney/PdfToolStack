@@ -6,6 +6,7 @@
 @inject AuthenticationStateProvider Auth
 @inject IJSRuntime JS
 @inject NavigationManager Navigation
+@inject PdfToolStack.Web.Services.CloudPickerService CloudPicker
 @using Microsoft.AspNetCore.Components.Authorization
 
 <PageTitle>@(IsContractMode ? "Compare Contracts Online — Find PDF Differences | PdfToolStack" : "Compare PDF Files — Find Differences | PdfToolStack")</PageTitle>
@@ -108,39 +109,87 @@
                 {
                     <div class="compare-grid">
 
-                        <label class="compare-upload-card @(_originalName != null ? "compare-card-filled" : "")">
-                            <InputFile OnChange="e => OnFileSelected(e, true)" accept=".pdf" class="file-input-hidden" />
-                            @if (_originalName != null)
+                        <div class="compare-upload-slot">
+                            <label class="compare-upload-card @(_originalName != null ? "compare-card-filled" : "")">
+                                <InputFile OnChange="e => OnFileSelected(e, true)" accept=".pdf" class="file-input-hidden" />
+                                @if (_originalName != null)
+                                {
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0D9488" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                                    <span class="compare-card-filename">@_originalName</span>
+                                    <span class="compare-card-hint">Click to change</span>
+                                }
+                                else
+                                {
+                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /></svg>
+                                    <span class="compare-card-label">@(IsContractMode ? "Original contract" : "Original version")</span>
+                                    <span class="compare-card-hint">Click or drag PDF here</span>
+                                }
+                            </label>
+
+                            <div class="cloud-picker-row">
+                                <span class="cloud-picker-label">Upload or import from</span>
+                                <button type="button" class="cloud-picker-btn" @onclick="() => PickGoogleDrive(true)" disabled="@_cloudLoading">
+                                    <svg class="cloud-icon" viewBox="0 0 24 24">
+                                        <path d="M9.6 3.2 3 14.5h4.5l6.5-11.3H9.6Z" fill="#34A853" />
+                                        <path d="M14.1 3.2h-4.5l6.6 11.3h4.5L14.1 3.2Z" fill="#FBBC04" />
+                                        <path d="M7.5 14.5 9.8 18.4h10.9L18.4 14.5H7.5Z" fill="#4285F4" />
+                                    </svg>
+                                    Google Drive
+                                </button>
+                                <button type="button" class="cloud-picker-btn" @onclick="() => PickDropbox(true)" disabled="@_cloudLoading">
+                                    <svg class="cloud-icon" viewBox="0 0 24 24">
+                                        <path d="M7.1 3.2 2 6.5l5.1 3.3 5.1-3.3-5.1-3.3Zm9.8 0-5.1 3.3 5.1 3.3L22 6.5l-5.1-3.3ZM2 13l5.1 3.3 5.1-3.3-5.1-3.3L2 13Zm14.9-3.3L11.8 13l5.1 3.3L22 13l-5.1-3.3ZM12 14.8 7.1 18 12 21.2l4.9-3.2-4.9-3.2Z" fill="#0061FF" />
+                                    </svg>
+                                    Dropbox
+                                </button>
+                            </div>
+                            @if (!string.IsNullOrEmpty(_originalCloudError))
                             {
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0D9488" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-                                <span class="compare-card-filename">@_originalName</span>
-                                <span class="compare-card-hint">Click to change</span>
+                                <p class="cloud-loading-hint" style="color:var(--danger);">@_originalCloudError</p>
                             }
-                            else
-                            {
-                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /></svg>
-                                <span class="compare-card-label">@(IsContractMode ? "Original contract" : "Original version")</span>
-                                <span class="compare-card-hint">Click or drag PDF here</span>
-                            }
-                        </label>
+                        </div>
 
                         <div class="compare-vs-divider">VS</div>
 
-                        <label class="compare-upload-card @(_revisedName != null ? "compare-card-filled" : "")">
-                            <InputFile OnChange="e => OnFileSelected(e, false)" accept=".pdf" class="file-input-hidden" />
-                            @if (_revisedName != null)
+                        <div class="compare-upload-slot">
+                            <label class="compare-upload-card @(_revisedName != null ? "compare-card-filled" : "")">
+                                <InputFile OnChange="e => OnFileSelected(e, false)" accept=".pdf" class="file-input-hidden" />
+                                @if (_revisedName != null)
+                                {
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0D9488" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                                    <span class="compare-card-filename">@_revisedName</span>
+                                    <span class="compare-card-hint">Click to change</span>
+                                }
+                                else
+                                {
+                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /></svg>
+                                    <span class="compare-card-label">@(IsContractMode ? "Revised contract" : "Revised version")</span>
+                                    <span class="compare-card-hint">Click or drag PDF here</span>
+                                }
+                            </label>
+
+                            <div class="cloud-picker-row">
+                                <span class="cloud-picker-label">Upload or import from</span>
+                                <button type="button" class="cloud-picker-btn" @onclick="() => PickGoogleDrive(false)" disabled="@_cloudLoading">
+                                    <svg class="cloud-icon" viewBox="0 0 24 24">
+                                        <path d="M9.6 3.2 3 14.5h4.5l6.5-11.3H9.6Z" fill="#34A853" />
+                                        <path d="M14.1 3.2h-4.5l6.6 11.3h4.5L14.1 3.2Z" fill="#FBBC04" />
+                                        <path d="M7.5 14.5 9.8 18.4h10.9L18.4 14.5H7.5Z" fill="#4285F4" />
+                                    </svg>
+                                    Google Drive
+                                </button>
+                                <button type="button" class="cloud-picker-btn" @onclick="() => PickDropbox(false)" disabled="@_cloudLoading">
+                                    <svg class="cloud-icon" viewBox="0 0 24 24">
+                                        <path d="M7.1 3.2 2 6.5l5.1 3.3 5.1-3.3-5.1-3.3Zm9.8 0-5.1 3.3 5.1 3.3L22 6.5l-5.1-3.3ZM2 13l5.1 3.3 5.1-3.3-5.1-3.3L2 13Zm14.9-3.3L11.8 13l5.1 3.3L22 13l-5.1-3.3ZM12 14.8 7.1 18 12 21.2l4.9-3.2-4.9-3.2Z" fill="#0061FF" />
+                                    </svg>
+                                    Dropbox
+                                </button>
+                            </div>
+                            @if (!string.IsNullOrEmpty(_revisedCloudError))
                             {
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0D9488" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-                                <span class="compare-card-filename">@_revisedName</span>
-                                <span class="compare-card-hint">Click to change</span>
+                                <p class="cloud-loading-hint" style="color:var(--danger);">@_revisedCloudError</p>
                             }
-                            else
-                            {
-                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /></svg>
-                                <span class="compare-card-label">@(IsContractMode ? "Revised contract" : "Revised version")</span>
-                                <span class="compare-card-hint">Click or drag PDF here</span>
-                            }
-                    </label>
+                        </div>
 
                 </div>
 
@@ -217,6 +266,9 @@
     private bool _isPro = false;
     private bool _processing = false;
     private string _error = string.Empty;
+    private bool _cloudLoading;
+    private string _originalCloudError = string.Empty;
+    private string _revisedCloudError = string.Empty;
     private byte[]? _reportBytes;
     private (int Added, int Removed, int Pages)? _result;
 
@@ -244,6 +296,70 @@
         var file = e.File;
         if (file == null) return;
 
+        await SetCompareFile(file, isOriginal);
+    }
+
+    private async Task PickGoogleDrive(bool isOriginal)
+    {
+        await PickCloudFile(isOriginal, "Google Drive", async () =>
+            await CloudPicker.OpenGoogleDriveAsync());
+    }
+
+    private async Task PickDropbox(bool isOriginal)
+    {
+        await PickCloudFile(isOriginal, "Dropbox", async () =>
+            await CloudPicker.OpenDropboxAsync());
+    }
+
+    private async Task PickCloudFile(
+        bool isOriginal,
+        string providerName,
+        Func<Task<PdfToolStack.Web.Services.CloudPickerService.CloudFileInfo?>> picker)
+    {
+        SetCloudError(isOriginal, string.Empty);
+        _cloudLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            var cloudFile = await picker();
+            if (cloudFile == null) return;
+
+            var bytes = await CloudPicker.DownloadFileAsync(
+                cloudFile.Url,
+                cloudFile.AccessToken);
+
+            if (bytes == null || bytes.Length == 0)
+            {
+                SetCloudError(isOriginal, $"{providerName}: Could not download the selected file.");
+                return;
+            }
+
+            await SetCompareFile(
+                new CloudBrowserFile(cloudFile.Name, bytes),
+                isOriginal);
+        }
+        catch (Exception ex)
+        {
+            SetCloudError(isOriginal, $"{providerName}: {ex.Message}");
+        }
+        finally
+        {
+            _cloudLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void SetCloudError(bool isOriginal, string message)
+    {
+        if (isOriginal)
+            _originalCloudError = message;
+        else
+            _revisedCloudError = message;
+    }
+
+    private async Task SetCompareFile(IBrowserFile file, bool isOriginal)
+    {
         using var ms = new MemoryStream();
         await file.OpenReadStream(maxAllowedSize: 52_428_800).CopyToAsync(ms);
 
@@ -261,6 +377,7 @@
         _result = null;
         _reportBytes = null;
         _error = string.Empty;
+        SetCloudError(isOriginal, string.Empty);
     }
 
     private async Task RunCompare()
@@ -306,5 +423,29 @@
         await JS.InvokeVoidAsync("downloadFile",
             "comparison_report.pdf",
             Convert.ToBase64String(_reportBytes));
+    }
+
+    private sealed class CloudBrowserFile : IBrowserFile
+    {
+        private readonly byte[] _bytes;
+
+        public CloudBrowserFile(string name, byte[] bytes)
+        {
+            Name = name;
+            Size = bytes.Length;
+            _bytes = bytes;
+            LastModified = DateTimeOffset.UtcNow;
+            ContentType = "application/pdf";
+        }
+
+        public string Name { get; }
+        public DateTimeOffset LastModified { get; }
+        public long Size { get; }
+        public string ContentType { get; }
+
+        public Stream OpenReadStream(
+            long maxAllowedSize = 512000,
+            CancellationToken cancellationToken = default)
+            => new MemoryStream(_bytes);
     }
 }
