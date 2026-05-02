@@ -18476,6 +18476,63 @@ html {
     }
 }
 
+/* ── FAQ spacing normalization ─────────────────────────────────────────── */
+.faq-section {
+    margin: 3rem auto 4rem;
+    padding: clamp(1.5rem, 3vw, 2.5rem);
+}
+
+.faq-section h2 {
+    margin: 0 0 1.5rem;
+}
+
+.faq-item {
+    padding: 1.1rem 0 1.25rem;
+    margin-bottom: 1.1rem;
+}
+
+.faq-item h3 {
+    margin: 0 0 .55rem;
+}
+
+.faq-item p {
+    margin: 0;
+}
+
+.cp-faq-item,
+.rp-faq-item,
+.tp-faq-item,
+.np-faq-item,
+.bp-faq-item {
+    margin-bottom: .85rem;
+}
+
+.cp-faq-item,
+.rp-faq-item,
+.tp-faq-item {
+    padding: 1.1rem 1.25rem;
+}
+
+.bp-faq {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    padding-bottom: 1.75rem;
+}
+
+.bp-faq-item summary {
+    padding: 1rem 1.15rem;
+}
+
+.bp-faq-item p {
+    padding: 0 1.15rem 1.15rem;
+}
+
+.pricing-premium-page .pricing-faq {
+    padding: 34px;
+    border-radius: 28px;
+    background: rgba(255,255,255,.68);
+}
+
 /* ── Global spacing normalization ─────────────────────────── */
 .tool-container,
 .bp-header,
