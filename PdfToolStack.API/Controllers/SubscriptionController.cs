@@ -153,21 +153,48 @@ namespace PdfToolStack.API.Controllers
         // ── Portal ────────────────────────────────────────────────────────────────
 
         [HttpPost("create-portal")]
+        [Authorize]
         public async Task<IActionResult> CreatePortal([FromBody] CreatePortalDto dto)
         {
             if (_service == null)
                 return StatusCode(503, new { error = "Database not configured." });
 
+            var userId =
+                User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                ?? User.FindFirst("sub")?.Value
+                ?? string.Empty;
+
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized();
+
+            dto.UserId = userId;
+
             try
             {
                 var url = await _service.CreatePortalSessionAsync(dto);
                 if (url == null)
-                    return NotFound(new { error = "No active subscription found for this user." });
+                {
+                    _logger.LogWarning("No subscription found for user {UserId}", userId);
+                    return NotFound(new { error = "No Stripe subscription found for this account." });
+                }
+
+                if (string.IsNullOrWhiteSpace(url))
+                {
+                    _logger.LogWarning("Billing portal unavailable for user {UserId}: missing Stripe customer record.", userId);
+                    return BadRequest(new { error = "Billing not available: missing Stripe customer record." });
+                }
+
                 return Ok(new CheckoutResponseDto { Url = url });
+            }
+            catch (Stripe.StripeException ex)
+            {
+                _logger.LogError("Stripe billing portal error for user {UserId}: {Code} — {Message}", userId, ex.StripeError?.Code, ex.Message);
+                return BadRequest(new { error = ex.Message });
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                _logger.LogError(ex, "Billing portal error for user {UserId}", userId);
+                return BadRequest(new { error = ex.Message });
             }
         }
 

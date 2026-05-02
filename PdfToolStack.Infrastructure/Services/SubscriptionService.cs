@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using PdfToolStack.Application.DTOs;
 using PdfToolStack.Application.Interfaces;
 using PdfToolStack.Domain.Entities;
@@ -17,17 +18,20 @@ namespace PdfToolStack.Infrastructure.Services
         private readonly IConfiguration _config;
         private readonly IEmailService _emailService;
         private readonly IServiceProvider _serviceProvider;
+        private readonly ILogger<SubscriptionService> _logger;
 
         public SubscriptionService(
             AppDbContext db,
             IConfiguration config,
             IEmailService emailService,
-            IServiceProvider serviceProvider)
+            IServiceProvider serviceProvider,
+            ILogger<SubscriptionService> logger)
         {
             _db = db;
             _config = config;
             _emailService = emailService;
             _serviceProvider = serviceProvider;
+            _logger = logger;
             StripeConfiguration.ApiKey = _config["Stripe:SecretKey"];
         }
 
@@ -157,6 +161,12 @@ namespace PdfToolStack.Infrastructure.Services
 
             if (sub == null)
                 return null;
+
+            if (string.IsNullOrEmpty(sub.StripeCustomerId))
+            {
+                _logger.LogError("Missing StripeCustomerId for user {UserId}", dto.UserId);
+                return string.Empty;
+            }
 
             var options = new Stripe.BillingPortal.SessionCreateOptions
             {

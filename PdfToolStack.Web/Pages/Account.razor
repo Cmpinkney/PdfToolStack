@@ -20,9 +20,14 @@
                 var planColor = _subStatus?.HasTeams == true ? "#0D9488" : _subStatus?.HasPro == true ? "#D97706" : "#6B7280";
             }
 
-            <!-- ── Top profile hero ─────────────────────────────────────────── -->
-            <div class="acc-hero">
-                <div class="acc-hero-inner">
+            <section class="acc-dashboard-hero">
+                <div>
+                    <span class="acc-eyebrow">PdfToolStack dashboard</span>
+                    <h1>Your workspace</h1>
+                    <p>Manage your plan, usage, and document workflows.</p>
+                </div>
+
+                <div class="acc-profile-chip">
                     <div class="acc-avatar-wrap">
                         @if (!string.IsNullOrEmpty(picture))
                         {
@@ -34,250 +39,282 @@
                         }
                         <span class="acc-avatar-badge" style="background:@planColor">@planLabel</span>
                     </div>
-
-                    <div class="acc-hero-info">
-                        <h1 class="acc-hero-name">@name</h1>
-                        <p class="acc-hero-email">@email</p>
-                    </div>
-
-                    <div class="acc-hero-stats">
-                        <div class="acc-kpi">
-                            <span class="acc-kpi-val">@(_history?.Count ?? 0)</span>
-                            <span class="acc-kpi-lbl">Documents</span>
-                        </div>
-                        <div class="acc-kpi-divider"></div>
-                        <div class="acc-kpi">
-                            <span class="acc-kpi-val">@GetUniqueTools()</span>
-                            <span class="acc-kpi-lbl">Tools used</span>
-                        </div>
-                        <div class="acc-kpi-divider"></div>
-                        <div class="acc-kpi">
-                            <span class="acc-kpi-val">@GetTotalSize()</span>
-                            <span class="acc-kpi-lbl">Processed</span>
-                        </div>
+                    <div>
+                        <strong>@name</strong>
+                        <span>@email</span>
                     </div>
                 </div>
-            </div>
+            </section>
 
-            <!-- ── Main grid ───────────────────────────────────────────────── -->
-            <div class="acc-grid">
-
-                <!-- LEFT COLUMN -->
-                <div class="acc-left">
-
-                    <!-- Subscription card -->
-                    <div class="acc-card">
-                        <div class="acc-card-header">
+            <section class="acc-dashboard-grid">
+                <article class="acc-card acc-plan-card">
+                    <div class="acc-card-header acc-card-header--spaced">
+                        <div class="acc-header-title">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26 12,2" /></svg>
-                            <span>Subscription</span>
+                            <span>Plan</span>
+                        </div>
+                        <span class="acc-plan-pill" style="--plan-color:@planColor">@planLabel</span>
+                    </div>
+
+                    @if (_subStatus == null)
+                    {
+                        <div class="acc-skeleton-block"></div>
+                    }
+                    else if (_subStatus.HasPro || _subStatus.HasTeams)
+                    {
+                        <div class="acc-plan-summary">
+                            <h2>@planLabel plan is active</h2>
+                            <p>
+                                @if (_subStatus.CurrentPeriodEnd.HasValue)
+                                {
+                                    @(_subStatus.CancelAtPeriodEnd ? "Access ends" : "Renews")
+                                    @(" on ")
+                                    @_subStatus.CurrentPeriodEnd.Value.ToString("MMM d, yyyy")
+                                }
+                                else
+                                {
+                                    @("Larger files, priority workflows, and Pro document features are enabled.")
+                                }
+                            </p>
                         </div>
 
-                        @if (_subStatus == null)
+                        <div class="acc-plan-benefits">
+                            <span>Larger files</span>
+                            <span>Batch workflows</span>
+                            <span>Priority features</span>
+                        </div>
+
+                        <button class="acc-action-btn acc-action-btn--secondary"
+                                type="button"
+                                disabled="@_billingLoading"
+                                @onclick="ManageBilling">
+                            @(_billingLoading ? "Opening billing..." : "Manage Billing")
+                        </button>
+                        @if (!string.IsNullOrWhiteSpace(_billingError))
                         {
-                            <div class="acc-skeleton-block"></div>
+                            <p class="acc-billing-error">@_billingError</p>
                         }
-                        else if (_subStatus.HasPro || _subStatus.HasTeams)
-                        {
-                            <div class="acc-plan-badge acc-plan-badge--pro">
-                                <div class="acc-plan-icon" style="background:@(planColor + "20");color:@planColor">
-                                    @if (_subStatus.HasTeams)
-                                    {
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
-                                    }
-                                    else
-                                    {
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="@planColor" stroke="none"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26 12,2" /></svg>
-                                    }
-                                </div>
-                                <div>
-                                    <p class="acc-plan-name">@planLabel Plan</p>
-                                    <p class="acc-plan-detail">
-                                        @if (_subStatus.CurrentPeriodEnd.HasValue)
-                                        {
-                                            @(_subStatus.CancelAtPeriodEnd ? "Cancels" : "Renews")
-                                            @(" on ")
-                                            @_subStatus.CurrentPeriodEnd.Value.ToString("MMM d, yyyy")
-                                        }
-                                        else
-                                        {
-                                            @("Active subscription")
-                                        }
-                                    </p>
-                                </div>
+                    }
+                    else
+                    {
+                        <div class="acc-plan-summary">
+                            <h2>Free workspace</h2>
+                            <p>Use standard PDF tools with smaller files. Upgrade when you need bigger documents, batch workflows, and faster processing.</p>
+                        </div>
+
+                        <div class="acc-plan-benefits">
+                            <span>25MB files</span>
+                            <span>Standard tools</span>
+                            <span>Limited batch</span>
+                        </div>
+
+                        <a href="/pricing" class="acc-action-btn acc-action-btn--upgrade">
+                            Upgrade to Pro — $19/mo
+                        </a>
+                    }
+                </article>
+
+                <article class="acc-card acc-usage-card">
+                    <div class="acc-card-header">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2" /></svg>
+                        <span>Usage</span>
+                    </div>
+
+                    <div class="acc-usage-stats">
+                        <div class="acc-usage-stat">
+                            <strong>@(_history?.Count ?? 0)</strong>
+                            <span>Files processed</span>
+                        </div>
+                        <div class="acc-usage-stat">
+                            <strong>@GetUniqueTools()</strong>
+                            <span>Tools used</span>
+                        </div>
+                        <div class="acc-usage-stat">
+                            <strong>@GetTotalSize()</strong>
+                            <span>Total processed</span>
+                        </div>
+                        <div class="acc-usage-stat">
+                            <strong>@((_subStatus?.HasPro == true || _subStatus?.HasTeams == true) ? "500MB" : "25MB")</strong>
+                            <span>File size limit</span>
+                        </div>
+                    </div>
+
+                    @if (_aiUsage != null)
+                    {
+                        <div class="acc-usage-block">
+                            <div class="acc-usage-row">
+                                <span class="acc-usage-lbl">AI requests this month</span>
+                                <span class="acc-usage-count">@_aiUsage.Used <span class="acc-usage-limit">/ @_aiUsage.Limit</span></span>
                             </div>
+                            <div class="acc-usage-track">
+                                <div class="acc-usage-fill" style="width:@(Math.Min(_aiUsage.Percentage, 100))%; background:@GetUsageColor(_aiUsage.Percentage)"></div>
+                            </div>
+                            <span class="acc-usage-remaining">@_aiUsage.Remaining remaining</span>
 
-                            <!-- AI usage meter -->
-                            @if (_aiUsage != null)
+                            @if (_purchasedCredits > 0)
                             {
-                                <div class="acc-usage-block">
-                                    <div class="acc-usage-row">
-                                        <span class="acc-usage-lbl">AI requests this month</span>
-                                        <span class="acc-usage-count">@_aiUsage.Used <span class="acc-usage-limit">/ @_aiUsage.Limit</span></span>
-                                    </div>
-                                    <div class="acc-usage-track">
-                                        <div class="acc-usage-fill" style="width:@(Math.Min(_aiUsage.Percentage, 100))%; background:@GetUsageColor(_aiUsage.Percentage)"></div>
-                                    </div>
-                                    <span class="acc-usage-remaining">@_aiUsage.Remaining remaining</span>
-
-                                    @if (_purchasedCredits > 0)
-                                    {
-                                        <div class="acc-credits-badge">
-                                            <svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M8 2v5M5 5l3-3 3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" /></svg>
-                                            +@_purchasedCredits top-up credits
-                                        </div>
-                                    }
-
-                                    @if (_aiUsage.Percentage >= 80)
-                                    {
-                                        <button class="acc-topup-btn @(_aiUsage.Percentage >= 100 ? "acc-topup-btn--urgent" : "")" @onclick="ShowTopUp">
-                                            @(_aiUsage.Percentage >= 100 ? "Buy more AI credits" : "Running low — top up credits")
-                                        </button>
-                                    }
+                                <div class="acc-credits-badge">
+                                    <svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M8 2v5M5 5l3-3 3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                                    +@_purchasedCredits top-up credits
                                 </div>
                             }
 
-                            <button class="acc-action-btn acc-action-btn--secondary" @onclick="ManageBilling">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2" /><line x1="1" y1="10" x2="23" y2="10" /></svg>
-                                Manage Billing
-                            </button>
-                        }
-                        else
-                        {
-                            <!-- Free plan -->
-                            <div class="acc-free-plan">
-                                <div class="acc-free-header">
-                                    <span class="acc-free-tag">Free</span>
-                                    <span class="acc-free-limit">25MB · Standard tools</span>
-                                </div>
-                                <div class="acc-upgrade-features">
-                                    @foreach (var feat in new[] { "All AI tools", "Batch processing (20 files)", "Unlimited file size (500MB)", "30-day download history", "PDF Compare", "Priority processing" })
-                                    {
-                                        <div class="acc-upgrade-feat">
-                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-                                            @feat
-                                        </div>
-                                    }
-                                </div>
-                                <a href="/pricing" class="acc-action-btn acc-action-btn--upgrade">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26 12,2" /></svg>
-                                    Upgrade to Pro — $19/mo
-                                </a>
-                            </div>
-                        }
-                    </div>
-
-                    <!-- Teams card (Pro teams only) -->
-                    @if (_subStatus?.HasTeams == true)
-                    {
-                        <div class="acc-card">
-                            <div class="acc-card-header">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
-                                <span>Team</span>
-                            </div>
-                            <p class="acc-card-desc">Manage your team members, invites, and shared usage.</p>
-                            <a href="/team" class="acc-action-btn acc-action-btn--primary">Open Team Dashboard →</a>
+                            @if (_aiUsage.Percentage >= 80)
+                            {
+                                <button class="acc-topup-btn @(_aiUsage.Percentage >= 100 ? "acc-topup-btn--urgent" : "")" @onclick="ShowTopUp">
+                                    @(_aiUsage.Percentage >= 100 ? "Buy more AI credits" : "Running low — top up credits")
+                                </button>
+                            }
                         </div>
                     }
+                    else
+                    {
+                        <div class="acc-usage-empty">AI usage appears here when available.</div>
+                    }
+                </article>
+            </section>
 
-                    <!-- Quick links -->
-                    <div class="acc-card">
-                        <div class="acc-card-header">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" /><polyline points="13 2 13 9 20 9" /></svg>
-                            <span>Quick Access</span>
+            <section class="acc-main-section">
+                <article class="acc-card acc-card--full acc-documents-card">
+                    <div class="acc-card-header acc-card-header--spaced">
+                        <div class="acc-header-title">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg>
+                            <span>Recent Documents</span>
                         </div>
-                        <div class="acc-quicklinks">
-                            @foreach (var link in QuickLinks)
-                            {
-                                <a href="@link.Url" class="acc-quicklink">
-                                    <div class="acc-quicklink-icon" style="background:@(link.Color + "20");color:@link.Color">
-                                        @((MarkupString)link.IconSvg)
-                                    </div>
-                                    <span>@link.Label</span>
-                                    <svg class="acc-quicklink-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
-                                </a>
-                            }
-                        </div>
+                        @if (_history?.Any() == true)
+                        {
+                            <span class="acc-history-count">@_history.Count files</span>
+                        }
                     </div>
 
-                    <!-- Danger zone -->
-                    <div class="acc-card acc-card--danger">
-                        <div class="acc-card-header">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>
-                            <span style="color:#EF4444">Danger Zone</span>
+                    @if (_historyLoading)
+                    {
+                        <div class="acc-loading">
+                            <div class="spinner"></div>
+                            <p>Loading documents...</p>
                         </div>
+                    }
+                    else if (_history == null || !_history.Any())
+                    {
+                        <div class="acc-empty">
+                            <div class="acc-empty-icon">
+                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /></svg>
+                            </div>
+                            <h3 class="acc-empty-title">No documents yet</h3>
+                            <p class="acc-empty-desc">Your processed files will appear here after you use any tool.</p>
+                            <a href="/" class="acc-action-btn acc-action-btn--secondary acc-inline-action">Browse Tools</a>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="acc-history">
+                            @foreach (var item in _history.Take(25))
+                            {
+                                <div class="acc-history-row">
+                                    <div class="acc-history-icon" style="background:@GetToolColor(item.ToolType)15;color:@GetToolColor(item.ToolType)">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /></svg>
+                                    </div>
+                                    <div class="acc-history-info">
+                                        <span class="acc-history-name">@TruncateFileName(item.FileName)</span>
+                                        <span class="acc-history-meta">
+                                            <span class="acc-history-tool" style="color:@GetToolColor(item.ToolType)">@FormatToolType(item.ToolType)</span>
+                                            <span>·</span>
+                                            <span>@FormatFileSize(item.FileSizeBytes)</span>
+                                            <span>·</span>
+                                            <span>@GetRelativeDate(item.ProcessedAt)</span>
+                                        </span>
+                                    </div>
+                                    <div class="acc-history-actions">
+                                        <button class="acc-history-action" type="button" disabled>Download again</button>
+                                        <button class="acc-history-action" type="button" disabled>Run again</button>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+
+                        @if (!(_subStatus?.HasPro == true))
+                        {
+                            <div class="acc-history-nudge">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6D5DFC" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26 12,2" /></svg>
+                                Pro users get full 30-day history, larger files, and batch workflows.
+                                <a href="/pricing">Upgrade →</a>
+                            </div>
+                        }
+                    }
+                </article>
+            </section>
+
+            <section class="acc-workflow-section">
+                <div class="acc-section-heading">
+                    <span>Quick actions</span>
+                    <h2>Start a workflow</h2>
+                </div>
+                <div class="acc-workflow-grid">
+                    <a href="/compress-pdf" class="acc-workflow-card">
+                        <span>Compress</span>
+                        <strong>Compress PDF</strong>
+                        <small>Reduce file size for sharing.</small>
+                    </a>
+                    <a href="/pdf-to-excel" class="acc-workflow-card">
+                        <span>Data</span>
+                        <strong>Convert to Excel</strong>
+                        <small>Extract tables into spreadsheets.</small>
+                    </a>
+                    <a href="/batch" class="acc-workflow-card">
+                        <span>Batch</span>
+                        <strong>Batch process</strong>
+                        <small>Apply workflows across files.</small>
+                    </a>
+                    <a href="/ai-pdf-assist" class="acc-workflow-card">
+                        <span>AI</span>
+                        <strong>AI tools</strong>
+                        <small>Summarize, compare, and extract.</small>
+                    </a>
+                </div>
+            </section>
+
+            <section class="acc-lower-grid">
+                <article class="acc-card acc-security-card">
+                    <div class="acc-card-header">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
+                        <span>Account & security</span>
+                    </div>
+                    <div class="acc-account-list">
+                        <div>
+                            <span>Email</span>
+                            <strong>@email</strong>
+                        </div>
+                        <div>
+                            <span>Authentication</span>
+                            <strong>Signed in</strong>
+                        </div>
+                        <div>
+                            <span>Data handling</span>
+                            <strong>Files auto-delete after processing</strong>
+                        </div>
+                    </div>
+                </article>
+
+                @if (_subStatus?.HasTeams == true)
+                {
+                    <article class="acc-card">
+                        <div class="acc-card-header">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+                            <span>Team</span>
+                        </div>
+                        <p class="acc-card-desc">Manage your team members, invites, and shared usage.</p>
+                        <a href="/team" class="acc-action-btn acc-action-btn--primary">Open Team Dashboard →</a>
+                    </article>
+                }
+
+                <details class="acc-danger-details">
+                    <summary>Danger Zone</summary>
+                    <div class="acc-card acc-card--danger">
                         <p class="acc-card-desc">Permanently delete your account and all associated data. This action cannot be undone.</p>
                         <a href="/account/delete" class="acc-action-btn acc-action-btn--danger">Delete My Account</a>
                     </div>
-
-                </div>
-
-                <!-- RIGHT COLUMN — Document History -->
-                <div class="acc-right">
-                    <div class="acc-card acc-card--full">
-                        <div class="acc-card-header acc-card-header--spaced">
-                            <div style="display:flex;align-items:center;gap:8px;">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg>
-                                <span>Recent Documents</span>
-                            </div>
-                            @if (_history?.Any() == true)
-                            {
-                                <span class="acc-history-count">@_history.Count files</span>
-                            }
-                        </div>
-
-                        @if (_historyLoading)
-                        {
-                            <div class="acc-loading">
-                                <div class="spinner"></div>
-                                <p>Loading documents...</p>
-                            </div>
-                        }
-                        else if (_history == null || !_history.Any())
-                        {
-                            <div class="acc-empty">
-                                <div class="acc-empty-icon">
-                                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /></svg>
-                                </div>
-                                <h3 class="acc-empty-title">No documents yet</h3>
-                                <p class="acc-empty-desc">Your processed files will appear here after you use any tool.</p>
-                                <a href="/" class="acc-action-btn acc-action-btn--secondary" style="display:inline-flex;width:auto;text-decoration:none;">Browse Tools</a>
-                            </div>
-                        }
-                        else
-                        {
-                            <div class="acc-history">
-                                @foreach (var item in _history.Take(25))
-                                {
-                                    <div class="acc-history-row">
-                                        <div class="acc-history-icon" style="background:@GetToolColor(item.ToolType)15;color:@GetToolColor(item.ToolType)">
-                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /></svg>
-                                        </div>
-                                        <div class="acc-history-info">
-                                            <span class="acc-history-name">@TruncateFileName(item.FileName)</span>
-                                            <span class="acc-history-meta">
-                                                <span class="acc-history-tool" style="color:@GetToolColor(item.ToolType)">@FormatToolType(item.ToolType)</span>
-                                                <span>·</span>
-                                                <span>@FormatFileSize(item.FileSizeBytes)</span>
-                                            </span>
-                                        </div>
-                                        <div class="acc-history-date">@GetRelativeDate(item.ProcessedAt)</div>
-                                    </div>
-                                }
-                            </div>
-
-                            @if (!(_subStatus?.HasPro == true))
-                            {
-                                <div class="acc-history-nudge">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26 12,2" /></svg>
-                                    Pro users get full 30-day history.
-                                    <a href="/pricing">Upgrade →</a>
-                                </div>
-                            }
-                        }
-                    </div>
-                </div>
-
-            </div>
+                </details>
+            </section>
         </Authorized>
 
         <NotAuthorized>
@@ -1042,6 +1079,8 @@
     private List<DownloadHistoryDto>? _history;
     private AiUsageDto? _aiUsage;
     private bool _historyLoading = true;
+    private bool _billingLoading = false;
+    private string _billingError = string.Empty;
     private int _purchasedCredits = 0;
     private bool _showTopUpSuccess = false;
     private int _topUpCreditsAdded = 0;
@@ -1154,9 +1193,33 @@
 
     private async Task ManageBilling()
     {
-        var url = await SubService.CreatePortalSessionAsync(_userId, _baseUrl);
-        if (!string.IsNullOrEmpty(url))
-            Navigation.NavigateTo(url, forceLoad: true);
+        if (_billingLoading)
+        {
+            return;
+        }
+
+        _billingError = string.Empty;
+        _billingLoading = true;
+
+        try
+        {
+            var url = await SubService.CreatePortalSessionAsync(_userId, _baseUrl);
+            if (!string.IsNullOrWhiteSpace(url))
+            {
+                Navigation.NavigateTo(url, forceLoad: true);
+                return;
+            }
+
+            _billingError = "Billing portal is not available for this account yet.";
+        }
+        catch
+        {
+            _billingError = "Could not open billing right now. Please try again.";
+        }
+        finally
+        {
+            _billingLoading = false;
+        }
     }
 
     private string GetUsageColor(double pct) => pct >= 90 ? "#EF4444" : pct >= 70 ? "#D97706" : "#4338CA";

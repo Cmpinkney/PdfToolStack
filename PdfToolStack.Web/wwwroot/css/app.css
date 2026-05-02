@@ -9331,6 +9331,520 @@ footer,
     border-top-color: rgba(34,80,244,0.1) !important;
 }
 
+/* Account dashboard refresh */
+.acc-root.acc-root {
+    width: min(1320px, calc(100% - (var(--page-gutter, 32px) * 2)));
+    max-width: 1320px;
+    margin: 0 auto;
+    padding: 42px 0 72px;
+}
+
+.acc-dashboard-hero {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 28px;
+    margin-bottom: 24px;
+    padding: 38px var(--panel-padding-lg, 32px);
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    border-radius: 28px;
+    background:
+        radial-gradient(circle at top left, rgba(109, 93, 252, 0.16), transparent 34%),
+        linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.88));
+    box-shadow: 0 22px 60px rgba(15, 23, 42, 0.08);
+}
+
+.acc-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    margin-bottom: 14px;
+    color: #2563eb;
+    font-size: 0.78rem;
+    font-weight: 850;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.acc-dashboard-hero h1 {
+    margin: 0 0 10px;
+    color: #0f172a;
+    font-family: var(--font-heading, inherit);
+    font-size: clamp(2.35rem, 4vw, 4.25rem);
+    font-weight: 800;
+    letter-spacing: -0.045em;
+    line-height: 1;
+}
+
+.acc-dashboard-hero p {
+    max-width: 620px;
+    margin: 0;
+    color: #64748b;
+    font-size: 1.02rem;
+    line-height: 1.7;
+}
+
+.acc-profile-chip {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-width: 280px;
+    padding: 14px;
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.76);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.acc-profile-chip strong,
+.acc-profile-chip span {
+    display: block;
+}
+
+.acc-profile-chip strong {
+    color: #0f172a;
+    font-size: 0.95rem;
+    font-weight: 850;
+}
+
+.acc-profile-chip > div:last-child > span {
+    max-width: 220px;
+    overflow: hidden;
+    color: #64748b;
+    font-size: 0.82rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.acc-dashboard-grid,
+.acc-lower-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: var(--card-gap, 28px);
+    margin-bottom: var(--card-gap, 28px);
+}
+
+.acc-main-section,
+.acc-workflow-section {
+    margin-bottom: var(--card-gap, 28px);
+}
+
+.acc-card.acc-card {
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.94);
+    box-shadow: 0 20px 50px rgba(15, 23, 42, 0.08);
+    padding: var(--panel-padding-lg, 32px);
+}
+
+.acc-card-header.acc-card-header {
+    margin-bottom: 20px;
+    color: #64748b;
+    font-size: 0.76rem;
+    font-weight: 850;
+    letter-spacing: 0.08em;
+}
+
+.acc-header-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.acc-plan-pill {
+    --plan-color: #2563eb;
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid color-mix(in srgb, var(--plan-color) 30%, transparent);
+    border-radius: 999px;
+    padding: 5px 11px;
+    background: color-mix(in srgb, var(--plan-color) 10%, white);
+    color: var(--plan-color);
+    font-size: 0.72rem;
+    font-weight: 900;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.acc-plan-summary h2 {
+    margin: 0 0 10px;
+    color: #0f172a;
+    font-family: var(--font-heading, inherit);
+    font-size: 1.55rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+}
+
+.acc-plan-summary p {
+    margin: 0;
+    color: #64748b;
+    font-size: 0.95rem;
+    line-height: 1.65;
+}
+
+.acc-plan-benefits {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin: 22px 0;
+}
+
+.acc-plan-benefits span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 10px;
+    border: 1px solid rgba(109, 93, 252, 0.16);
+    border-radius: 14px;
+    background: #f8fafc;
+    color: #334155;
+    font-size: 0.8rem;
+    font-weight: 800;
+    text-align: center;
+}
+
+.acc-action-btn.acc-action-btn {
+    min-height: 46px;
+    border-radius: 999px;
+    font-weight: 850;
+}
+
+.acc-action-btn--upgrade.acc-action-btn--upgrade,
+.acc-action-btn--primary.acc-action-btn--primary {
+    background: linear-gradient(135deg, #6d5dfc 0%, #2563eb 55%, #06b6d4 100%);
+    color: #fff;
+    box-shadow: 0 16px 34px rgba(37, 99, 235, 0.2);
+}
+
+.acc-action-btn--upgrade.acc-action-btn--upgrade:hover,
+.acc-action-btn--primary.acc-action-btn--primary:hover {
+    opacity: 1;
+    transform: translateY(-2px);
+    box-shadow: 0 22px 44px rgba(37, 99, 235, 0.28);
+}
+
+.acc-usage-stats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 22px;
+}
+
+.acc-usage-stat {
+    min-width: 0;
+    padding: 16px;
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    border-radius: 18px;
+    background: linear-gradient(135deg, #f8fafc, #ffffff);
+}
+
+.acc-usage-stat strong,
+.acc-usage-stat span {
+    display: block;
+}
+
+.acc-usage-stat strong {
+    overflow: hidden;
+    color: #0f172a;
+    font-size: 1.35rem;
+    font-weight: 900;
+    letter-spacing: -0.04em;
+    line-height: 1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.acc-usage-stat span {
+    margin-top: 8px;
+    color: #64748b;
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.acc-usage-empty {
+    border: 1px dashed rgba(148, 163, 184, 0.35);
+    border-radius: 16px;
+    padding: 16px;
+    color: #64748b;
+    font-size: 0.88rem;
+}
+
+.acc-billing-error {
+    margin: 12px 0 0;
+    border: 1px solid rgba(239, 68, 68, 0.18);
+    border-radius: 14px;
+    padding: 10px 12px;
+    background: rgba(254, 242, 242, 0.82);
+    color: #b91c1c;
+    font-size: 0.82rem;
+    font-weight: 700;
+    line-height: 1.45;
+}
+
+.acc-documents-card.acc-card--full {
+    min-height: 0;
+}
+
+.acc-history.acc-history {
+    gap: 10px;
+}
+
+.acc-history-row.acc-history-row {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 14px;
+    align-items: center;
+    padding: 14px;
+    border: 1px solid rgba(148, 163, 184, 0.14);
+    border-radius: 18px;
+    background: rgba(248, 250, 252, 0.68);
+}
+
+.acc-history-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.acc-history-action {
+    border: 1px solid rgba(148, 163, 184, 0.26);
+    border-radius: 999px;
+    padding: 8px 12px;
+    background: #fff;
+    color: #475569;
+    font-size: 0.76rem;
+    font-weight: 850;
+}
+
+.acc-history-action:disabled {
+    cursor: not-allowed;
+    opacity: 0.52;
+}
+
+.acc-inline-action {
+    display: inline-flex !important;
+    width: auto !important;
+    text-decoration: none !important;
+}
+
+.acc-history-nudge.acc-history-nudge {
+    border: 1px solid rgba(109, 93, 252, 0.2);
+    background:
+        radial-gradient(circle at left, rgba(109, 93, 252, 0.1), transparent 40%),
+        rgba(248, 250, 252, 0.9);
+    color: #334155;
+}
+
+.acc-history-nudge a {
+    color: #2563eb !important;
+}
+
+.acc-section-heading {
+    margin-bottom: 14px;
+}
+
+.acc-section-heading span {
+    display: block;
+    color: #2563eb;
+    font-size: 0.74rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.acc-section-heading h2 {
+    margin: 6px 0 0;
+    color: #0f172a;
+    font-family: var(--font-heading, inherit);
+    font-size: 1.55rem;
+    font-weight: 850;
+    letter-spacing: -0.03em;
+}
+
+.acc-workflow-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.acc-workflow-card {
+    display: grid;
+    gap: 8px;
+    min-height: 170px;
+    padding: 20px;
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    border-radius: 22px;
+    background:
+        radial-gradient(circle at top right, rgba(109, 93, 252, 0.13), transparent 42%),
+        rgba(255, 255, 255, 0.92);
+    color: inherit;
+    text-decoration: none;
+    box-shadow: 0 16px 38px rgba(15, 23, 42, 0.06);
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.acc-workflow-card:hover {
+    border-color: rgba(109, 93, 252, 0.34);
+    box-shadow: 0 22px 48px rgba(37, 99, 235, 0.14);
+    transform: translateY(-3px);
+}
+
+.acc-workflow-card span {
+    width: fit-content;
+    border-radius: 999px;
+    padding: 5px 10px;
+    background: #eef2ff;
+    color: #4f46e5;
+    font-size: 0.72rem;
+    font-weight: 900;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.acc-workflow-card strong {
+    color: #0f172a;
+    font-size: 1.02rem;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+}
+
+.acc-workflow-card small {
+    color: #64748b;
+    font-size: 0.86rem;
+    line-height: 1.55;
+}
+
+.acc-account-list {
+    display: grid;
+    gap: 12px;
+}
+
+.acc-account-list div {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 13px 0;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+}
+
+.acc-account-list div:last-child {
+    border-bottom: 0;
+}
+
+.acc-account-list span {
+    color: #64748b;
+    font-size: 0.82rem;
+    font-weight: 750;
+}
+
+.acc-account-list strong {
+    min-width: 0;
+    overflow: hidden;
+    color: #0f172a;
+    font-size: 0.88rem;
+    font-weight: 850;
+    text-align: right;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.acc-danger-details {
+    align-self: start;
+    border: 1px solid rgba(239, 68, 68, 0.16);
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.72);
+    overflow: hidden;
+}
+
+.acc-danger-details summary {
+    cursor: pointer;
+    padding: 20px var(--panel-padding-lg, 32px);
+    color: #991b1b;
+    font-size: 0.82rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.acc-danger-details .acc-card {
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+@media (max-width: 980px) {
+    .acc-root.acc-root {
+        width: min(100%, calc(100% - (var(--page-gutter-mobile, 16px) * 2)));
+        padding: 28px 0 56px;
+    }
+
+    .acc-dashboard-hero,
+    .acc-dashboard-grid,
+    .acc-lower-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .acc-dashboard-hero {
+        display: grid;
+        padding: 28px var(--panel-padding-mobile, 20px);
+    }
+
+    .acc-profile-chip {
+        min-width: 0;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .acc-usage-stats,
+    .acc-workflow-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .acc-history-row.acc-history-row {
+        grid-template-columns: auto minmax(0, 1fr);
+    }
+
+    .acc-history-actions {
+        grid-column: 1 / -1;
+        justify-content: flex-start;
+        padding-left: 50px;
+    }
+}
+
+@media (max-width: 640px) {
+    .acc-dashboard-hero h1 {
+        font-size: clamp(2rem, 10vw, 2.85rem);
+    }
+
+    .acc-card.acc-card {
+        padding: var(--panel-padding-mobile, 20px);
+    }
+
+    .acc-plan-benefits,
+    .acc-usage-stats,
+    .acc-workflow-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .acc-account-list div {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .acc-account-list strong {
+        text-align: left;
+    }
+
+    .acc-history-actions {
+        padding-left: 0;
+    }
+}
+
 /* ── Global gradient background — applies to every page ─────────────────── */
 body {
     background: linear-gradient(135deg, #f0f4ff 0%, #e8e0ff 40%, #dbeafe 80%, #eff6ff 100%) !important;
