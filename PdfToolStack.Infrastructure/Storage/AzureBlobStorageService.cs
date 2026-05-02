@@ -49,14 +49,41 @@ namespace PdfToolStack.Infrastructure.Storage
             string blobUrl,
             CancellationToken cancellationToken = default)
         {
-            var uri = new Uri(blobUrl);
-            var blobName = uri.AbsolutePath.TrimStart('/');
             var containerClient = _blobServiceClient
                 .GetBlobContainerClient(_containerName);
 
+            var blobName = GetBlobName(blobUrl);
             var blobClient = containerClient.GetBlobClient(blobName);
             await blobClient.DeleteIfExistsAsync(
                 cancellationToken: cancellationToken);
+        }
+
+        public async Task<byte[]?> DownloadAsync(
+            string blobUrl,
+            CancellationToken cancellationToken = default)
+        {
+            var containerClient = _blobServiceClient
+                .GetBlobContainerClient(_containerName);
+
+            var blobName = GetBlobName(blobUrl);
+            var blobClient = containerClient.GetBlobClient(blobName);
+
+            if (!await blobClient.ExistsAsync(cancellationToken))
+                return null;
+
+            using var stream = new MemoryStream();
+            await blobClient.DownloadToAsync(stream, cancellationToken);
+            return stream.ToArray();
+        }
+
+        private string GetBlobName(string blobUrl)
+        {
+            var uri = new Uri(blobUrl);
+            var path = uri.AbsolutePath.TrimStart('/');
+            var prefix = _containerName + "/";
+            return path.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
+                ? path[prefix.Length..]
+                : path;
         }
     }
 }

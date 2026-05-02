@@ -21,6 +21,21 @@
     </div>
 }
 
+@if (_isLoading)
+{
+    <div class="sf-viewport-loading-overlay" role="status" aria-live="polite" aria-label="Preparing PDF editor">
+        <div class="sf-viewport-loading-card">
+            <div class="sf-viewport-loading-mark" aria-hidden="true">
+                <span></span>
+            </div>
+            <div>
+                <p class="sf-viewport-loading-title">Preparing your PDF editor...</p>
+                <p class="sf-viewport-loading-copy">This may take a few seconds for larger files.</p>
+            </div>
+        </div>
+    </div>
+}
+
 <div class="sf-viewer-area @(_showArea ? "" : "sf-viewer-area-hidden") @(_isLoading ? "is-loading" : "")"
      id="@_wrapperId">
 
@@ -84,7 +99,7 @@
 
         // Let the overlay render before heavy work starts
         await InvokeAsync(StateHasChanged);
-        await Task.Delay(50);
+        await Task.Yield();
 
         _ = RunLoadingStagesAsync(_loadingCts.Token);
 

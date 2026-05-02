@@ -19,6 +19,8 @@ namespace PdfToolStack.Web.Services
             _logger = logger;
         }
 
+        public string LastPendingBatchCreateError { get; private set; } = string.Empty;
+
         public async Task<T?> GetAsync<T>(string endpoint)
         {
             var response = await _httpClient.GetAsync(endpoint);
@@ -762,6 +764,133 @@ namespace PdfToolStack.Web.Services
                 _logger.LogError(ex, "Error calling batch API");
                 return null;
             }
+        }
+
+        public async Task<PendingBatchCreateResponse?> CreatePendingBatchJobAsync(
+            IReadOnlyList<IBrowserFile> files,
+            ToolType toolType,
+            CancellationToken cancellationToken = default)
+        {
+            LastPendingBatchCreateError = string.Empty;
+            var endpoint = $"api/pending-batch?toolType={toolType}";
+            var fileSummary = string.Join(", ", files.Select(f => $"{f.Name} ({f.Size} bytes)"));
+
+            _logger.LogInformation(
+                "Creating pending batch at {Endpoint}. FileCount={FileCount}. Files={Files}",
+                endpoint,
+                files.Count,
+                fileSummary);
+
+            using var content = new MultipartFormDataContent();
+
+            try
+            {
+                foreach (var file in files)
+                {
+                    var stream = file.OpenReadStream(524_288_000);
+                    var fileContent = new StreamContent(stream);
+                    fileContent.Headers.ContentType =
+                        new System.Net.Http.Headers.MediaTypeHeaderValue("application/pdf");
+                    content.Add(fileContent, "files", file.Name);
+                }
+
+                var response = await _httpClient.PostAsync(
+                    endpoint,
+                    content,
+                    cancellationToken);
+
+                if (response.IsSuccessStatusCode)
+                    return await response.Content.ReadFromJsonAsync<PendingBatchCreateResponse>(
+                        cancellationToken: cancellationToken);
+
+                var error = await response.Content.ReadAsStringAsync(cancellationToken);
+                LastPendingBatchCreateError =
+                    $"POST {endpoint} failed with HTTP {(int)response.StatusCode} ({response.StatusCode}). Response: {error}";
+                _logger.LogWarning(
+                    "Pending batch create failed. Endpoint={Endpoint}. FileCount={FileCount}. Files={Files}. StatusCode={StatusCode}. Body={Body}",
+                    endpoint,
+                    files.Count,
+                    fileSummary,
+                    response.StatusCode,
+                    error);
+                return null;
+            }
+            catch (Exception ex)
+            {
+                LastPendingBatchCreateError =
+                    $"POST {endpoint} failed before a successful response. FileCount={files.Count}. Files={fileSummary}. Error: {ex.Message}";
+                _logger.LogError(
+                    ex,
+                    "Pending batch create threw. Endpoint={Endpoint}. FileCount={FileCount}. Files={Files}",
+                    endpoint,
+                    files.Count,
+                    fileSummary);
+                return null;
+            }
+        }
+
+        public async Task<PendingBatchStatusResponse?> GetPendingBatchJobAsync(
+            Guid pendingBatchId,
+            string? pendingBatchToken = null,
+            CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var query = string.IsNullOrWhiteSpace(pendingBatchToken)
+                    ? string.Empty
+                    : $"?token={Uri.EscapeDataString(pendingBatchToken)}";
+                return await _httpClient.GetFromJsonAsync<PendingBatchStatusResponse>(
+                    $"api/pending-batch/{pendingBatchId}{query}",
+                    cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading pending batch {PendingBatchId}", pendingBatchId);
+                return null;
+            }
+        }
+
+        public async Task<byte[]?> ProcessPendingBatchJobAsync(
+            Guid pendingBatchId,
+            string? pendingBatchToken = null,
+            CancellationToken cancellationToken = default)
+        {
+            var query = string.IsNullOrWhiteSpace(pendingBatchToken)
+                ? string.Empty
+                : $"?token={Uri.EscapeDataString(pendingBatchToken)}";
+            var response = await _httpClient.PostAsync(
+                $"api/pending-batch/{pendingBatchId}/process{query}",
+                null,
+                cancellationToken);
+
+            if (response.IsSuccessStatusCode)
+                return await response.Content.ReadAsByteArrayAsync(cancellationToken);
+
+            var error = await response.Content.ReadAsStringAsync(cancellationToken);
+            _logger.LogWarning("Pending batch process failed {StatusCode}: {Body}",
+                response.StatusCode, error);
+            return null;
+        }
+
+        public async Task<PendingBatchStatusResponse?> ClaimPendingBatchJobAsync(
+            Guid pendingBatchId,
+            string pendingBatchToken,
+            string userId,
+            CancellationToken cancellationToken = default)
+        {
+            var response = await _httpClient.PostAsync(
+                $"api/pending-batch/{pendingBatchId}/claim?token={Uri.EscapeDataString(pendingBatchToken)}&userId={Uri.EscapeDataString(userId)}",
+                null,
+                cancellationToken);
+
+            if (response.IsSuccessStatusCode)
+                return await response.Content.ReadFromJsonAsync<PendingBatchStatusResponse>(
+                    cancellationToken: cancellationToken);
+
+            var error = await response.Content.ReadAsStringAsync(cancellationToken);
+            _logger.LogWarning("Pending batch claim failed {StatusCode}: {Body}",
+                response.StatusCode, error);
+            return null;
         }
 
         public async Task<bool> DeleteAccountAsync()

@@ -4,6 +4,7 @@ using Microsoft.Extensions.Options;
 using PdfToolStack.API.Configuration;
 using PdfToolStack.Application.Interfaces;
 using PdfToolStack.Domain.Entities;
+using PdfToolStack.Domain.Enums;
 using PdfToolStack.Domain.Interfaces;
 using PdfToolStack.Infrastructure.Data;
 using Stripe;
@@ -261,6 +262,23 @@ namespace PdfToolStack.API.Controllers
                     CreatedAt = DateTime.UtcNow,
                     UsesRemaining = 1
                 });
+
+                if (session.Metadata.TryGetValue("pendingBatchId", out var pendingBatchIdText) &&
+                    Guid.TryParse(pendingBatchIdText, out var pendingBatchId))
+                {
+                    var pendingBatch = await _db.PendingBatchJobs
+                        .FirstOrDefaultAsync(x => x.PendingBatchId == pendingBatchId);
+
+                    if (pendingBatch != null &&
+                        pendingBatch.UserId == userId &&
+                        pendingBatch.Status == PendingBatchStatus.PendingPayment &&
+                        pendingBatch.ExpiresAtUtc > DateTime.UtcNow &&
+                        !pendingBatch.IsUsed)
+                    {
+                        pendingBatch.Status = PendingBatchStatus.Paid;
+                        pendingBatch.PaymentSessionId = session.Id;
+                    }
+                }
 
                 await _db.SaveChangesAsync();
             }

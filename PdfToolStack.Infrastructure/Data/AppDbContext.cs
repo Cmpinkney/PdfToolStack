@@ -18,6 +18,7 @@ namespace PdfToolStack.Infrastructure.Data
         public DbSet<Referral> Referrals => Set<Referral>();
         public DbSet<AiCreditPurchase> AiCreditPurchases => Set<AiCreditPurchase>();
         public DbSet<OneTimePurchase> OneTimePurchases => Set<OneTimePurchase>();
+        public DbSet<PendingBatchJob> PendingBatchJobs => Set<PendingBatchJob>();
         public DbSet<Team> Teams => Set<Team>();
         public DbSet<TeamMember> TeamMembers => Set<TeamMember>();
         public DbSet<TeamInvite> TeamInvites => Set<TeamInvite>();
@@ -64,6 +65,24 @@ namespace PdfToolStack.Infrastructure.Data
                     .IsRequired().HasMaxLength(256);
                 entity.HasIndex(e => e.KeyHash).IsUnique();
                 entity.HasIndex(e => e.UserId);
+            });
+
+            modelBuilder.Entity<PendingBatchJob>(entity =>
+            {
+                entity.HasKey(e => e.PendingBatchId);
+                entity.Property(e => e.UserId).HasMaxLength(256);
+                entity.Property(e => e.PendingAccessToken).IsRequired().HasMaxLength(128);
+                entity.Property(e => e.PaymentSessionId).HasMaxLength(256);
+                entity.Property(e => e.OriginalFileNames).IsRequired();
+                entity.Property(e => e.StoredFileReferences).IsRequired();
+                entity.Property(e => e.ErrorMessage).HasMaxLength(2000);
+                entity.Property(e => e.Status).IsRequired();
+                entity.Property(e => e.ToolType).IsRequired();
+                entity.HasIndex(e => e.UserId);
+                entity.HasIndex(e => e.PendingAccessToken).IsUnique();
+                entity.HasIndex(e => e.PaymentSessionId);
+                entity.HasIndex(e => e.Status);
+                entity.HasIndex(e => e.ExpiresAtUtc);
             });
 
             modelBuilder.Entity<Referral>(entity =>

@@ -62,6 +62,7 @@ Entities/
  OneTimePurchase.cs
  PdfFormField.cs
  PdfJob.cs
+ PendingBatchJob.cs
  ProcessingResult.cs
  RedactionRegion.cs
  Referral.cs
@@ -72,6 +73,7 @@ Entities/
 Enums/
  JobStatus.cs
  PaywallReason.cs
+ PendingBatchStatus.cs
  SubscriptionPlan.cs
  ToolType.cs
 Interfaces/

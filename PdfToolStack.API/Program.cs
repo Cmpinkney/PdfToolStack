@@ -94,6 +94,10 @@ try
     {
         builder.Services.AddScoped<IBlobStorageService, AzureBlobStorageService>();
     }
+    else
+    {
+        builder.Services.AddScoped<IBlobStorageService, MissingBlobStorageService>();
+    }
 
     // ── PDF Processors ────────────────────────────────────────────────────
     builder.Services.AddScoped<PdfCompressor>();

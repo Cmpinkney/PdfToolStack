@@ -79,6 +79,7 @@ Migrations/
  20260421032207_AddOneTimePurchases.Designer.cs
  20260426182038_AddTeams.cs
  20260426182038_AddTeams.Designer.cs
+ 20260430190000_AddPendingBatchJobs.cs
  AppDbContextModelSnapshot.cs
 obj/Debug/net9.0/
  .NETCoreApp,Version=v9.0.AssemblyAttributes.cs
@@ -132,6 +133,7 @@ Services/
 Storage/
  AzureBlobStorageService.cs
  IBlobStorageService.cs
+ MissingBlobStorageService.cs
 Strategies/
  AnnotateStrategy.cs
  CropStrategy.cs

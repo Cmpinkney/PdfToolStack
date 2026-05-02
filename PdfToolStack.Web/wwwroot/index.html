@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="css/app.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap" rel="stylesheet">
     <link href="_content/Syncfusion.Blazor.Themes/bootstrap5.css" rel="stylesheet" />
     <link rel="preload" href="_content/Syncfusion.Blazor.SfPdfViewer/scripts/syncfusion-blazor-sfpdfviewer.min.js" as="script" />
     <script src="_content/Microsoft.AspNetCore.Components.WebAssembly.Authentication/AuthenticationService.js"></script>
@@ -947,7 +947,8 @@
                 }
 
                 const blob = new Blob([bytes], { type: "application/pdf" });
-                return URL.createObjectURL(blob);
+                const url = URL.createObjectURL(blob);
+                return url;
             },
 
             revokeBlobUrl: (url) => {

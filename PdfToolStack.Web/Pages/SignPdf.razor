@@ -15,55 +15,76 @@
     <link rel="canonical" href="https://pdftoolstack.com/sign-pdf" />
 </HeadContent>
 
-<div class="tool-page">
+<div class="tool-page sign-tool-page @(_viewerActive ? "viewer-active" : "")">
     <AdSlot Size="banner" />
-    <div class="tool-container">
+    <div class="tool-container sign-tool-container">
 
-        <div class="ai-tool-header">
-            <div class="ai-tool-badge">✒️ Free Tool</div>
-            <h1>@(IsContractMode ? "Sign Contract Online" : "Sign PDF Online")</h1>
-            <p class="tool-subtitle">
+        <section class="sign-hero">
+            <div class="sign-trust-row" aria-label="Sign PDF trust badges">
+                <span>Secure upload</span>
+                <span>Private signing</span>
+                <span>Auto-delete</span>
+            </div>
+            <h1>Sign PDF <span class="hero-gradient-text">confidently</span></h1>
+            <p>
                 @(IsContractMode
-                    ? "Upload your contract and add a legally binding electronic signature. No account needed."
-                    : "Draw your signature and place it anywhere on your PDF. Free, private, and instant.")
+                    ? "Upload your contract and add a legally binding electronic signature. Use the signing tools to place your signature, then download the signed PDF."
+                    : "Draw your signature and place it anywhere on your PDF. Use the signing tools to place your signature, then download the signed PDF.")
             </p>
+        </section>
+
+        <div class="sign-stepper" aria-label="Sign PDF workflow">
+            <div class="sign-step active"><span>1</span>Upload</div>
+            <div class="sign-step"><span>2</span>Sign</div>
+            <div class="sign-step"><span>3</span>Review</div>
+            <div class="sign-step"><span>4</span>Download</div>
         </div>
 
-        <div class="how-it-works">
-            <div class="hiw-step">
-                <div class="hiw-num">1</div>
-                <div class="hiw-text"><strong>Upload PDF</strong><span>Up to 25MB free</span></div>
-            </div>
-            <div class="hiw-arrow">→</div>
-            <div class="hiw-step">
-                <div class="hiw-num">2</div>
-                <div class="hiw-text"><strong>Add your signature</strong><span>Use the signature tool in the toolbar</span></div>
-            </div>
-            <div class="hiw-arrow">→</div>
-            <div class="hiw-step">
-                <div class="hiw-num">3</div>
-                <div class="hiw-text"><strong>Place &amp; download</strong><span>Click to position anywhere</span></div>
-            </div>
-        </div>
-
-        @if (CurrentState == PageState.LargeFile)
+        @if (!_viewerActive)
         {
-            <LargeFileUpgrade FileSizeBytes="@_largeFileSize"
-                              FileName="@_largeFileName"
-                              ToolType="SignPdf"
-                              OnCancel="ResetAll" />
-        }
-        else if (!_viewerActive)
-        {
-            <FileUpload OnFileSelected="HandleFileSelected"
-                        OnFileRemoved="HandleFileRemoved" />
+            <section class="sign-workflow-grid">
+                <div class="sign-workspace-card">
+                    @if (CurrentState == PageState.LargeFile)
+                    {
+                        <LargeFileUpgrade FileSizeBytes="@_largeFileSize"
+                                          FileName="@_largeFileName"
+                                          ToolType="SignPdf"
+                                          OnCancel="ResetAll" />
+                    }
+                    else
+                    {
+                        <FileUpload OnFileSelected="HandleFileSelected"
+                                    OnFileRemoved="HandleFileRemoved" />
+                    }
+                </div>
+
+                <aside class="sign-side-card">
+                    <div class="sign-panel-eyebrow">Signing workspace</div>
+                    <h2>@(IsContractMode ? "Add your signature to the contract" : "Place your signature with precision")</h2>
+                    <p>Open the viewer, use the signature tools in the toolbar, review placement, and download the finished PDF.</p>
+                    <div class="sign-value-list">
+                        <span>Draw or add your signature in the viewer toolbar</span>
+                        <span>Place signatures directly on the document</span>
+                        <span>Review the signed PDF before downloading</span>
+                    </div>
+                </aside>
+            </section>
         }
 
-        <SfPdfViewerShell @ref="_viewer"
-                          ResetLabel="Sign Another PDF"
-                          Height="85vh"
-                          ToolbarItems="@_signToolbar"
-                          OnReset="ResetAll" />
+        <section class="sign-viewer-stage @(_viewerActive ? "is-active" : "")">
+            @if (_viewerActive)
+            {
+                <div class="sign-viewer-helper">
+                    Use the signing tools to place your signature, then download the signed PDF.
+                </div>
+            }
+
+            <SfPdfViewerShell @ref="_viewer"
+                              ResetLabel="Sign Another PDF"
+                              Height="85vh"
+                              ToolbarItems="@_signToolbar"
+                              OnReset="ResetAll" />
+        </section>
 
         @if (CurrentState == PageState.Error)
         {

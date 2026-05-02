@@ -66,6 +66,7 @@ Controllers/
  HealthController.cs
  PaymentController.cs
  PdfController.cs
+ PendingBatchController.cs
  ReferralController.cs
  StripeWebhookController.cs
  SubscriptionController.cs

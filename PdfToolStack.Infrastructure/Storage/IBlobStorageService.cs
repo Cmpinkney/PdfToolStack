@@ -16,5 +16,9 @@ namespace PdfToolStack.Infrastructure.Storage
         Task DeleteAsync(
             string blobUrl,
             CancellationToken cancellationToken = default);
+
+        Task<byte[]?> DownloadAsync(
+            string blobUrl,
+            CancellationToken cancellationToken = default);
     }
 }

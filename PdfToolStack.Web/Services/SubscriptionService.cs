@@ -48,15 +48,24 @@ namespace PdfToolStack.Web.Services
         // ── Subscription checkout (recurring) ─────────────────────────────────────
 
         public async Task<string> CreateCheckoutSessionAsync(
-            string priceId, string userId, string email, string baseUrl)
+            string priceId,
+            string userId,
+            string email,
+            string baseUrl,
+            string? returnPath = null,
+            string? cancelPath = null)
         {
             var dto = new CreateCheckoutDto
             {
                 PriceId = priceId,
                 UserId = userId,
                 Email = email,
-                SuccessUrl = baseUrl + "/subscription/success",
-                CancelUrl = baseUrl + "/pricing"
+                SuccessUrl = string.IsNullOrWhiteSpace(returnPath)
+                    ? baseUrl + "/subscription/success"
+                    : baseUrl + returnPath,
+                CancelUrl = string.IsNullOrWhiteSpace(cancelPath)
+                    ? baseUrl + "/pricing"
+                    : baseUrl + cancelPath
             };
 
             var response = await _api.PostAsync<CreateCheckoutDto, CheckoutResponseDto>(
@@ -73,7 +82,8 @@ namespace PdfToolStack.Web.Services
             string userId,
             string email,
             string baseUrl,
-            string? returnPath = null)
+            string? returnPath = null,
+            Dictionary<string, string>? metadata = null)
         {
             var successUrl = string.IsNullOrEmpty(returnPath)
                 ? baseUrl + "/subscription/success"
@@ -90,7 +100,8 @@ namespace PdfToolStack.Web.Services
                 UserId = userId,
                 Email = email,
                 SuccessUrl = successUrl,
-                CancelUrl = cancelUrl
+                CancelUrl = cancelUrl,
+                Metadata = metadata ?? new()
             };
 
             var response = await _api.PostAsync<AddonCheckoutRequest, CheckoutResponseDto>(

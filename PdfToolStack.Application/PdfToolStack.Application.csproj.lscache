@@ -61,6 +61,7 @@ DTOs/
  JobStatusResponse.cs
  PaywallApiError.cs
  PaywallResult.cs
+ PendingBatchDtos.cs
  ProcessRequest.cs
  ProcessResponse.cs
  ReferralDtos.cs
