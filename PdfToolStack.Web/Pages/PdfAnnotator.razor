@@ -9,53 +9,73 @@
     <link rel="canonical" href="https://pdftoolstack.com/pdf-annotator" />
 </HeadContent>
 
-<div class="tool-page">
+<div class="tool-page annotate-tool-page">
     <AdSlot Size="banner" />
-    <div class="tool-container">
+    <div class="tool-container annotate-tool-container">
 
-        <div class="ai-tool-header">
-            <div class="ai-tool-badge">🖊️ Free Tool</div>
-            <h1>PDF Annotator Online</h1>
-            <p class="tool-subtitle">
-                Highlight, underline, strikethrough, and draw on your PDF.
-                Full annotation toolbar with undo/redo built in. No signup required.
+        <section class="annotate-hero">
+            <div class="annotate-trust-row" aria-label="Annotate PDF trust badges">
+                <span>Secure upload</span>
+                <span>Private notes</span>
+                <span>Auto-delete</span>
+            </div>
+            <h1>Annotate PDF <span class="hero-gradient-text">clearly</span></h1>
+            <p>
+                Highlight, underline, strikethrough, and draw on your PDF. Add highlights, notes, and markup, then download your annotated PDF.
             </p>
+        </section>
+
+        <div class="annotate-stepper" aria-label="Annotate PDF workflow">
+            <div class="annotate-step active"><span>1</span>Upload</div>
+            <div class="annotate-step"><span>2</span>Annotate</div>
+            <div class="annotate-step"><span>3</span>Review</div>
+            <div class="annotate-step"><span>4</span>Download</div>
         </div>
 
-        <div class="how-it-works">
-            <div class="hiw-step">
-                <div class="hiw-num">1</div>
-                <div class="hiw-text"><strong>Upload your PDF</strong><span>Up to 25MB free</span></div>
-            </div>
-            <div class="hiw-arrow">→</div>
-            <div class="hiw-step">
-                <div class="hiw-num">2</div>
-                <div class="hiw-text"><strong>Annotate</strong><span>Highlight, draw, mark up</span></div>
-            </div>
-            <div class="hiw-arrow">→</div>
-            <div class="hiw-step">
-                <div class="hiw-num">3</div>
-                <div class="hiw-text"><strong>Download</strong><span>Annotations embedded permanently</span></div>
-            </div>
-        </div>
-
-        @if (CurrentState == PageState.LargeFile)
+        @if (!_viewerActive)
         {
-            <LargeFileUpgrade FileSizeBytes="@_largeFileSize"
-                              FileName="@_largeFileName"
-                              ToolType="PdfAnnotator"
-                              OnCancel="ResetAll" />
-        }
-        else if (!_viewerActive)
-        {
-            <FileUpload OnFileSelected="HandleFileSelected"
-                        OnFileRemoved="HandleFileRemoved" />
+            <section class="annotate-workflow-grid">
+                <div class="annotate-workspace-card">
+                    @if (CurrentState == PageState.LargeFile)
+                    {
+                        <LargeFileUpgrade FileSizeBytes="@_largeFileSize"
+                                          FileName="@_largeFileName"
+                                          ToolType="PdfAnnotator"
+                                          OnCancel="ResetAll" />
+                    }
+                    else
+                    {
+                        <FileUpload OnFileSelected="HandleFileSelected"
+                                    OnFileRemoved="HandleFileRemoved" />
+                    }
+                </div>
+
+                <aside class="annotate-side-card">
+                    <div class="annotate-panel-eyebrow">Annotation workspace</div>
+                    <h2>Mark up PDFs without losing context</h2>
+                    <p>Open the viewer, add clear feedback, and export the finished PDF with your annotations embedded.</p>
+                    <div class="annotate-value-list">
+                        <span>Highlight, underline, strikethrough, and draw</span>
+                        <span>Review notes before downloading the final PDF</span>
+                        <span>Browser-based workflow for private markup</span>
+                    </div>
+                </aside>
+            </section>
         }
 
-        <SfPdfViewerShell @ref="_viewer"
-                          ResetLabel="Annotate Another PDF"
-                          Height="85vh"
-                          OnReset="ResetAll" />
+        <section class="annotate-viewer-stage @(_viewerActive ? "is-active" : "")">
+            @if (_viewerActive)
+            {
+                <div class="annotate-viewer-helper">
+                    Add highlights, notes, and markup, then download your annotated PDF.
+                </div>
+            }
+
+            <SfPdfViewerShell @ref="_viewer"
+                              ResetLabel="Annotate Another PDF"
+                              Height="85vh"
+                              OnReset="ResetAll" />
+        </section>
 
         @if (CurrentState == PageState.Error)
         {

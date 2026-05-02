@@ -17169,3 +17169,267 @@ html {
         border-radius: 20px;
     }
 }
+
+/* ── Annotate PDF premium viewer page ─────────────────────── */
+.annotate-tool-page {
+    max-width: none;
+    padding: 48px 0 72px;
+    background:
+        radial-gradient(circle at top left, rgba(109, 93, 252, 0.14), transparent 30%),
+        linear-gradient(135deg, #f8f7ff 0%, #eef5ff 100%);
+}
+
+.annotate-tool-container {
+    width: min(1240px, calc(100% - 48px));
+    max-width: 1240px;
+    margin: 0 auto 2rem;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    text-align: left;
+}
+
+.annotate-hero {
+    margin-bottom: 24px;
+}
+
+.annotate-trust-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 18px;
+}
+
+.annotate-trust-row span {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.82);
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    color: #334155;
+    font-size: 0.82rem;
+    font-weight: 700;
+    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.05);
+}
+
+.annotate-trust-row span::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #6d5dfc, #06b6d4);
+}
+
+.annotate-hero h1 {
+    max-width: 780px;
+    margin: 0 0 14px;
+    color: #111827;
+    font-size: var(--heading-hero-size);
+    line-height: 1.08;
+    letter-spacing: -0.02em;
+}
+
+.annotate-hero p {
+    max-width: 720px;
+    margin: 0;
+    color: #475569;
+    font-size: 1rem;
+    line-height: 1.7;
+}
+
+.annotate-stepper {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+    margin: 0 0 24px;
+    padding: 8px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.82);
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.06);
+}
+
+.annotate-step {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 42px;
+    border-radius: 999px;
+    color: #64748b;
+    font-size: 0.85rem;
+    font-weight: 800;
+}
+
+.annotate-step span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 999px;
+    background: #e2e8f0;
+    color: #475569;
+    font-size: 0.75rem;
+}
+
+.annotate-step.active {
+    color: #fff;
+    background: linear-gradient(135deg, #6d5dfc 0%, #2563eb 55%, #06b6d4 100%);
+    box-shadow: 0 12px 24px rgba(37, 99, 235, 0.22);
+}
+
+.annotate-step.active span {
+    background: rgba(255, 255, 255, 0.22);
+    color: #fff;
+}
+
+.annotate-workflow-grid {
+    width: 100%;
+    display: grid;
+    grid-template-columns: minmax(0, 1.55fr) minmax(320px, 0.75fr);
+    gap: 24px;
+    align-items: start;
+}
+
+.annotate-workspace-card,
+.annotate-side-card {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.94);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    box-shadow: 0 20px 50px rgba(15, 23, 42, 0.08);
+    padding: 28px;
+}
+
+.annotate-workspace-card .file-upload-container,
+.annotate-workspace-card .upload-container {
+    width: 100%;
+    max-width: none;
+}
+
+.annotate-panel-eyebrow {
+    display: inline-flex;
+    margin-bottom: 10px;
+    color: #4f46e5;
+    font-size: 0.75rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.annotate-side-card h2 {
+    margin: 0 0 10px;
+    color: #111827;
+    font-size: clamp(1.35rem, 2vw, 1.8rem);
+    line-height: 1.15;
+}
+
+.annotate-side-card p {
+    margin: 0 0 18px;
+    color: #64748b;
+    line-height: 1.65;
+}
+
+.annotate-value-list {
+    display: grid;
+    gap: 10px;
+}
+
+.annotate-value-list span {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    color: #334155;
+    font-size: 0.92rem;
+    line-height: 1.45;
+}
+
+.annotate-value-list span::before {
+    content: "";
+    width: 9px;
+    height: 9px;
+    margin-top: 6px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #6d5dfc, #06b6d4);
+    flex: 0 0 auto;
+}
+
+.annotate-viewer-stage {
+    width: 100%;
+    margin-top: 24px;
+}
+
+.annotate-viewer-stage.is-active {
+    padding: 18px;
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.94);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.1);
+}
+
+.annotate-viewer-helper {
+    margin: 0 0 14px;
+    padding: 12px 14px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(109, 93, 252, 0.09), rgba(6, 182, 212, 0.1));
+    color: #334155;
+    font-size: 0.92rem;
+    font-weight: 700;
+}
+
+.annotate-viewer-stage .annotator-toolbar-row {
+    margin-bottom: 14px;
+}
+
+.annotate-viewer-stage .reset-button {
+    border: 0;
+    color: #fff;
+    background: linear-gradient(135deg, #6d5dfc 0%, #2563eb 55%, #06b6d4 100%);
+    box-shadow: 0 12px 24px rgba(37, 99, 235, 0.22);
+}
+
+.annotate-viewer-stage .reset-button:hover {
+    color: #fff;
+    transform: translateY(-1px);
+    box-shadow: 0 16px 30px rgba(37, 99, 235, 0.28);
+}
+
+@media (max-width: 980px) {
+    .annotate-tool-page {
+        padding: 32px 0 56px;
+    }
+
+    .annotate-tool-container {
+        width: min(100%, calc(100% - 24px));
+    }
+
+    .annotate-workflow-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .annotate-stepper {
+        grid-template-columns: repeat(4, minmax(120px, 1fr));
+        overflow-x: auto;
+        border-radius: 20px;
+    }
+}
+
+@media (max-width: 640px) {
+    .annotate-workspace-card,
+    .annotate-side-card {
+        padding: 20px;
+        border-radius: 20px;
+    }
+
+    .annotate-viewer-stage.is-active {
+        padding: 12px;
+        border-radius: 20px;
+    }
+}
