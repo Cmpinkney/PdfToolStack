@@ -20,174 +20,283 @@
           href="https://yoursite.com/fill-pdf-form" />
 </HeadContent>
 
-<div class="tool-page">
-
-    <AdSlot Size="banner" />
-
+<div class="tool-page fill-tool-page">
     <div class="tool-container">
-        <h1>Fill PDF Form Online</h1>
-        <p class="tool-subtitle">
-            Upload a fillable PDF form, complete the fields,
-            and download your filled document for free.
-            No signup required.
-        </p>
+        <section class="tool-hero fill-hero">
+            <div class="trust-row">
+                <span>Secure upload</span>
+                <span>Editable fields</span>
+                <span>Auto-delete</span>
+            </div>
 
-        @if (CurrentState == PageState.Upload)
-        {
-            <FileUpload OnFileSelected="HandleFileSelected"
-                        OnFileRemoved="HandleFileRemoved" />
+            <h1>Fill PDF forms <span class="hero-gradient-text">online</span></h1>
+            <p>
+                Upload a fillable PDF, complete the detected fields, and download
+                a finished document without installing software.
+            </p>
+        </section>
 
-            @if (SelectedFile != null && !IsDetecting)
-            {
-                <button class="process-button"
-                        @onclick="DetectFields">
-                    Load Form Fields
-                </button>
-            }
+        <div class="stepper fill-stepper">
+            <div class="step @(CurrentState == PageState.Upload || CurrentState == PageState.LargeFile ? "active" : "complete")">
+                <span>1</span>
+                <p>Upload</p>
+            </div>
+            <div class="step @(CurrentState == PageState.Upload || CurrentState == PageState.LargeFile ? "" : CurrentState == PageState.FillFields ? "active" : "complete")">
+                <span>2</span>
+                <p>Detect Fields</p>
+            </div>
+            <div class="step @(CurrentState == PageState.FillFields ? "active" : CurrentState == PageState.Processing || CurrentState == PageState.Complete ? "complete" : "")">
+                <span>3</span>
+                <p>Fill</p>
+            </div>
+            <div class="step @(CurrentState == PageState.Complete ? "complete active" : "")">
+                <span>4</span>
+                <p>Download</p>
+            </div>
+        </div>
 
-            @if (IsDetecting)
-            {
-                <div class="processing-container">
-                    <div class="spinner"></div>
-                    <p>Detecting form fields...</p>
-                </div>
-            }
-        }
+        <section class="workflow-grid fill-workflow-grid">
+            <div class="workspace-card fill-workspace-card">
+                @if (CurrentState == PageState.Upload)
+                {
+                    <div class="panel-header">
+                        <span class="panel-eyebrow">Upload workspace</span>
+                        <h2>Start with a fillable PDF</h2>
+                        <p>
+                            Choose a PDF form from your device, Google Drive, or Dropbox.
+                            We will scan for interactive fields before you fill it.
+                        </p>
+                    </div>
 
-        @if (CurrentState == PageState.LargeFile)
-        {
-            <LargeFileUpgrade FileSizeBytes="@(SelectedFile?.Size ?? 0)"
-                              FileName="@(SelectedFile?.Name ?? "")"
-                              ToolType="FillPdfForm"
-                              OnCancel="Reset" />
-        }
+                    <FileUpload OnFileSelected="HandleFileSelected"
+                                OnFileRemoved="HandleFileRemoved" />
 
-        @if (CurrentState == PageState.FillFields)
-        {
-            <div class="form-fields-container">
-                <h2 class="fields-title">
-                    Fill in your form fields
-                </h2>
-                <p class="fields-subtitle">
-                    @FormFields.Count field@(FormFields.Count != 1 ? "s" : "") detected
-                </p>
-
-                <div class="fields-list">
-                    @foreach (var field in FormFields)
+                    @if (SelectedFile != null && !IsDetecting)
                     {
-                        <div class="field-item">
-                            <label class="field-label">
-                                @FormatFieldName(field.Name)
-                                <span class="field-technical-name">@field.Name</span>
-                            </label>
-
-                            @if (field.FieldType == "checkbox")
-                            {
-                                <div class="checkbox-wrapper">
-                                    <input type="checkbox"
-                                           class="field-checkbox"
-                                           @onchange="e => HandleCheckboxChange(field.Name, e.Value)" />
-                                    <span>Check this box</span>
-                                </div>
-                            }
-                            else if (field.FieldType == "dropdown"
-                            && field.Options.Count > 0)
-                            {
-                                <select class="field-input"
-                                        @onchange="e => HandleSelectChange(field.Name, e.Value)">
-                                    <option value="">
-                                        Select an option...
-                                    </option>
-                                    @foreach (var option in field.Options)
-                                    {
-                                        <option value="@option">
-                                            @option
-                                        </option>
-                                    }
-                                </select>
-                            }
-                            else
-                            {
-                                <input type="text"
-                                       class="field-input"
-                                       placeholder="@($"Enter {FormatFieldName(field.Name)}...")"
-                                       @oninput="e => HandleInputChange(field.Name, e.Value)" />
-                            }
+                        <div class="fill-file-ready">
+                            <div>
+                                <strong>@SelectedFile.Name</strong>
+                                <span>@Validator.FormatSize(SelectedFile.Size)</span>
+                            </div>
+                            <button class="fill-primary-button"
+                                    @onclick="DetectFields">
+                                Load Form Fields
+                            </button>
                         </div>
                     }
-                </div>
 
-                <button class="process-button"
-                        @onclick="FillForm">
-                    Fill & Download PDF
-                </button>
+                    @if (IsDetecting)
+                    {
+                        <div class="fill-state-card">
+                            <div class="spinner"></div>
+                            <h3>Detecting form fields...</h3>
+                            <p>Scanning your PDF for editable fields and answer areas.</p>
+                        </div>
+                    }
+                }
 
-                <button class="reset-button"
-                        style="margin-top: 1rem;"
-                        @onclick="Reset">
-                    Upload Different PDF
-                </button>
+                @if (CurrentState == PageState.LargeFile)
+                {
+                    <LargeFileUpgrade FileSizeBytes="@(SelectedFile?.Size ?? 0)"
+                                      FileName="@(SelectedFile?.Name ?? "")"
+                                      ToolType="FillPdfForm"
+                                      OnCancel="Reset" />
+                }
+
+                @if (CurrentState == PageState.FillFields)
+                {
+                    <div class="fill-document-card">
+                        <div class="fill-document-icon">
+                            <span>PDF</span>
+                        </div>
+
+                        <div class="fill-document-copy">
+                            <span class="panel-eyebrow">Document status</span>
+                            <h2>Document ready</h2>
+                            <p>
+                                We detected the form fields in your PDF. Enter your
+                                responses on the right, then download the completed file.
+                            </p>
+                        </div>
+
+                        <div class="fill-document-stats">
+                            <div>
+                                <span>File name</span>
+                                <strong>@(SelectedFile?.Name ?? "Selected PDF")</strong>
+                            </div>
+                            <div>
+                                <span>Detected fields</span>
+                                <strong>@FormFields.Count</strong>
+                            </div>
+                            <div>
+                                <span>Output</span>
+                                <strong>Completed PDF</strong>
+                            </div>
+                        </div>
+
+                        <div class="fill-placement-note">
+                            Live field placement preview is coming later. Filled values
+                            are applied when you download.
+                        </div>
+                    </div>
+                }
+
+                @if (CurrentState == PageState.NoFields)
+                {
+                    <div class="fill-state-card fill-warning-card">
+                        <span class="fill-state-icon">!</span>
+                        <h2>No fillable fields found</h2>
+                        <p>
+                            This PDF does not contain interactive form fields. Scanned or
+                            flat PDFs are not supported by this form filler yet.
+                        </p>
+                        <button class="fill-secondary-button"
+                                @onclick="Reset">
+                            Try Another PDF
+                        </button>
+                    </div>
+                }
+
+                @if (CurrentState == PageState.Processing)
+                {
+                    <div class="fill-state-card">
+                        <div class="spinner"></div>
+                        <h2>Filling your PDF form...</h2>
+                        <p>Applying your answers and preparing a completed PDF download.</p>
+                    </div>
+                }
+
+                @if (CurrentState == PageState.Complete)
+                {
+                    <div class="fill-state-card fill-success-card">
+                        <span class="fill-state-icon">✓</span>
+                        <h2>Form filled successfully</h2>
+                        <p>Your completed PDF is ready to download.</p>
+
+                        <div class="fill-action-row">
+                            <button class="fill-primary-button"
+                                    @onclick="DownloadFile">
+                                Download Filled PDF
+                            </button>
+
+                            <button class="fill-secondary-button"
+                                    @onclick="Reset">
+                                Fill Another PDF
+                            </button>
+                        </div>
+                    </div>
+                }
+
+                @if (CurrentState == PageState.Error)
+                {
+                    <div class="fill-state-card fill-error-card">
+                        <span class="fill-state-icon">×</span>
+                        <h2>Something went wrong</h2>
+                        <p class="error-message">@ErrorMessage</p>
+                        <button class="fill-secondary-button" @onclick="Reset">
+                            Try Again
+                        </button>
+                    </div>
+                }
             </div>
-        }
 
-        @if (CurrentState == PageState.NoFields)
-        {
-            <div class="error-container">
-                <span class="error-icon">⚠️</span>
-                <p>This PDF does not contain fillable form fields.</p>
-                <p style="color: var(--gray); font-size: 0.9rem; margin-top: 0.5rem;">
-                    Only PDFs with interactive form fields
-                    can be filled using this tool.
-                </p>
-                <button class="reset-button"
-                        style="margin-top: 1rem;"
-                        @onclick="Reset">
-                    Try Another PDF
-                </button>
-            </div>
-        }
+            <aside class="settings-card fill-settings-card">
+                @if (CurrentState == PageState.FillFields)
+                {
+                    <div class="panel-header">
+                        <span class="panel-eyebrow">Detected fields</span>
+                        <h2>Complete your form</h2>
+                        <p>
+                            Detected fields are listed below.
+                        </p>
+                    </div>
 
-        @if (CurrentState == PageState.Processing)
-        {
-            <div class="processing-container">
-                <div class="spinner"></div>
-                <p>Filling your PDF form...</p>
-            </div>
-        }
+                    <div class="fields-list fill-fields-list">
+                        @foreach (var field in FormFields)
+                        {
+                            <div class="field-item fill-field-item">
+                                <label class="field-label">
+                                    @FormatFieldName(field.Name)
+                                    <span class="field-technical-name">@field.Name</span>
+                                </label>
 
-        @if (CurrentState == PageState.Complete)
-        {
-            <AdSlot Size="rectangle" />
+                                @if (field.FieldType == "checkbox")
+                                {
+                                    <div class="checkbox-wrapper fill-checkbox-wrapper">
+                                        <input type="checkbox"
+                                               class="field-checkbox"
+                                               @onchange="e => HandleCheckboxChange(field.Name, e.Value)" />
+                                        <span>Check this box</span>
+                                    </div>
+                                }
+                                else if (field.FieldType == "dropdown"
+                                && field.Options.Count > 0)
+                                {
+                                    <select class="field-input"
+                                            @onchange="e => HandleSelectChange(field.Name, e.Value)">
+                                        <option value="">
+                                            Select an option...
+                                        </option>
+                                        @foreach (var option in field.Options)
+                                        {
+                                            <option value="@option">
+                                                @option
+                                            </option>
+                                        }
+                                    </select>
+                                }
+                                else
+                                {
+                                    <input type="text"
+                                           class="field-input"
+                                           placeholder="@($"Enter {FormatFieldName(field.Name)}...")"
+                                           @oninput="e => HandleInputChange(field.Name, e.Value)" />
+                                }
+                            </div>
+                        }
+                    </div>
 
-            <div class="result-container">
-                <span class="result-icon">✅</span>
-                <h2>Form Filled Successfully!</h2>
-                <p style="color: var(--gray); margin-bottom: 1.5rem;">
-                    Your completed PDF is ready to download.
-                </p>
+                    <button class="fill-primary-button fill-full-button"
+                            @onclick="FillForm">
+                        Fill & Download PDF
+                    </button>
 
-                <button class="download-button"
-                        @onclick="DownloadFile">
-                    Download Filled PDF
-                </button>
+                    <button class="fill-secondary-button fill-full-button"
+                            @onclick="Reset">
+                        Upload Different PDF
+                    </button>
+                }
+                else
+                {
+                    <div class="panel-header">
+                        <span class="panel-eyebrow">Form workflow</span>
+                        <h2>Detect, fill, download</h2>
+                        <p>
+                            Use this workflow for PDFs that already contain interactive
+                            fields such as applications, forms, and agreements.
+                        </p>
+                    </div>
 
-                <button class="reset-button"
-                        @onclick="Reset">
-                    Fill Another Form
-                </button>
-            </div>
-        }
-
-        @if (CurrentState == PageState.Error)
-        {
-            <div class="error-container">
-                <span class="error-icon">❌</span>
-                <p class="error-message">@ErrorMessage</p>
-                <button class="reset-button" @onclick="Reset">
-                    Try Again
-                </button>
-            </div>
-        }
+                    <div class="fill-value-list">
+                        <div>
+                            <span>1</span>
+                            <strong>Detect fields</strong>
+                            <p>Find text boxes, dropdowns, and checkboxes automatically.</p>
+                        </div>
+                        <div>
+                            <span>2</span>
+                            <strong>Fill answers</strong>
+                            <p>Complete the detected fields in a clean side panel.</p>
+                        </div>
+                        <div>
+                            <span>3</span>
+                            <strong>Download completed PDF</strong>
+                            <p>Generate a finished copy with your filled values applied.</p>
+                        </div>
+                    </div>
+                }
+            </aside>
+        </section>
     </div>
 
     <div class="faq-section">

@@ -19,44 +19,24 @@
     <link rel="canonical" href="https://pdftoolstack.com/ai-rewrite" />
 </HeadContent>
 
-<div class="tool-page">
-    <AdSlot Size="banner" />
+<div class="tool-page ai-tool-page">
+    <div class="tool-container ai-tool-container">
 
-    <div class="tool-container">
+        <section class="tool-hero ai-tool-hero">
+            <div class="trust-row">
+                <span>Private processing</span>
+                <span>Secure upload</span>
+                <span>Auto-delete after 1 hour</span>
+            </div>
+            <h1>Rewrite PDF content <span class="hero-gradient-text">clearly</span></h1>
+            <p>Use AI to understand, analyze, and transform your documents in seconds.</p>
+        </section>
 
-        <div class="ai-tool-header">
-            <div class="ai-tool-badge">✨ AI-Powered</div>
-            <h1>AI PDF Rewriter</h1>
-            <p class="tool-subtitle">
-                Upload any PDF and tell AI how to rewrite it — change the tone,
-                simplify language, make it more formal, or apply any custom instruction.
-            </p>
-        </div>
-
-        <div class="how-it-works">
-            <div class="hiw-step">
-                <div class="hiw-num">1</div>
-                <div class="hiw-text">
-                    <strong>Upload your PDF</strong>
-                    <span>Any text-based document</span>
-                </div>
-            </div>
-            <div class="hiw-arrow">→</div>
-            <div class="hiw-step">
-                <div class="hiw-num">2</div>
-                <div class="hiw-text">
-                    <strong>Give your instruction</strong>
-                    <span>Tell AI what to change</span>
-                </div>
-            </div>
-            <div class="hiw-arrow">→</div>
-            <div class="hiw-step">
-                <div class="hiw-num">3</div>
-                <div class="hiw-text">
-                    <strong>Download rewritten text</strong>
-                    <span>Ready in seconds</span>
-                </div>
-            </div>
+        <div class="stepper ai-tool-stepper" aria-label="AI rewrite steps">
+            <div class="stepper-step active"><span>1</span>Upload</div>
+            <div class="stepper-step"><span>2</span>Process</div>
+            <div class="stepper-step"><span>3</span>Review</div>
+            <div class="stepper-step"><span>4</span>Copy/Download</div>
         </div>
 
         <AuthorizeView>
@@ -85,22 +65,178 @@
             </NotAuthorized>
 
             <Authorized>
-                @if (!_isPro && _aiUsed < 5)
-                {
-                    <div class="free-uses-banner">
-                        <span>✨ @(5 - _aiUsed) of 5 free AI uses remaining this month</span>
-                        <a href="/pricing">Upgrade to Pro for 200 AI uses/month →</a>
+                <section class="workflow-grid ai-tool-workflow">
+                    <div class="workspace-card ai-tool-workspace">
+                        @if (CurrentState == PageState.Upload)
+                        {
+                            <div class="ai-tool-card-header">
+                                <span>Upload</span>
+                                <h2>Start with text-based PDF content</h2>
+                                <p>Upload a PDF, then set the rewrite tone and instruction in the panel.</p>
+                            </div>
+
+                            <FileUpload OnFileSelected="HandleFileSelected"
+                                        OnFileRemoved="HandleFileRemoved"
+                                        HintText="Upload a PDF document — up to 50MB" />
+
+                            @if (_fileBytes != null)
+                            {
+                                <button class="process-button ai-tool-primary-cta"
+                                        @onclick="RunRewrite"
+                                        disabled="@(string.IsNullOrWhiteSpace(_instruction))">
+                                    ✨ Rewrite with AI
+                                </button>
+                            }
+                        }
+
+                        @if (CurrentState == PageState.Processing)
+                        {
+                            <div class="ai-processing-container ai-tool-processing">
+                                <div class="ai-processing-icon">✍️</div>
+                                <h3>AI is rewriting your document...</h3>
+                                <p>Applying your instruction throughout the document</p>
+                                <div class="ai-processing-steps">
+                                    <div class="ai-processing-step @(_step >= 1 ? "done" : "")">Reading PDF content</div>
+                                    <div class="ai-processing-step @(_step >= 2 ? "done" : "")">Applying your instruction</div>
+                                    <div class="ai-processing-step @(_step >= 3 ? "done" : "")">Preparing download</div>
+                                </div>
+                            </div>
+                        }
+
+                        @if (CurrentState == PageState.Complete && !string.IsNullOrEmpty(_rewrittenText))
+                        {
+                            <div class="ai-result-card ai-tool-result-card">
+                                <div class="ai-result-header">
+                                    <div>
+                                        <span class="ai-tool-result-kicker">Result</span>
+                                        <h2>Rewrite complete</h2>
+                                        <p style="color:var(--text-secondary); font-size:0.875rem;">
+                                            @_fileName
+                                        </p>
+                                    </div>
+                                    <div style="display:flex; gap:0.75rem; flex-wrap:wrap; align-items:center;">
+                                        <div class="rewrite-format-select">
+                                            <select class="rewrite-format-dropdown" @bind="_downloadFormat">
+                                                <option value="txt">.txt — Plain text</option>
+                                                <option value="docx">.docx — Word document</option>
+                                                <option value="pdf">.pdf — PDF file</option>
+                                            </select>
+                                        </div>
+                                        <button class="download-button"
+                                                style="max-width:180px; margin-top:0;"
+                                                disabled="@_downloading"
+                                                @onclick="DownloadRewrite">
+                                            @(_downloading ? "Preparing..." : "⬇ Download")
+                                        </button>
+                                        <button class="reset-button"
+                                                style="max-width:140px;"
+                                                @onclick="Reset">
+                                            Rewrite Another
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div style="margin-bottom:1rem;">
+                                    <span class="extract-confidence-badge">
+                                        ✨ @_appliedInstruction
+                                    </span>
+                                </div>
+
+                                <div class="rewrite-compare-tabs">
+                                    <button class="rewrite-compare-tab @(_showOriginal ? "active" : "")"
+                                            @onclick="() => _showOriginal = true">
+                                        Original
+                                    </button>
+                                    <button class="rewrite-compare-tab @(!_showOriginal ? "active" : "")"
+                                            @onclick="() => _showOriginal = false">
+                                        Rewritten ✨
+                                    </button>
+                                </div>
+
+                                <div class="translate-preview">
+                                    <div class="translate-preview-header">
+                                        @if (_showOriginal)
+                                        {
+                                            <span>Original document</span>
+                                        }
+                                        else
+                                        {
+                                            <svg width="14" height="14" viewBox="0 0 24 24"
+                                                 fill="none" stroke="currentColor" stroke-width="2"
+                                                 stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M12 20h9" />
+                                                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                                            </svg>
+                                            <span>AI rewritten version</span>
+                                        }
+                                        <span style="margin-left:auto; font-size:0.72rem;
+                                                                 color:var(--text-muted); font-weight:400;">
+                                            Scroll to read full text
+                                        </span>
+                                    </div>
+                                    <div class="translate-preview-body">
+                                        @(_showOriginal? _originalText : _rewrittenText)
+                                    </div>
+                                </div>
+
+                                <div class="extract-download-cta" style="margin-top:1rem;">
+                                    <div class="extract-download-cta-text">
+                                        <svg width="20" height="20" viewBox="0 0 24 24"
+                                             fill="none" stroke="currentColor" stroke-width="2"
+                                             stroke-linecap="round" stroke-linejoin="round"
+                                             style="color:var(--success); flex-shrink:0;">
+                                            <path d="M12 20h9" />
+                                            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                                        </svg>
+                                        <div>
+                                            <strong>Download your rewritten document</strong>
+                                            <p>Clean text file — paste into Word, Google Docs, or email.</p>
+                                        </div>
+                                    </div>
+                                    <button class="download-button"
+                                            style="max-width:180px; margin-top:0;"
+                                            @onclick="DownloadRewrite">
+                                        ⬇ Download .txt
+                                    </button>
+                                </div>
+                            </div>
+                        }
+
+                        @if (CurrentState == PageState.Error)
+                        {
+                            @if (_isRateLimit)
+                            {
+                                <AiLimitBanner IsVisible="true"
+                                               IsFreeLimit="@_isFreeLimit"
+                                               Limit="@(_isFreeLimit ? 5 : 200)" />
+                                <button class="reset-button" style="margin-top:1rem;" @onclick="Reset">Try Again</button>
+                            }
+                            else
+                            {
+                                <div class="error-container" role="alert">
+                                    <span class="error-icon">❌</span>
+                                    <p class="error-message">@_error</p>
+                                    <button class="reset-button" @onclick="Reset">Try Again</button>
+                                </div>
+                            }
+                        }
                     </div>
-                }
 
-                @if (CurrentState == PageState.Upload)
-                {
-                    <FileUpload OnFileSelected="HandleFileSelected"
-                                OnFileRemoved="HandleFileRemoved"
-                                HintText="Upload a PDF document — up to 50MB" />
+                    <aside class="settings-card ai-tool-settings">
+                        <div class="ai-tool-card-header">
+                            <span>Rewrite settings</span>
+                            <h2>Rewrite to simplify, formalize, or clarify</h2>
+                            <p>Give AI a specific instruction before running the rewrite.</p>
+                        </div>
 
-                    @if (_fileBytes != null)
-                    {
+                        @if (!_isPro && _aiUsed < 5)
+                        {
+                            <div class="free-uses-banner">
+                                <span>✨ @(5 - _aiUsed) of 5 free AI uses remaining this month</span>
+                                <a href="/pricing">Upgrade to Pro for 200 AI uses/month →</a>
+                            </div>
+                        }
+
                         <div class="rewrite-section">
                             <p class="rewrite-section-label">Choose a tone (optional)</p>
                             <div class="rewrite-tone-grid">
@@ -144,144 +280,17 @@
                             </div>
                         </div>
 
-                        <button class="process-button"
-                                @onclick="RunRewrite"
-                                disabled="@(string.IsNullOrWhiteSpace(_instruction))">
-                            ✨ Rewrite with AI
-                        </button>
-                    }
-                }
-
-                @if (CurrentState == PageState.Processing)
-                {
-                    <div class="ai-processing-container">
-                        <div class="ai-processing-icon">✍️</div>
-                        <h3>AI is rewriting your document...</h3>
-                        <p>Applying your instruction throughout the document</p>
-                        <div class="ai-processing-steps">
-                            <div class="ai-processing-step @(_step >= 1 ? "done" : "")">Reading PDF content</div>
-                            <div class="ai-processing-step @(_step >= 2 ? "done" : "")">Applying your instruction</div>
-                            <div class="ai-processing-step @(_step >= 3 ? "done" : "")">Preparing download</div>
-                        </div>
-                    </div>
-                }
-
-                @if (CurrentState == PageState.Complete && !string.IsNullOrEmpty(_rewrittenText))
-                {
-                    <div class="ai-result-card">
-                        <div class="ai-result-header">
-                            <div>
-                                <h2>Rewrite complete</h2>
-                                <p style="color:var(--text-secondary); font-size:0.875rem;">
-                                    @_fileName
-                                </p>
-                            </div>
-                            <div style="display:flex; gap:0.75rem; flex-wrap:wrap; align-items:center;">
-                                <div class="rewrite-format-select">
-                                    <select class="rewrite-format-dropdown" @bind="_downloadFormat">
-                                        <option value="txt">.txt — Plain text</option>
-                                        <option value="docx">.docx — Word document</option>
-                                        <option value="pdf">.pdf — PDF file</option>
-                                    </select>
-                                </div>
-                                <button class="download-button"
-                                        style="max-width:180px; margin-top:0;"
-                                        disabled="@_downloading"
-                                        @onclick="DownloadRewrite">
-                                    @(_downloading ? "Preparing..." : "⬇ Download")
-                                </button>
-                                <button class="reset-button"
-                                        style="max-width:140px;"
-                                        @onclick="Reset">
-                                    Rewrite Another
-                                </button>
+                        <div class="ai-tool-guidance-card">
+                            <h3>Helpful tips</h3>
+                            <p>Use precise instructions for the best rewritten output.</p>
+                            <div class="ai-tool-guidance-list">
+                                <span>Simplify dense text</span>
+                                <span>Make language more formal</span>
+                                <span>Clarify or shorten content</span>
                             </div>
                         </div>
-
-                        <div style="margin-bottom:1rem;">
-                            <span class="extract-confidence-badge">
-                                ✨ @_appliedInstruction
-                            </span>
-                        </div>
-
-                        <div class="rewrite-compare-tabs">
-                            <button class="rewrite-compare-tab @(_showOriginal ? "active" : "")"
-                                    @onclick="() => _showOriginal = true">
-                                Original
-                            </button>
-                            <button class="rewrite-compare-tab @(!_showOriginal ? "active" : "")"
-                                    @onclick="() => _showOriginal = false">
-                                Rewritten ✨
-                            </button>
-                        </div>
-
-                        <div class="translate-preview">
-                            <div class="translate-preview-header">
-                                @if (_showOriginal)
-                                {
-                                    <span>Original document</span>
-                                }
-                                else
-                                {
-                                    <svg width="14" height="14" viewBox="0 0 24 24"
-                                         fill="none" stroke="currentColor" stroke-width="2"
-                                         stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M12 20h9" />
-                                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-                                    </svg>
-                                    <span>AI rewritten version</span>
-                                }
-                                <span style="margin-left:auto; font-size:0.72rem;
-                                                         color:var(--text-muted); font-weight:400;">
-                                    Scroll to read full text
-                                </span>
-                            </div>
-                            <div class="translate-preview-body">
-                                @(_showOriginal? _originalText : _rewrittenText)
-                            </div>
-                        </div>
-
-                        <div class="extract-download-cta" style="margin-top:1rem;">
-                            <div class="extract-download-cta-text">
-                                <svg width="20" height="20" viewBox="0 0 24 24"
-                                     fill="none" stroke="currentColor" stroke-width="2"
-                                     stroke-linecap="round" stroke-linejoin="round"
-                                     style="color:var(--success); flex-shrink:0;">
-                                    <path d="M12 20h9" />
-                                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-                                </svg>
-                                <div>
-                                    <strong>Download your rewritten document</strong>
-                                    <p>Clean text file — paste into Word, Google Docs, or email.</p>
-                                </div>
-                            </div>
-                            <button class="download-button"
-                                    style="max-width:180px; margin-top:0;"
-                                    @onclick="DownloadRewrite">
-                                ⬇ Download .txt
-                            </button>
-                        </div>
-                    </div>
-                }
-
-                @if (CurrentState == PageState.Error)
-                {
-                    @if (_isRateLimit)
-                    {
-                        <AiLimitBanner IsVisible="true"
-                                       IsFreeLimit="@_isFreeLimit"
-                                       Limit="@(_isFreeLimit ? 5 : 200)" />
-                        <button class="reset-button" style="margin-top:1rem;" @onclick="Reset">Try Again</button>
-                    }
-                    else
-                    {
-                        <div class="error-container" role="alert">
-                            <span class="error-icon">❌</span>
-                            <p class="error-message">@_error</p>
-                            <button class="reset-button" @onclick="Reset">Try Again</button>
-                        </div>
-                    }
-                }
+                    </aside>
+                </section>
             </Authorized>
         </AuthorizeView>
 

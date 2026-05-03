@@ -360,6 +360,35 @@
         </div>
     </div>
 
+    <section class="home-command-center" id="tools">
+        <div class="home-section-heading home-section-heading--center">
+            <span>Command center</span>
+            <h2>Find the right workflow instantly</h2>
+            <p>Search by task, file problem, or document goal.</p>
+        </div>
+
+        <div class="tools-search-wrap home-command-search">
+            <span class="hero-search-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+            </span>
+            <input type="text"
+                   placeholder="Search tools — compress for email, sign contract, extract invoice..."
+                   @bind="HeroSearch"
+                   @bind:event="oninput" />
+        </div>
+
+        <div class="home-command-hints" aria-hidden="true">
+            <span>Compress</span>
+            <span>Convert</span>
+            <span>Redact</span>
+            <span>Sign</span>
+            <span>Extract data</span>
+        </div>
+    </section>
+
     <div class="trust-bar">
         <div class="trust-item">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -397,7 +426,7 @@
 
 
     <div class="founder-statement">
-        <div class="founder-avatar">S</div>
+        <div class="founder-avatar">C</div>
         <div class="founder-quote-wrap">
             <blockquote class="founder-quote">
                 "I built PdfToolStack because I was tired of hitting a paywall every time I needed to
@@ -412,25 +441,16 @@
                  Title="Continue your work"
                  Description="Pick up from your recent document workflows on this device." />
 
-    <div class="tools-section" id="tools">
-
-        <div class="tools-search-wrap">
-            <span class="hero-search-icon">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="11" cy="11" r="8" />
-                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                </svg>
-            </span>
-            <input type="text"
-                   placeholder="Search tools — compress, sign, extract invoice..."
-                   @bind="HeroSearch"
-                   @bind:event="oninput" />
-        </div>
+    <div class="tools-section">
 
         @if (!string.IsNullOrWhiteSpace(HeroSearch))
         {
-            <div class="tools-category">
-                <div class="tools-category-title">Search results</div>
+            <div class="tools-category home-search-results">
+                <div class="home-section-heading">
+                    <span>Search results</span>
+                    <h2>Matching workflows</h2>
+                    <p>Jump straight into the tool that fits your document goal.</p>
+                </div>
                 <div class="tools-grid">
                     @foreach (var tool in SearchResults)
                     {
@@ -454,32 +474,31 @@
         else
         {
             <div class="tools-category popular-workflows-section">
-                <div class="popular-workflows-header">
-                    <div>
-                        <div class="tools-category-title">Popular workflows</div>
-                        <p>Start with the most common document jobs.</p>
-                    </div>
+                <div class="popular-workflows-header home-section-heading">
+                    <span>Popular workflows</span>
+                    <h2>Start with a common document workflow</h2>
+                    <p>Choose the outcome you need and jump straight into the right tool.</p>
                 </div>
 
                 <div class="popular-workflows-grid">
                     <a href="/compress-for-email" class="popular-workflow-card">
                         <span class="popular-workflow-icon">Email</span>
-                        <h3>Fix file too large for email</h3>
-                        <p>Get oversized PDFs under control before you send.</p>
+                        <h3>Send PDFs that actually go through email</h3>
+                        <p>Shrink oversized files without derailing your send.</p>
                         <span class="popular-workflow-action">Compress now →</span>
                     </a>
 
                     <a href="/redact-pdf" class="popular-workflow-card">
                         <span class="popular-workflow-icon">Secure</span>
-                        <h3>Hide sensitive information</h3>
-                        <p>Cover private details before a document leaves your hands.</p>
+                        <h3>Remove private data before sharing</h3>
+                        <p>Cover sensitive details before a document leaves your hands.</p>
                         <span class="popular-workflow-action">Redact securely →</span>
                     </a>
 
                     <a href="/translate-pdf" class="popular-workflow-card">
                         <span class="popular-workflow-icon">Global</span>
-                        <h3>Understand another language</h3>
-                        <p>Turn foreign-language PDFs into something you can act on.</p>
+                        <h3>Translate documents without extra steps</h3>
+                        <p>Move from upload to translated workflow without extra setup.</p>
                         <span class="popular-workflow-action">Translate PDF →</span>
                     </a>
 
@@ -492,23 +511,19 @@
 
                     <a href="/pdf-to-excel" class="popular-workflow-card">
                         <span class="popular-workflow-icon">Data</span>
-                        <h3>Turn tables into Excel</h3>
-                        <p>Pull table data into a spreadsheet you can clean up fast.</p>
+                        <h3>Turn tables into clean spreadsheets</h3>
+                        <p>Pull table data into editable files you can clean up fast.</p>
                         <span class="popular-workflow-action">Extract tables →</span>
                     </a>
                 </div>
             </div>
 
             <!-- AI Tools -->
-            <div class="tools-category">
-                <div class="tools-category-title">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--primary);">
-                        <path d="M12 3c.5 1.5 1.5 2.5 3 3-1.5.5-2.5 1.5-3 3-.5-1.5-1.5-2.5-3-3 1.5-.5 2.5-1.5 3-3z" fill="currentColor" fill-opacity="0.2" />
-                        <path d="M5 7c.3.8.8 1.4 1.5 1.5C5.8 8.8 5.3 9.4 5 10c-.3-.6-.8-1.2-1.5-1.5C4.2 8.2 4.7 7.6 5 7z" fill="currentColor" fill-opacity="0.6" />
-                        <path d="M18 14c.3.8.8 1.4 1.5 1.5-.7.3-1.2.8-1.5 1.5-.3-.7-.8-1.2-1.5-1.5.7-.3 1.2-.8 1.5-1.5z" fill="currentColor" fill-opacity="0.6" />
-                    </svg>
-                    AI Tools
-                    <span class="pro-label">Pro</span>
+            <div class="tools-category home-ai-section">
+                <div class="home-section-heading">
+                    <span>AI tools <strong>Pro</strong></span>
+                    <h2>AI-powered document tools</h2>
+                    <p>Extract, summarize, review, and understand documents faster.</p>
                 </div>
                 <div class="tools-grid ai-tools-grid">
 
@@ -587,8 +602,12 @@
                 </div>
 
                 <!-- Popular fixes -->
-                <div class="tools-category">
-                    <div class="tools-category-title">Popular fixes</div>
+                <div class="tools-category popular-fixes-section">
+                    <div class="home-section-heading">
+                        <span>Popular fixes</span>
+                        <h2>More ways to fix your PDF</h2>
+                        <p>Fast entry points for the document problems people run into every day.</p>
+                    </div>
                     <div class="popular-fixes-grid">
 
                         <a href="/compress-for-email" class="tool-card featured-fix">
@@ -628,8 +647,56 @@
                 </div>
             </div>
 
+            <section class="home-mid-cta">
+                <div>
+                    <span>Ready when you are</span>
+                    <h2>Ready to fix your PDF?</h2>
+                    <p>Start with a file, choose a workflow, and download the finished document.</p>
+                </div>
+                <div class="home-mid-cta-actions">
+                    <a href="#tools" class="hero-cta-primary">Upload your PDF</a>
+                    <a href="/pricing" class="hero-cta-secondary">View pricing</a>
+                </div>
+            </section>
+
+            <section class="home-trust-block">
+                <div class="home-section-heading home-section-heading--center">
+                    <span>Security</span>
+                    <h2>Built for private document work</h2>
+                    <p>PdfToolStack is designed for everyday document workflows where privacy and speed both matter.</p>
+                </div>
+                <div class="home-trust-grid">
+                    <div class="home-trust-card">
+                        <span>01</span>
+                        <h3>Secure uploads</h3>
+                        <p>Files move through protected processing flows.</p>
+                    </div>
+                    <div class="home-trust-card">
+                        <span>02</span>
+                        <h3>Auto-delete after 1 hour</h3>
+                        <p>Temporary files are not kept around longer than needed.</p>
+                    </div>
+                    <div class="home-trust-card">
+                        <span>03</span>
+                        <h3>No permanent storage</h3>
+                        <p>Basic workflows are built around short-lived processing.</p>
+                    </div>
+                    <div class="home-trust-card">
+                        <span>04</span>
+                        <h3>No signup required for basic tools</h3>
+                        <p>Start with common PDF jobs without creating an account.</p>
+                    </div>
+                </div>
+            </section>
+
             <!-- Compress & Convert -->
-            <div class="tools-category">
+            <div class="home-section-heading home-library-heading">
+                <span>Tool library</span>
+                <h2>All PDF tools</h2>
+                <p>Browse the full workspace when you already know the action you need.</p>
+            </div>
+
+            <div class="tools-category home-library-category">
                 <div class="tools-category-title">Compress &amp; Convert</div>
                 <div class="tools-grid">
                     <a href="/compress-pdf/app" class="tool-card"><div class="tool-icon-tile" style="background:#EFF6FF;"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke="#2250F4" stroke-width="2.5" stroke-linecap="round" /><path d="M12 3V15M7 10L12 15L17 10" stroke="#2250F4" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" /></svg></div><h3>Compress PDF</h3><p>Reduce file size</p></a>

@@ -377,6 +377,7 @@ Components/
  LoginDisplay.razor
  PdfLoadingOverlay.razor
  ProUpsellModal.razor
+ RecentFiles.razor
  RedirectToLogin.razor
  SfPdfViewerShell.razor
  SupportChat.razor
@@ -443,12 +444,12 @@ Pages/
  PdfToJpg.razor
  PdfToPpt.razor
  PdfToWord.razor
- PdfViewerTest.razor
  PptToPdf.razor
  Pricing.razor
  PrivacyPolicy.razor
  ProtectPdf.razor
  RedactPdf.razor
+ RedactPdfOnlineLanding.razor
  ReviewContract.razor
  RotatePdf.razor
  Security.razor
@@ -478,6 +479,7 @@ Components/
  LoginDisplay.razor
  PdfLoadingOverlay.razor
  ProUpsellModal.razor
+ RecentFiles.razor
  RedirectToLogin.razor
  SfPdfViewerShell.razor
  SupportChat.razor
@@ -544,12 +546,12 @@ Pages/
  PdfToJpg.razor
  PdfToPpt.razor
  PdfToWord.razor
- PdfViewerTest.razor
  PptToPdf.razor
  Pricing.razor
  PrivacyPolicy.razor
  ProtectPdf.razor
  RedactPdf.razor
+ RedactPdfOnlineLanding.razor
  ReviewContract.razor
  RotatePdf.razor
  Security.razor
