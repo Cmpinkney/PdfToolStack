@@ -16,42 +16,24 @@
     <link rel="canonical" href="https://pdftoolstack.com/ai-questions" />
 </HeadContent>
 
-<div class="tool-page">
-    <div class="tool-container">
+<div class="tool-page ai-tool-page">
+    <div class="tool-container ai-tool-container">
 
-        <div class="ai-tool-header">
-            <div class="ai-tool-badge">✨ AI-Powered</div>
-            <h1>AI Questions Generator</h1>
-            <p class="tool-subtitle">
-                Upload any PDF and let AI generate quiz questions automatically.
-                Perfect for studying, teaching, or testing comprehension.
-            </p>
-        </div>
+        <section class="tool-hero ai-tool-hero">
+            <div class="trust-row">
+                <span>Private processing</span>
+                <span>Secure upload</span>
+                <span>Auto-delete after 1 hour</span>
+            </div>
+            <h1>Ask questions about your PDF <span class="hero-gradient-text">instantly</span></h1>
+            <p>Use AI to understand, analyze, and transform your documents in seconds.</p>
+        </section>
 
-        <div class="how-it-works">
-            <div class="hiw-step">
-                <div class="hiw-num">1</div>
-                <div class="hiw-text">
-                    <strong>Upload your PDF</strong>
-                    <span>Any document up to 50MB</span>
-                </div>
-            </div>
-            <div class="hiw-arrow">→</div>
-            <div class="hiw-step">
-                <div class="hiw-num">2</div>
-                <div class="hiw-text">
-                    <strong>Choose question count</strong>
-                    <span>3 to 15 questions</span>
-                </div>
-            </div>
-            <div class="hiw-arrow">→</div>
-            <div class="hiw-step">
-                <div class="hiw-num">3</div>
-                <div class="hiw-text">
-                    <strong>Copy or export</strong>
-                    <span>Ready to use instantly</span>
-                </div>
-            </div>
+        <div class="stepper ai-tool-stepper" aria-label="AI questions steps">
+            <div class="stepper-step active"><span>1</span>Upload</div>
+            <div class="stepper-step"><span>2</span>Process</div>
+            <div class="stepper-step"><span>3</span>Review</div>
+            <div class="stepper-step"><span>4</span>Copy/Download</div>
         </div>
 
         <AuthorizeView>
@@ -80,22 +62,115 @@
             </NotAuthorized>
 
             <Authorized>
-                @if (!_isPro && _aiUsed < 5)
-                {
-                    <div class="free-uses-banner">
-                        <span>✨ @(5 - _aiUsed) of 5 free AI uses remaining this month</span>
-                        <a href="/pricing">Upgrade to Pro for 200 AI uses/month →</a>
+                <section class="workflow-grid ai-tool-workflow">
+                    <div class="workspace-card ai-tool-workspace">
+                        @if (CurrentState == PageState.Upload)
+                        {
+                            <div class="ai-tool-card-header">
+                                <span>Upload</span>
+                                <h2>Start with study material</h2>
+                                <p>Upload a PDF and choose how many questions AI should generate.</p>
+                            </div>
+
+                            <FileUpload OnFileSelected="HandleFileSelected"
+                                        OnFileRemoved="HandleFileRemoved"
+                                        HintText="Upload a PDF document — up to 50MB" />
+
+                            @if (_fileBytes != null)
+                            {
+                                <button class="process-button ai-tool-primary-cta" @onclick="RunGenerate">
+                                    📝 Generate @_questionCount Questions
+                                </button>
+                            }
+                        }
+
+                        @if (CurrentState == PageState.Processing)
+                        {
+                            <div class="ai-processing-container ai-tool-processing">
+                                <div class="ai-processing-icon">📝</div>
+                                <h3>AI is generating questions...</h3>
+                                <p>Reading your document and creating @_questionCount questions</p>
+                                <div class="ai-processing-steps">
+                                    <div class="ai-processing-step @(_step >= 1 ? "done" : "")">Reading PDF content</div>
+                                    <div class="ai-processing-step @(_step >= 2 ? "done" : "")">Identifying key concepts</div>
+                                    <div class="ai-processing-step @(_step >= 3 ? "done" : "")">Generating questions</div>
+                                </div>
+                            </div>
+                        }
+
+                        @if (CurrentState == PageState.Complete && _questions.Any())
+                        {
+                            <div class="ai-result-card ai-tool-result-card">
+                                <div class="ai-result-header">
+                                    <div>
+                                        <span class="ai-tool-result-kicker">Result</span>
+                                        <h2>@_questions.Count questions generated</h2>
+                                        <p style="color:var(--text-secondary); font-size:0.875rem;">
+                                            @_fileName
+                                        </p>
+                                    </div>
+                                    <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+                                        <button class="download-button"
+                                                style="max-width:160px; margin-top:0;"
+                                                @onclick="CopyQuestions">
+                                            @(_copied ? "✓ Copied!" : "📋 Copy All")
+                                        </button>
+                                        <button class="reset-button"
+                                                style="max-width:140px;"
+                                                @onclick="Reset">
+                                            Generate More
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="questions-result-list">
+                                    @for (int i = 0; i < _questions.Count; i++)
+                                    {
+                                        var index = i;
+                                        <div class="question-result-item">
+                                            <span class="question-result-num">@(index + 1)</span>
+                                            <span class="question-result-text">@_questions[index]</span>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+
+                        @if (CurrentState == PageState.Error)
+                        {
+                            @if (_isRateLimit)
+                            {
+                                <AiLimitBanner IsVisible="true"
+                                               IsFreeLimit="@_isFreeLimit"
+                                               Limit="@(_isFreeLimit ? 5 : 200)" />
+                                <button class="reset-button" style="margin-top:1rem;" @onclick="Reset">Try Again</button>
+                            }
+                            else
+                            {
+                                <div class="error-container" role="alert">
+                                    <span class="error-icon" aria-hidden="true">❌</span>
+                                    <p class="error-message">@_error</p>
+                                    <button class="reset-button" @onclick="Reset">Try Again</button>
+                                </div>
+                            }
+                        }
                     </div>
-                }
 
-                @if (CurrentState == PageState.Upload)
-                {
-                    <FileUpload OnFileSelected="HandleFileSelected"
-                                OnFileRemoved="HandleFileRemoved"
-                                HintText="Upload a PDF document — up to 50MB" />
+                    <aside class="settings-card ai-tool-settings">
+                        <div class="ai-tool-card-header">
+                            <span>Question settings</span>
+                            <h2>Shape the output</h2>
+                            <p>Ask specific questions for better answers and choose a count that fits your lesson or review session.</p>
+                        </div>
 
-                    @if (_fileBytes != null)
-                    {
+                        @if (!_isPro && _aiUsed < 5)
+                        {
+                            <div class="free-uses-banner">
+                                <span>✨ @(5 - _aiUsed) of 5 free AI uses remaining this month</span>
+                                <a href="/pricing">Upgrade to Pro for 200 AI uses/month →</a>
+                            </div>
+                        }
+
                         <div class="questions-count-section">
                             <p class="questions-count-label">How many questions?</p>
                             <div class="questions-count-grid">
@@ -109,81 +184,17 @@
                             </div>
                         </div>
 
-                        <button class="process-button" @onclick="RunGenerate">
-                            📝 Generate @_questionCount Questions
-                        </button>
-                    }
-                }
-
-                @if (CurrentState == PageState.Processing)
-                {
-                    <div class="ai-processing-container">
-                        <div class="ai-processing-icon">📝</div>
-                        <h3>AI is generating questions...</h3>
-                        <p>Reading your document and creating @_questionCount questions</p>
-                        <div class="ai-processing-steps">
-                            <div class="ai-processing-step @(_step >= 1 ? "done" : "")">Reading PDF content</div>
-                            <div class="ai-processing-step @(_step >= 2 ? "done" : "")">Identifying key concepts</div>
-                            <div class="ai-processing-step @(_step >= 3 ? "done" : "")">Generating questions</div>
-                        </div>
-                    </div>
-                }
-
-                @if (CurrentState == PageState.Complete && _questions.Any())
-                {
-                    <div class="ai-result-card">
-                        <div class="ai-result-header">
-                            <div>
-                                <h2>@_questions.Count questions generated</h2>
-                                <p style="color:var(--text-secondary); font-size:0.875rem;">
-                                    @_fileName
-                                </p>
-                            </div>
-                            <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
-                                <button class="download-button"
-                                        style="max-width:160px; margin-top:0;"
-                                        @onclick="CopyQuestions">
-                                    @(_copied ? "✓ Copied!" : "📋 Copy All")
-                                </button>
-                                <button class="reset-button"
-                                        style="max-width:140px;"
-                                        @onclick="Reset">
-                                    Generate More
-                                </button>
+                        <div class="ai-tool-guidance-card">
+                            <h3>Helpful tips</h3>
+                            <p>Best for study guides, classroom material, training PDFs, and comprehension checks.</p>
+                            <div class="ai-tool-guidance-list">
+                                <span>Open-ended comprehension questions</span>
+                                <span>Copy-ready output</span>
+                                <span>Private processing</span>
                             </div>
                         </div>
-
-                        <div class="questions-result-list">
-                            @for (int i = 0; i < _questions.Count; i++)
-                            {
-                                var index = i;
-                                <div class="question-result-item">
-                                    <span class="question-result-num">@(index + 1)</span>
-                                    <span class="question-result-text">@_questions[index]</span>
-                                </div>
-                            }
-                        </div>
-                    </div>
-                }
-
-                @if (CurrentState == PageState.Error)
-                {
-                    @if (_isRateLimit)
-                    {
-                        <AiLimitBanner IsVisible="true"
-                                       IsFreeLimit="@_isFreeLimit"
-                                       Limit="@(_isFreeLimit ? 5 : 200)" />
-                        <button class="reset-button" style="margin-top:1rem;" @onclick="Reset">Try Again</button>
-                    }
-                    else
-                    {
-                        <div class="error-container" role="alert">
-                            <span class="error-icon" aria-hidden="true">❌</span>
-                            <p class="error-message">@_error</p>
-                            <button class="reset-button" @onclick="Reset">Try Again</button>
-                        </div>
-                    }
-                }
+                    </aside>
+                </section>
             </Authorized>
         </AuthorizeView>
 

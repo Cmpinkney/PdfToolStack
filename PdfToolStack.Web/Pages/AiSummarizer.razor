@@ -15,42 +15,24 @@
     <link rel="canonical" href="https://pdftoolstack.com/ai-summarizer" />
 </HeadContent>
 
-<div class="tool-page">
-    <div class="tool-container">
+<div class="tool-page ai-tool-page">
+    <div class="tool-container ai-tool-container">
 
-        <div class="ai-tool-header">
-            <div class="ai-tool-badge">✨ AI-Powered</div>
-            <h1>AI PDF Summarizer</h1>
-            <p class="tool-subtitle">
-                Upload any PDF and get a concise AI summary in seconds.
-                Key points, main arguments, and conclusions — without reading the whole document.
-            </p>
-        </div>
+        <section class="tool-hero ai-tool-hero">
+            <div class="trust-row">
+                <span>Private processing</span>
+                <span>Secure upload</span>
+                <span>Auto-delete after 1 hour</span>
+            </div>
+            <h1>Summarize PDFs <span class="hero-gradient-text">instantly</span></h1>
+            <p>Use AI to understand, analyze, and transform your documents in seconds.</p>
+        </section>
 
-        <div class="how-it-works">
-            <div class="hiw-step">
-                <div class="hiw-num">1</div>
-                <div class="hiw-text">
-                    <strong>Upload your PDF</strong>
-                    <span>Any document up to 50MB</span>
-                </div>
-            </div>
-            <div class="hiw-arrow">→</div>
-            <div class="hiw-step">
-                <div class="hiw-num">2</div>
-                <div class="hiw-text">
-                    <strong>AI reads everything</strong>
-                    <span>Claude processes all pages</span>
-                </div>
-            </div>
-            <div class="hiw-arrow">→</div>
-            <div class="hiw-step">
-                <div class="hiw-num">3</div>
-                <div class="hiw-text">
-                    <strong>Get your summary</strong>
-                    <span>Key points in seconds</span>
-                </div>
-            </div>
+        <div class="stepper ai-tool-stepper" aria-label="AI summary steps">
+            <div class="stepper-step active"><span>1</span>Upload</div>
+            <div class="stepper-step"><span>2</span>Process</div>
+            <div class="stepper-step"><span>3</span>Review</div>
+            <div class="stepper-step"><span>4</span>Copy/Download</div>
         </div>
 
         <AuthorizeView>
@@ -79,82 +61,111 @@
             </NotAuthorized>
 
             <Authorized>
-                @if (!_isPro && _aiUsed < 5)
-                {
-                    <div class="free-uses-banner">
-                        <span>✨ @(5 - _aiUsed) of 5 free AI uses remaining this month</span>
-                        <a href="/pricing">Upgrade to Pro for 200 AI uses/month →</a>
-                    </div>
-                }
-
-                @if (CurrentState == PageState.Upload)
-                {
-                    <FileUpload OnFileSelected="HandleFileSelected"
-                                OnFileRemoved="HandleFileRemoved"
-                                HintText="Upload a PDF document — up to 50MB" />
-
-                    @if (_fileBytes != null)
-                    {
-                        <button class="process-button" @onclick="RunSummarize">
-                            ✨ Summarize with AI
-                        </button>
-                    }
-                }
-
-                @if (CurrentState == PageState.Processing)
-                {
-                    <div class="ai-processing-container">
-                        <div class="ai-processing-icon">✨</div>
-                        <h3>AI is reading your document...</h3>
-                        <p>Extracting key points and main arguments</p>
-                        <div class="ai-processing-steps">
-                            <div class="ai-processing-step @(_step >= 1 ? "done" : "")">Reading PDF content</div>
-                            <div class="ai-processing-step @(_step >= 2 ? "done" : "")">Identifying key points</div>
-                            <div class="ai-processing-step @(_step >= 3 ? "done" : "")">Generating summary</div>
-                        </div>
-                    </div>
-                }
-
-                @if (CurrentState == PageState.Complete && !string.IsNullOrEmpty(_summary))
-                {
-                    <div class="ai-result-card">
-                        <div class="ai-result-header">
-                            <div>
-                                <h2>Summary complete</h2>
-                                <p style="color:var(--text-secondary); font-size:0.875rem;">
-                                    @_fileName
-                                </p>
+                <section class="workflow-grid ai-tool-workflow">
+                    <div class="workspace-card ai-tool-workspace">
+                        @if (CurrentState == PageState.Upload)
+                        {
+                            <div class="ai-tool-card-header">
+                                <span>Upload</span>
+                                <h2>Start with a PDF</h2>
+                                <p>Upload a report, contract, paper, or manual and generate a concise summary.</p>
                             </div>
-                            <button class="reset-button"
-                                    style="max-width:140px;"
-                                    @onclick="Reset">
-                                Summarize Another
-                            </button>
-                        </div>
-                        <div class="ai-summary-body">
-                            @_summary
-                        </div>
-                    </div>
-                }
 
-                @if (CurrentState == PageState.Error)
-                {
-                    @if (_isRateLimit)
-                    {
-                        <AiLimitBanner IsVisible="true"
-                                       IsFreeLimit="@_isFreeLimit"
-                                       Limit="@(_isFreeLimit ? 5 : 200)" />
-                        <button class="reset-button" style="margin-top:1rem;" @onclick="Reset">Try Again</button>
-                    }
-                    else
-                    {
-                        <div class="error-container" role="alert">
-                            <span class="error-icon" aria-hidden="true">❌</span>
-                            <p class="error-message">@_error</p>
-                            <button class="reset-button" @onclick="Reset">Try Again</button>
+                            <FileUpload OnFileSelected="HandleFileSelected"
+                                        OnFileRemoved="HandleFileRemoved"
+                                        HintText="Upload a PDF document — up to 50MB" />
+
+                            @if (_fileBytes != null)
+                            {
+                                <button class="process-button ai-tool-primary-cta" @onclick="RunSummarize">
+                                    ✨ Summarize with AI
+                                </button>
+                            }
+                        }
+
+                        @if (CurrentState == PageState.Processing)
+                        {
+                            <div class="ai-processing-container ai-tool-processing">
+                                <div class="ai-processing-icon">✨</div>
+                                <h3>AI is reading your document...</h3>
+                                <p>Extracting key points and main arguments</p>
+                                <div class="ai-processing-steps">
+                                    <div class="ai-processing-step @(_step >= 1 ? "done" : "")">Reading PDF content</div>
+                                    <div class="ai-processing-step @(_step >= 2 ? "done" : "")">Identifying key points</div>
+                                    <div class="ai-processing-step @(_step >= 3 ? "done" : "")">Generating summary</div>
+                                </div>
+                            </div>
+                        }
+
+                        @if (CurrentState == PageState.Complete && !string.IsNullOrEmpty(_summary))
+                        {
+                            <div class="ai-result-card ai-tool-result-card">
+                                <div class="ai-result-header">
+                                    <div>
+                                        <span class="ai-tool-result-kicker">Result</span>
+                                        <h2>Summary complete</h2>
+                                        <p style="color:var(--text-secondary); font-size:0.875rem;">
+                                            @_fileName
+                                        </p>
+                                    </div>
+                                    <button class="reset-button"
+                                            style="max-width:140px;"
+                                            @onclick="Reset">
+                                        Summarize Another
+                                    </button>
+                                </div>
+                                <div class="ai-summary-body">
+                                    @_summary
+                                </div>
+                            </div>
+                        }
+
+                        @if (CurrentState == PageState.Error)
+                        {
+                            @if (_isRateLimit)
+                            {
+                                <AiLimitBanner IsVisible="true"
+                                               IsFreeLimit="@_isFreeLimit"
+                                               Limit="@(_isFreeLimit ? 5 : 200)" />
+                                <button class="reset-button" style="margin-top:1rem;" @onclick="Reset">Try Again</button>
+                            }
+                            else
+                            {
+                                <div class="error-container" role="alert">
+                                    <span class="error-icon" aria-hidden="true">❌</span>
+                                    <p class="error-message">@_error</p>
+                                    <button class="reset-button" @onclick="Reset">Try Again</button>
+                                </div>
+                            }
+                        }
+                    </div>
+
+                    <aside class="settings-card ai-tool-settings">
+                        <div class="ai-tool-card-header">
+                            <span>Summary settings</span>
+                            <h2>Get the important parts faster</h2>
+                            <p>Summaries work best on structured documents with readable text.</p>
                         </div>
-                    }
-                }
+
+                        @if (!_isPro && _aiUsed < 5)
+                        {
+                            <div class="free-uses-banner">
+                                <span>✨ @(5 - _aiUsed) of 5 free AI uses remaining this month</span>
+                                <a href="/pricing">Upgrade to Pro for 200 AI uses/month →</a>
+                            </div>
+                        }
+
+                        <div class="ai-tool-guidance-card">
+                            <h3>Helpful tips</h3>
+                            <p>Use this for reports, contracts, research papers, manuals, and long PDFs where you need the main argument quickly.</p>
+                            <div class="ai-tool-guidance-list">
+                                <span>Key points and conclusions</span>
+                                <span>Readable summary output</span>
+                                <span>Private processing</span>
+                            </div>
+                        </div>
+                    </aside>
+                </section>
             </Authorized>
         </AuthorizeView>
 
