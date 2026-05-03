@@ -20,43 +20,37 @@
           href="https://pdftoolstack.com/extract-invoice-data" />
 </HeadContent>
 
-<div class="tool-page">
-    <AdSlot Size="banner" />
+<div class="tool-page extract-invoice-tool-page">
+    <div class="tool-container extract-invoice-container">
 
-    <div class="tool-container">
-
-        <div class="ai-tool-header">
-            <div class="ai-tool-badge">✨ AI-Powered</div>
-            <h1>Extract Invoice Data from PDF</h1>
-            <p class="tool-subtitle">
-                Upload any invoice, contract, or form — AI reads every field
-                and exports structured data to Excel in seconds. No manual entry ever again.
+        <section class="tool-hero extract-invoice-hero">
+            <div class="trust-row">
+                <span>Secure upload</span>
+                <span>Structured output</span>
+                <span>Auto-delete</span>
+            </div>
+            <h1>Extract invoice data <span class="hero-gradient-text">accurately</span></h1>
+            <p>
+                Turn invoices, contracts, and PDFs into structured data and Excel instantly.
             </p>
-        </div>
+        </section>
 
-        <div class="how-it-works">
-            <div class="hiw-step">
-                <div class="hiw-num">1</div>
-                <div class="hiw-text">
-                    <strong>Upload your PDF</strong>
-                    <span>Invoice, contract, or any form</span>
-                </div>
+        <div class="stepper extract-invoice-stepper" aria-label="Extraction steps">
+            <div class="stepper-step active">
+                <span>1</span>
+                Upload
             </div>
-            <div class="hiw-arrow">→</div>
-            <div class="hiw-step">
-                <div class="hiw-num">2</div>
-                <div class="hiw-text">
-                    <strong>AI extracts all fields</strong>
-                    <span>Vendor, amounts, dates, line items</span>
-                </div>
+            <div class="stepper-step">
+                <span>2</span>
+                Extract
             </div>
-            <div class="hiw-arrow">→</div>
-            <div class="hiw-step">
-                <div class="hiw-num">3</div>
-                <div class="hiw-text">
-                    <strong>Download Excel</strong>
-                    <span>Structured, ready to use</span>
-                </div>
+            <div class="stepper-step">
+                <span>3</span>
+                Review
+            </div>
+            <div class="stepper-step">
+                <span>4</span>
+                Export
             </div>
         </div>
 
@@ -84,223 +78,258 @@
             </NotAuthorized>
 
             <Authorized>
-                @if (!_isPro && _aiUsed < 5)
-                {
-                    <div class="free-uses-banner">
-                        <span>✨ @(5 - _aiUsed) of 5 free AI uses remaining this month</span>
-                        <a href="/pricing">Upgrade to Pro for 200 AI uses/month →</a>
-                    </div>
-                }
-
-                <div class="extract-type-section">
-                    <p class="extract-type-label">What type of document are you extracting?</p>
-                    <div class="extract-type-grid">
-                        <button class="extract-type-btn @(_type == "invoice" ? "active" : "")"
-                                @onclick='() => _type = "invoice"'>
-                            <span class="extract-type-icon">🧾</span>
-                            <span class="extract-type-name">Invoice</span>
-                            <span class="extract-type-desc">Vendor, amounts, line items</span>
-                        </button>
-                        <button class="extract-type-btn @(_type == "contract" ? "active" : "")"
-                                @onclick='() => _type = "contract"'>
-                            <span class="extract-type-icon">📋</span>
-                            <span class="extract-type-name">Contract</span>
-                            <span class="extract-type-desc">Parties, dates, obligations</span>
-                        </button>
-                        <button class="extract-type-btn @(_type == "general" ? "active" : "")"
-                                @onclick='() => _type = "general"'>
-                            <span class="extract-type-icon">📄</span>
-                            <span class="extract-type-name">General Form</span>
-                            <span class="extract-type-desc">Any structured document</span>
-                        </button>
-                    </div>
-                </div>
-
-                @if (CurrentState == PageState.Upload)
-                {
-                    <FileUpload OnFileSelected="HandleFileSelected"
-                                OnFileRemoved="HandleFileRemoved"
-                                HintText="Upload a PDF invoice, contract, or form — up to 50MB" />
-
-                    @if (_fileBytes != null)
-                    {
-                        <button class="process-button" @onclick="RunExtract">
-                            ✨ Extract Data with AI
-                        </button>
-                    }
-                }
-
-                @if (CurrentState == PageState.Processing)
-                {
-                    <div class="ai-processing-container">
-                        <div class="ai-processing-icon">✨</div>
-                        <h3>AI is reading your document...</h3>
-                        <p>Extracting fields, amounts, and line items</p>
-                        <div class="ai-processing-steps">
-                            <div class="ai-processing-step @(_step >= 1 ? "done" : "")">Reading PDF text</div>
-                            <div class="ai-processing-step @(_step >= 2 ? "done" : "")">Identifying fields</div>
-                            <div class="ai-processing-step @(_step >= 3 ? "done" : "")">Structuring data</div>
-                            <div class="ai-processing-step @(_step >= 4 ? "done" : "")">Building Excel file</div>
-                        </div>
-                    </div>
-                }
-
-                @if (CurrentState == PageState.Complete && _extractedJson != null)
-                {
-                    <div class="extract-results">
-                        <div class="extract-results-header">
-                            <div>
-                                <h2>Extraction complete</h2>
-                                <p style="color:var(--text-secondary); font-size:0.875rem;">
-                                    @_fields.Count fields extracted from @_fileName
-                                </p>
-                            </div>
-                            <div class="extract-results-actions">
-                                @if (_excelReady)
-                                {
-                                    <button class="download-button" @onclick="DownloadExcel">
-                                        ⬇ Download Excel
-                                    </button>
-                                }
-                                <button class="reset-button" @onclick="Reset">
-                                    Extract Another
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="extract-confidence-row">
-                            <div class="extract-confidence-badge">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-                                     stroke="currentColor" stroke-width="2.5"
-                                     stroke-linecap="round" stroke-linejoin="round">
-                                    <polyline points="20,6 9,17 4,12" />
-                                </svg>
-                                95%+ field confidence
-                            </div>
-                            <span class="extract-type-tag">@_type.ToUpper()</span>
-                        </div>
-
-                        <div class="extract-spreadsheet-wrap">
-                            <div class="extract-spreadsheet-header">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-                                     stroke="currentColor" stroke-width="2"
-                                     stroke-linecap="round" stroke-linejoin="round"
-                                     style="color:var(--success);">
-                                    <rect x="3" y="3" width="18" height="18" rx="1" />
-                                    <path d="M3 9h18" />
-                                    <path d="M9 21V9" />
-                                </svg>
-                                Extracted Data Preview
-                                <span style="margin-left:auto; font-size:0.72rem; color:var(--text-muted); font-weight:400;">
-                                    Matches your Excel download exactly
-                                </span>
-                            </div>
-                            <div class="extract-spreadsheet-table-wrap">
-                                <table class="extract-spreadsheet-table">
-                                    <thead>
-                                        <tr>
-                                            <th class="extract-sheet-col-a">Field</th>
-                                            <th class="extract-sheet-col-b">Value</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach (var field in _fields)
-                                        {
-                                            <tr class="extract-sheet-row">
-                                                <td class="extract-sheet-label">@field.Key</td>
-                                                <td class="extract-sheet-value">@field.Value</td>
-                                            </tr>
-                                        }
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-
-                        @if (_lineItems.Any())
+                <section class="workflow-grid extract-invoice-workflow">
+                    <div class="workspace-card extract-invoice-workspace">
+                        @if (CurrentState == PageState.Upload)
                         {
-                            <div class="extract-line-items">
-                                <div class="extract-spreadsheet-header">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-                                         stroke="currentColor" stroke-width="2"
-                                         stroke-linecap="round" stroke-linejoin="round"
-                                         style="color:var(--success);">
-                                        <rect x="3" y="3" width="18" height="18" rx="1" />
-                                        <path d="M3 9h18" />
-                                        <path d="M9 21V9" />
-                                    </svg>
-                                    Line Items
+                            <div class="extract-workspace-header">
+                                <span class="extract-workspace-kicker">Upload document</span>
+                                <h2>Start with an invoice, contract, or form</h2>
+                                <p>Import a PDF and PdfToolStack will prepare it for structured AI extraction.</p>
+                            </div>
+
+                            <FileUpload OnFileSelected="HandleFileSelected"
+                                        OnFileRemoved="HandleFileRemoved"
+                                        HintText="Upload a PDF invoice, contract, or form — up to 50MB" />
+
+                            @if (_fileBytes != null)
+                            {
+                                <button class="process-button extract-primary-cta" @onclick="RunExtract">
+                                    ✨ Extract Data with AI
+                                </button>
+                            }
+                        }
+
+                        @if (CurrentState == PageState.Processing)
+                        {
+                            <div class="ai-processing-container extract-processing-card">
+                                <div class="ai-processing-icon">✨</div>
+                                <h3>AI is reading your document...</h3>
+                                <p>Extracting fields, amounts, and line items</p>
+                                <div class="ai-processing-steps">
+                                    <div class="ai-processing-step @(_step >= 1 ? "done" : "")">Reading PDF text</div>
+                                    <div class="ai-processing-step @(_step >= 2 ? "done" : "")">Identifying fields</div>
+                                    <div class="ai-processing-step @(_step >= 3 ? "done" : "")">Structuring data</div>
+                                    <div class="ai-processing-step @(_step >= 4 ? "done" : "")">Building Excel file</div>
                                 </div>
-                                <div class="extract-spreadsheet-table-wrap">
-                                    <table class="extract-spreadsheet-table">
-                                        <thead>
-                                            <tr>
-                                                <th style="text-align:left; width:40%;">Description</th>
-                                                <th style="text-align:center;">Qty</th>
-                                                <th style="text-align:right;">Unit Price</th>
-                                                <th style="text-align:right;">Total</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @foreach (var item in _lineItems)
+                            </div>
+                        }
+
+                        @if (CurrentState == PageState.Complete && _extractedJson != null)
+                        {
+                            <div class="extract-results-card">
+                                <div class="extract-results">
+                                    <div class="extract-results-header">
+                                        <div>
+                                            <span class="extract-workspace-kicker">Extracted data</span>
+                                            <h2>Review and export your structured results.</h2>
+                                            <p style="color:var(--text-secondary); font-size:0.875rem;">
+                                                @_fields.Count fields extracted from @_fileName
+                                            </p>
+                                        </div>
+                                        <div class="extract-results-actions">
+                                            @if (_excelReady)
                                             {
-                                                <tr class="extract-sheet-row">
-                                                    <td class="extract-sheet-value" style="text-align:left;">@item.GetValueOrDefault("description")</td>
-                                                    <td class="extract-sheet-value" style="text-align:center;">@item.GetValueOrDefault("quantity")</td>
-                                                    <td class="extract-sheet-value" style="text-align:right;">@item.GetValueOrDefault("unitPrice")</td>
-                                                    <td class="extract-sheet-value extract-sheet-total" style="text-align:right;">@item.GetValueOrDefault("total")</td>
-                                                </tr>
+                                                <button class="download-button" @onclick="DownloadExcel">
+                                                    ⬇ Download Excel
+                                                </button>
                                             }
-                                        </tbody>
-                                    </table>
+                                            <button class="reset-button" @onclick="Reset">
+                                                Extract Another
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div class="extract-confidence-row">
+                                        <div class="extract-confidence-badge">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                                 stroke="currentColor" stroke-width="2.5"
+                                                 stroke-linecap="round" stroke-linejoin="round">
+                                                <polyline points="20,6 9,17 4,12" />
+                                            </svg>
+                                            95%+ field confidence
+                                        </div>
+                                        <span class="extract-type-tag">@_type.ToUpper()</span>
+                                    </div>
+
+                                    <div class="extract-spreadsheet-wrap">
+                                        <div class="extract-spreadsheet-header">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                                 stroke="currentColor" stroke-width="2"
+                                                 stroke-linecap="round" stroke-linejoin="round"
+                                                 style="color:var(--success);">
+                                                <rect x="3" y="3" width="18" height="18" rx="1" />
+                                                <path d="M3 9h18" />
+                                                <path d="M9 21V9" />
+                                            </svg>
+                                            Extracted Data Preview
+                                            <span style="margin-left:auto; font-size:0.72rem; color:var(--text-muted); font-weight:400;">
+                                                Matches your Excel download exactly
+                                            </span>
+                                        </div>
+                                        <div class="extract-spreadsheet-table-wrap">
+                                            <table class="extract-spreadsheet-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th class="extract-sheet-col-a">Field</th>
+                                                        <th class="extract-sheet-col-b">Value</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach (var field in _fields)
+                                                    {
+                                                        <tr class="extract-sheet-row">
+                                                            <td class="extract-sheet-label">@field.Key</td>
+                                                            <td class="extract-sheet-value">@field.Value</td>
+                                                        </tr>
+                                                    }
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+
+                                    @if (_lineItems.Any())
+                                    {
+                                        <div class="extract-line-items">
+                                            <div class="extract-spreadsheet-header">
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                                     stroke="currentColor" stroke-width="2"
+                                                     stroke-linecap="round" stroke-linejoin="round"
+                                                     style="color:var(--success);">
+                                                    <rect x="3" y="3" width="18" height="18" rx="1" />
+                                                    <path d="M3 9h18" />
+                                                    <path d="M9 21V9" />
+                                                </svg>
+                                                Line Items
+                                            </div>
+                                            <div class="extract-spreadsheet-table-wrap">
+                                                <table class="extract-spreadsheet-table">
+                                                    <thead>
+                                                        <tr>
+                                                            <th style="text-align:left; width:40%;">Description</th>
+                                                            <th style="text-align:center;">Qty</th>
+                                                            <th style="text-align:right;">Unit Price</th>
+                                                            <th style="text-align:right;">Total</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        @foreach (var item in _lineItems)
+                                                        {
+                                                            <tr class="extract-sheet-row">
+                                                                <td class="extract-sheet-value" style="text-align:left;">@item.GetValueOrDefault("description")</td>
+                                                                <td class="extract-sheet-value" style="text-align:center;">@item.GetValueOrDefault("quantity")</td>
+                                                                <td class="extract-sheet-value" style="text-align:right;">@item.GetValueOrDefault("unitPrice")</td>
+                                                                <td class="extract-sheet-value extract-sheet-total" style="text-align:right;">@item.GetValueOrDefault("total")</td>
+                                                            </tr>
+                                                        }
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    }
+
+                                    @if (_excelReady)
+                                    {
+                                        <div class="extract-download-cta">
+                                            <div class="extract-download-cta-text">
+                                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                                                     stroke="currentColor" stroke-width="2"
+                                                     stroke-linecap="round" stroke-linejoin="round"
+                                                     style="color:var(--success); flex-shrink:0;">
+                                                    <rect x="3" y="3" width="18" height="18" rx="1" />
+                                                    <path d="M3 9h18" />
+                                                    <path d="M9 21V9" />
+                                                </svg>
+                                                <div>
+                                                    <strong>Looks right? Download your Excel file.</strong>
+                                                    <p>Professional accounting layout — ready for QuickBooks, Xero, or Excel.</p>
+                                                </div>
+                                            </div>
+                                            <button class="download-button"
+                                                    style="max-width:200px; margin-top:0;"
+                                                    @onclick="DownloadExcel">
+                                                ⬇ Download Excel
+                                            </button>
+                                        </div>
+                                    }
                                 </div>
                             </div>
                         }
 
-                        @if (_excelReady)
+                        @if (CurrentState == PageState.Error)
                         {
-                            <div class="extract-download-cta">
-                                <div class="extract-download-cta-text">
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
-                                         stroke="currentColor" stroke-width="2"
-                                         stroke-linecap="round" stroke-linejoin="round"
-                                         style="color:var(--success); flex-shrink:0;">
-                                        <rect x="3" y="3" width="18" height="18" rx="1" />
-                                        <path d="M3 9h18" />
-                                        <path d="M9 21V9" />
-                                    </svg>
-                                    <div>
-                                        <strong>Looks right? Download your Excel file.</strong>
-                                        <p>Professional accounting layout — ready for QuickBooks, Xero, or Excel.</p>
-                                    </div>
+                            @if (_isRateLimit)
+                            {
+                                <AiLimitBanner IsVisible="true"
+                                               IsFreeLimit="@_isFreeLimit"
+                                               Limit="@(_isFreeLimit ? 5 : 200)" />
+                                <button class="reset-button" style="margin-top:1rem;" @onclick="Reset">Try Again</button>
+                            }
+                            else
+                            {
+                                <div class="error-container" role="alert">
+                                    <span class="error-icon" aria-hidden="true">❌</span>
+                                    <p class="error-message">@_error</p>
+                                    <button class="reset-button" @onclick="Reset">Try Again</button>
                                 </div>
-                                <button class="download-button"
-                                        style="max-width:200px; margin-top:0;"
-                                        @onclick="DownloadExcel">
-                                    ⬇ Download Excel
-                                </button>
-                            </div>
+                            }
                         }
                     </div>
-                }
 
-                @if (CurrentState == PageState.Error)
-                {
-                    @if (_isRateLimit)
-                    {
-                        <AiLimitBanner IsVisible="true"
-                                       IsFreeLimit="@_isFreeLimit"
-                                       Limit="@(_isFreeLimit ? 5 : 200)" />
-                        <button class="reset-button" style="margin-top:1rem;" @onclick="Reset">Try Again</button>
-                    }
-                    else
-                    {
-                        <div class="error-container" role="alert">
-                            <span class="error-icon" aria-hidden="true">❌</span>
-                            <p class="error-message">@_error</p>
-                            <button class="reset-button" @onclick="Reset">Try Again</button>
+                    <aside class="settings-card extract-invoice-settings">
+                        <div class="extract-settings-header">
+                            <span class="extract-workspace-kicker">AI extraction</span>
+                            <h2>Extraction settings</h2>
+                            <p>Choose the document pattern that best matches your file.</p>
                         </div>
-                    }
-                }
+
+                        @if (!_isPro && _aiUsed < 5)
+                        {
+                            <div class="free-uses-banner">
+                                <span>✨ @(5 - _aiUsed) of 5 free AI uses remaining this month</span>
+                                <a href="/pricing">Upgrade to Pro for 200 AI uses/month →</a>
+                            </div>
+                        }
+
+                        <div class="extract-type-section">
+                            <p class="extract-type-label">What type of document are you extracting?</p>
+                            <div class="extract-type-grid">
+                                <button class="extract-type-btn @(_type == "invoice" ? "active" : "")"
+                                        @onclick='() => _type = "invoice"'>
+                                    <span class="extract-type-icon">🧾</span>
+                                    <span class="extract-type-name">Invoice</span>
+                                    <span class="extract-type-desc">Vendor, amounts, line items</span>
+                                </button>
+                                <button class="extract-type-btn @(_type == "contract" ? "active" : "")"
+                                        @onclick='() => _type = "contract"'>
+                                    <span class="extract-type-icon">📋</span>
+                                    <span class="extract-type-name">Contract</span>
+                                    <span class="extract-type-desc">Parties, dates, obligations</span>
+                                </button>
+                                <button class="extract-type-btn @(_type == "general" ? "active" : "")"
+                                        @onclick='() => _type = "general"'>
+                                    <span class="extract-type-icon">📄</span>
+                                    <span class="extract-type-name">General Form</span>
+                                    <span class="extract-type-desc">Any structured document</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="extract-explainer-card">
+                            <h3>What this does</h3>
+                            <p>Extracts structured fields and line items into a spreadsheet-ready format.</p>
+                            <div class="extract-explainer-list">
+                                <span>Vendor and customer details</span>
+                                <span>Dates, totals, and tax fields</span>
+                                <span>Line items for Excel export</span>
+                            </div>
+                        </div>
+
+                        <div class="extract-guidance-card">
+                            Upload a document and run extraction to generate Excel output.
+                        </div>
+                    </aside>
+                </section>
             </Authorized>
         </AuthorizeView>
 
