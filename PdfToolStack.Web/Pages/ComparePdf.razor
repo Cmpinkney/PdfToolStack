@@ -20,43 +20,24 @@
     <link rel="canonical" href="https://pdftoolstack.com/compare-pdf" />
 </HeadContent>
 
-<div class="tool-page">
-    <div class="tool-container">
+<div class="tool-page compare-tool-page">
+    <div class="tool-container compare-tool-container">
 
-        <div class="ai-tool-header">
-            <div class="ai-tool-badge">✨ AI-Powered</div>
-            <h1>@(IsContractMode ? "Compare Contracts Online" : "Compare PDF Files")</h1>
-            <p class="tool-subtitle">
-                @(IsContractMode
-                                ? "Upload two versions of a contract and get a word-by-word diff report showing every addition and deletion. Essential for legal review."
-                                : "Upload two versions of a document and get a highlighted report showing exactly what changed.")
-            </p>
-        </div>
+        <section class="tool-hero compare-tool-hero">
+            <div class="trust-row">
+                <span>Secure upload</span>
+                <span>Side-by-side comparison</span>
+                <span>Auto-delete after 1 hour</span>
+            </div>
+            <h1>Compare PDFs <span class="hero-gradient-text">clearly</span></h1>
+            <p>See exactly what changed between two documents in seconds.</p>
+        </section>
 
-        <div class="how-it-works">
-            <div class="hiw-step">
-                <div class="hiw-num">1</div>
-                <div class="hiw-text">
-                    <strong>Upload two PDFs</strong>
-                    <span>Original and revised version</span>
-                </div>
-            </div>
-            <div class="hiw-arrow">→</div>
-            <div class="hiw-step">
-                <div class="hiw-num">2</div>
-                <div class="hiw-text">
-                    <strong>AI finds every change</strong>
-                    <span>Word-by-word diff</span>
-                </div>
-            </div>
-            <div class="hiw-arrow">→</div>
-            <div class="hiw-step">
-                <div class="hiw-num">3</div>
-                <div class="hiw-text">
-                    <strong>Get a diff report</strong>
-                    <span>Additions and deletions highlighted</span>
-                </div>
-            </div>
+        <div class="stepper compare-tool-stepper" aria-label="Compare PDF steps">
+            <div class="stepper-step active"><span>1</span>Upload</div>
+            <div class="stepper-step"><span>2</span>Compare</div>
+            <div class="stepper-step"><span>3</span>Review</div>
+            <div class="stepper-step"><span>4</span>Download</div>
         </div>
 
         <AuthorizeView>
@@ -107,6 +88,14 @@
                 }
                 else
                 {
+                    <section class="workflow-grid compare-tool-workflow">
+                        <div class="workspace-card compare-tool-workspace">
+                            <div class="compare-workspace-header">
+                                <span>Upload documents</span>
+                                <h2>Add the original and revised PDFs</h2>
+                                <p>Keep each upload slot targeted to the correct version before running the comparison.</p>
+                            </div>
+
                     <div class="compare-grid">
 
                         <div class="compare-upload-slot">
@@ -206,7 +195,8 @@
 
                 @if (_result != null)
                     {
-                        <div class="tool-card result-card" style="margin-top: 1.5rem;">
+                        <div class="ai-tool-result-card compare-result-card" style="margin-top: 1.5rem;">
+                            <span class="compare-result-kicker">Comparison results</span>
                             <h3>✅ Comparison complete</h3>
 
                             <div class="compare-stats">
@@ -251,6 +241,31 @@
                             @_error
                         </div>
                     }
+                        </div>
+
+                        <aside class="settings-card compare-tool-settings">
+                            <div class="compare-settings-header">
+                                <span>Compare workflow</span>
+                                <h2>How comparison works</h2>
+                                <p>Upload both versions, compare changes instantly, then download a detailed report.</p>
+                            </div>
+
+                            <div class="compare-guidance-card">
+                                <h3>Steps</h3>
+                                <div class="compare-guidance-list">
+                                    <span>Upload original and revised PDFs</span>
+                                    <span>Use Google Drive or Dropbox if needed</span>
+                                    <span>Compare changes instantly</span>
+                                    <span>Download a detailed report</span>
+                                </div>
+                            </div>
+
+                            <div class="compare-tip-card">
+                                <strong>Tips</strong>
+                                <p>Use similar document versions. Comparison works best with text-based PDFs.</p>
+                            </div>
+                        </aside>
+                    </section>
                 }
             </Authorized>
         </AuthorizeView>
