@@ -19,45 +19,24 @@
     <link rel="canonical" href="https://pdftoolstack.com/review-contract" />
 </HeadContent>
 
-<div class="tool-page">
-    <AdSlot Size="banner" />
+<div class="tool-page ai-tool-page review-contract-page">
+    <div class="tool-container ai-tool-container">
 
-    <div class="tool-container">
+        <section class="tool-hero ai-tool-hero">
+            <div class="trust-row">
+                <span>Private processing</span>
+                <span>Secure upload</span>
+                <span>Auto-delete after 1 hour</span>
+            </div>
+            <h1>Review contracts <span class="hero-gradient-text">with AI</span></h1>
+            <p>Identify risks, obligations, missing clauses, and key terms instantly.</p>
+        </section>
 
-        <div class="ai-tool-header">
-            <div class="ai-tool-badge">✨ AI-Powered</div>
-            <h1>AI Contract Reviewer</h1>
-            <p class="tool-subtitle">
-                Upload any contract — AI identifies risky clauses, key dates,
-                obligations, and missing elements in seconds.
-                No legal expertise required.
-            </p>
-        </div>
-
-        <div class="how-it-works">
-            <div class="hiw-step">
-                <div class="hiw-num">1</div>
-                <div class="hiw-text">
-                    <strong>Upload contract PDF</strong>
-                    <span>NDA, service agreement, lease</span>
-                </div>
-            </div>
-            <div class="hiw-arrow">→</div>
-            <div class="hiw-step">
-                <div class="hiw-num">2</div>
-                <div class="hiw-text">
-                    <strong>AI reviews every clause</strong>
-                    <span>Risks, dates, obligations</span>
-                </div>
-            </div>
-            <div class="hiw-arrow">→</div>
-            <div class="hiw-step">
-                <div class="hiw-num">3</div>
-                <div class="hiw-text">
-                    <strong>Get a full report</strong>
-                    <span>Plain English, actionable</span>
-                </div>
-            </div>
+        <div class="stepper ai-tool-stepper" aria-label="Contract review steps">
+            <div class="stepper-step active"><span>1</span>Upload</div>
+            <div class="stepper-step"><span>2</span>Analyze</div>
+            <div class="stepper-step"><span>3</span>Review</div>
+            <div class="stepper-step"><span>4</span>Export</div>
         </div>
 
         <AuthorizeView>
@@ -86,49 +65,50 @@
             </NotAuthorized>
 
             <Authorized>
-                @if (!_isPro && _aiUsed < 5)
-                {
-                    <div class="free-uses-banner">
-                        <span>✨ @(5 - _aiUsed) of 5 free AI uses remaining this month</span>
-                        <a href="/pricing">Upgrade to Pro for 200 AI uses/month →</a>
-                    </div>
-                }
+                <section class="workflow-grid ai-tool-workflow review-contract-workflow">
+                    <div class="workspace-card ai-tool-workspace review-contract-workspace">
+                        @if (CurrentState == PageState.Upload)
+                        {
+                            <div class="ai-tool-card-header">
+                                <span>Contract analysis</span>
+                                <h2>Upload a contract for review</h2>
+                                <p>Use this for NDAs, service agreements, leases, employment contracts, and vendor agreements.</p>
+                            </div>
 
-                @if (CurrentState == PageState.Upload)
-                {
-                    <FileUpload OnFileSelected="HandleFileSelected"
-                                OnFileRemoved="HandleFileRemoved"
-                                HintText="Upload a contract PDF — NDA, service agreement, lease, employment contract" />
+                            <FileUpload OnFileSelected="HandleFileSelected"
+                                        OnFileRemoved="HandleFileRemoved"
+                                        HintText="Upload a contract PDF — NDA, service agreement, lease, employment contract" />
 
-                    @if (_fileBytes != null)
-                    {
-                        <button class="process-button" @onclick="RunReview">
-                            ⚖️ Review Contract with AI
-                        </button>
-                    }
-                }
+                            @if (_fileBytes != null)
+                            {
+                                <button class="process-button ai-tool-primary-cta" @onclick="RunReview">
+                                    ⚖️ Review Contract with AI
+                                </button>
+                            }
+                        }
 
-                @if (CurrentState == PageState.Processing)
-                {
-                    <div class="ai-processing-container">
-                        <div class="ai-processing-icon">⚖️</div>
-                        <h3>AI is reviewing your contract...</h3>
-                        <p>Analyzing clauses, dates, obligations and risks</p>
-                        <div class="ai-processing-steps">
-                            <div class="ai-processing-step @(_step >= 1 ? "done" : "")">Reading contract text</div>
-                            <div class="ai-processing-step @(_step >= 2 ? "done" : "")">Identifying parties &amp; dates</div>
-                            <div class="ai-processing-step @(_step >= 3 ? "done" : "")">Detecting risky clauses</div>
-                            <div class="ai-processing-step @(_step >= 4 ? "done" : "")">Generating recommendations</div>
-                        </div>
-                    </div>
-                }
+                        @if (CurrentState == PageState.Processing)
+                        {
+                            <div class="ai-processing-container ai-tool-processing">
+                                <div class="ai-processing-icon">⚖️</div>
+                                <h3>AI is reviewing your contract...</h3>
+                                <p>Analyzing clauses, dates, obligations and risks</p>
+                                <div class="ai-processing-steps">
+                                    <div class="ai-processing-step @(_step >= 1 ? "done" : "")">Reading contract text</div>
+                                    <div class="ai-processing-step @(_step >= 2 ? "done" : "")">Identifying parties &amp; dates</div>
+                                    <div class="ai-processing-step @(_step >= 3 ? "done" : "")">Detecting risky clauses</div>
+                                    <div class="ai-processing-step @(_step >= 4 ? "done" : "")">Generating recommendations</div>
+                                </div>
+                            </div>
+                        }
 
-                @if (CurrentState == PageState.Complete && _review != null)
-                {
-                    <div class="contract-review-results">
+                        @if (CurrentState == PageState.Complete && _review != null)
+                        {
+                            <div class="contract-review-results review-contract-results-card">
 
                         <div class="review-header">
                             <div>
+                                <span class="ai-tool-result-kicker">Contract analysis</span>
                                 <h2>Contract Review Complete</h2>
                                 <p style="color:var(--text-secondary); font-size:0.875rem;">
                                     @_fileName
@@ -282,27 +262,59 @@
                         <button class="reset-button" style="margin-top:1rem;" @onclick="Reset">
                             Review Another Contract
                         </button>
-                    </div>
-                }
+                            </div>
+                        }
 
-                @if (CurrentState == PageState.Error)
-                {
-                    @if (_isRateLimit)
-                    {
-                        <AiLimitBanner IsVisible="true"
-                                       IsFreeLimit="@_isFreeLimit"
-                                       Limit="@(_isFreeLimit ? 5 : 200)" />
-                        <button class="reset-button" style="margin-top:1rem;" @onclick="Reset">Try Again</button>
-                    }
-                    else
-                    {
-                        <div class="error-container" role="alert">
-                            <span class="error-icon" aria-hidden="true">❌</span>
-                            <p class="error-message">@_error</p>
-                            <button class="reset-button" @onclick="Reset">Try Again</button>
+                        @if (CurrentState == PageState.Error)
+                        {
+                            @if (_isRateLimit)
+                            {
+                                <AiLimitBanner IsVisible="true"
+                                               IsFreeLimit="@_isFreeLimit"
+                                               Limit="@(_isFreeLimit ? 5 : 200)" />
+                                <button class="reset-button" style="margin-top:1rem;" @onclick="Reset">Try Again</button>
+                            }
+                            else
+                            {
+                                <div class="error-container" role="alert">
+                                    <span class="error-icon" aria-hidden="true">❌</span>
+                                    <p class="error-message">@_error</p>
+                                    <button class="reset-button" @onclick="Reset">Try Again</button>
+                                </div>
+                            }
+                        }
+                    </div>
+
+                    <aside class="settings-card ai-tool-settings review-contract-settings">
+                        <div class="ai-tool-card-header">
+                            <span>Review scope</span>
+                            <h2>What this analysis checks</h2>
+                            <p>AI reviews the uploaded contract for common business and legal risk signals.</p>
                         </div>
-                    }
-                }
+
+                        @if (!_isPro && _aiUsed < 5)
+                        {
+                            <div class="free-uses-banner">
+                                <span>✨ @(5 - _aiUsed) of 5 free AI uses remaining this month</span>
+                                <a href="/pricing">Upgrade to Pro for 200 AI uses/month →</a>
+                            </div>
+                        }
+
+                        <div class="ai-tool-guidance-card review-contract-checks">
+                            <h3>Checks included</h3>
+                            <div class="ai-tool-guidance-list">
+                                <span>Risky clauses</span>
+                                <span>Missing protections</span>
+                                <span>Key obligations</span>
+                                <span>Important dates</span>
+                            </div>
+                        </div>
+
+                        <div class="review-contract-note">
+                            This is an AI-generated review and not legal advice.
+                        </div>
+                    </aside>
+                </section>
             </Authorized>
         </AuthorizeView>
     </div>

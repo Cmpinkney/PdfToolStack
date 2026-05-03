@@ -7481,6 +7481,310 @@ div.picker-dialog,
     100% { transform: translateY(420%); opacity: 0; }
 }
 
+/* ── Shared Premium AI Tool Layout ───────────────────────── */
+.ai-tool-page {
+    width: 100%;
+    max-width: none !important;
+    margin: 0;
+    padding: 48px 0 72px;
+}
+
+.ai-tool-container {
+    width: min(1320px, calc(100% - 64px));
+    max-width: 1320px;
+    margin: 0 auto;
+    padding: 0;
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+}
+
+.ai-tool-hero {
+    width: 100%;
+    max-width: none;
+    margin-bottom: 24px;
+    text-align: left;
+}
+
+.ai-tool-hero h1 {
+    max-width: 980px;
+    margin: 0 0 14px;
+    color: var(--text);
+    font-family: var(--font-heading);
+    font-size: clamp(2.4rem, 3vw, 3.8rem);
+    line-height: 1.02;
+    letter-spacing: -0.04em;
+}
+
+.ai-tool-hero p {
+    max-width: 760px;
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 1rem;
+    line-height: 1.7;
+}
+
+.ai-tool-stepper {
+    grid-template-columns: repeat(4, 1fr);
+    padding: 8px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.8);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    box-shadow: 0 14px 35px rgba(15, 23, 42, 0.06);
+}
+
+[data-theme="dark"] .ai-tool-stepper {
+    background: rgba(15, 23, 42, 0.72);
+    border-color: rgba(148, 163, 184, 0.18);
+}
+
+.ai-tool-stepper .stepper-step {
+    min-width: 0;
+    border-radius: 999px;
+}
+
+.ai-tool-workflow {
+    width: 100%;
+    max-width: none;
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(360px, 1fr);
+    gap: 32px;
+    align-items: start;
+}
+
+.ai-tool-workspace,
+.ai-tool-settings {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    padding: var(--panel-padding-lg);
+    border-radius: var(--radius-card);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-soft);
+    box-sizing: border-box;
+}
+
+.ai-tool-settings {
+    position: sticky;
+    top: 96px;
+}
+
+.ai-tool-card-header {
+    margin-bottom: 22px;
+}
+
+.ai-tool-card-header > span,
+.ai-tool-result-kicker {
+    display: inline-flex;
+    margin-bottom: 8px;
+    color: var(--brand-primary);
+    font-size: 0.78rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.ai-tool-card-header h2 {
+    margin: 0 0 8px;
+    color: var(--text);
+    font-family: var(--font-heading);
+    font-size: clamp(1.35rem, 2vw, 1.75rem);
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+}
+
+.ai-tool-card-header p {
+    margin: 0;
+    color: var(--text-secondary);
+    line-height: 1.65;
+}
+
+.ai-tool-primary-cta {
+    margin-top: 22px;
+}
+
+.ai-tool-processing {
+    min-height: 420px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    border-radius: 22px;
+    background: var(--surface-2);
+}
+
+.ai-tool-result-card {
+    margin: 0;
+    border-radius: 22px;
+    background: var(--surface-2);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    box-shadow: none;
+}
+
+.ai-tool-settings .free-uses-banner {
+    margin: 0 0 22px;
+    align-items: flex-start;
+    text-align: left;
+}
+
+.ai-tool-settings .questions-count-section,
+.ai-tool-settings .rewrite-section {
+    margin: 0 0 24px;
+}
+
+.ai-tool-settings .questions-count-label,
+.ai-tool-settings .rewrite-section-label {
+    text-align: left;
+}
+
+.ai-tool-settings .rewrite-tone-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.ai-tool-settings .rewrite-tone-btn {
+    min-width: 0;
+}
+
+.ai-tool-settings .rewrite-textarea {
+    width: 100%;
+    max-width: none;
+}
+
+.ai-tool-guidance-card {
+    border-radius: 20px;
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    background: linear-gradient(135deg, rgba(109, 93, 252, 0.1), rgba(6, 182, 212, 0.1));
+    padding: 20px;
+}
+
+.ai-tool-guidance-card h3 {
+    margin: 0 0 8px;
+    color: var(--text);
+    font-family: var(--font-heading);
+    font-size: 1rem;
+}
+
+.ai-tool-guidance-card p {
+    margin: 0 0 14px;
+    color: var(--text-secondary);
+    font-size: 0.92rem;
+    line-height: 1.6;
+}
+
+.ai-tool-guidance-list {
+    display: grid;
+    gap: 10px;
+}
+
+.ai-tool-guidance-list span {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text);
+    font-size: 0.9rem;
+    font-weight: 650;
+}
+
+.ai-tool-guidance-list span::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, var(--brand-primary), var(--brand-accent));
+    flex: 0 0 auto;
+}
+
+.ai-tool-page .error-container {
+    margin: 0;
+}
+
+.review-contract-results-card {
+    margin: 0;
+}
+
+.review-contract-results-card .review-header {
+    margin-bottom: 1.5rem;
+}
+
+.review-contract-settings .free-uses-banner {
+    margin-bottom: 22px;
+}
+
+.review-contract-checks {
+    margin-bottom: 16px;
+}
+
+.review-contract-note {
+    padding: 18px 20px;
+    border-radius: 18px;
+    color: var(--text-secondary);
+    background: var(--surface-2);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+[data-theme="dark"] .ai-tool-workspace,
+[data-theme="dark"] .ai-tool-settings {
+    background: rgba(15, 23, 42, 0.78);
+    border-color: rgba(148, 163, 184, 0.18);
+}
+
+[data-theme="dark"] .ai-tool-processing,
+[data-theme="dark"] .ai-tool-result-card {
+    background: rgba(15, 23, 42, 0.62);
+    border-color: rgba(148, 163, 184, 0.16);
+}
+
+[data-theme="dark"] .ai-tool-guidance-card {
+    background: linear-gradient(135deg, rgba(109, 93, 252, 0.16), rgba(6, 182, 212, 0.12));
+}
+
+[data-theme="dark"] .review-contract-note {
+    background: rgba(15, 23, 42, 0.62);
+    border-color: rgba(148, 163, 184, 0.16);
+}
+
+@media (max-width: 980px) {
+    .ai-tool-workflow {
+        grid-template-columns: 1fr;
+    }
+
+    .ai-tool-settings {
+        position: static;
+    }
+}
+
+@media (max-width: 640px) {
+    .ai-tool-page {
+        padding: 28px 0 48px;
+    }
+
+    .ai-tool-container {
+        width: min(100%, calc(100% - 24px));
+    }
+
+    .ai-tool-stepper {
+        grid-template-columns: 1fr 1fr;
+        border-radius: 22px;
+    }
+
+    .ai-tool-workflow {
+        gap: 20px;
+    }
+
+    .ai-tool-workspace,
+    .ai-tool-settings {
+        padding: var(--panel-padding-mobile);
+        border-radius: 20px;
+    }
+
+    .ai-tool-settings .rewrite-tone-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 /* ── Extract Invoice Data Premium Layout ─────────────────── */
 .extract-invoice-tool-page {
     width: 100%;
