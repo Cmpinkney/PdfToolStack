@@ -1,46 +1,112 @@
-﻿@page "/pdf-scanner"
+@page "/pdf-scanner"
 
-<PageTitle>PDF Scanner — Coming Soon | PdfToolStack</PageTitle>
+<PageTitle>PDF Scanner Is Coming Soon | PdfToolStack</PageTitle>
 
 <HeadContent>
     <meta name="description"
-          content="PDF Scanner is coming soon to PdfToolStack. Scan documents
-                   to PDF using your mobile camera. Auto edge detection,
-                   perspective correction, and multi-page scanning." />
+          content="PDF Scanner is coming soon to PdfToolStack. Turn photos and paper documents into clean, shareable PDFs with camera capture, auto-crop, multi-page scans, and OCR." />
     <link rel="canonical" href="https://pdftoolstack.com/pdf-scanner" />
 </HeadContent>
 
-<div class="tool-page">
-    <div class="tool-container" style="text-align:center; max-width:540px; margin:4rem auto;">
+<main class="scanner-coming-page">
+    <section class="scanner-coming-hero">
+        <div class="scanner-coming-copy">
+            <span class="scanner-coming-kicker">Coming soon</span>
+            <h1>PDF Scanner is <span class="hero-gradient-text">coming soon</span></h1>
+            <p>
+                Turn photos and paper documents into clean, shareable PDFs.
+            </p>
 
-        <div style="font-size:3.5rem; margin-bottom:1.5rem;">📱</div>
+            <div class="scanner-coming-actions">
+                <a href="/pdf-ocr" class="scanner-coming-primary">Try PDF OCR today</a>
+                <a href="/" class="scanner-coming-secondary">Browse PDF tools</a>
+            </div>
 
-        <h1 style="font-size:1.75rem; margin-bottom:.75rem;">PDF Scanner — Coming Soon</h1>
-
-        <p class="tool-subtitle" style="margin-bottom:2rem;">
-            We're building a mobile-optimized scanner that uses your camera to
-            capture documents and convert them to clean, professional PDFs.
-            Auto edge detection, perspective correction, and multi-page scanning included.
-        </p>
-
-        <div style="display:flex; gap:.75rem; justify-content:center; align-items:stretch; flex-wrap:wrap;">
-            <a href="/" class="process-button"
-               style="display:inline-flex; align-items:center; justify-content:center;
-              text-decoration:none; width:200px; height:44px;
-              white-space:nowrap; box-sizing:border-box; margin:0;">
-                Browse PDF Tools →
-            </a>
-            <a href="/jpg-to-pdf" class="reset-button"
-               style="display:inline-flex; align-items:center; justify-content:center;
-              text-decoration:none; width:200px; height:44px;
-              white-space:nowrap; box-sizing:border-box; margin:0;">
-                Try JPG to PDF
-            </a>
+            <div class="scanner-coming-note">
+                <strong>Need searchable text now?</strong>
+                <span>Use PDF OCR to make scanned PDFs searchable.</span>
+            </div>
         </div>
 
-        <p style="color:var(--text-muted); font-size:.8rem; margin-top:2rem;">
-            In the meantime, JPG to PDF converts any photo or image to a PDF instantly.
-        </p>
+        <div class="scanner-coming-visual" aria-hidden="true">
+            <div class="scanner-phone-shell">
+                <div class="scanner-phone-top"></div>
+                <div class="scanner-doc-frame">
+                    <div class="scanner-doc-sheet">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                    <div class="scanner-corner scanner-corner-tl"></div>
+                    <div class="scanner-corner scanner-corner-tr"></div>
+                    <div class="scanner-corner scanner-corner-bl"></div>
+                    <div class="scanner-corner scanner-corner-br"></div>
+                </div>
+                <div class="scanner-scan-line"></div>
+                <div class="scanner-phone-action"></div>
+            </div>
+        </div>
+    </section>
 
-    </div>
-</div>
+    <section class="scanner-feature-section" aria-labelledby="scanner-features-title">
+        <div class="scanner-section-header">
+            <span class="scanner-coming-kicker">Planned features</span>
+            <h2 id="scanner-features-title">Designed for paper-to-PDF workflows</h2>
+            <p>
+                The scanner will focus on quick capture, clean edges, and documents that are easy to share or search.
+            </p>
+        </div>
+
+        <div class="scanner-feature-grid">
+            <article class="scanner-feature-card">
+                <div class="scanner-feature-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 7h3l2-3h6l2 3h3v13H4z" />
+                        <circle cx="12" cy="13" r="3.5" />
+                    </svg>
+                </div>
+                <h3>Camera-based document capture</h3>
+                <p>Capture paper documents from your phone and turn them into shareable PDFs.</p>
+            </article>
+
+            <article class="scanner-feature-card">
+                <div class="scanner-feature-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M5 4h14v16H5z" />
+                        <path d="M8 8h8" />
+                        <path d="M8 12h8" />
+                        <path d="M8 16h5" />
+                    </svg>
+                </div>
+                <h3>Auto-crop and deskew</h3>
+                <p>Clean document edges and straighten angled captures before exporting.</p>
+            </article>
+
+            <article class="scanner-feature-card">
+                <div class="scanner-feature-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M7 3h10v14H7z" />
+                        <path d="M5 7h10v14H5z" />
+                        <path d="M9 7h4" />
+                    </svg>
+                </div>
+                <h3>Multi-page scans</h3>
+                <p>Combine multiple captured pages into one organized PDF file.</p>
+            </article>
+
+            <article class="scanner-feature-card">
+                <div class="scanner-feature-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 5h16" />
+                        <path d="M4 12h10" />
+                        <path d="M4 19h7" />
+                        <circle cx="17" cy="17" r="3" />
+                        <path d="m20 20-1.5-1.5" />
+                    </svg>
+                </div>
+                <h3>Searchable text with OCR</h3>
+                <p>Make scans easier to search, select, and reuse with OCR-powered text recognition.</p>
+            </article>
+        </div>
+    </section>
+</main>
