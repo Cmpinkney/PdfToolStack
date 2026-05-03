@@ -4,6 +4,7 @@
 @inject AuthenticationStateProvider Auth
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
+@inject CloudPickerService CloudPicker
 @inject Microsoft.AspNetCore.Components.WebAssembly.Hosting.IWebAssemblyHostEnvironment HostEnvironment
 @using PdfToolStack.Application.DTOs
 @using PdfToolStack.Domain.Enums
@@ -159,6 +160,28 @@
                             <InputFile OnChange="OnFilesSelected" multiple accept=".pdf"
                                        style="position:absolute;inset:0;opacity:0;cursor:pointer;" />
                         </label>
+
+                        <div class="bp-cloud-import">
+                            <span class="bp-cloud-label">Import from cloud</span>
+                            <div class="bp-cloud-actions">
+                                <button type="button" class="bp-cloud-btn" @onclick="PickGoogleDrive" disabled="@(_cloudLoading || _processing)">
+                                    <svg width="16" height="16" viewBox="0 0 87.3 78" xmlns="http://www.w3.org/2000/svg"><path d="m6.6 66.85 3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8h-27.5c0 1.55.4 3.1 1.2 4.5z" fill="#0066da" /><path d="m43.65 25-13.75-23.8c-1.35.8-2.5 1.9-3.3 3.3l-25.4 44a9.06 9.06 0 0 0 -1.2 4.5h27.5z" fill="#00ac47" /><path d="m73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5h-27.502l5.852 11.5z" fill="#ea4335" /><path d="m43.65 25 13.75-23.8c-1.35-.8-2.9-1.2-4.5-1.2h-18.5c-1.6 0-3.15.45-4.5 1.2z" fill="#00832d" /><path d="m59.8 53h-32.3l-13.75 23.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2z" fill="#2684fc" /><path d="m73.4 26.5-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3l-13.75 23.8 16.15 28h27.45c0-1.55-.4-3.1-1.2-4.5z" fill="#ffba00" /></svg>
+                                    Google Drive
+                                </button>
+                                <button type="button" class="bp-cloud-btn" @onclick="PickDropbox" disabled="@(_cloudLoading || _processing)">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="#0061FF"><path d="M6 2L0 6l6 4-6 4 6 4 6-4-6-4 6-4L6 2zm12 0l-6 4 6 4-6 4 6 4 6-4-6-4 6-4-6-4zm-6 13l-6 4 6 4 6-4-6-4z" /></svg>
+                                    Dropbox
+                                </button>
+                            </div>
+                            @if (_cloudLoading)
+                            {
+                                <p class="bp-cloud-hint">Importing from cloud...</p>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(_cloudError))
+                            {
+                                <p class="bp-cloud-error">@_cloudError</p>
+                            }
+                        </div>
 
                         @if (!_files.Any())
                         {
@@ -1307,6 +1330,79 @@
         font-size: .76rem;
         color: var(--text-muted, #98a2b3);
         margin: 0;
+    }
+
+    .bp-cloud-import {
+        display: grid;
+        gap: .75rem;
+        margin: 0 0 1rem;
+        padding: .95rem;
+        border: 1px solid var(--border, #e5e7eb);
+        border-radius: 18px;
+        background: rgba(248,250,252,.78);
+    }
+
+    .bp-cloud-label {
+        color: var(--text-muted, #667085);
+        font-size: .72rem;
+        font-weight: 900;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+    }
+
+    .bp-cloud-actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: .65rem;
+    }
+
+    .bp-cloud-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: .5rem;
+        min-height: 42px;
+        border: 1px solid rgba(99,102,241,.22);
+        border-radius: 12px;
+        background: var(--surface, #fff);
+        color: var(--text, #111827);
+        font-size: .82rem;
+        font-weight: 850;
+        cursor: pointer;
+        transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+    }
+
+        .bp-cloud-btn:hover:not(:disabled) {
+            transform: translateY(-1px);
+            border-color: rgba(79,70,229,.45);
+            box-shadow: 0 12px 24px rgba(79,70,229,.12);
+        }
+
+        .bp-cloud-btn:disabled {
+            cursor: not-allowed;
+            opacity: .58;
+        }
+
+    .bp-cloud-hint,
+    .bp-cloud-error {
+        margin: 0;
+        font-size: .82rem;
+        line-height: 1.5;
+    }
+
+    .bp-cloud-hint {
+        color: var(--text-muted, #667085);
+    }
+
+    .bp-cloud-error {
+        color: #dc2626;
+        font-weight: 750;
+    }
+
+    @@media (max-width: 640px) {
+        .bp-cloud-actions {
+            grid-template-columns: 1fr;
+        }
     }
 
     .bp-empty-command-center {
@@ -3001,6 +3097,17 @@
         border-color: #6d28d9;
     }
 
+    [data-theme="dark"] .bp-cloud-import {
+        background: rgba(15,23,42,.62);
+        border-color: rgba(148,163,184,.22);
+    }
+
+    [data-theme="dark"] .bp-cloud-btn {
+        background: rgba(15,23,42,.82);
+        border-color: rgba(148,163,184,.24);
+        color: var(--text, #f8fafc);
+    }
+
     [data-theme="dark"] .bp-file-row, [data-theme="dark"] .bp-tool-btn, [data-theme="dark"] .bp-copt, [data-theme="dark"] .bp-mini-card, [data-theme="dark"] .bp-faq-item, [data-theme="dark"] .bp-output-option, [data-theme="dark"] .bp-input, [data-theme="dark"] .bp-select {
         background: rgba(15,23,42,.42);
     }
@@ -4163,6 +4270,8 @@
     private List<string> _pendingFileNames = new();
     private bool _processing = false;
     private bool _batchDragging = false;
+    private bool _cloudLoading = false;
+    private string _cloudError = string.Empty;
     private bool _showErrors = false;
     private int _processedCount = 0;
     private int _successCount = 0;
@@ -4576,6 +4685,117 @@
         AddActivity($"Added {_files.Count} file{(_files.Count == 1 ? "" : "s")} to the batch.");
     }
 
+    private async Task PickGoogleDrive()
+    {
+        await PickCloudFile("Google Drive", async () => await CloudPicker.OpenGoogleDriveAsync());
+    }
+
+    private async Task PickDropbox()
+    {
+        await PickCloudFile("Dropbox", async () => await CloudPicker.OpenDropboxAsync());
+    }
+
+    private async Task PickCloudFile(
+        string providerName,
+        Func<Task<PdfToolStack.Web.Services.CloudPickerService.CloudFileInfo?>> picker)
+    {
+        _cloudError = string.Empty;
+
+        if (_files.Count >= 20)
+        {
+            _cloudError = "The batch queue is full. Remove a file before importing another PDF.";
+            return;
+        }
+
+        _cloudLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            var cloudFile = await picker();
+            if (cloudFile == null)
+                return;
+
+            if (!IsPdfFileName(cloudFile.Name))
+            {
+                _cloudError = $"{providerName}: Please choose a PDF file.";
+                return;
+            }
+
+            var bytes = await CloudPicker.DownloadFileAsync(cloudFile.Url, cloudFile.AccessToken);
+            if (bytes == null || bytes.Length == 0)
+            {
+                _cloudError = $"{providerName}: Could not download the selected file.";
+                return;
+            }
+
+            var fileName = GetUniqueFileName(cloudFile.Name);
+            _files.Add(new CloudBrowserFile(fileName, bytes));
+            SyncFileCount();
+            ClearBatchArtifactsAfterQueueChange();
+            AddActivity($"Imported {fileName} from {providerName}.");
+        }
+        catch (Exception ex)
+        {
+            _cloudError = $"{providerName}: {ex.Message}";
+        }
+        finally
+        {
+            _cloudLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void ClearBatchArtifactsAfterQueueChange()
+    {
+        _showUpgradeModal = false;
+        _batchUnlocked = false;
+        _pendingBatchId = null;
+        _pendingBatchToken = string.Empty;
+        _pendingFileNames.Clear();
+        _fileStatuses.Clear();
+        _fileProgress.Clear();
+        _fileOutputSizes.Clear();
+        _fileErrors.Clear();
+        _zipBytes = null;
+        _error = string.Empty;
+        _successCount = 0;
+        _failCount = 0;
+        _overallPct = 0;
+        _totalOutputBytes = 0;
+        _showErrors = false;
+    }
+
+    private static bool IsPdfFileName(string name)
+        => name.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase);
+
+    private string GetUniqueFileName(string name)
+    {
+        var safeName = string.IsNullOrWhiteSpace(name)
+            ? "cloud-file.pdf"
+            : System.IO.Path.GetFileName(name);
+
+        if (string.IsNullOrWhiteSpace(safeName))
+            safeName = "cloud-file.pdf";
+
+        var extension = System.IO.Path.GetExtension(safeName);
+        var baseName = System.IO.Path.GetFileNameWithoutExtension(safeName);
+        if (string.IsNullOrWhiteSpace(baseName))
+            baseName = "cloud-file";
+        if (string.IsNullOrWhiteSpace(extension))
+            extension = ".pdf";
+
+        var candidate = $"{baseName}{extension}";
+        var suffix = 2;
+        while (_files.Any(f => string.Equals(f.Name, candidate, StringComparison.OrdinalIgnoreCase)))
+        {
+            candidate = $"{baseName} ({suffix}){extension}";
+            suffix++;
+        }
+
+        return candidate;
+    }
+
     private void RemoveFile(int idx)
     {
         if (idx < 0 || idx >= _files.Count) return;
@@ -4914,5 +5134,34 @@
 
             _ => "#4338CA"
         };
+    }
+
+    private sealed class CloudBrowserFile : IBrowserFile
+    {
+        private readonly byte[] _bytes;
+
+        public CloudBrowserFile(string name, byte[] bytes)
+        {
+            Name = name;
+            Size = bytes.Length;
+            _bytes = bytes;
+            LastModified = DateTimeOffset.UtcNow;
+            ContentType = "application/pdf";
+        }
+
+        public string Name { get; }
+        public DateTimeOffset LastModified { get; }
+        public long Size { get; }
+        public string ContentType { get; }
+
+        public Stream OpenReadStream(
+            long maxAllowedSize = 512000,
+            CancellationToken cancellationToken = default)
+        {
+            if (Size > maxAllowedSize)
+                throw new System.IO.IOException($"File size exceeds the maximum allowed size of {maxAllowedSize} bytes.");
+
+            return new MemoryStream(_bytes, writable: false);
+        }
     }
 }
