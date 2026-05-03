@@ -9230,6 +9230,77 @@ div.picker-dialog,
     grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+/* ── Premium AI Stepper Normalization ────────────────────── */
+.ai-tool-stepper,
+.extract-invoice-stepper,
+.ocr-tool-stepper {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    align-items: center;
+    gap: 12px;
+    width: 100% !important;
+    max-width: none;
+    margin: 0 0 24px !important;
+    padding: 10px;
+    border-radius: 999px;
+}
+
+.ai-tool-stepper .stepper-step,
+.extract-invoice-stepper .stepper-step,
+.ocr-tool-stepper .stepper-step {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-width: 0;
+    min-height: 44px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    color: var(--text-secondary);
+    font-size: 0.86rem;
+    font-weight: 800;
+    line-height: 1.2;
+    text-align: center;
+    white-space: normal;
+}
+
+.ai-tool-stepper .stepper-step span,
+.extract-invoice-stepper .stepper-step span,
+.ocr-tool-stepper .stepper-step span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 999px;
+    color: var(--brand-primary);
+    background: rgba(37, 99, 235, 0.1);
+    font-size: 0.76rem;
+    font-weight: 900;
+    flex: 0 0 auto;
+}
+
+.ai-tool-stepper .stepper-step.active,
+.extract-invoice-stepper .stepper-step.active,
+.ocr-tool-stepper .stepper-step.active {
+    color: #fff;
+    background: linear-gradient(135deg, #4f46e5, #06b6d4);
+    box-shadow: 0 14px 28px rgba(37, 99, 235, 0.24);
+}
+
+.ai-tool-stepper .stepper-step.active span,
+.extract-invoice-stepper .stepper-step.active span,
+.ocr-tool-stepper .stepper-step.active span {
+    color: #fff;
+    background: rgba(255,255,255,0.2);
+}
+
+[data-theme="dark"] .ai-tool-stepper .stepper-step span,
+[data-theme="dark"] .extract-invoice-stepper .stepper-step span,
+[data-theme="dark"] .ocr-tool-stepper .stepper-step span {
+    background: rgba(96, 165, 250, 0.16);
+}
+
 .ocr-value-card {
     border-radius: 20px;
     border: 1px solid rgba(148, 163, 184, 0.22);
@@ -9265,6 +9336,15 @@ div.picker-dialog,
     border-radius: 999px;
     background: linear-gradient(135deg, var(--brand-primary), var(--brand-accent));
     flex: 0 0 auto;
+}
+
+.ocr-quality-note {
+    margin: 16px 0 0;
+    padding-top: 14px;
+    border-top: 1px solid rgba(148, 163, 184, 0.2);
+    color: var(--text-secondary);
+    font-size: 0.86rem;
+    line-height: 1.5;
 }
 
 [data-theme="dark"] .ocr-tool-workspace,
@@ -9319,6 +9399,23 @@ div.picker-dialog,
 
     .ocr-tool-settings .ocr-lang-grid {
         grid-template-columns: 1fr;
+    }
+
+    .ai-tool-stepper,
+    .extract-invoice-stepper,
+    .ocr-tool-stepper {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 8px;
+        padding: 8px;
+        border-radius: 22px;
+    }
+
+    .ai-tool-stepper .stepper-step,
+    .extract-invoice-stepper .stepper-step,
+    .ocr-tool-stepper .stepper-step {
+        min-height: 40px;
+        padding: 8px 10px;
+        font-size: 0.8rem;
     }
 }
 

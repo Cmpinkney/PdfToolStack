@@ -18,183 +18,190 @@
     <link rel="canonical" href="https://pdftoolstack.com/pdf-ocr" />
 </HeadContent>
 
-<div class="tool-page">
-    <AdSlot Size="banner" />
+<div class="tool-page ocr-tool-page">
+    <div class="tool-container ocr-tool-container">
 
-    <div class="tool-container">
+        <section class="tool-hero ocr-tool-hero">
+            <div class="trust-row">
+                <span>Secure upload</span>
+                <span>OCR processing</span>
+                <span>Auto-delete after 1 hour</span>
+            </div>
+            <h1>Make scanned PDFs <span class="hero-gradient-text">searchable</span></h1>
+            <p>Convert scanned documents into searchable, selectable text instantly.</p>
+        </section>
 
-        <div class="ai-tool-header">
-            <div class="ai-tool-badge">🔍 OCR Technology</div>
-            <h1>PDF OCR — Make Scans Searchable</h1>
-            <p class="tool-subtitle">
-                Upload a scanned PDF and OCR makes every word searchable,
-                selectable, and copyable. Works on faxes, photos of documents,
-                and any image-based PDF. No signup required.
-            </p>
+        <div class="stepper ai-tool-stepper ocr-tool-stepper" aria-label="OCR steps">
+            <div class="stepper-step active"><span>1</span>Upload</div>
+            <div class="stepper-step"><span>2</span>OCR</div>
+            <div class="stepper-step"><span>3</span>Review</div>
+            <div class="stepper-step"><span>4</span>Download</div>
         </div>
 
-        <div class="how-it-works">
-            <div class="hiw-step">
-                <div class="hiw-num">1</div>
-                <div class="hiw-text">
-                    <strong>Upload scanned PDF</strong>
-                    <span>Fax, photo, image-based</span>
-                </div>
-            </div>
-            <div class="hiw-arrow">→</div>
-            <div class="hiw-step">
-                <div class="hiw-num">2</div>
-                <div class="hiw-text">
-                    <strong>OCR reads every word</strong>
-                    <span>Tesseract processes each page</span>
-                </div>
-            </div>
-            <div class="hiw-arrow">→</div>
-            <div class="hiw-step">
-                <div class="hiw-num">3</div>
-                <div class="hiw-text">
-                    <strong>Download searchable PDF</strong>
-                    <span>Text selectable and copyable</span>
-                </div>
-            </div>
-        </div>
+        <section class="workflow-grid ocr-tool-workflow">
+            <div class="workspace-card ocr-tool-workspace">
+                @if (CurrentState == PageState.Upload)
+                {
+                    <div class="ocr-workspace-header">
+                        <span>Upload scan</span>
+                        <h2>Start with an image-based PDF</h2>
+                        <p>Use OCR for faxes, photographed documents, scanned contracts, or PDFs where text cannot be selected.</p>
+                    </div>
 
-        @if (CurrentState == PageState.Upload)
-        {
-            <!-- Language selector -->
-            <div class="ocr-lang-section">
-                <p class="ocr-lang-label">Document language</p>
-                <div class="ocr-lang-grid">
-                    @foreach (var lang in _languages)
+                    <FileUpload OnFileSelected="HandleFileSelected"
+                                OnFileRemoved="HandleFileRemoved"
+                                HintText="Upload a scanned PDF — photos of documents, faxes, or image-based PDFs" />
+
+                    @if (_fileBytes != null)
                     {
-                        <button class="ocr-lang-btn @(_language == lang.Code ? "active" : "")"
-                                @onclick="() => _language = lang.Code">
-                            <span class="ocr-lang-flag">@lang.Flag</span>
-                            <span class="ocr-lang-name">@lang.Name</span>
+                        <button class="process-button ocr-primary-cta" @onclick="RunOcr">
+                            🔍 Make Searchable with OCR
                         </button>
                     }
-                </div>
+                }
+
+                @if (CurrentState == PageState.Processing)
+                {
+                    <div class="ai-processing-container ocr-processing-card">
+                        <div class="ai-processing-icon">🔍</div>
+                        <h3>OCR is reading your document...</h3>
+                        <p>This may take 30–60 seconds for multi-page documents</p>
+                        <div class="ai-processing-steps">
+                            <div class="ai-processing-step @(_step >= 1 ? "done" : "")">
+                                Rendering PDF pages
+                            </div>
+                            <div class="ai-processing-step @(_step >= 2 ? "done" : "")">
+                                Reading text with OCR
+                            </div>
+                            <div class="ai-processing-step @(_step >= 3 ? "done" : "")">
+                                Building searchable PDF
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                @if (CurrentState == PageState.Complete && _outputBytes != null)
+                {
+                    <div class="ai-result-card ocr-result-card">
+                        <div class="ai-result-header">
+                            <div>
+                                <span class="ocr-result-kicker">Searchable document ready</span>
+                                <h2>OCR complete</h2>
+                                <p style="color:var(--text-secondary); font-size:0.875rem;">
+                                    @_fileName — now fully searchable
+                                </p>
+                            </div>
+                            <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+                                <button class="download-button"
+                                        style="max-width:220px; margin-top:0;"
+                                        @onclick="DownloadFile">
+                                    ⬇ Download Searchable PDF
+                                </button>
+                                <button class="reset-button"
+                                        style="max-width:160px;"
+                                        @onclick="Reset">
+                                    Process Another
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="ocr-result-features">
+                            <div class="ocr-result-feat">
+                                <div class="ocr-result-feat-icon">✅</div>
+                                <div>
+                                    <strong>Text is now selectable</strong>
+                                    <p>Click and drag to select any text in the PDF</p>
+                                </div>
+                            </div>
+                            <div class="ocr-result-feat">
+                                <div class="ocr-result-feat-icon">🔍</div>
+                                <div>
+                                    <strong>Ctrl+F search works</strong>
+                                    <p>Find any word or phrase in the document</p>
+                                </div>
+                            </div>
+                            <div class="ocr-result-feat">
+                                <div class="ocr-result-feat-icon">📋</div>
+                                <div>
+                                    <strong>Text can be copied</strong>
+                                    <p>Copy content directly from the PDF</p>
+                                </div>
+                            </div>
+                            <div class="ocr-result-feat">
+                                <div class="ocr-result-feat-icon">🌐</div>
+                                <div>
+                                    <strong>Search engine indexed</strong>
+                                    <p>Google can now read and index the content</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="extract-download-cta" style="margin-top:1rem;">
+                            <div class="extract-download-cta-text">
+                                <svg width="20" height="20" viewBox="0 0 24 24"
+                                     fill="none" stroke="currentColor" stroke-width="2"
+                                     stroke-linecap="round" stroke-linejoin="round"
+                                     style="color:var(--success); flex-shrink:0;">
+                                    <circle cx="11" cy="11" r="8" />
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                                </svg>
+                                <div>
+                                    <strong>Your PDF is ready</strong>
+                                    <p>Same layout, same pages — now fully searchable and selectable.</p>
+                                </div>
+                            </div>
+                            <button class="download-button"
+                                    style="max-width:220px; margin-top:0;"
+                                    @onclick="DownloadFile">
+                                ⬇ Download Searchable PDF
+                            </button>
+                        </div>
+                    </div>
+                }
+
+                @if (CurrentState == PageState.Error)
+                {
+                    <div class="error-container" role="alert">
+                        <span class="error-icon" aria-hidden="true">❌</span>
+                        <p class="error-message">@_error</p>
+                        <button class="reset-button" @onclick="Reset">Try Again</button>
+                    </div>
+                }
             </div>
 
-            <FileUpload OnFileSelected="HandleFileSelected"
-                        OnFileRemoved="HandleFileRemoved"
-                        HintText="Upload a scanned PDF — photos of documents, faxes, or image-based PDFs" />
-
-            @if (_fileBytes != null)
-            {
-                <button class="process-button" @onclick="RunOcr">
-                    🔍 Make Searchable with OCR
-                </button>
-            }
-        }
-
-        @if (CurrentState == PageState.Processing)
-        {
-            <div class="ai-processing-container">
-                <div class="ai-processing-icon">🔍</div>
-                <h3>OCR is reading your document...</h3>
-                <p>This may take 30–60 seconds for multi-page documents</p>
-                <div class="ai-processing-steps">
-                    <div class="ai-processing-step @(_step >= 1 ? "done" : "")">
-                        Rendering PDF pages
-                    </div>
-                    <div class="ai-processing-step @(_step >= 2 ? "done" : "")">
-                        Reading text with OCR
-                    </div>
-                    <div class="ai-processing-step @(_step >= 3 ? "done" : "")">
-                        Building searchable PDF
-                    </div>
+            <aside class="settings-card ocr-tool-settings">
+                <div class="ocr-settings-header">
+                    <span>OCR settings</span>
+                    <h2>What OCR does</h2>
+                    <p>Choose the document language, then convert image-based text into a searchable PDF layer.</p>
                 </div>
-            </div>
-        }
 
-        @if (CurrentState == PageState.Complete && _outputBytes != null)
-        {
-            <div class="ai-result-card">
-                <div class="ai-result-header">
-                    <div>
-                        <h2>OCR complete</h2>
-                        <p style="color:var(--text-secondary); font-size:0.875rem;">
-                            @_fileName — now fully searchable
-                        </p>
-                    </div>
-                    <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
-                        <button class="download-button"
-                                style="max-width:220px; margin-top:0;"
-                                @onclick="DownloadFile">
-                            ⬇ Download Searchable PDF
-                        </button>
-                        <button class="reset-button"
-                                style="max-width:160px;"
-                                @onclick="Reset">
-                            Process Another
-                        </button>
+                <div class="ocr-lang-section">
+                    <p class="ocr-lang-label">Document language</p>
+                    <div class="ocr-lang-grid">
+                        @foreach (var lang in _languages)
+                        {
+                            <button class="ocr-lang-btn @(_language == lang.Code ? "active" : "")"
+                                    @onclick="() => _language = lang.Code">
+                                <span class="ocr-lang-flag">@lang.Flag</span>
+                                <span class="ocr-lang-name">@lang.Name</span>
+                            </button>
+                        }
                     </div>
                 </div>
 
-                <!-- What changed -->
-                <div class="ocr-result-features">
-                    <div class="ocr-result-feat">
-                        <div class="ocr-result-feat-icon">✅</div>
-                        <div>
-                            <strong>Text is now selectable</strong>
-                            <p>Click and drag to select any text in the PDF</p>
-                        </div>
+                <div class="ocr-value-card">
+                    <h3>OCR helps you</h3>
+                    <div class="ocr-value-list">
+                        <span>Converts images into text</span>
+                        <span>Make PDFs searchable</span>
+                        <span>Enables copy &amp; paste</span>
+                        <span>Works best with clean scans</span>
                     </div>
-                    <div class="ocr-result-feat">
-                        <div class="ocr-result-feat-icon">🔍</div>
-                        <div>
-                            <strong>Ctrl+F search works</strong>
-                            <p>Find any word or phrase in the document</p>
-                        </div>
-                    </div>
-                    <div class="ocr-result-feat">
-                        <div class="ocr-result-feat-icon">📋</div>
-                        <div>
-                            <strong>Text can be copied</strong>
-                            <p>Copy content directly from the PDF</p>
-                        </div>
-                    </div>
-                    <div class="ocr-result-feat">
-                        <div class="ocr-result-feat-icon">🌐</div>
-                        <div>
-                            <strong>Search engine indexed</strong>
-                            <p>Google can now read and index the content</p>
-                        </div>
-                    </div>
+                    <p class="ocr-quality-note">Results may vary depending on scan quality.</p>
                 </div>
-
-                <div class="extract-download-cta" style="margin-top:1rem;">
-                    <div class="extract-download-cta-text">
-                        <svg width="20" height="20" viewBox="0 0 24 24"
-                             fill="none" stroke="currentColor" stroke-width="2"
-                             stroke-linecap="round" stroke-linejoin="round"
-                             style="color:var(--success); flex-shrink:0;">
-                            <circle cx="11" cy="11" r="8" />
-                            <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                        </svg>
-                        <div>
-                            <strong>Your PDF is ready</strong>
-                            <p>Same layout, same pages — now fully searchable and selectable.</p>
-                        </div>
-                    </div>
-                    <button class="download-button"
-                            style="max-width:220px; margin-top:0;"
-                            @onclick="DownloadFile">
-                        ⬇ Download Searchable PDF
-                    </button>
-                </div>
-            </div>
-        }
-
-        @if (CurrentState == PageState.Error)
-        {
-            <div class="error-container" role="alert">
-                <span class="error-icon" aria-hidden="true">❌</span>
-                <p class="error-message">@_error</p>
-                <button class="reset-button" @onclick="Reset">Try Again</button>
-            </div>
-        }
+            </aside>
+        </section>
 
     </div>
 
