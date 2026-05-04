@@ -62,16 +62,6 @@
                     <span>Google Drive</span>
                 </button>
 
-               @*  <button class="cloud-btn"
-                        @onclick="HandleOneDrive"
-                        disabled="@_cloudLoading"
-                        title="Import from OneDrive">
-                    <svg width="22" height="22" viewBox="0 0 24 24">
-                        <path d="M20.7 11.4c-.1-.6-.3-1.1-.6-1.6A5.6 5.6 0 0 0 14.7 7a5.5 5.5 0 0 0-4.6 2.5 3.3 3.3 0 0 0-1.4-.3A3.3 3.3 0 0 0 5.4 12a3.3 3.3 0 0 0 .1.7A4 4 0 0 0 4 16a4 4 0 0 0 4 4h12a4 4 0 0 0 .7-7.9z" fill="#0364B8" />
-                    </svg>
-                    OneDrive
-                </button> *@
-
             </div>
         </div>
 
@@ -111,6 +101,8 @@
             Remove
         </button>
     }
+
+    <TrustSignals />
 </div>
 
 <style>

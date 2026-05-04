@@ -1,0 +1,119 @@
+<div class="post-success-upsell" aria-label="@AriaLabel">
+    <div class="post-success-accent"></div>
+    <div class="post-success-copy">
+        <strong>@Content.Headline</strong>
+        <p>@Content.SupportingText</p>
+        <ul class="post-success-benefits">
+            @foreach (var benefit in Content.Benefits)
+            {
+                <li>@benefit</li>
+            }
+        </ul>
+    </div>
+    <a class="post-success-link" href="@Href">
+        @Content.CtaText
+    </a>
+</div>
+
+@code {
+    [Parameter] public string ToolName { get; set; } = string.Empty;
+    [Parameter] public string ActionPerformed { get; set; } = string.Empty;
+    [Parameter] public string Href { get; set; } = "/pricing";
+
+    private string AriaLabel => $"Upgrade suggestion after {DisplayToolName}";
+    private string DisplayToolName => string.IsNullOrWhiteSpace(ToolName) ? "processing" : ToolName;
+    private UpsellContent Content => GetContent(ToolName, ActionPerformed);
+
+    private static UpsellContent GetContent(string toolName, string actionPerformed)
+    {
+        var tool = Normalize(toolName);
+        var action = Normalize(actionPerformed);
+
+        return tool switch
+        {
+            "compress pdf" => new(
+                "Compress PDFs like this in bulk",
+                "You just reduced one file. Pro helps when the next task is a folder full of PDFs.",
+                new[] { "Compress up to 20 files at once", "Process larger PDFs", "Download everything as one ZIP" },
+                "Upgrade for batch compression"),
+
+            "pdf to jpg" => new(
+                "Export image sets faster",
+                "You converted pages to images. Pro keeps high-volume page exports moving without the one-file rhythm.",
+                new[] { "Batch PDF-to-image exports", "Larger source PDFs", "Faster repeat conversions" },
+                "Upgrade for faster exports"),
+
+            "jpg to pdf" => new(
+                "Turn image batches into PDFs",
+                "You built one PDF from images. Pro is built for recurring scan, photo, and upload workflows.",
+                new[] { "Handle larger image sets", "Batch document creation", "Priority processing" },
+                "Upgrade image workflows"),
+
+            "word to pdf" => new(
+                "Convert documents without slowing down",
+                "You converted a Word file. Pro helps with larger files and repeat document production.",
+                new[] { "Convert larger documents", "Batch multiple files", "Keep workflows moving faster" },
+                "Upgrade document conversion"),
+
+            "excel to pdf" => new(
+                "Make spreadsheet exports painless",
+                "You converted a workbook. Pro helps when reports, invoices, and sheets stack up.",
+                new[] { "Process larger workbooks", "Batch recurring exports", "Faster PDF generation" },
+                "Upgrade spreadsheet exports"),
+
+            "ppt to pdf" => new(
+                "Ship presentation PDFs faster",
+                "You converted one deck. Pro helps with larger presentations and repeat client-ready exports.",
+                new[] { "Convert larger decks", "Batch presentation exports", "Priority processing" },
+                "Upgrade presentation exports"),
+
+            "pdf to word" => new(
+                "Edit more PDFs without friction",
+                "You turned a PDF into an editable document. Pro is better for larger files and repeated extraction work.",
+                new[] { "Convert larger PDFs", "Batch editable exports", "Faster turnaround" },
+                "Upgrade editable exports"),
+
+            "pdf to excel" => new(
+                "Extract tables at work pace",
+                "You pulled spreadsheet data from a PDF. Pro helps when reports, statements, and invoices come in batches.",
+                new[] { "Process larger PDFs", "Batch table extraction", "More room for recurring work" },
+                "Upgrade table extraction"),
+
+            "translate pdf" => new(
+                "Translate more documents in one flow",
+                "You translated a PDF. Pro gives you more room for larger files and recurring multilingual workflows.",
+                new[] { "Translate larger PDFs", "More AI-powered usage", "Batch-ready document workflows" },
+                "Upgrade translation workflows"),
+
+            "batch process" => new(
+                "Make this your repeatable batch workflow",
+                $"You just ran a {ActionLabel(action)} batch. Pro keeps high-volume PDF work moving with fewer stops.",
+                new[] { "Process up to 20 files per batch", "Handle larger PDFs", "Download organized ZIP results" },
+                "Upgrade batch workflows"),
+
+            _ when action.Contains("convert") => new(
+                "Keep conversions moving",
+                "You finished one conversion. Pro helps when file size, volume, or repeat work starts to grow.",
+                new[] { "Larger files", "Batch workflows", "Faster processing" },
+                "Upgrade conversion workflows"),
+
+            _ => new(
+                "Ready for bigger PDF workflows?",
+                "You finished this file. Pro gives you more capacity when the next job is larger or more repetitive.",
+                new[] { "Larger files", "Batch workflows", "Priority processing" },
+                "View Pro options")
+        };
+    }
+
+    private static string Normalize(string value) =>
+        value.Trim().ToLowerInvariant().Replace("-", " ");
+
+    private static string ActionLabel(string action) =>
+        string.IsNullOrWhiteSpace(action) ? "PDF processing" : action;
+
+    private sealed record UpsellContent(
+        string Headline,
+        string SupportingText,
+        string[] Benefits,
+        string CtaText);
+}

@@ -133,21 +133,7 @@
                         <button class="reset-button" @onclick="Reset">
                             Convert Another PDF
                         </button>
-                        <div class="post-success-upsell">
-                            <div class="post-success-accent"></div>
-                            <div class="post-success-copy">
-                                <strong>Need to process more files?</strong>
-                                <p>Upgrade to Pro for larger files, faster processing, and batch workflows.</p>
-                                <div class="post-success-benefits">
-                                    <span>Larger files</span>
-                                    <span>Faster processing</span>
-                                    <span>Batch workflows</span>
-                                </div>
-                            </div>
-                            <a class="post-success-link" href="/pricing">
-                                View Pro options
-                            </a>
-                        </div>
+                        <PostSuccessUpsell ToolName="PDF to JPG" ActionPerformed="exported PDF pages to images" />
 
                         <RecentFiles FileName="@(SelectedFile?.Name ?? "Converted PDF")"
                                      ToolName="PDF to JPG"

@@ -22,114 +22,244 @@
 
 <div class="tool-page">
     <AdSlot Size="banner" />
-
     <div class="tool-container">
-        <h1>Organize PDF Pages</h1>
-        <p class="tool-subtitle">
-            Rearrange, rotate, and delete pages in your PDF.
-            No signup required. Files deleted within 1 hour.
-        </p>
+        <section class="tool-hero">
+            <div>
+                <div class="trust-row">
+                    <span>Secure processing</span>
+                    <span>Page controls</span>
+                    <span>Deleted in 1 hour</span>
+                </div>
 
-        @if (CurrentState == PageState.Upload)
-        {
-            <FileUpload OnFileSelected="HandleFileSelected"
-                        OnFileRemoved="HandleFileRemoved" />
+                <h1>Organize PDF pages <span class="hero-gradient-text">visually</span></h1>
+                <p class="tool-subtitle">
+                    Rearrange, rotate, and remove pages before creating a clean,
+                    reordered PDF.
+                </p>
+            </div>
+        </section>
 
-            @if (SelectedFile != null && Pages.Any())
-            {
-                <div class="organize-container">
-                    <h3>Click arrows to reorder — rotate or delete pages</h3>
-                    <div class="organize-grid">
-                        @for (int i = 0; i < Pages.Count; i++)
-                        {
-                            var idx = i;
-                            var pg = Pages[idx];
-                            <div class="@GetTileClass(pg.IsDeleted)">
-                                <div class="organize-page-num">
-                                    @pg.OriginalPage
+        <div class="stepper" aria-label="Organize PDF workflow progress">
+            <div class="step @(CurrentState == PageState.Upload && SelectedFile == null ? "active" : SelectedFile != null || CurrentState == PageState.Processing || CurrentState == PageState.Complete ? "complete" : "")">
+                <span>1</span>
+                <strong>Upload</strong>
+            </div>
+            <div class="step @(CurrentState == PageState.Upload && SelectedFile != null ? "active" : CurrentState == PageState.Processing || CurrentState == PageState.Complete ? "complete" : "")">
+                <span>2</span>
+                <strong>Arrange</strong>
+            </div>
+            <div class="step @(CurrentState == PageState.Processing ? "active" : CurrentState == PageState.Complete ? "complete" : "")">
+                <span>3</span>
+                <strong>Process</strong>
+            </div>
+            <div class="step @(CurrentState == PageState.Complete ? "active complete" : "")">
+                <span>4</span>
+                <strong>Download</strong>
+            </div>
+        </div>
+
+        <section class="workflow-grid">
+            <div class="workspace-card">
+                @if (CurrentState == PageState.Upload)
+                {
+                    <div class="panel-header">
+                        <span class="panel-eyebrow">Upload PDF</span>
+                        <h2>Start with your source file</h2>
+                        <p>Load a PDF, then use the page tiles to move, rotate, or remove pages.</p>
+                    </div>
+
+                    <FileUpload OnFileSelected="HandleFileSelected"
+                                OnFileRemoved="HandleFileRemoved"
+                                HintText="Upload a PDF — page controls appear after loading" />
+
+                    @if (SelectedFile != null && Pages.Any())
+                    {
+                        <div class="file-ready-card">
+                            <div class="file-ready-header">
+                                <div class="file-ready-icon" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7z" />
+                                        <polyline points="14 2 14 7 19 7" />
+                                        <polyline points="9 14 11 16 15 12" />
+                                    </svg>
                                 </div>
-                                <div class="organize-actions">
-                                    <button class="org-btn"
-                                            title="Move left"
-                                            disabled="@(idx == 0 || pg.IsDeleted)"
-                                            @onclick="() => MoveLeft(idx)">
-                                        ←
-                                    </button>
-                                    <button class="org-btn"
-                                            title="Rotate"
-                                            disabled="@pg.IsDeleted"
-                                            @onclick="() => RotatePage(idx)">
-                                        ↻
-                                    </button>
-                                    <button class="org-btn org-btn-delete"
-                                            title="Delete"
-                                            @onclick="() => ToggleDelete(idx)">
-                                        @GetDeleteLabel(pg.IsDeleted)
-                                    </button>
-                                    <button class="org-btn"
-                                            title="Move right"
-                                            disabled="@(idx == Pages.Count - 1 || pg.IsDeleted)"
-                                            @onclick="() => MoveRight(idx)">
-                                        →
-                                    </button>
+                                <div>
+                                    <span class="panel-eyebrow">Ready to arrange</span>
+                                    <strong>@SelectedFile.Name</strong>
+                                    <div class="file-ready-meta">
+                                        <span>PDF</span>
+                                        <span>@Validator.FormatSize(SelectedFile.Size)</span>
+                                    </div>
+                                    <small>@Pages.Count pages loaded</small>
                                 </div>
-                                @if (pg.Rotation != 0)
+                            </div>
+                            <div class="ready-metrics">
+                                <span>Move pages</span>
+                                <span>Rotate pages</span>
+                                <span>Remove pages</span>
+                            </div>
+                        </div>
+
+                        <div class="organize-container">
+                            <div class="organize-header">
+                                <span class="panel-eyebrow">Arrange pages</span>
+                                <h3>Use page controls to set the final order</h3>
+                                <p>Move pages left or right, rotate individual pages, or mark pages for removal.</p>
+                            </div>
+                            <div class="organize-grid">
+                                @for (int i = 0; i < Pages.Count; i++)
                                 {
-                                    <span class="rotation-badge">@pg.Rotation°</span>
+                                    var idx = i;
+                                    var pg = Pages[idx];
+                                    <div class="@GetTileClass(pg.IsDeleted)">
+                                        <div class="organize-page-num">
+                                            @pg.OriginalPage
+                                        </div>
+                                        <div class="organize-actions">
+                                            <button class="org-btn"
+                                                    title="Move left"
+                                                    disabled="@(idx == 0 || pg.IsDeleted)"
+                                                    @onclick="() => MoveLeft(idx)">
+                                                ←
+                                            </button>
+                                            <button class="org-btn"
+                                                    title="Rotate"
+                                                    disabled="@pg.IsDeleted"
+                                                    @onclick="() => RotatePage(idx)">
+                                                ↻
+                                            </button>
+                                            <button class="org-btn org-btn-delete"
+                                                    title="Delete"
+                                                    @onclick="() => ToggleDelete(idx)">
+                                                @GetDeleteLabel(pg.IsDeleted)
+                                            </button>
+                                            <button class="org-btn"
+                                                    title="Move right"
+                                                    disabled="@(idx == Pages.Count - 1 || pg.IsDeleted)"
+                                                    @onclick="() => MoveRight(idx)">
+                                                →
+                                            </button>
+                                        </div>
+                                        @if (pg.Rotation != 0)
+                                        {
+                                            <span class="rotation-badge">@pg.Rotation°</span>
+                                        }
+                                    </div>
                                 }
                             </div>
-                        }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="empty-state">
+                            <span class="empty-kicker">Page organizer</span>
+                            <strong>Upload a PDF to preview the page controls.</strong>
+                            <span>Your arrange workspace appears once the document is ready.</span>
+                        </div>
+                    }
+                }
+
+                @if (CurrentState == PageState.LargeFile)
+                {
+                    <LargeFileUpgrade
+                        FileSizeBytes="@(SelectedFile?.Size ?? 0)"
+                        FileName="@(SelectedFile?.Name ?? "")"
+                        ToolType="OrganizePdf"
+                        OnCancel="Reset" />
+                }
+
+                @if (CurrentState == PageState.Processing)
+                {
+                    <div class="processing-container" role="status">
+                        <div class="spinner"></div>
+                        <h2>Organizing your PDF</h2>
+                        <p>Applying page order, rotations, removals, and preparing your download.</p>
                     </div>
+                }
+
+                @if (CurrentState == PageState.Complete && ResultBytes != null)
+                {
+                    <AdSlot Size="rectangle" />
+                    <div class="result-container">
+                        <span class="result-icon" aria-hidden="true">Ready</span>
+                        <h2>Your organized PDF is ready</h2>
+                        <p class="result-copy">
+                            Your PDF pages have been reorganized successfully.
+                        </p>
+                        <button class="download-button" @onclick="DownloadFile">
+                            Download PDF
+                        </button>
+                        <button class="reset-button" @onclick="Reset">
+                            Organize Another PDF
+                        </button>
+                    </div>
+                }
+
+                @if (CurrentState == PageState.Error)
+                {
+                    <div class="error-container" role="alert">
+                        <span class="error-icon" aria-hidden="true">Organize failed</span>
+                        <h2>We could not apply the page changes</h2>
+                        <p class="error-message">@ErrorMessage</p>
+                        <button class="reset-button" @onclick="Reset">Try Again</button>
+                    </div>
+                }
+            </div>
+
+            <aside class="settings-card">
+                <div class="panel-header">
+                    <span class="panel-eyebrow">Page workflow</span>
+                    <h2>Finalize page changes</h2>
+                    <p>Review the current page count, removal count, and output before applying changes.</p>
+                </div>
+
+                @if (SelectedFile != null)
+                {
+                    <div class="file-summary">
+                        <span class="file-name">@SelectedFile.Name</span>
+                        <span class="file-size">@Validator.FormatSize(SelectedFile.Size)</span>
+                    </div>
+                }
+
+                <div class="option-list">
+                    <span><strong>Reorder pages</strong><small>Use arrows on each tile to move pages into position.</small></span>
+                    <span><strong>Rotate pages</strong><small>Rotate individual pages before generating the final PDF.</small></span>
+                    <span><strong>Remove pages</strong><small>Mark pages for deletion while keeping the original upload unchanged.</small></span>
+                </div>
+
+                @if (CurrentState == PageState.Upload && SelectedFile != null && Pages.Any())
+                {
+                    <div class="organize-summary">
+                        <span>
+                            <strong>@Pages.Count</strong>
+                            <small>Total pages</small>
+                        </span>
+                        <span>
+                            <strong>@DeletedPageCount</strong>
+                            <small>Marked for removal</small>
+                        </span>
+                        <span>
+                            <strong>@RotatedPageCount</strong>
+                            <small>Rotated</small>
+                        </span>
+                    </div>
+
                     <button class="process-button" @onclick="ProcessFile">
                         Apply Changes
                     </button>
-                </div>
-            }
-        }
-
-        @if (CurrentState == PageState.LargeFile)
-        {
-            <LargeFileUpgrade
-                FileSizeBytes="@(SelectedFile?.Size ?? 0)"
-                FileName="@(SelectedFile?.Name ?? "")"
-                ToolType="OrganizePdf"
-                OnCancel="Reset" />
-        }
-
-        @if (CurrentState == PageState.Processing)
-        {
-            <div class="processing-container">
-                <div class="spinner"></div>
-                <p>Organizing your PDF...</p>
-            </div>
-        }
-
-        @if (CurrentState == PageState.Complete && ResultBytes != null)
-        {
-            <AdSlot Size="rectangle" />
-            <div class="result-container">
-                <span class="result-icon">✅</span>
-                <h2>PDF Organized!</h2>
-                <p style="color: var(--gray); margin-bottom: 1.5rem;">
-                    Your PDF pages have been reorganized successfully.
-                </p>
-                <button class="download-button" @onclick="DownloadFile">
-                    Download PDF
-                </button>
-                <button class="reset-button" @onclick="Reset">
-                    Organize Another PDF
-                </button>
-            </div>
-        }
-
-        @if (CurrentState == PageState.Error)
-        {
-            <div class="error-container">
-                <span class="error-icon">❌</span>
-                <p class="error-message">@ErrorMessage</p>
-                <button class="reset-button" @onclick="Reset">Try Again</button>
-            </div>
-        }
+                    <div class="secure-note">
+                        Secure processing. Files are deleted within 1 hour.
+                    </div>
+                }
+                else if (CurrentState == PageState.Upload)
+                {
+                    <button class="process-button disabled" disabled>
+                        Apply Changes
+                    </button>
+                    <p class="action-hint">Upload a PDF to enable page organization.</p>
+                }
+            </aside>
+        </section>
     </div>
 
     <div class="faq-section">
@@ -151,6 +281,89 @@
         </div>
     </div>
 </div>
+
+<style>
+    .tool-page { width: 100%; max-width: none !important; min-height: calc(100vh - 72px); margin: 0; padding: 48px 0 72px; box-sizing: border-box; background: radial-gradient(circle at top left, rgba(109,40,217,.12), transparent 32%), linear-gradient(135deg, #f8f7ff 0%, #eef5ff 100%); color: #172033; }
+    .tool-container { width: min(1320px, calc(100% - 64px)) !important; max-width: 1320px; margin: 0 auto; padding: 0; background: transparent !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; text-align: left; box-sizing: border-box; }
+    .tool-hero { width: 100%; max-width: none; margin-bottom: 24px; text-align: left; }
+    .tool-hero h1 { max-width: 900px; margin: 0 0 14px; color: #111827; font-size: clamp(2.4rem, 3vw, 3.8rem); line-height: 1.02; letter-spacing: -0.04em; }
+    .tool-hero p { max-width: 760px; margin: 0; color: #526173; font-size: 1rem; line-height: 1.7; }
+    .hero-gradient-text { background: linear-gradient(135deg, #6d5dfc 0%, #2563eb 55%, #06b6d4 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .trust-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; }
+    .trust-row span { border: 1px solid rgba(37,99,235,.16); border-radius: 999px; background: rgba(255,255,255,.76); color: #334155; font-size: .83rem; font-weight: 800; padding: .48rem .78rem; box-shadow: 0 10px 30px rgba(15,23,42,.06); }
+    .stepper { width: 100% !important; max-width: none; margin: 0 0 24px !important; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 8px; border-radius: 999px; background: rgba(255,255,255,.8); box-shadow: 0 18px 45px rgba(15,23,42,.08); }
+    .step { display: flex; align-items: center; justify-content: center; gap: .45rem; min-height: 44px; border-radius: 999px; color: #64748b; font-size: .9rem; font-weight: 900; padding: .45rem .7rem .45rem .45rem; transition: transform .2s ease, background .2s ease, color .2s ease; }
+    .step span { display: grid; place-items: center; width: 1.7rem; height: 1.7rem; border-radius: 50%; background: #eef2ff; color: #4f46e5; font-size: .82rem; font-weight: 800; }
+    .step strong { font-size: .88rem; white-space: nowrap; }
+    .step.active { background: linear-gradient(135deg, rgba(109,93,252,.15), rgba(37,99,235,.12)); color: #1e293b; box-shadow: inset 0 0 0 1px rgba(37,99,235,.12); }
+    .step.complete { background: linear-gradient(135deg, #6d5dfc 0%, #2563eb 55%, #06b6d4 100%); color: #fff; }
+    .step.complete span { background: rgba(255,255,255,.22); color: #fff; }
+    .workflow-grid { width: 100%; max-width: none; display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(360px, .75fr); gap: 28px; align-items: start; }
+    .workspace-card, .settings-card { width: 100%; max-width: none; min-width: 0; box-sizing: border-box; border: 1px solid rgba(148,163,184,.18); border-radius: 24px; background: rgba(255,255,255,.92); box-shadow: 0 20px 50px rgba(15,23,42,.08); padding: 28px; }
+    .settings-card { position: sticky; top: 24px; }
+    .panel-header { margin-bottom: 20px; }
+    .panel-eyebrow { display: inline-flex; margin-bottom: 10px; background: linear-gradient(135deg, #6d5dfc 0%, #2563eb 55%, #06b6d4 100%); -webkit-background-clip: text; background-clip: text; color: transparent; font-size: .76rem; font-weight: 950; letter-spacing: .08em; text-transform: uppercase; }
+    .panel-header h2 { margin: 0 0 8px; color: #111827; font-size: 1.35rem; line-height: 1.2; }
+    .panel-header p { margin: 0; color: #64748b; line-height: 1.6; }
+    .upload-container { width: 100%; max-width: none; box-sizing: border-box; border: 1px dashed rgba(37,99,235,.28); border-radius: 22px; background: linear-gradient(135deg, #fff, #f8fbff); padding: 28px; text-align: center; }
+    .file-ready-card { display: grid; gap: 1rem; margin-top: 1rem; border-radius: 22px; background: linear-gradient(135deg, rgba(109,93,252,.1), rgba(6,182,212,.08)), #fff; border: 1px solid rgba(109,93,252,.18); padding: 1.1rem; }
+    .file-ready-header { display: flex; gap: .85rem; align-items: center; min-width: 0; }
+    .file-ready-icon { display: grid; place-items: center; flex: 0 0 auto; width: 46px; height: 46px; border-radius: 16px; background: #eef2ff; color: #3730a3; }
+    .file-ready-icon svg { width: 24px; height: 24px; }
+    .file-ready-card strong, .file-ready-card small { display: block; }
+    .file-ready-card strong { margin-top: .3rem; color: #111827; font-size: 1.05rem; overflow-wrap: anywhere; }
+    .file-ready-card small { margin-top: .2rem; color: #64748b; font-weight: 700; }
+    .file-ready-meta { display: flex; flex-wrap: wrap; gap: .45rem; margin-top: .4rem; }
+    .file-ready-meta span { border-radius: 999px; background: rgba(255,255,255,.8); color: #475569; font-size: .74rem; font-weight: 900; padding: .32rem .55rem; }
+    .ready-metrics, .organize-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .55rem; }
+    .ready-metrics span, .organize-summary span { border-radius: 14px; background: rgba(255,255,255,.75); color: #334155; font-size: .8rem; font-weight: 900; padding: .7rem; text-align: center; }
+    .organize-summary { margin: 18px 0; }
+    .organize-summary strong, .organize-summary small { display: block; }
+    .organize-summary strong { color: #111827; font-size: 1.25rem; }
+    .organize-summary small { margin-top: .15rem; color: #64748b; font-size: .74rem; font-weight: 850; }
+    .empty-state { display: grid; gap: .4rem; margin-top: 1rem; border-radius: 20px; background: #f8fafc; color: #64748b; padding: 1rem; }
+    .empty-state strong { color: #1e293b; font-size: 1.1rem; }
+    .empty-kicker { color: #2563eb; font-size: .78rem; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+    .file-summary, .option-list span { border: 1px solid rgba(148,163,184,.16); border-radius: 18px; background: #f8fafc; padding: 16px; }
+    .file-summary { display: flex; justify-content: space-between; gap: 16px; align-items: center; margin-top: 18px; }
+    .file-name, .file-size, .option-list strong, .option-list small { display: block; }
+    .file-name { color: #111827; font-weight: 900; word-break: break-word; }
+    .file-size, .option-list small { color: #64748b; font-size: .9rem; }
+    .option-list { display: grid; gap: 12px; margin: 18px 0; }
+    .option-list strong { color: #111827; margin-bottom: 4px; }
+    .organize-container { margin-top: 1rem; border-radius: 24px; border: 1px solid rgba(148,163,184,.16); background: #f8fafc; padding: 20px; }
+    .organize-header { margin-bottom: 16px; }
+    .organize-header h3 { margin: 0 0 6px; color: #111827; font-size: 1.15rem; line-height: 1.2; }
+    .organize-header p { margin: 0; color: #64748b; line-height: 1.55; }
+    .organize-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 12px; margin: 0; justify-content: stretch; }
+    .organize-tile { width: auto; min-height: 118px; display: grid; align-content: center; gap: .75rem; border: 1px solid rgba(148,163,184,.22); border-radius: 18px; background: #fff; box-shadow: 0 12px 24px rgba(15,23,42,.05); padding: .85rem; text-align: center; position: relative; transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease; }
+    .organize-tile:hover { transform: translateY(-1px); border-color: rgba(37,99,235,.32); box-shadow: 0 16px 32px rgba(37,99,235,.09); }
+    .organize-tile-deleted { opacity: .55; border-color: rgba(220,38,38,.38) !important; background: #fff5f5; }
+    .organize-page-num { display: grid; place-items: center; width: 44px; height: 44px; margin: 0 auto; border-radius: 14px; background: #eef2ff; color: #3730a3; font-size: 1.05rem; font-weight: 950; }
+    .organize-actions { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; }
+    .org-btn { display: inline-flex; align-items: center; justify-content: center; min-width: 0; min-height: 32px; border: 1px solid rgba(148,163,184,.24); border-radius: 10px; background: #fff; color: #334155; cursor: pointer; font-size: .82rem; font-weight: 950; padding: 0; transition: transform .16s ease, border-color .16s ease, background .16s ease, color .16s ease; }
+    .org-btn:hover:not(:disabled) { transform: translateY(-1px); border-color: rgba(37,99,235,.3); background: #eef2ff; color: #3730a3; }
+    .org-btn:disabled { cursor: not-allowed; opacity: .36; transform: none; }
+    .org-btn-delete { color: #dc2626 !important; }
+    .rotation-badge { position: absolute; top: -8px; right: -8px; border-radius: 999px; background: linear-gradient(135deg, #6d5dfc, #2563eb); color: #fff; font-size: .68rem; font-weight: 950; padding: .22rem .45rem; box-shadow: 0 10px 18px rgba(37,99,235,.22); }
+    .process-button, .download-button { width: 100%; border: 0; border-radius: 16px; background: linear-gradient(135deg, #6d5dfc, #2563eb); color: #fff; cursor: pointer; font-weight: 950; padding: 1rem 1.15rem; box-shadow: 0 18px 36px rgba(37,99,235,.25); transition: transform .18s ease, box-shadow .18s ease; }
+    .process-button:hover, .download-button:hover { transform: translateY(-2px); box-shadow: 0 24px 45px rgba(37,99,235,.32); }
+    .process-button.disabled { cursor: not-allowed; opacity: .58; transform: none; box-shadow: none; }
+    .processing-container, .result-container, .error-container { text-align: center; padding: 34px 18px; }
+    .spinner { width: 46px; height: 46px; margin: 0 auto 18px; border: 4px solid #e0e7ff; border-top-color: #2563eb; border-radius: 50%; animation: spin 1s linear infinite; }
+    .result-icon, .error-icon { display: inline-flex; margin-bottom: 14px; border-radius: 999px; padding: .45rem .7rem; font-size: .82rem; font-weight: 950; }
+    .result-icon { background: #dcfce7; color: #166534; }
+    .error-icon { background: #fee2e2; color: #991b1b; }
+    .result-container h2, .error-container h2, .processing-container h2 { margin: 0 0 10px; color: #111827; }
+    .result-container p, .error-container p, .processing-container p { margin: 0 0 18px; color: #64748b; line-height: 1.6; }
+    .reset-button { border: 0; border-radius: 14px; background: #eef2ff; color: #3730a3; cursor: pointer; font-weight: 900; padding: .9rem 1rem; }
+    .download-button + .reset-button { width: 100%; margin-top: 12px; }
+    .secure-note, .action-hint { margin-top: .8rem; color: #64748b; font-size: .82rem; font-weight: 800; text-align: center; }
+    .error-message { color: #b91c1c; font-weight: 800; }
+    @@keyframes spin { to { transform: rotate(360deg); } }
+    @@media (max-width: 980px) { .tool-container { width: min(100%, calc(100% - 24px)) !important; } .workflow-grid { grid-template-columns: 1fr; } .settings-card { position: static; } .stepper { overflow-x: auto; border-radius: 20px; grid-template-columns: repeat(4, minmax(130px, 1fr)); } .tool-hero h1 { font-size: clamp(2rem, 8vw, 3rem); } }
+    @@media (max-width: 640px) { .workspace-card, .settings-card { border-radius: 22px; padding: 1rem; } .organize-container { padding: 1rem; } .organize-grid { grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); } .ready-metrics, .organize-summary { grid-template-columns: 1fr; } }
+</style>
 
 @code {
     private enum PageState
@@ -187,6 +400,10 @@
 
     private string GetDeleteLabel(bool isDeleted) =>
         isDeleted ? "↩" : "✕";
+
+    private int DeletedPageCount => Pages.Count(p => p.IsDeleted);
+
+    private int RotatedPageCount => Pages.Count(p => p.Rotation != 0);
 
     private async Task HandleFileSelected(IBrowserFile file)
     {

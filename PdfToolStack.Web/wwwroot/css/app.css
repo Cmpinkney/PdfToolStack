@@ -611,7 +611,8 @@ h2 {
 }
 
 /* ── Tool Pages ───────────────────────────────────────────── */
-.tool-page {
+.tool-page:has(.workflow-grid),
+.tool-page:has(.stepper) {
     max-width: 800px;
     margin: 0 auto;
     padding: 2rem 1.5rem 4rem;
@@ -12307,7 +12308,7 @@ body {
 }
 
 /* Tool pages — keep their content readable on gradient */
-.tool-page {
+.tool-page:has(> .tool-container) {
     background: transparent !important;
 }
 
@@ -22207,6 +22208,19 @@ html {
     text-decoration: none;
 }
 
+img.brand-logo {
+    height: 44px;
+    width: auto;
+    display: block;
+    object-fit: contain;
+}
+
+@media (max-width: 768px) {
+    img.brand-logo {
+        height: 38px;
+    }
+}
+
 .brand-mark {
     display: block;
     flex: 0 0 auto;
@@ -22264,6 +22278,10 @@ html {
 
 .site-footer .brand-logo {
     gap: 11px;
+    height: auto;
+    width: auto;
+    display: inline-flex;
+    object-fit: initial;
 }
 
 .site-footer .brand-text {
@@ -22271,9 +22289,6 @@ html {
 }
 
 /* Brand-critical polish: logo, nav, account menu, footer */
-.brand-logo {
-    gap: 12px;
-}
 
 .brand-mark {
     align-self: center;
@@ -22307,8 +22322,17 @@ html {
     box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
 }
 
-.nav-brand .brand-logo {
-    min-height: 42px;
+.nav-brand img.brand-logo {
+    height: 44px;
+    min-height: 0;
+}
+
+@media (max-width: 768px) {
+    .nav-brand img.brand-logo,
+    .mob-header img.brand-logo {
+        height: 38px;
+        min-height: 0;
+    }
 }
 
 .nav-brand .brand-text {
@@ -22583,10 +22607,6 @@ html {
 }
 
 /* Logo system refinement */
-.brand-logo {
-    align-items: center;
-    gap: 11px;
-}
 
 .brand-mark {
     overflow: visible;
@@ -23587,3 +23607,1116 @@ html {
         padding-right: 0;
     }
 }
+
+/* Global primary action buttons */
+:root {
+    --button-primary-gradient: linear-gradient(135deg, #6D5DFC 0%, #2563EB 55%, #06B6D4 100%);
+    --button-primary-gradient-hover: linear-gradient(135deg, #5B4BEA 0%, #1D4ED8 55%, #0891B2 100%);
+    --button-primary-gradient-active: linear-gradient(135deg, #4C3FD2 0%, #1E40AF 55%, #0E7490 100%);
+    --button-primary-shadow: 0 14px 28px rgba(37, 99, 235, 0.24);
+    --button-primary-shadow-hover: 0 18px 38px rgba(37, 99, 235, 0.32);
+    --button-action-padding: 0.82rem 1.75rem;
+    --button-action-radius: 12px;
+}
+
+.upload-button,
+.process-button,
+.download-button,
+.bp-proc-btn,
+.bp-dl-btn,
+.cp-apply-btn,
+.cp-download-btn,
+.tp-translate-btn,
+.tp-download-btn,
+.fill-primary-button {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.55rem !important;
+    min-height: 48px !important;
+    padding: var(--button-action-padding) !important;
+    border: 0 !important;
+    border-radius: var(--button-action-radius) !important;
+    background: var(--button-primary-gradient) !important;
+    color: #fff !important;
+    font-family: inherit !important;
+    font-size: 0.95rem !important;
+    font-weight: 700 !important;
+    line-height: 1.1 !important;
+    text-align: center !important;
+    text-decoration: none !important;
+    cursor: pointer !important;
+    box-shadow: var(--button-primary-shadow) !important;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease, opacity 0.18s ease !important;
+}
+
+.upload-button:hover,
+.process-button:hover:not(:disabled),
+.download-button:hover,
+.bp-proc-btn:hover:not(:disabled),
+.bp-dl-btn:hover,
+.cp-apply-btn:hover:not(:disabled),
+.cp-download-btn:hover,
+.tp-translate-btn:hover:not(:disabled),
+.tp-download-btn:hover,
+.fill-primary-button:hover {
+    background: var(--button-primary-gradient-hover) !important;
+    box-shadow: var(--button-primary-shadow-hover) !important;
+    transform: translateY(-1px) !important;
+}
+
+.upload-button:active,
+.process-button:active:not(:disabled),
+.download-button:active,
+.bp-proc-btn:active:not(:disabled),
+.bp-dl-btn:active,
+.cp-apply-btn:active:not(:disabled),
+.cp-download-btn:active,
+.tp-translate-btn:active:not(:disabled),
+.tp-download-btn:active,
+.fill-primary-button:active {
+    background: var(--button-primary-gradient-active) !important;
+    box-shadow: 0 8px 18px rgba(37, 99, 235, 0.22) !important;
+    transform: translateY(0) scale(0.99) !important;
+}
+
+.upload-button:focus-visible,
+.process-button:focus-visible,
+.download-button:focus-visible,
+.bp-proc-btn:focus-visible,
+.bp-dl-btn:focus-visible,
+.cp-apply-btn:focus-visible,
+.cp-download-btn:focus-visible,
+.tp-translate-btn:focus-visible,
+.tp-download-btn:focus-visible,
+.fill-primary-button:focus-visible {
+    outline: 3px solid color-mix(in srgb, var(--brand-primary) 32%, transparent) !important;
+    outline-offset: 3px !important;
+}
+
+.process-button:disabled,
+.process-button.disabled,
+.bp-proc-btn:disabled,
+.cp-apply-btn:disabled,
+.tp-translate-btn:disabled,
+.fill-primary-button:disabled {
+    opacity: 0.52 !important;
+    cursor: not-allowed !important;
+    box-shadow: none !important;
+    transform: none !important;
+}
+
+/* Tool page typography hierarchy */
+:root {
+    --tool-title-size: clamp(2.35rem, 4.2vw, 3.55rem);
+    --tool-title-weight: 850;
+    --tool-title-leading: 1.04;
+    --tool-subtitle-color: #475569;
+    --tool-body-color: #64748B;
+    --tool-card-title-weight: 600;
+    --tool-section-gap: 2rem;
+}
+
+[data-theme="dark"] {
+    --tool-subtitle-color: #CBD5E1;
+    --tool-body-color: #94A3B8;
+}
+
+.tool-container h1,
+.tool-hero h1,
+.ai-tool-hero h1,
+.extract-invoice-hero h1,
+.ocr-tool-hero h1,
+.compare-tool-hero h1,
+.edit-hero h1,
+.annotate-hero h1,
+.sign-hero h1,
+.bp-hero-title,
+.tp-title,
+.cp-title,
+.np-title,
+.rp-title {
+    font-size: var(--tool-title-size) !important;
+    font-weight: var(--tool-title-weight) !important;
+    line-height: var(--tool-title-leading) !important;
+    letter-spacing: -0.035em !important;
+    color: var(--text) !important;
+    margin-bottom: 0.85rem !important;
+}
+
+.tool-subtitle,
+.tool-hero p,
+.ai-tool-hero p,
+.ai-tool-card-header p,
+.extract-invoice-hero p,
+.ocr-tool-hero p,
+.compare-tool-hero p,
+.bp-header-left p,
+.tp-subtitle,
+.cp-subtitle,
+.np-subtitle,
+.rp-subtitle {
+    color: var(--tool-subtitle-color) !important;
+    font-size: clamp(1rem, 1.2vw, 1.08rem) !important;
+    line-height: 1.68 !important;
+    font-weight: 450 !important;
+}
+
+.tool-page p,
+.tool-container p,
+.ai-tool-container p,
+.ocr-tool-container p,
+.compare-tool-container p,
+.edit-tool-container p,
+.annotate-tool-container p,
+.sign-tool-container p,
+.bp-wrap p,
+.tp-page p,
+.cp-page p,
+.np-shell p,
+.rp-page p {
+    color: var(--tool-body-color);
+}
+
+.tool-card h3,
+.popular-fixes-grid .tool-card h3,
+.ai-tool-card-header h2,
+.review-section h3,
+.bp-dz-title,
+.bp-pl-title,
+.bp-workflow-title,
+.bp-preview-title,
+.bp-prog-title,
+.bp-activity-title,
+.bp-insight-title,
+.bp-result-title,
+.tp-upload-title,
+.tp-section-label,
+.tp-result-title,
+.cp-upload-title,
+.cp-settings-title,
+.np-upload-title,
+.np-settings-title,
+.rp-upload-title,
+.rp-panel-title {
+    font-weight: var(--tool-card-title-weight) !important;
+    letter-spacing: -0.01em !important;
+    color: var(--text) !important;
+}
+
+.tool-card p,
+.popular-fixes-grid .tool-card p,
+.upload-prompt p,
+.upload-hint,
+.file-size,
+.bp-wrap small,
+.tp-page small,
+.cp-page small,
+.np-shell small,
+.rp-page small {
+    color: var(--tool-body-color) !important;
+}
+
+.tool-container > section + section,
+.tool-container > .workflow-grid + .faq-section,
+.tool-page > .faq-section,
+.ai-tool-container > section + section,
+.ai-tool-container + .faq-section,
+.ocr-tool-container + .faq-section,
+.compare-tool-container + .faq-section,
+.edit-tool-container + .faq-section,
+.annotate-tool-container + .faq-section,
+.sign-tool-container + .faq-section,
+.bp-main + .bp-progress-section,
+.bp-progress-section + .bp-insights-grid,
+.tp-shell > section + section,
+.cp-shell > section + section,
+.np-shell > section + section,
+.rp-shell > section + section {
+    margin-top: var(--tool-section-gap) !important;
+}
+
+@media (max-width: 768px) {
+    :root {
+        --tool-title-size: clamp(2rem, 9vw, 2.7rem);
+        --tool-section-gap: 1.5rem;
+    }
+}
+
+/* Contextual post-success upsell benefits */
+.post-success-upsell {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 1rem;
+    align-items: center;
+    overflow: hidden;
+    width: 100%;
+    box-sizing: border-box;
+    margin-top: 1rem;
+    border: 1px solid rgba(109, 93, 252, 0.18);
+    border-radius: 18px;
+    background:
+        radial-gradient(circle at top left, rgba(109, 93, 252, 0.12), transparent 38%),
+        linear-gradient(135deg, rgba(255, 255, 255, 0.94), rgba(239, 246, 255, 0.86));
+    box-shadow: 0 14px 34px rgba(37, 99, 235, 0.08);
+    padding: 1rem 1rem 1rem 1.15rem;
+    text-align: left;
+}
+
+.post-success-accent {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 4px;
+    background: linear-gradient(180deg, #6D5DFC 0%, #2563EB 58%, #06B6D4 100%);
+}
+
+.post-success-copy {
+    position: relative;
+    min-width: 0;
+}
+
+.post-success-copy strong {
+    display: block;
+    color: var(--text);
+    font-size: 1.02rem;
+    font-weight: 850;
+    letter-spacing: -0.015em;
+    margin-bottom: 0.3rem;
+}
+
+.post-success-copy p {
+    margin: 0 0 0.75rem;
+    color: var(--tool-body-color, #64748B);
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.post-success-link {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    background: var(--button-primary-gradient, linear-gradient(135deg, #6D5DFC 0%, #2563EB 65%, #06B6D4 100%));
+    box-shadow: 0 14px 28px rgba(37, 99, 235, 0.22);
+    color: #fff !important;
+    font-size: 0.84rem;
+    font-weight: 850;
+    line-height: 1.1;
+    padding: 0.78rem 0.95rem;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.post-success-link:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 18px 34px rgba(37, 99, 235, 0.28);
+}
+
+.post-success-benefits {
+    display: grid !important;
+    gap: 0.45rem !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    list-style: none !important;
+}
+
+.post-success-benefits li {
+    position: relative !important;
+    padding-left: 1.15rem !important;
+    color: #334155 !important;
+    font-size: 0.82rem !important;
+    font-weight: 750 !important;
+    line-height: 1.35 !important;
+}
+
+.post-success-benefits li::before {
+    content: "" !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0.48em !important;
+    width: 0.42rem !important;
+    height: 0.42rem !important;
+    border-radius: 999px !important;
+    background: var(--brand-success) !important;
+}
+
+[data-theme="dark"] .post-success-benefits li {
+    color: #CBD5E1 !important;
+}
+
+[data-theme="dark"] .post-success-upsell {
+    background:
+        radial-gradient(circle at top left, rgba(109, 93, 252, 0.18), transparent 38%),
+        linear-gradient(135deg, rgba(30, 41, 59, 0.92), rgba(15, 23, 42, 0.86));
+    border-color: rgba(148, 163, 184, 0.22);
+}
+
+@media (max-width: 700px) {
+    .post-success-upsell {
+        grid-template-columns: 1fr;
+    }
+
+    .post-success-link {
+        width: 100%;
+        white-space: normal;
+        text-align: center;
+    }
+}
+
+/* Global processing state: staged, non-blocking frontend polish */
+.processing-container,
+.ai-processing-container,
+.tp-processing-card,
+.pdf-loading-card,
+.sf-viewport-loading-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.processing-container .spinner,
+.acc-loading .spinner,
+.pdf-loading-spinner,
+.tp-proc-spinner {
+    width: min(100%, 320px) !important;
+    height: 8px !important;
+    margin: 0 auto 0.75rem !important;
+    border: 0 !important;
+    border-radius: 999px !important;
+    background:
+        linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.72) 48%, transparent 100%),
+        linear-gradient(90deg, #6D5DFC 0%, #2563EB 55%, #06B6D4 100%) !important;
+    background-size: 80px 100%, 100% 100% !important;
+    box-shadow: 0 10px 24px rgba(37, 99, 235, 0.22) !important;
+    animation: processing-bar-sheen 1.25s ease-in-out infinite !important;
+}
+
+.processing-container::before,
+.ai-processing-container::before,
+.tp-processing-card::before,
+.pdf-loading-card::before,
+.sf-viewport-loading-card::before {
+    content: "";
+    display: block;
+    width: min(100%, 320px);
+    height: 8px;
+    margin: 0 auto 1rem;
+    border-radius: 999px;
+    background:
+        linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.72) 48%, transparent 100%),
+        linear-gradient(90deg, #6D5DFC 0%, #2563EB 55%, #06B6D4 100%);
+    background-size: 80px 100%, 100% 100%;
+    box-shadow: 0 10px 24px rgba(37, 99, 235, 0.18);
+    animation: processing-bar-sheen 1.25s ease-in-out infinite;
+}
+
+.processing-container:has(.spinner)::before,
+.pdf-loading-card:has(.pdf-loading-spinner)::before,
+.tp-processing-card:has(.tp-proc-spinner)::before {
+    display: none;
+}
+
+.processing-container::after,
+.ai-processing-container::after,
+.tp-processing-card::after,
+.pdf-loading-card::after,
+.sf-viewport-loading-card::after {
+    content: "Uploading...   Processing document...   Finalizing output...";
+    display: block;
+    max-width: 520px;
+    margin: 0.35rem auto 0;
+    color: var(--text-secondary);
+    font-size: 0.82rem;
+    font-weight: 650;
+    line-height: 1.45;
+    letter-spacing: 0.01em;
+    text-align: center;
+    animation: processing-stage-pulse 2.4s ease-in-out infinite;
+}
+
+.processing-container.compact::after {
+    content: "Reading document...   Checking pages...   Preparing controls...";
+}
+
+.processing-container h2,
+.ai-processing-container h3,
+.tp-processing-card h2,
+.pdf-loading-msg,
+.sf-viewport-loading-title {
+    animation: processing-title-lift 2.4s ease-in-out infinite;
+}
+
+.ai-processing-steps,
+.tp-processing-steps {
+    position: relative;
+}
+
+.ai-processing-step,
+.tp-processing-step {
+    transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.ai-processing-step.done,
+.tp-processing-step.done {
+    transform: translateX(2px);
+}
+
+@keyframes processing-bar-sheen {
+    0% {
+        background-position: -90px 0, 0 0;
+        opacity: 0.78;
+    }
+
+    50% {
+        opacity: 1;
+    }
+
+    100% {
+        background-position: calc(100% + 90px) 0, 0 0;
+        opacity: 0.78;
+    }
+}
+
+@keyframes processing-stage-pulse {
+    0%, 100% {
+        opacity: 0.68;
+    }
+
+    45% {
+        opacity: 1;
+    }
+}
+
+@keyframes processing-title-lift {
+    0%, 100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-1px);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .processing-container .spinner,
+    .acc-loading .spinner,
+    .pdf-loading-spinner,
+    .tp-proc-spinner,
+    .processing-container::before,
+    .ai-processing-container::before,
+    .tp-processing-card::before,
+    .pdf-loading-card::before,
+    .sf-viewport-loading-card::before,
+    .processing-container::after,
+    .ai-processing-container::after,
+    .tp-processing-card::after,
+    .pdf-loading-card::after,
+    .sf-viewport-loading-card::after,
+    .processing-container h2,
+    .ai-processing-container h3,
+    .tp-processing-card h2,
+    .pdf-loading-msg,
+    .sf-viewport-loading-title {
+        animation: none !important;
+    }
+}
+
+/* Standard trust signals across tool workflows */
+.trust-signals,
+.upload-container:not(:has(.trust-signals))::after,
+.compare-upload-card::after,
+.reader-file-upload:not(:has(.trust-signals))::after,
+.tp-upload-panel:not(:has(.trust-signals))::after,
+.result-container::after,
+.ai-result-card::after,
+.tp-result::after,
+.bp-result::after,
+.fill-success-card::after {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    margin-top: 1rem;
+    color: var(--text-secondary);
+    font-size: 0.76rem;
+    font-weight: 750;
+    line-height: 1.35;
+    text-align: center;
+}
+
+.upload-container:not(:has(.trust-signals))::after,
+.compare-upload-card::after,
+.reader-file-upload:not(:has(.trust-signals))::after,
+.tp-upload-panel:not(:has(.trust-signals))::after,
+.result-container::after,
+.ai-result-card::after,
+.tp-result::after,
+.bp-result::after,
+.fill-success-card::after {
+    content: "Files deleted in 1 hour  |  Encrypted processing  |  No data stored";
+}
+
+.trust-signals span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.32rem;
+    white-space: nowrap;
+}
+
+.trust-signals span::before {
+    content: "";
+    width: 0.42rem;
+    height: 0.42rem;
+    flex: 0 0 auto;
+    border-radius: 999px;
+    background: var(--brand-success);
+}
+
+.upload-container:not(:has(.trust-signals))::after,
+.reader-file-upload:not(:has(.trust-signals))::after,
+.tp-upload-panel:not(:has(.trust-signals))::after {
+    padding-top: 0.85rem;
+    border-top: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+}
+
+.result-container::after,
+.ai-result-card::after,
+.tp-result::after,
+.bp-result::after,
+.fill-success-card::after {
+    padding-top: 1rem;
+    border-top: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
+}
+
+[data-theme="dark"] .trust-signals,
+[data-theme="dark"] .upload-container:not(:has(.trust-signals))::after,
+[data-theme="dark"] .compare-upload-card::after,
+[data-theme="dark"] .reader-file-upload:not(:has(.trust-signals))::after,
+[data-theme="dark"] .tp-upload-panel:not(:has(.trust-signals))::after,
+[data-theme="dark"] .result-container::after,
+[data-theme="dark"] .ai-result-card::after,
+[data-theme="dark"] .tp-result::after,
+[data-theme="dark"] .bp-result::after,
+[data-theme="dark"] .fill-success-card::after {
+    color: #CBD5E1;
+}
+
+/* Modern full-width tool shell: the page itself is not a card. */
+.tool-page {
+    width: 100% !important;
+    max-width: none !important;
+    min-height: calc(100vh - 72px);
+    margin: 0 !important;
+    padding: 48px 0 72px !important;
+    box-sizing: border-box;
+    background:
+        radial-gradient(circle at top left, rgba(109, 40, 217, 0.12), transparent 32%),
+        linear-gradient(135deg, #f8f7ff 0%, #eef5ff 100%) !important;
+}
+
+.tool-page:has(.workflow-grid) > .tool-container,
+.tool-page:has(.stepper) > .tool-container {
+    width: min(1320px, calc(100% - 64px)) !important;
+    max-width: 1320px !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    background: transparent !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    text-align: left !important;
+    box-sizing: border-box;
+}
+
+.tool-page:has(.workflow-grid) .tool-hero,
+.tool-page:has(.stepper) .tool-hero {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 0 24px !important;
+    padding: 0 !important;
+    text-align: left !important;
+    box-sizing: border-box;
+}
+
+.tool-page:has(.workflow-grid) .tool-hero h1,
+.tool-page:has(.stepper) .tool-hero h1 {
+    max-width: 920px;
+}
+
+.tool-page:has(.workflow-grid) .tool-hero p,
+.tool-page:has(.stepper) .tool-hero p,
+.tool-page:has(.workflow-grid) .tool-subtitle,
+.tool-page:has(.stepper) .tool-subtitle {
+    max-width: 760px;
+}
+
+.tool-page:has(.workflow-grid) .stepper,
+.tool-page:has(.stepper) .stepper {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 0 24px !important;
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    box-sizing: border-box;
+}
+
+.tool-page:has(.workflow-grid) .workflow-grid,
+.tool-page:has(.stepper) .workflow-grid {
+    width: 100% !important;
+    max-width: none !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1.55fr) minmax(360px, 0.75fr);
+    gap: 28px;
+    align-items: start;
+    box-sizing: border-box;
+}
+
+.tool-page:has(.workflow-grid) .workspace-card,
+.tool-page:has(.stepper) .workspace-card,
+.tool-page:has(.workflow-grid) .settings-card,
+.tool-page:has(.stepper) .settings-card {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+.tool-page:has(.workflow-grid) .settings-card,
+.tool-page:has(.stepper) .settings-card {
+    position: sticky;
+    top: 24px;
+}
+
+@media (max-width: 980px) {
+    .tool-page:has(.workflow-grid) > .tool-container,
+    .tool-page:has(.stepper) > .tool-container {
+        width: min(100%, calc(100% - 32px)) !important;
+    }
+
+    .tool-page:has(.workflow-grid) .workflow-grid,
+    .tool-page:has(.stepper) .workflow-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .tool-page:has(.workflow-grid) .settings-card,
+    .tool-page:has(.stepper) .settings-card {
+        position: static !important;
+    }
+
+    .tool-page:has(.workflow-grid) .stepper,
+    .tool-page:has(.stepper) .stepper {
+        overflow-x: auto;
+        border-radius: 20px;
+        grid-template-columns: repeat(4, minmax(130px, 1fr));
+    }
+}
+
+/* Full browser shell for all tool workflow pages */
+body:has(.tool-page) {
+    background:
+        radial-gradient(circle at top left, rgba(109, 40, 217, 0.12), transparent 32%),
+        linear-gradient(135deg, #f8f7ff 0%, #eef5ff 100%);
+}
+
+.tool-page:has(.workflow-grid),
+.tool-page:has(.fill-workflow-grid),
+.tool-page:has(.reader-canvas-wrapper),
+.tool-page:has(.organize-container),
+.tool-page:has(.stepper) {
+    width: 100% !important;
+    max-width: none !important;
+    min-height: calc(100vh - 72px) !important;
+    margin: 0 !important;
+    padding: 48px 0 72px !important;
+    box-sizing: border-box !important;
+    background:
+        radial-gradient(circle at top left, rgba(109, 40, 217, 0.12), transparent 32%),
+        linear-gradient(135deg, #f8f7ff 0%, #eef5ff 100%) !important;
+}
+
+/* The page container must NOT be the card */
+.tool-page:has(.workflow-grid) > .tool-container,
+.tool-page:has(.fill-workflow-grid) > .tool-container,
+.tool-page:has(.reader-canvas-wrapper) > .tool-container,
+.tool-page:has(.organize-container) > .tool-container,
+.tool-page:has(.stepper) > .tool-container {
+    width: min(1320px, calc(100% - 64px)) !important;
+    max-width: 1320px !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    background: transparent !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    text-align: left !important;
+    box-sizing: border-box !important;
+}
+
+/* Hero alignment */
+.tool-page:has(.workflow-grid) .tool-hero,
+.tool-page:has(.fill-workflow-grid) .tool-hero,
+.tool-page:has(.reader-canvas-wrapper) .tool-hero,
+.tool-page:has(.organize-container) .tool-hero,
+.tool-page:has(.stepper) .tool-hero {
+    width: 100% !important;
+    max-width: 760px !important;
+    margin: 0 0 56px !important;
+    text-align: left !important;
+}
+
+.tool-page:has(.workflow-grid) .tool-hero h1,
+.tool-page:has(.fill-workflow-grid) .tool-hero h1,
+.tool-page:has(.reader-canvas-wrapper) .tool-hero h1,
+.tool-page:has(.organize-container) .tool-hero h1,
+.tool-page:has(.stepper) .tool-hero h1 {
+    font-size: clamp(3rem, 5vw, 5rem) !important;
+    line-height: 0.95 !important;
+    letter-spacing: -0.06em !important;
+    margin: 0 0 18px !important;
+    color: var(--text, #0f172a) !important;
+}
+
+.tool-page:has(.workflow-grid) .tool-hero p,
+.tool-page:has(.fill-workflow-grid) .tool-hero p,
+.tool-page:has(.reader-canvas-wrapper) .tool-hero p,
+.tool-page:has(.organize-container) .tool-hero p,
+.tool-page:has(.stepper) .tool-hero p {
+    max-width: 720px !important;
+    margin: 0 !important;
+    color: var(--text-secondary, #64748b) !important;
+    font-size: 1.08rem !important;
+    line-height: 1.7 !important;
+}
+
+/* Fallback for old pages that still use plain h1/subtitle instead of .tool-hero */
+.tool-page:has(.organize-container) > .tool-container > h1,
+.tool-page:has(.reader-canvas-wrapper) > .tool-container > h1 {
+    max-width: 760px !important;
+    margin: 0 0 14px !important;
+    text-align: left !important;
+    font-size: clamp(3rem, 5vw, 5rem) !important;
+    line-height: 0.95 !important;
+    letter-spacing: -0.06em !important;
+    color: var(--text, #0f172a) !important;
+}
+
+.tool-page:has(.organize-container) > .tool-container > .tool-subtitle,
+.tool-page:has(.reader-canvas-wrapper) > .tool-container > .tool-subtitle {
+    max-width: 720px !important;
+    margin: 0 0 40px !important;
+    text-align: left !important;
+    color: var(--text-secondary, #64748b) !important;
+    font-size: 1.08rem !important;
+    line-height: 1.7 !important;
+}
+
+.hero-gradient-text,
+.tool-page .hero-gradient-text {
+    background: linear-gradient(135deg, #6d5dfc 0%, #2563eb 55%, #06b6d4 100%) !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    color: transparent !important;
+}
+
+/* Horizontal stepper */
+.tool-page .stepper,
+.tool-page .fill-stepper {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 0 24px !important;
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    padding: 8px !important;
+    border-radius: 999px !important;
+    background: rgba(255, 255, 255, 0.82) !important;
+    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08) !important;
+    text-align: left !important;
+}
+
+.tool-page .step,
+.tool-page .fill-stepper .step {
+    min-width: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 0.55rem !important;
+    padding: 0.58rem 0.8rem 0.58rem 0.58rem !important;
+    border-radius: 999px !important;
+    color: var(--text-secondary, #64748b) !important;
+    font-weight: 800 !important;
+    white-space: nowrap !important;
+}
+
+.tool-page .step span,
+.tool-page .fill-stepper .step span {
+    flex: 0 0 auto !important;
+    display: grid !important;
+    place-items: center !important;
+    width: 1.7rem !important;
+    height: 1.7rem !important;
+    border-radius: 50% !important;
+    background: #eef2ff !important;
+    color: #4f46e5 !important;
+    font-size: .82rem !important;
+    font-weight: 900 !important;
+}
+
+.tool-page .step strong,
+.tool-page .fill-stepper .step strong {
+    font-size: .9rem !important;
+    line-height: 1 !important;
+}
+
+.tool-page .step.active,
+.tool-page .fill-stepper .step.active {
+    color: #1e293b !important;
+    background: rgba(79, 70, 229, 0.12) !important;
+    box-shadow: inset 0 0 0 1px rgba(79, 70, 229, 0.16) !important;
+}
+
+.tool-page .step.complete,
+.tool-page .fill-stepper .step.complete {
+    color: #fff !important;
+    background: linear-gradient(135deg, #6d5dfc 0%, #2563eb 55%, #06b6d4 100%) !important;
+}
+
+.tool-page .step.complete span,
+.tool-page .fill-stepper .step.complete span {
+    background: rgba(255, 255, 255, 0.22) !important;
+    color: #fff !important;
+}
+
+/* Two-column workflow */
+.tool-page .workflow-grid,
+.tool-page .fill-workflow-grid {
+    width: 100% !important;
+    max-width: none !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1.55fr) minmax(360px, 0.75fr) !important;
+    gap: 28px !important;
+    align-items: start !important;
+}
+
+.tool-page .workspace-card,
+.tool-page .settings-card,
+.tool-page .fill-workspace-card,
+.tool-page .fill-settings-card {
+    width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    border-radius: 24px !important;
+    background: rgba(255, 255, 255, 0.92) !important;
+    border: 1px solid rgba(148, 163, 184, 0.16) !important;
+    box-shadow: 0 18px 55px rgba(15, 23, 42, 0.08) !important;
+}
+
+.tool-page .settings-card,
+.tool-page .fill-settings-card {
+    position: sticky !important;
+    top: 24px !important;
+}
+
+/* Organize PDF fallback: make old organize UI wide and card-based */
+.tool-page:has(.organize-container) .organize-container {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 28px !important;
+    border-radius: 24px !important;
+    background: rgba(255,255,255,.92) !important;
+    border: 1px solid rgba(148,163,184,.16) !important;
+    box-shadow: 0 18px 55px rgba(15,23,42,.08) !important;
+    text-align: left !important;
+}
+
+.tool-page:has(.organize-container) .organize-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)) !important;
+    gap: 16px !important;
+    width: 100% !important;
+}
+
+/* PDF Reader fallback: make old viewer use a wide workspace */
+.tool-page:has(.reader-canvas-wrapper) .upload-container,
+.tool-page:has(.reader-canvas-wrapper) .reader-toolbar,
+.tool-page:has(.reader-canvas-wrapper) .reader-canvas-wrapper,
+.tool-page:has(.reader-canvas-wrapper) .reader-file-info {
+    width: 100% !important;
+    max-width: none !important;
+}
+
+.tool-page:has(.reader-canvas-wrapper) .upload-container,
+.tool-page:has(.reader-canvas-wrapper) .reader-toolbar,
+.tool-page:has(.reader-canvas-wrapper) .reader-canvas-wrapper {
+    border-radius: 24px !important;
+    background: rgba(255,255,255,.92) !important;
+    border: 1px solid rgba(148,163,184,.16) !important;
+    box-shadow: 0 18px 55px rgba(15,23,42,.08) !important;
+}
+
+.tool-page:has(.reader-canvas-wrapper) .reader-toolbar {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 16px !important;
+    padding: 16px !important;
+    margin-bottom: 18px !important;
+}
+
+.tool-page:has(.reader-canvas-wrapper) .reader-canvas-wrapper {
+    min-height: 640px !important;
+    padding: 24px !important;
+    overflow: auto !important;
+}
+
+/* FAQ width alignment */
+.tool-page > .faq-section,
+.tool-page .faq-section {
+    width: min(1320px, calc(100% - 64px)) !important;
+    max-width: 1320px !important;
+    margin: 3rem auto 4rem !important;
+}
+
+/* Cloud picker consistency */
+.cloud-picker-row,
+.cloud-row {
+    margin-top: 16px !important;
+    text-align: center !important;
+}
+
+.cloud-picker-buttons,
+.cloud-row-buttons {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 10px !important;
+    flex-wrap: wrap !important;
+}
+
+.cloud-picker-label,
+.cloud-row-label {
+    display: block !important;
+    margin-bottom: 10px !important;
+    color: var(--text-muted, #94a3b8) !important;
+    font-size: .72rem !important;
+    font-weight: 900 !important;
+    letter-spacing: .11em !important;
+    text-transform: uppercase !important;
+}
+
+.cloud-picker-btn,
+.cloud-import-btn {
+    min-height: 44px !important;
+    border-radius: 14px !important;
+    padding: 0 16px !important;
+    border: 1px solid rgba(148, 163, 184, .18) !important;
+    background: rgba(255, 255, 255, .92) !important;
+    color: var(--text, #0f172a) !important;
+    font-weight: 800 !important;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, .06) !important;
+}
+
+/* Navbar right-side alignment */
+.navbar {
+    display: flex !important;
+    align-items: center !important;
+}
+
+.nav-search {
+    margin-left: auto !important;
+    flex: 0 1 310px !important;
+}
+
+.navbar-right {
+    margin-left: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    flex: 0 0 auto !important;
+}
+
+.hamburger {
+    flex: 0 0 auto !important;
+    margin-left: 4px !important;
+}
+
+/* When search is hidden, right controls still stay at the right edge */
+@media (max-width: 980px) {
+    .nav-search {
+        display: none !important;
+    }
+
+    .navbar-right {
+        margin-left: auto !important;
+    }
+}
+
+/* Responsive tool layout */
+@media (max-width: 980px) {
+    .tool-page:has(.workflow-grid),
+    .tool-page:has(.fill-workflow-grid),
+    .tool-page:has(.reader-canvas-wrapper),
+    .tool-page:has(.organize-container),
+    .tool-page:has(.stepper) {
+        padding: 32px 0 56px !important;
+    }
+
+    .tool-page:has(.workflow-grid) > .tool-container,
+    .tool-page:has(.fill-workflow-grid) > .tool-container,
+    .tool-page:has(.reader-canvas-wrapper) > .tool-container,
+    .tool-page:has(.organize-container) > .tool-container,
+    .tool-page:has(.stepper) > .tool-container,
+    .tool-page > .faq-section,
+    .tool-page .faq-section {
+        width: min(100%, calc(100% - 32px)) !important;
+    }
+
+    .tool-page .workflow-grid,
+    .tool-page .fill-workflow-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .tool-page .settings-card,
+    .tool-page .fill-settings-card {
+        position: static !important;
+    }
+
+    .tool-page .stepper,
+    .tool-page .fill-stepper {
+        overflow-x: auto !important;
+        border-radius: 20px !important;
+        grid-template-columns: repeat(4, minmax(130px, 1fr)) !important;
+    }
+
+    .tool-page:has(.reader-canvas-wrapper) .reader-toolbar {
+        flex-direction: column !important;
+        align-items: stretch !important;
+    }
+}
+
+[data-theme="dark"] .tool-page:has(.workflow-grid),
+[data-theme="dark"] .tool-page:has(.fill-workflow-grid),
+[data-theme="dark"] .tool-page:has(.reader-canvas-wrapper),
+[data-theme="dark"] .tool-page:has(.organize-container),
+[data-theme="dark"] .tool-page:has(.stepper) {
+    background:
+        radial-gradient(circle at top left, rgba(109, 40, 217, 0.12), transparent 32%),
+        linear-gradient(135deg, #0f0e17 0%, #13111f 100%) !important;
+}
+
+[data-theme="dark"] .tool-page .workspace-card,
+[data-theme="dark"] .tool-page .settings-card,
+[data-theme="dark"] .tool-page .fill-workspace-card,
+[data-theme="dark"] .tool-page .fill-settings-card,
+[data-theme="dark"] .tool-page:has(.organize-container) .organize-container,
+[data-theme="dark"] .tool-page:has(.reader-canvas-wrapper) .upload-container,
+[data-theme="dark"] .tool-page:has(.reader-canvas-wrapper) .reader-toolbar,
+[data-theme="dark"] .tool-page:has(.reader-canvas-wrapper) .reader-canvas-wrapper {
+    background: rgba(15, 23, 42, .86) !important;
+    border-color: rgba(148, 163, 184, .22) !important;
+}
+
+
