@@ -5642,14 +5642,26 @@ button,
 
 /* ── Footer Logo ──────────────────────────────────────────── */
 .footer-logo-wrap {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
+    margin-bottom: 1rem;
     text-decoration: none;
-    margin-bottom: 0.75rem;
 }
 
-.footer-logo-text {
+.footer-brand-logo {
+    height: 44px;
+    width: auto;
+    display: block;
+    object-fit: contain;
+}
+
+@media (max-width: 768px) {
+    .footer-brand-logo {
+        height: 38px;
+    }
+}
+
+/*.footer-logo-text {
     font-size: 1.2rem;
     font-weight: 800;
     color: #0F0D1F;
@@ -5658,7 +5670,7 @@ button,
 
     .footer-logo-text span {
         color: var(--primary);
-    }
+    }*/
 
 /* ── Footer Social Sign-in ────────────────────────────────── */
 .footer-signin-label {
