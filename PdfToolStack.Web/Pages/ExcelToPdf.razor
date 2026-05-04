@@ -6,6 +6,7 @@
 @inject ToastService Toast
 @inject SessionUsageService SessionUsage
 @inject CloudPickerService CloudPicker
+@using static PdfToolStack.Web.Components.FileUpload
 
 <PageTitle>Excel to PDF Converter Free Online — Convert XLSX to PDF</PageTitle>
 
@@ -34,10 +35,22 @@
         </section>
 
         <div class="stepper" aria-label="Excel to PDF workflow progress">
-            <div class="step @(SelectedFile != null || CurrentState != PageState.Upload ? "complete" : "active")">Upload</div>
-            <div class="step @(SelectedFile != null && CurrentState == PageState.Upload ? "active" : CurrentState == PageState.Processing || CurrentState == PageState.Complete ? "complete" : "")">Configure</div>
-            <div class="step @(CurrentState == PageState.Processing ? "active" : CurrentState == PageState.Complete ? "complete" : "")">Process</div>
-            <div class="step @(CurrentState == PageState.Complete ? "complete active" : "")">Download</div>
+            <div class="step @(SelectedFile != null || CurrentState != PageState.Upload ? "complete" : "active")">
+                <span>1</span>
+                <strong>Upload</strong>
+            </div>
+            <div class="step @(SelectedFile != null && CurrentState == PageState.Upload ? "active" : CurrentState == PageState.Processing || CurrentState == PageState.Complete ? "complete" : "")">
+                <span>2</span>
+                <strong>Configure</strong>
+            </div>
+            <div class="step @(CurrentState == PageState.Processing ? "active" : CurrentState == PageState.Complete ? "complete" : "")">
+                <span>3</span>
+                <strong>Process</strong>
+            </div>
+            <div class="step @(CurrentState == PageState.Complete ? "complete active" : "")">
+                <span>4</span>
+                <strong>Download</strong>
+            </div>
         </div>
 
         <section class="workflow-grid">
@@ -50,47 +63,75 @@
                         <p>Upload an XLS or XLSX file from your device, Google Drive, or Dropbox.</p>
                     </div>
 
-                    <div class="upload-container">
-                        <span class="upload-icon">XLSX</span>
-                        <p>Upload your Excel file (.xlsx)</p>
-                        <label class="upload-button">
-                            Browse File
-                            <InputFile OnChange="HandleFileSelected"
-                                       accept=".xlsx,.xls"
-                                       style="display:none" />
-                        </label>
-                        <div class="cloud-picker-row">
-                            <span class="cloud-picker-label">OR IMPORT FROM</span>
-                            <div class="cloud-picker-buttons">
-                                <button class="cloud-picker-btn" @onclick="PickGoogleDrive" disabled="@_cloudLoading">
-                                    <svg width="16" height="16" viewBox="0 0 87.3 78" xmlns="http://www.w3.org/2000/svg"><path d="m6.6 66.85 3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8h-27.5c0 1.55.4 3.1 1.2 4.5z" fill="#0066da" /><path d="m43.65 25-13.75-23.8c-1.35.8-2.5 1.9-3.3 3.3l-25.4 44a9.06 9.06 0 0 0 -1.2 4.5h27.5z" fill="#00ac47" /><path d="m73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5h-27.502l5.852 11.5z" fill="#ea4335" /><path d="m43.65 25 13.75-23.8c-1.35-.8-2.9-1.2-4.5-1.2h-18.5c-1.6 0-3.15.45-4.5 1.2z" fill="#00832d" /><path d="m59.8 53h-32.3l-13.75 23.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2z" fill="#2684fc" /><path d="m73.4 26.5-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3l-13.75 23.8 16.15 28h27.45c0-1.55-.4-3.1-1.2-4.5z" fill="#ffba00" /></svg>
-                                    Google Drive
-                                </button>
-                                <button class="cloud-picker-btn" @onclick="PickDropbox" disabled="@_cloudLoading">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="#0061FF"><path d="M6 2L0 6l6 4-6 4 6 4 6-4-6-4 6-4L6 2zm12 0l-6 4 6 4-6 4 6 4 6-4-6-4 6-4-6-4zm-6 13l-6 4 6 4 6-4-6-4z" /></svg>
-                                    Dropbox
-                                </button>
-                            </div>
+                    <div class="file-upload-clean">
+                        <FileUpload OnFileSelected="HandleFileSelected"
+                                    OnFileRemoved="HandleFileRemoved"
+                                    Accept=".xlsx,.xls"
+                                    HintText="Supports .xlsx and .xls files up to 25MB" />
+                    </div>
+
+                    <div class="cloud-row">
+                        <span class="cloud-label">Import from cloud</span>
+                        <div class="cloud-actions">
+                            <button type="button" class="cloud-btn" @onclick="PickDropbox" disabled="@_cloudLoading">
+                                <svg class="cloud-icon" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M7.1 3.2 2 6.5l5.1 3.3 5.1-3.3-5.1-3.3Zm9.8 0-5.1 3.3 5.1 3.3L22 6.5l-5.1-3.3ZM2 13l5.1 3.3 5.1-3.3-5.1-3.3L2 13Zm14.9-3.3L11.8 13l5.1 3.3L22 13l-5.1-3.3ZM12 14.8 7.1 18 12 21.2l4.9-3.2-4.9-3.2Z" fill="#0061FF" />
+                                </svg>
+                                Dropbox
+                            </button>
+                            <button type="button" class="cloud-btn" @onclick="PickGoogleDrive" disabled="@_cloudLoading">
+                                <svg class="cloud-icon" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M9.6 3.2 3 14.5h4.5l6.5-11.3H9.6Z" fill="#34A853" />
+                                    <path d="M14.1 3.2h-4.5l6.6 11.3h4.5L14.1 3.2Z" fill="#FBBC04" />
+                                    <path d="M7.5 14.5 9.8 18.4h10.9L18.4 14.5H7.5Z" fill="#4285F4" />
+                                </svg>
+                                Google Drive
+                            </button>
                         </div>
                         @if (_cloudLoading)
                         {
-                            <p class="cloud-loading-hint">Downloading from cloud...</p>
+                            <p class="cloud-status">Importing from cloud...</p>
                         }
                         @if (!string.IsNullOrEmpty(_cloudError))
                         {
-                            <p class="error-message">@_cloudError</p>
+                            <p class="cloud-error">@_cloudError</p>
                         }
-                        <p class="upload-hint">Supports .xlsx files up to 25MB</p>
                     </div>
 
                     @if (SelectedFile != null)
                     {
-                        <div class="file-summary">
-                            <div>
-                                <span class="file-name">@SelectedFile.Name</span>
-                                <span class="file-size">@Validator.FormatSize(SelectedFile.Size)</span>
+                        <div class="file-ready-card">
+                            <div class="file-ready-header">
+                                <div class="file-ready-icon" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7z" />
+                                        <polyline points="14 2 14 7 19 7" />
+                                        <polyline points="9 14 11 16 15 12" />
+                                    </svg>
+                                </div>
+                                <div>
+                                <span class="panel-eyebrow">Ready to process</span>
+                                <strong>@SelectedFile.Name</strong>
+                                <div class="file-ready-meta">
+                                    <span>@Path.GetExtension(SelectedFile.Name).TrimStart('.').ToUpperInvariant()</span>
+                                    <span>@Validator.FormatSize(SelectedFile.Size)</span>
+                                </div>
+                                <small>Will convert to PDF</small>
+                                </div>
                             </div>
-                            <span class="status-pill">Ready</span>
+                            <div class="ready-metrics">
+                                <span>Workbook</span>
+                                <span>PDF output</span>
+                                <span>Report-ready</span>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="empty-state">
+                            <span class="empty-kicker">Spreadsheet conversion</span>
+                            <strong>Upload an Excel workbook to create a shareable PDF.</strong>
+                            <span>Your conversion profile appears once the file is ready.</span>
                         </div>
                     }
 
@@ -126,6 +167,25 @@
                         <p>Your Excel spreadsheet has been converted to PDF successfully.</p>
                         <button class="download-button" @onclick="DownloadFile">Download PDF</button>
                         <button class="reset-button" @onclick="Reset">Convert Another Spreadsheet</button>
+                        <div class="post-success-upsell">
+                            <div class="post-success-accent"></div>
+                            <div class="post-success-copy">
+                                <strong>Need to process more files?</strong>
+                                <p>Upgrade to Pro for larger files, faster processing, and batch workflows.</p>
+                                <div class="post-success-benefits">
+                                    <span>Larger files</span>
+                                    <span>Faster processing</span>
+                                    <span>Batch workflows</span>
+                                </div>
+                            </div>
+                            <a class="post-success-link" href="/pricing">
+                                View Pro options
+                            </a>
+                        </div>
+
+                        <RecentFiles FileName="@(SelectedFile?.Name ?? "Converted spreadsheet")"
+                                     ToolName="Excel to PDF"
+                                     OnDownloadAgain="@DownloadFile" />
                     </div>
                 }
 
@@ -156,6 +216,9 @@
                 @if (SelectedFile != null && CurrentState == PageState.Upload)
                 {
                     <button class="process-button" @onclick="ProcessFile">Convert to PDF</button>
+                    <div class="secure-note">
+                        Secure processing. Files are deleted within 1 hour.
+                    </div>
                 }
                 else if (CurrentState == PageState.Upload)
                 {
@@ -192,30 +255,49 @@
     .trust-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; }
     .trust-row span { border: 1px solid rgba(37,99,235,.16); border-radius: 999px; background: rgba(255,255,255,.76); color: #334155; font-size: .83rem; font-weight: 800; padding: .48rem .78rem; box-shadow: 0 10px 30px rgba(15,23,42,.06); }
     .stepper { width: 100%; max-width: none; margin: 0 0 24px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 8px; border-radius: 999px; background: rgba(255,255,255,.8); box-shadow: 0 18px 45px rgba(15,23,42,.08); }
-    .step { min-height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 999px; color: #64748b; font-size: .9rem; font-weight: 900; }
-    .step.active { background: linear-gradient(135deg, #6d5dfc, #2563eb); color: #fff; box-shadow: 0 12px 26px rgba(37,99,235,.24); }
-    .step.complete { background: #eef2ff; color: #3730a3; }
+    .step { display: flex; align-items: center; justify-content: center; gap: .45rem; min-height: 44px; border-radius: 999px; color: #64748b; font-size: .9rem; font-weight: 900; padding: .45rem .7rem .45rem .45rem; transition: transform .2s ease, background .2s ease, color .2s ease; }
+    .step span { display: grid; place-items: center; width: 1.7rem; height: 1.7rem; border-radius: 50%; background: #eef2ff; color: #4f46e5; font-size: .82rem; font-weight: 800; }
+    .step strong { font-size: .88rem; white-space: nowrap; }
+    .step.active { background: linear-gradient(135deg, rgba(109,93,252,.15), rgba(37,99,235,.12)); color: #1e293b; box-shadow: inset 0 0 0 1px rgba(37,99,235,.12); }
+    .step.complete { background: linear-gradient(135deg, #6d5dfc 0%, #2563eb 55%, #06b6d4 100%); color: #fff; }
+    .step.complete span { background: rgba(255,255,255,.22); color: #fff; }
     .workflow-grid { width: 100%; max-width: none; display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(360px, .75fr); gap: 28px; align-items: start; }
     .workspace-card, .settings-card { width: 100%; max-width: none; min-width: 0; box-sizing: border-box; border: 1px solid rgba(148,163,184,.18); border-radius: 24px; background: rgba(255,255,255,.92); box-shadow: 0 20px 50px rgba(15,23,42,.08); padding: 28px; }
     .settings-card { position: sticky; top: 24px; }
     .panel-header { margin-bottom: 20px; }
-    .panel-eyebrow { display: inline-flex; margin-bottom: 10px; color: #4f46e5; font-size: .76rem; font-weight: 950; letter-spacing: .08em; text-transform: uppercase; }
+    .panel-eyebrow { display: inline-flex; margin-bottom: 10px; background: linear-gradient(135deg, #6d5dfc 0%, #2563eb 55%, #06b6d4 100%); -webkit-background-clip: text; background-clip: text; color: transparent; font-size: .76rem; font-weight: 950; letter-spacing: .08em; text-transform: uppercase; }
     .panel-header h2 { margin: 0 0 8px; color: #111827; font-size: 1.35rem; line-height: 1.2; }
     .panel-header p { margin: 0; color: #64748b; line-height: 1.6; }
     .upload-container { width: 100%; max-width: none; box-sizing: border-box; border: 1px dashed rgba(37,99,235,.28); border-radius: 22px; background: linear-gradient(135deg, #fff, #f8fbff); padding: 28px; text-align: center; }
     .upload-icon { display: inline-flex; align-items: center; justify-content: center; width: 58px; height: 58px; margin-bottom: 12px; border-radius: 18px; background: #eef2ff; color: #3730a3; font-weight: 950; }
     .upload-button { display: inline-flex; align-items: center; justify-content: center; margin: 10px 0; border-radius: 14px; background: linear-gradient(135deg, #6d5dfc, #2563eb); color: #fff; cursor: pointer; font-weight: 950; padding: .85rem 1.1rem; box-shadow: 0 16px 32px rgba(37,99,235,.22); }
-    .upload-hint, .cloud-loading-hint { color: #64748b; font-size: .9rem; }
-    .cloud-picker-row { margin-top: 18px; }
-    .cloud-picker-label { display: block; margin-bottom: 10px; color: #64748b; font-size: .72rem; font-weight: 950; letter-spacing: .08em; }
-    .cloud-picker-buttons { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
-    .cloud-picker-btn { display: inline-flex; align-items: center; gap: 8px; border: 1px solid rgba(148,163,184,.24); border-radius: 999px; background: #fff; color: #334155; cursor: pointer; font-weight: 900; padding: .7rem .95rem; }
+    .upload-hint { color: #64748b; font-size: .9rem; }
+    .file-upload-clean .cloud-row { display: none; }
+    .cloud-row { display: grid; gap: .75rem; margin-top: 18px; border: 1px solid rgba(148,163,184,.2); border-radius: 18px; background: rgba(248,250,252,.9); padding: 1rem; text-align: center; }
+    .cloud-label { color: #64748b; font-size: .72rem; font-weight: 950; letter-spacing: .08em; text-transform: uppercase; }
+    .cloud-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .65rem; }
+    .cloud-btn { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; min-height: 44px; border: 1px solid rgba(148,163,184,.24); border-radius: 14px; background: #fff; color: #334155; cursor: pointer; font-size: .86rem; font-weight: 900; padding: .72rem .9rem; transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease; }
+    .cloud-btn:hover:not(:disabled) { transform: translateY(-1px); border-color: rgba(37,99,235,.3); box-shadow: 0 12px 24px rgba(37,99,235,.1); }
+    .cloud-btn:disabled { cursor: not-allowed; opacity: .58; }
+    .cloud-icon { width: 18px; height: 18px; flex: 0 0 auto; }
+    .cloud-status, .cloud-error { margin: 0; font-size: .84rem; font-weight: 750; line-height: 1.45; }
+    .cloud-status { color: #64748b; }
+    .cloud-error { color: #dc2626; }
     .file-summary, .value-list div { border: 1px solid rgba(148,163,184,.16); border-radius: 18px; background: #f8fafc; padding: 16px; }
     .file-summary { display: flex; justify-content: space-between; gap: 16px; align-items: center; margin-top: 18px; }
     .file-name, .file-size, .value-list strong, .value-list span { display: block; }
     .file-name { color: #111827; font-weight: 900; word-break: break-word; }
     .file-size, .value-list span { color: #64748b; font-size: .9rem; }
     .status-pill { border-radius: 999px; background: #dcfce7; color: #166534; font-size: .78rem; font-weight: 900; padding: .35rem .6rem; white-space: nowrap; }
+    .empty-state { display: grid; gap: .4rem; margin-top: 1rem; border-radius: 20px; background: #f8fafc; color: #64748b; padding: 1rem; }
+    .empty-state strong { color: #1e293b; font-size: 1.1rem; }
+    .empty-kicker { color: #2563eb; font-size: .78rem; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+    .file-ready-card { display: grid; gap: 1rem; margin-top: 1rem; border-radius: 22px; background: linear-gradient(135deg, rgba(109,93,252,.1), rgba(6,182,212,.08)), #fff; border: 1px solid rgba(109,93,252,.18); padding: 1.1rem; }
+    .file-ready-card strong, .file-ready-card small { display: block; }
+    .file-ready-card strong { margin-top: .3rem; color: #111827; font-size: 1.05rem; overflow-wrap: anywhere; }
+    .file-ready-card small { margin-top: .2rem; color: #64748b; font-weight: 700; }
+    .ready-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .55rem; }
+    .ready-metrics span { border-radius: 14px; background: rgba(255,255,255,.75); color: #334155; font-size: .8rem; font-weight: 900; padding: .7rem; text-align: center; }
     .value-list { display: grid; gap: 12px; margin: 18px 0; }
     .value-list strong { color: #111827; margin-bottom: 4px; }
     .process-button, .download-button { width: 100%; border: 0; border-radius: 16px; background: linear-gradient(135deg, #6d5dfc, #2563eb); color: #fff; cursor: pointer; font-weight: 950; padding: 1rem 1.15rem; box-shadow: 0 18px 36px rgba(37,99,235,.25); transition: transform .18s ease, box-shadow .18s ease; }
@@ -231,8 +313,19 @@
     .reset-button { border: 0; border-radius: 14px; background: #eef2ff; color: #3730a3; cursor: pointer; font-weight: 900; padding: .9rem 1rem; }
     .download-button + .reset-button { width: 100%; margin-top: 12px; }
     .error-message { color: #b91c1c; font-weight: 800; }
+    .secure-note { margin-top: .8rem; color: #64748b; font-size: .82rem; font-weight: 800; text-align: center; }
     @@keyframes spin { to { transform: rotate(360deg); } }
     @@media (max-width: 980px) { .tool-container { width: min(100%, calc(100% - 24px)); } .workflow-grid { grid-template-columns: 1fr; } .settings-card { position: static; } .stepper { overflow-x: auto; border-radius: 20px; grid-template-columns: repeat(4, minmax(130px, 1fr)); } .tool-hero h1 { font-size: clamp(2rem, 8vw, 3rem); } }
+    .post-success-upsell { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 1rem; align-items: center; overflow: hidden; width: 100%; box-sizing: border-box; margin-top: 1rem; border: 1px solid rgba(109,93,252,.18); border-radius: 18px; background: radial-gradient(circle at top left, rgba(109,93,252,.12), transparent 38%), linear-gradient(135deg, rgba(255,255,255,.94), rgba(239,246,255,.86)); box-shadow: 0 14px 34px rgba(37,99,235,.08); padding: 1rem 1rem 1rem 1.15rem; text-align: left; }
+    .post-success-accent { position: absolute; inset: 0 auto 0 0; width: 4px; background: linear-gradient(180deg, #6d5dfc 0%, #2563eb 58%, #06b6d4 100%); }
+    .post-success-copy { position: relative; min-width: 0; }
+    .post-success-copy strong { display: block; color: #111827; font-size: .98rem; font-weight: 950; letter-spacing: -.01em; margin-bottom: .25rem; }
+    .post-success-copy p { margin: 0 0 .7rem; color: #64748b; font-size: .88rem; line-height: 1.5; }
+    .post-success-benefits { display: flex; flex-wrap: wrap; gap: .45rem; }
+    .post-success-benefits span { border: 1px solid rgba(37,99,235,.14); border-radius: 999px; background: rgba(255,255,255,.78); color: #334155; font-size: .74rem; font-weight: 850; padding: .3rem .5rem; }
+    .post-success-link { position: relative; border-radius: 14px; background: linear-gradient(135deg, #6d5dfc 0%, #2563eb 65%, #06b6d4 100%); box-shadow: 0 14px 28px rgba(37,99,235,.22); color: #fff; font-size: .84rem; font-weight: 950; padding: .78rem .95rem; text-decoration: none; white-space: nowrap; transition: transform .18s ease, box-shadow .18s ease; }
+    .post-success-link:hover { transform: translateY(-1px); box-shadow: 0 18px 34px rgba(37,99,235,.28); }
+    @@media (max-width: 700px) { .cloud-actions, .ready-metrics, .post-success-upsell { grid-template-columns: 1fr; } .post-success-link { text-align: center; } }
 </style>
 
 @code {
@@ -253,27 +346,27 @@
         if (Paid == "true") CurrentState = PageState.Upload;
     }
 
-    private async Task HandleFileSelected(InputFileChangeEventArgs e)
+    private async Task HandleFileSelected(IBrowserFile file)
     {
         SelectedFile = null;
         UploadedBytes = null;
         ErrorMessage = null;
 
-        var validation = Validator.ValidateExcelFile(e.File);
+        var validation = Validator.ValidateExcelFile(file);
         if (!validation.IsValid) { Toast.ShowError(validation.Message!); return; }
 
         try
         {
-            using var stream = e.File.OpenReadStream(maxAllowedSize: 524288000);
+            using var stream = file.OpenReadStream(maxAllowedSize: 524288000);
             using var ms = new MemoryStream();
             await stream.CopyToAsync(ms);
             UploadedBytes = ms.ToArray();
-            SelectedFile = e.File;
+            SelectedFile = file;
 
-            if (PaymentService.IsFileTooLargeForFree(e.File.Size))
+            if (PaymentService.IsFileTooLargeForFree(file.Size))
                 CurrentState = PageState.LargeFile;
             else
-                Toast.ShowSuccess($"File ready — {Validator.FormatSize(e.File.Size)}");
+                Toast.ShowSuccess($"File ready — {Validator.FormatSize(file.Size)}");
         }
         catch (Exception ex)
         {
@@ -281,6 +374,13 @@
             UploadedBytes = null;
         }
         StateHasChanged();
+    }
+
+    private void HandleFileRemoved()
+    {
+        SelectedFile = null;
+        UploadedBytes = null;
+        ErrorMessage = null;
     }
 
     private async Task ProcessFile()
@@ -345,6 +445,7 @@
         if (bytes is null || bytes.Length == 0) { _cloudError = "Could not download file. Please try again."; return; }
         UploadedBytes = bytes;
         _cloudFileName = name;
+        SelectedFile = new CloudBrowserFile(name, bytes);
         Toast.ShowSuccess($"File ready — {Validator.FormatSize(bytes.LongLength)}");
         StateHasChanged();
     }

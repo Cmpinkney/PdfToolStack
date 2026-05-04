@@ -74,10 +74,23 @@
                     @if (SelectedFile != null)
                     {
                         <div class="file-ready-card">
-                            <div>
-                                <span class="panel-eyebrow">File ready</span>
+                            <div class="file-ready-header">
+                                <div class="file-ready-icon" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7z" />
+                                        <polyline points="14 2 14 7 19 7" />
+                                        <polyline points="9 14 11 16 15 12" />
+                                    </svg>
+                                </div>
+                                <div>
+                                <span class="panel-eyebrow">Ready to process</span>
                                 <strong>@SelectedFile.Name</strong>
-                                <small>@FormatFileSize(SelectedFile.Size) selected for DOCX conversion</small>
+                                <div class="file-ready-meta">
+                                    <span>@Path.GetExtension(SelectedFile.Name).TrimStart('.').ToUpperInvariant()</span>
+                                    <span>@FormatFileSize(SelectedFile.Size)</span>
+                                </div>
+                                <small>Will convert to DOCX</small>
+                                </div>
                             </div>
                             <div class="ready-metrics">
                                 <span>Editable text</span>

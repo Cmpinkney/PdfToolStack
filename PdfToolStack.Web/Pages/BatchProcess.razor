@@ -161,25 +161,31 @@
                                        style="position:absolute;inset:0;opacity:0;cursor:pointer;" />
                         </label>
 
-                        <div class="bp-cloud-import">
-                            <span class="bp-cloud-label">Import from cloud</span>
-                            <div class="bp-cloud-actions">
-                                <button type="button" class="bp-cloud-btn" @onclick="PickGoogleDrive" disabled="@(_cloudLoading || _processing)">
-                                    <svg width="16" height="16" viewBox="0 0 87.3 78" xmlns="http://www.w3.org/2000/svg"><path d="m6.6 66.85 3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8h-27.5c0 1.55.4 3.1 1.2 4.5z" fill="#0066da" /><path d="m43.65 25-13.75-23.8c-1.35.8-2.5 1.9-3.3 3.3l-25.4 44a9.06 9.06 0 0 0 -1.2 4.5h27.5z" fill="#00ac47" /><path d="m73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5h-27.502l5.852 11.5z" fill="#ea4335" /><path d="m43.65 25 13.75-23.8c-1.35-.8-2.9-1.2-4.5-1.2h-18.5c-1.6 0-3.15.45-4.5 1.2z" fill="#00832d" /><path d="m59.8 53h-32.3l-13.75 23.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2z" fill="#2684fc" /><path d="m73.4 26.5-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3l-13.75 23.8 16.15 28h27.45c0-1.55-.4-3.1-1.2-4.5z" fill="#ffba00" /></svg>
-                                    Google Drive
-                                </button>
-                                <button type="button" class="bp-cloud-btn" @onclick="PickDropbox" disabled="@(_cloudLoading || _processing)">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="#0061FF"><path d="M6 2L0 6l6 4-6 4 6 4 6-4-6-4 6-4L6 2zm12 0l-6 4 6 4-6 4 6 4 6-4-6-4 6-4-6-4zm-6 13l-6 4 6 4 6-4-6-4z" /></svg>
+                        <div class="cloud-row">
+                            <span class="cloud-label">Import from cloud</span>
+                            <div class="cloud-actions">
+                                <button type="button" class="cloud-btn" @onclick="PickDropbox" disabled="@(_cloudLoading || _processing)">
+                                    <svg class="cloud-icon" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path d="M7.1 3.2 2 6.5l5.1 3.3 5.1-3.3-5.1-3.3Zm9.8 0-5.1 3.3 5.1 3.3L22 6.5l-5.1-3.3ZM2 13l5.1 3.3 5.1-3.3-5.1-3.3L2 13Zm14.9-3.3L11.8 13l5.1 3.3L22 13l-5.1-3.3ZM12 14.8 7.1 18 12 21.2l4.9-3.2-4.9-3.2Z" fill="#0061FF" />
+                                    </svg>
                                     Dropbox
+                                </button>
+                                <button type="button" class="cloud-btn" @onclick="PickGoogleDrive" disabled="@(_cloudLoading || _processing)">
+                                    <svg class="cloud-icon" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path d="M9.6 3.2 3 14.5h4.5l6.5-11.3H9.6Z" fill="#34A853" />
+                                        <path d="M14.1 3.2h-4.5l6.6 11.3h4.5L14.1 3.2Z" fill="#FBBC04" />
+                                        <path d="M7.5 14.5 9.8 18.4h10.9L18.4 14.5H7.5Z" fill="#4285F4" />
+                                    </svg>
+                                    Google Drive
                                 </button>
                             </div>
                             @if (_cloudLoading)
                             {
-                                <p class="bp-cloud-hint">Importing from cloud...</p>
+                                <p class="cloud-status">Importing from cloud...</p>
                             }
                             @if (!string.IsNullOrWhiteSpace(_cloudError))
                             {
-                                <p class="bp-cloud-error">@_cloudError</p>
+                                <p class="cloud-error">@_cloudError</p>
                             }
                         </div>
 
@@ -242,7 +248,7 @@
                                         <div class="bp-status-area">
                                             @if (status == "waiting")
                                             {
-                                                <span class="bp-pill bp-pill--gray"><span class="bp-dot bp-dot--gray"></span> Waiting</span>
+                                                <span class="bp-pill bp-pill--green"><span class="bp-dot bp-dot--green"></span> Ready to process</span>
                                             }
                                             else if (status == "queued")
                                             {
@@ -1332,7 +1338,7 @@
         margin: 0;
     }
 
-    .bp-cloud-import {
+    .cloud-row {
         display: grid;
         gap: .75rem;
         margin: 0 0 1rem;
@@ -1340,9 +1346,10 @@
         border: 1px solid var(--border, #e5e7eb);
         border-radius: 18px;
         background: rgba(248,250,252,.78);
+        text-align: center;
     }
 
-    .bp-cloud-label {
+    .cloud-label {
         color: var(--text-muted, #667085);
         font-size: .72rem;
         font-weight: 900;
@@ -1350,13 +1357,13 @@
         text-transform: uppercase;
     }
 
-    .bp-cloud-actions {
+    .cloud-actions {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: .65rem;
     }
 
-    .bp-cloud-btn {
+    .cloud-btn {
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -1372,35 +1379,41 @@
         transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
     }
 
-        .bp-cloud-btn:hover:not(:disabled) {
+        .cloud-btn:hover:not(:disabled) {
             transform: translateY(-1px);
             border-color: rgba(79,70,229,.45);
             box-shadow: 0 12px 24px rgba(79,70,229,.12);
         }
 
-        .bp-cloud-btn:disabled {
+        .cloud-btn:disabled {
             cursor: not-allowed;
             opacity: .58;
         }
 
-    .bp-cloud-hint,
-    .bp-cloud-error {
+    .cloud-icon {
+        width: 18px;
+        height: 18px;
+        flex: 0 0 auto;
+    }
+
+    .cloud-status,
+    .cloud-error {
         margin: 0;
         font-size: .82rem;
         line-height: 1.5;
     }
 
-    .bp-cloud-hint {
+    .cloud-status {
         color: var(--text-muted, #667085);
     }
 
-    .bp-cloud-error {
+    .cloud-error {
         color: #dc2626;
         font-weight: 750;
     }
 
     @@media (max-width: 640px) {
-        .bp-cloud-actions {
+        .cloud-actions {
             grid-template-columns: 1fr;
         }
     }
@@ -3097,12 +3110,12 @@
         border-color: #6d28d9;
     }
 
-    [data-theme="dark"] .bp-cloud-import {
+    [data-theme="dark"] .cloud-row {
         background: rgba(15,23,42,.62);
         border-color: rgba(148,163,184,.22);
     }
 
-    [data-theme="dark"] .bp-cloud-btn {
+    [data-theme="dark"] .cloud-btn {
         background: rgba(15,23,42,.82);
         border-color: rgba(148,163,184,.24);
         color: var(--text, #f8fafc);

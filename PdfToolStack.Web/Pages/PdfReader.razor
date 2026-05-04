@@ -1,142 +1,991 @@
-﻿@page "/pdf-reader"
+@page "/pdf-reader"
+@using PdfToolStack.Web.Services
 @inject IJSRuntime JS
 @inject CloudPickerService CloudPicker
+@inject NavigationManager Navigation
 
-<PageTitle>PDF Reader Free Online — View and Share PDFs</PageTitle>
+<PageTitle>PDF Reader Free Online - View and Share PDFs</PageTitle>
 
 <HeadContent>
     <meta name="description"
-          content="Read and view PDF files free online.
-                   No software download required.
-                   Display, navigate, and share PDFs
-                   instantly in your browser." />
+          content="Read and view PDF files free online. No software download required. Display, navigate, and share PDFs instantly in your browser." />
     <meta name="keywords"
-          content="pdf reader online, view pdf free,
-                   pdf viewer online, read pdf online, read pdf browser" />
+          content="pdf reader online, view pdf free, pdf viewer online, read pdf online, read pdf browser" />
     <link rel="canonical"
           href="https://pdftoolstack.com/pdf-reader" />
 </HeadContent>
 
-<div class="tool-page">
+<div class="reader-page">
+    <section class="reader-hero">
+        <div class="reader-hero-copy">
+            <div class="reader-trust-row" aria-label="Reader benefits">
+                <span>Browser-only viewing</span>
+                <span>Cloud imports</span>
+                <span>No signup needed</span>
+                <span>PDF.js powered</span>
+            </div>
+            <h1>Read PDFs in a clean workspace</h1>
+            <p>
+                Open a PDF from your device or cloud storage, move through pages,
+                adjust zoom, and download the original file without leaving the browser.
+            </p>
+        </div>
+        <div class="reader-hero-panel" aria-label="PDF Reader status">
+            <div class="reader-panel-icon">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7z" />
+                    <path d="M14 2v5h5" />
+                    <path d="M8 13h8" />
+                    <path d="M8 17h5" />
+                </svg>
+            </div>
+            <div>
+                <span class="reader-panel-label">Current document</span>
+                <strong>@(FileName ?? "No PDF open")</strong>
+                <small>@(IsLoaded ? $"{TotalPages} pages loaded" : "Upload or import a PDF to begin")</small>
+            </div>
+        </div>
+    </section>
 
-    <div class="tool-container">
-        <h1>PDF Reader Online</h1>
-        <p class="tool-subtitle">
-            View your PDF directly in your browser for free.
-            No software required. No signup needed.
-        </p>
+    <section class="reader-flow" aria-label="PDF Reader workflow">
+        <div class="reader-step @(IsLoaded ? "reader-step--done" : "reader-step--active")">
+            <span>1</span>
+            Upload
+        </div>
+        <div class="reader-step @(IsLoaded ? "reader-step--done" : "")">
+            <span>2</span>
+            Open
+        </div>
+        <div class="reader-step @(IsLoaded ? "reader-step--active" : "")">
+            <span>3</span>
+            Navigate
+        </div>
+        <div class="reader-step @(IsLoaded ? "reader-step--ready" : "")">
+            <span>4</span>
+            Download
+        </div>
+    </section>
 
-        @if (!IsLoaded)
-        {
-            <div class="upload-container">
-                <span class="upload-icon">📖</span>
-                <p>Upload a PDF to start reading</p>
-                <label class="upload-button">
-                    Browse PDF
-                    <InputFile OnChange="HandleFileSelected"
-                               accept=".pdf"
-                               style="display:none" />
-                </label>
-                <div class="cloud-picker-row">
-                    <span class="cloud-picker-label">OR IMPORT FROM</span>
-                    <div class="cloud-picker-buttons">
-                        <button class="cloud-picker-btn" @onclick="PickGoogleDrive" disabled="@_cloudLoading">
-                            <svg width="16" height="16" viewBox="0 0 87.3 78" xmlns="http://www.w3.org/2000/svg"><path d="m6.6 66.85 3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8h-27.5c0 1.55.4 3.1 1.2 4.5z" fill="#0066da" /><path d="m43.65 25-13.75-23.8c-1.35.8-2.5 1.9-3.3 3.3l-25.4 44a9.06 9.06 0 0 0 -1.2 4.5h27.5z" fill="#00ac47" /><path d="m73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5h-27.502l5.852 11.5z" fill="#ea4335" /><path d="m43.65 25 13.75-23.8c-1.35-.8-2.9-1.2-4.5-1.2h-18.5c-1.6 0-3.15.45-4.5 1.2z" fill="#00832d" /><path d="m59.8 53h-32.3l-13.75 23.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2z" fill="#2684fc" /><path d="m73.4 26.5-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3l-13.75 23.8 16.15 28h27.45c0-1.55-.4-3.1-1.2-4.5z" fill="#ffba00" /></svg>
-                            Google Drive
+    <main class="reader-workspace">
+        <section class="reader-main">
+            @if (!IsLoaded)
+            {
+                <div class="reader-upload-card">
+                    <div class="reader-section-heading">
+                        <span>Open a document</span>
+                        <h2>Upload or import your PDF</h2>
+                        <p>
+                            Use a local file, Dropbox, or Google Drive.
+                            Your document stays in the browser viewer.
+                        </p>
+                    </div>
+
+                    <div class="reader-file-upload">
+                        <FileUpload OnFileSelected="HandleFileSelected"
+                                    OnFileRemoved="HandleFileRemoved"
+                                    Accept=".pdf"
+                                    HintText="PDF files up to 500MB" />
+                    </div>
+
+                    <div class="cloud-row" aria-label="Cloud imports">
+                        <span class="cloud-label">Import from cloud</span>
+                        <div class="cloud-actions">
+                            <button type="button"
+                                    class="cloud-btn"
+                                    @onclick="PickDropbox"
+                                    disabled="@_cloudLoading">
+                                <svg class="cloud-icon" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M7.1 3.2 2 6.5l5.1 3.3 5.1-3.3-5.1-3.3Zm9.8 0-5.1 3.3 5.1 3.3L22 6.5l-5.1-3.3ZM2 13l5.1 3.3 5.1-3.3-5.1-3.3L2 13Zm14.9-3.3L11.8 13l5.1 3.3L22 13l-5.1-3.3ZM12 14.8 7.1 18 12 21.2l4.9-3.2-4.9-3.2Z" fill="#0061FF" />
+                                </svg>
+                                Dropbox
+                            </button>
+                            <button type="button"
+                                    class="cloud-btn"
+                                    @onclick="PickGoogleDrive"
+                                    disabled="@_cloudLoading">
+                                <svg class="cloud-icon" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M9.6 3.2 3 14.5h4.5l6.5-11.3H9.6Z" fill="#34A853" />
+                                    <path d="M14.1 3.2H9.6l6.6 11.3h4.5L14.1 3.2Z" fill="#FBBC04" />
+                                    <path d="M7.5 14.5 9.8 18.4h10.9l-2.3-3.9H7.5Z" fill="#4285F4" />
+                                </svg>
+                                Google Drive
+                            </button>
+                        </div>
+                    </div>
+
+                    @if (_cloudLoading)
+                    {
+                        <p class="cloud-status">Importing from cloud...</p>
+                    }
+
+                    @if (!string.IsNullOrEmpty(_cloudError))
+                    {
+                        <p class="cloud-error">@_cloudError</p>
+                    }
+
+                    @if (!string.IsNullOrEmpty(ErrorMessage))
+                    {
+                        <p class="reader-error">@ErrorMessage</p>
+                    }
+                </div>
+            }
+
+            @if (IsLoaded)
+            {
+                <div class="reader-toolbar" aria-label="PDF controls">
+                    <div class="reader-toolbar-group">
+                        <button type="button"
+                                class="reader-icon-btn"
+                                @onclick="PreviousPage"
+                                disabled="@(CurrentPage <= 1)"
+                                aria-label="Previous page">
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="m15 18-6-6 6-6" />
+                            </svg>
                         </button>
-                        <button class="cloud-picker-btn" @onclick="PickDropbox" disabled="@_cloudLoading">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="#0061FF"><path d="M6 2L0 6l6 4-6 4 6 4 6-4-6-4 6-4L6 2zm12 0l-6 4 6 4-6 4 6 4 6-4-6-4 6-4-6-4zm-6 13l-6 4 6 4 6-4-6-4z" /></svg>
-                            Dropbox
+                        <div class="reader-page-count">
+                            <strong>Page @CurrentPage</strong>
+                            <span>of @TotalPages</span>
+                        </div>
+                        <button type="button"
+                                class="reader-icon-btn"
+                                @onclick="NextPage"
+                                disabled="@(CurrentPage >= TotalPages)"
+                                aria-label="Next page">
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="m9 18 6-6-6-6" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="reader-toolbar-group">
+                        <button type="button"
+                                class="reader-icon-btn"
+                                @onclick="ZoomOut"
+                                disabled="@(Scale <= 50)"
+                                aria-label="Zoom out">
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <circle cx="11" cy="11" r="7" />
+                                <path d="M8 11h6" />
+                                <path d="m16.5 16.5 4 4" />
+                            </svg>
+                        </button>
+                        <span class="reader-zoom">@Scale%</span>
+                        <button type="button"
+                                class="reader-icon-btn"
+                                @onclick="ZoomIn"
+                                disabled="@(Scale >= 200)"
+                                aria-label="Zoom in">
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <circle cx="11" cy="11" r="7" />
+                                <path d="M11 8v6" />
+                                <path d="M8 11h6" />
+                                <path d="m16.5 16.5 4 4" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="reader-toolbar-group reader-toolbar-group--actions">
+                        <button type="button"
+                                class="reader-action-btn"
+                                @onclick="DownloadPdf">
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M12 3v11" />
+                                <path d="m7 10 5 5 5-5" />
+                                <path d="M5 21h14" />
+                            </svg>
+                            Download
+                        </button>
+                        <button type="button"
+                                class="reader-secondary-btn"
+                                @onclick="Reset">
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M18 6 6 18" />
+                                <path d="m6 6 12 12" />
+                            </svg>
+                            Close
                         </button>
                     </div>
                 </div>
-                @if (_cloudLoading)
-                {
-                    <p class="cloud-loading-hint">⏳ Downloading from cloud...</p>
-                }
-                @if (!string.IsNullOrEmpty(_cloudError))
-                {
-                    <p class="error-message">@_cloudError</p>
-                }
-                <p class="upload-hint">
-                    Files are never uploaded to our servers —
-                    everything stays in your browser
+
+                <div class="reader-canvas-shell">
+                    <canvas id="pdfReaderCanvas"></canvas>
+                </div>
+            }
+        </section>
+
+        <aside class="reader-side-card">
+            <div class="reader-section-heading">
+                <span>Document workspace</span>
+                <h2>@(IsLoaded ? "Reader controls" : "Ready when you are")</h2>
+                <p>
+                    @(IsLoaded
+                        ? "Use the controls below to jump to a page, tune zoom, or download your PDF."
+                        : "Upload a PDF to unlock navigation, zoom controls, and document details.")
                 </p>
             </div>
 
-            @if (!string.IsNullOrEmpty(ErrorMessage))
-            {
-                <p class="error-message">@ErrorMessage</p>
-            }
-        }
-
-        @if (IsLoaded)
-        {
-            <div class="reader-toolbar">
-                <div class="page-controls">
-                    <button class="page-btn" @onclick="PreviousPage" disabled="@(CurrentPage <= 1)">◀ Prev</button>
-                    <span class="page-info">Page @CurrentPage of @TotalPages</span>
-                    <button class="page-btn" @onclick="NextPage" disabled="@(CurrentPage >= TotalPages)">Next ▶</button>
+            <div class="reader-info-list">
+                <div>
+                    <span>File</span>
+                    <strong>@(FileName ?? "Not selected")</strong>
                 </div>
-                <div class="reader-actions">
-                    <button class="page-btn" @onclick="ZoomOut">🔍 −</button>
-                    <span class="zoom-level">@Scale%</span>
-                    <button class="page-btn" @onclick="ZoomIn">🔍 +</button>
-                    <button class="reset-button" style="padding: 0.4rem 1rem;" @onclick="Reset">Close</button>
+                <div>
+                    <span>Pages</span>
+                    <strong>@(IsLoaded ? TotalPages.ToString() : "-")</strong>
+                </div>
+                <div>
+                    <span>Current page</span>
+                    <strong>@(IsLoaded ? CurrentPage.ToString() : "-")</strong>
+                </div>
+                <div>
+                    <span>Zoom</span>
+                    <strong>@(IsLoaded ? $"{Scale}%" : "-")</strong>
                 </div>
             </div>
 
-            <div class="reader-canvas-wrapper">
-                <canvas id="pdfReaderCanvas"
-                        style="display: block; max-width: 100%; border-radius: 8px; box-shadow: var(--shadow);">
-                </canvas>
+            <div class="reader-settings">
+                <label for="readerPageJump">Page number</label>
+                <div class="reader-jump-row">
+                    <input id="readerPageJump"
+                           type="number"
+                           min="1"
+                           max="@TotalPages"
+                           disabled="@(!IsLoaded)"
+                           @bind="PageInput"
+                           @bind:event="oninput"
+                           @onkeydown="HandlePageInputKeyDown" />
+                    <button type="button"
+                            @onclick="JumpToPage"
+                            disabled="@(!IsLoaded)">
+                        Go
+                    </button>
+                </div>
             </div>
 
-            <div class="reader-file-info">
-                <span>📄 @FileName</span>
+            <div class="reader-settings">
+                <label>Zoom</label>
+                <div class="reader-zoom-row">
+                    <button type="button"
+                            @onclick="ZoomOut"
+                            disabled="@(!IsLoaded || Scale <= 50)">
+                        Out
+                    </button>
+                    <span>@Scale%</span>
+                    <button type="button"
+                            @onclick="ZoomIn"
+                            disabled="@(!IsLoaded || Scale >= 200)">
+                        In
+                    </button>
+                </div>
             </div>
-        }
-    </div>
 
-    <div class="faq-section">
+            <button type="button"
+                    class="reader-primary-wide"
+                    @onclick="DownloadPdf"
+                    disabled="@(!IsLoaded)">
+                Download original PDF
+            </button>
+        </aside>
+    </main>
+
+    <section class="reader-faq">
         <h2>Frequently Asked Questions</h2>
-        <div class="faq-item">
-            <h3>Is my PDF uploaded to your servers?</h3>
-            <p>No — this PDF reader works entirely in your browser using PDF.js. Your file never leaves your device.</p>
+        <div class="reader-faq-grid">
+            <details class="reader-faq-item" open>
+                <summary>Is my PDF uploaded to your servers?</summary>
+                <p>No. This PDF reader works in your browser using PDF.js. Local files never leave your device.</p>
+            </details>
+            <details class="reader-faq-item">
+                <summary>What PDF features are supported?</summary>
+                <p>Page navigation, page jump, zoom controls, and rendered PDF pages with images and formatted text.</p>
+            </details>
+            <details class="reader-faq-item">
+                <summary>Can I import from cloud storage?</summary>
+                <p>Yes. You can open PDFs from Dropbox or Google Drive, then read them in the same viewer.</p>
+            </details>
         </div>
-        <div class="faq-item">
-            <h3>What PDF features are supported?</h3>
-            <p>Page navigation, zoom in/out, and full text rendering. All standard PDF content including images and formatted text.</p>
-        </div>
-        <div class="faq-item">
-            <h3>Is this PDF reader free?</h3>
-            <p>Yes — completely free with no signup required and no file size limits since files stay on your device.</p>
-        </div>
-    </div>
+    </section>
 </div>
+
+<style>
+    .reader-page {
+        width: 100%;
+        min-height: calc(100vh - 72px);
+        padding: 48px 0 72px;
+        background:
+            radial-gradient(circle at 8% 0%, rgba(37, 99, 235, .14), transparent 34%),
+            radial-gradient(circle at 88% 8%, rgba(20, 184, 166, .12), transparent 30%),
+            linear-gradient(135deg, #f8fafc 0%, #eef4ff 52%, #f7f7ff 100%);
+    }
+
+    .reader-hero,
+    .reader-flow,
+    .reader-workspace,
+    .reader-faq {
+        width: min(1440px, calc(100% - 64px));
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .reader-hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 360px;
+        gap: 28px;
+        align-items: end;
+        margin-bottom: 24px;
+    }
+
+    .reader-trust-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 18px;
+    }
+
+    .reader-trust-row span {
+        display: inline-flex;
+        align-items: center;
+        min-height: 34px;
+        border: 1px solid rgba(37, 99, 235, .16);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, .78);
+        box-shadow: 0 12px 30px rgba(15, 23, 42, .06);
+        color: #334155;
+        font-size: .82rem;
+        font-weight: 850;
+        padding: .35rem .72rem;
+    }
+
+    .reader-hero h1 {
+        max-width: 860px;
+        margin: 0 0 14px;
+        color: #0f172a;
+        font-size: clamp(2.35rem, 4vw, 4.6rem);
+        line-height: 1.02;
+        letter-spacing: 0;
+    }
+
+    .reader-hero p {
+        max-width: 740px;
+        margin: 0;
+        color: #526173;
+        font-size: 1.02rem;
+        line-height: 1.75;
+    }
+
+    .reader-hero-panel {
+        display: grid;
+        grid-template-columns: 56px minmax(0, 1fr);
+        gap: 14px;
+        align-items: center;
+        border: 1px solid rgba(148, 163, 184, .22);
+        border-radius: 22px;
+        background: rgba(255, 255, 255, .86);
+        box-shadow: 0 22px 50px rgba(15, 23, 42, .08);
+        padding: 18px;
+    }
+
+    .reader-panel-icon {
+        display: grid;
+        place-items: center;
+        width: 56px;
+        height: 56px;
+        border-radius: 17px;
+        background: linear-gradient(135deg, #eff6ff, #eef2ff);
+        color: #2563eb;
+    }
+
+    .reader-panel-icon svg,
+    .reader-icon-btn svg,
+    .reader-action-btn svg,
+    .reader-secondary-btn svg {
+        width: 20px;
+        height: 20px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+
+    .reader-panel-label,
+    .reader-section-heading span,
+    .reader-settings label {
+        color: #4f46e5;
+        font-size: .74rem;
+        font-weight: 950;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+    }
+
+    .reader-hero-panel strong {
+        display: block;
+        overflow: hidden;
+        color: #111827;
+        font-size: .98rem;
+        font-weight: 950;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .reader-hero-panel small {
+        display: block;
+        margin-top: 2px;
+        color: #64748b;
+        font-size: .82rem;
+    }
+
+    .reader-flow {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 8px;
+        margin-bottom: 24px;
+        border: 1px solid rgba(148, 163, 184, .22);
+        border-radius: 22px;
+        background: rgba(255, 255, 255, .76);
+        box-shadow: 0 18px 45px rgba(15, 23, 42, .07);
+        padding: 8px;
+    }
+
+    .reader-step {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: .55rem;
+        min-height: 44px;
+        border-radius: 16px;
+        color: #64748b;
+        font-size: .88rem;
+        font-weight: 900;
+    }
+
+    .reader-step span {
+        display: grid;
+        place-items: center;
+        width: 24px;
+        height: 24px;
+        border-radius: 999px;
+        background: #e2e8f0;
+        color: #475569;
+        font-size: .75rem;
+        font-weight: 950;
+    }
+
+    .reader-step--active {
+        background: linear-gradient(135deg, #2563eb, #14b8a6);
+        box-shadow: 0 12px 26px rgba(37, 99, 235, .23);
+        color: #fff;
+    }
+
+    .reader-step--active span {
+        background: #fff;
+        color: #2563eb;
+    }
+
+    .reader-step--done,
+    .reader-step--ready {
+        background: #eef2ff;
+        color: #3730a3;
+    }
+
+    .reader-step--done span,
+    .reader-step--ready span {
+        background: #4f46e5;
+        color: #fff;
+    }
+
+    .reader-workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 380px;
+        gap: 24px;
+        align-items: start;
+    }
+
+    .reader-main,
+    .reader-side-card,
+    .reader-upload-card {
+        min-width: 0;
+        box-sizing: border-box;
+    }
+
+    .reader-main,
+    .reader-side-card {
+        border: 1px solid rgba(148, 163, 184, .22);
+        border-radius: 26px;
+        background: rgba(255, 255, 255, .9);
+        box-shadow: 0 22px 55px rgba(15, 23, 42, .08);
+    }
+
+    .reader-main {
+        padding: 22px;
+    }
+
+    .reader-upload-card {
+        padding: 8px;
+    }
+
+    .reader-section-heading {
+        margin-bottom: 18px;
+    }
+
+    .reader-section-heading h2 {
+        margin: 8px 0 7px;
+        color: #0f172a;
+        font-size: 1.35rem;
+        line-height: 1.25;
+    }
+
+    .reader-section-heading p {
+        margin: 0;
+        color: #64748b;
+        line-height: 1.65;
+    }
+
+    .reader-file-upload .cloud-row {
+        display: none;
+    }
+
+    .reader-file-upload .upload-container {
+        max-width: none;
+        border-color: rgba(37, 99, 235, .28);
+        border-radius: 22px;
+        background: linear-gradient(135deg, #fff, #f8fbff);
+        box-shadow: none;
+    }
+
+    .cloud-row {
+        display: grid;
+        gap: .75rem;
+        margin-top: 18px;
+        border: 1px solid rgba(148, 163, 184, .2);
+        border-radius: 18px;
+        background: rgba(248, 250, 252, .9);
+        padding: 1rem;
+        text-align: center;
+    }
+
+    .cloud-label {
+        color: #64748b;
+        font-size: .72rem;
+        font-weight: 950;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+    }
+
+    .cloud-actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: .65rem;
+    }
+
+    .cloud-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: .5rem;
+        min-height: 44px;
+        border: 1px solid rgba(148, 163, 184, .24);
+        border-radius: 14px;
+        background: #fff;
+        color: #334155;
+        cursor: pointer;
+        font-size: .86rem;
+        font-weight: 900;
+        padding: .72rem .9rem;
+        transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+    }
+
+    .cloud-btn:hover:not(:disabled) {
+        transform: translateY(-1px);
+        border-color: rgba(37, 99, 235, .3);
+        box-shadow: 0 12px 24px rgba(37, 99, 235, .1);
+    }
+
+    .cloud-btn:disabled,
+    .reader-primary-wide:disabled,
+    .reader-jump-row button:disabled,
+    .reader-zoom-row button:disabled {
+        cursor: not-allowed;
+        opacity: .58;
+    }
+
+    .cloud-icon {
+        width: 18px;
+        height: 18px;
+        flex: 0 0 auto;
+    }
+
+    .cloud-status,
+    .cloud-error,
+    .reader-error {
+        margin: 14px 0 0;
+        border-radius: 14px;
+        padding: .75rem .9rem;
+        font-size: .88rem;
+        line-height: 1.45;
+    }
+
+    .cloud-status {
+        background: #eff6ff;
+        color: #1d4ed8;
+    }
+
+    .cloud-error,
+    .reader-error {
+        background: #fef2f2;
+        color: #b91c1c;
+    }
+
+    .reader-toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 18px;
+        border: 1px solid rgba(148, 163, 184, .22);
+        border-radius: 20px;
+        background: #f8fafc;
+        padding: 10px;
+    }
+
+    .reader-toolbar-group {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+    }
+
+    .reader-toolbar-group--actions {
+        margin-left: auto;
+    }
+
+    .reader-icon-btn,
+    .reader-action-btn,
+    .reader-secondary-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: .48rem;
+        min-height: 40px;
+        border: 1px solid #dbe3ef;
+        border-radius: 13px;
+        background: #fff;
+        color: #334155;
+        cursor: pointer;
+        font-weight: 850;
+        transition: transform .15s ease, box-shadow .15s ease;
+    }
+
+    .reader-icon-btn {
+        width: 40px;
+        padding: 0;
+    }
+
+    .reader-icon-btn:disabled {
+        cursor: not-allowed;
+        opacity: .45;
+    }
+
+    .reader-action-btn {
+        border-color: transparent;
+        background: linear-gradient(135deg, #2563eb, #14b8a6);
+        color: #fff;
+        padding: 0 .95rem;
+        box-shadow: 0 14px 28px rgba(37, 99, 235, .22);
+    }
+
+    .reader-secondary-btn {
+        padding: 0 .85rem;
+    }
+
+    .reader-icon-btn:hover:not(:disabled),
+    .reader-action-btn:hover,
+    .reader-secondary-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 12px 24px rgba(15, 23, 42, .1);
+    }
+
+    .reader-page-count {
+        display: grid;
+        min-width: 92px;
+        text-align: center;
+    }
+
+    .reader-page-count strong,
+    .reader-zoom {
+        color: #0f172a;
+        font-size: .9rem;
+        font-weight: 950;
+    }
+
+    .reader-page-count span {
+        color: #64748b;
+        font-size: .74rem;
+        font-weight: 800;
+    }
+
+    .reader-canvas-shell {
+        display: grid;
+        min-height: 640px;
+        place-items: start center;
+        overflow: auto;
+        border: 1px solid rgba(148, 163, 184, .22);
+        border-radius: 22px;
+        background:
+            linear-gradient(45deg, rgba(148, 163, 184, .12) 25%, transparent 25%),
+            linear-gradient(-45deg, rgba(148, 163, 184, .12) 25%, transparent 25%),
+            linear-gradient(45deg, transparent 75%, rgba(148, 163, 184, .12) 75%),
+            linear-gradient(-45deg, transparent 75%, rgba(148, 163, 184, .12) 75%),
+            #eef2f7;
+        background-position: 0 0, 0 10px, 10px -10px, -10px 0;
+        background-size: 20px 20px;
+        padding: 22px;
+    }
+
+    #pdfReaderCanvas {
+        display: block;
+        max-width: 100%;
+        border-radius: 10px;
+        background: #fff;
+        box-shadow: 0 22px 60px rgba(15, 23, 42, .18);
+    }
+
+    .reader-side-card {
+        position: sticky;
+        top: 24px;
+        padding: 22px;
+    }
+
+    .reader-info-list {
+        display: grid;
+        gap: 10px;
+        margin: 18px 0;
+    }
+
+    .reader-info-list div {
+        display: grid;
+        gap: 4px;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        background: #f8fafc;
+        padding: .85rem;
+    }
+
+    .reader-info-list span {
+        color: #64748b;
+        font-size: .74rem;
+        font-weight: 850;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+    }
+
+    .reader-info-list strong {
+        overflow: hidden;
+        color: #0f172a;
+        font-size: .94rem;
+        font-weight: 950;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .reader-settings {
+        display: grid;
+        gap: 9px;
+        margin-top: 16px;
+    }
+
+    .reader-jump-row,
+    .reader-zoom-row {
+        display: grid;
+        gap: 8px;
+    }
+
+    .reader-jump-row {
+        grid-template-columns: minmax(0, 1fr) 72px;
+    }
+
+    .reader-zoom-row {
+        grid-template-columns: 1fr auto 1fr;
+        align-items: center;
+    }
+
+    .reader-jump-row input,
+    .reader-jump-row button,
+    .reader-zoom-row button,
+    .reader-primary-wide {
+        min-height: 42px;
+        border: 1px solid #dbe3ef;
+        border-radius: 13px;
+        font: inherit;
+        font-weight: 850;
+    }
+
+    .reader-jump-row input {
+        min-width: 0;
+        background: #fff;
+        color: #0f172a;
+        padding: 0 .85rem;
+    }
+
+    .reader-jump-row button,
+    .reader-zoom-row button {
+        background: #fff;
+        color: #334155;
+        cursor: pointer;
+    }
+
+    .reader-zoom-row span {
+        color: #0f172a;
+        font-weight: 950;
+        text-align: center;
+    }
+
+    .reader-primary-wide {
+        width: 100%;
+        margin-top: 18px;
+        border-color: transparent;
+        background: linear-gradient(135deg, #2563eb, #14b8a6);
+        color: #fff;
+        cursor: pointer;
+        box-shadow: 0 16px 32px rgba(37, 99, 235, .22);
+    }
+
+    .reader-faq {
+        margin-top: 34px;
+    }
+
+    .reader-faq h2 {
+        margin: 0 0 16px;
+        color: #0f172a;
+        font-size: 1.65rem;
+    }
+
+    .reader-faq-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+    }
+
+    .reader-faq-item {
+        border: 1px solid rgba(148, 163, 184, .22);
+        border-radius: 18px;
+        background: rgba(255, 255, 255, .86);
+        box-shadow: 0 16px 38px rgba(15, 23, 42, .06);
+        padding: 16px;
+    }
+
+    .reader-faq-item summary {
+        color: #0f172a;
+        cursor: pointer;
+        font-weight: 950;
+    }
+
+    .reader-faq-item p {
+        margin: 10px 0 0;
+        color: #64748b;
+        line-height: 1.6;
+    }
+
+    @@media (max-width: 1100px) {
+        .reader-hero,
+        .reader-workspace {
+            grid-template-columns: 1fr;
+        }
+
+        .reader-side-card {
+            position: static;
+        }
+
+        .reader-faq-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @@media (max-width: 760px) {
+        .reader-page {
+            padding: 28px 0 48px;
+        }
+
+        .reader-hero,
+        .reader-flow,
+        .reader-workspace,
+        .reader-faq {
+            width: min(100% - 28px, 1440px);
+        }
+
+        .reader-flow,
+        .cloud-actions {
+            grid-template-columns: 1fr;
+        }
+
+        .reader-main,
+        .reader-side-card {
+            padding: 16px;
+            border-radius: 22px;
+        }
+
+        .reader-toolbar {
+            align-items: stretch;
+        }
+
+        .reader-toolbar-group,
+        .reader-toolbar-group--actions {
+            width: 100%;
+            justify-content: space-between;
+            margin-left: 0;
+        }
+
+        .reader-action-btn,
+        .reader-secondary-btn {
+            flex: 1;
+        }
+
+        .reader-canvas-shell {
+            min-height: 460px;
+            padding: 14px;
+        }
+    }
+</style>
 
 @code {
     private bool IsLoaded = false;
     private int CurrentPage = 1;
+    private int PageInput = 1;
     private int TotalPages = 1;
     private int Scale = 100;
     private string? FileName;
     private string? ErrorMessage;
     private string? PdfBase64;
 
-    private async Task HandleFileSelected(InputFileChangeEventArgs e)
+    protected override async Task OnInitializedAsync()
+    {
+        await HandleOneDriveCallbackIfNeeded();
+    }
+
+    private async Task HandleFileSelected(IBrowserFile file)
     {
         ErrorMessage = null;
-        FileName = e.File.Name;
+        _cloudError = string.Empty;
+        FileName = file.Name;
         try
         {
-            using var stream = e.File.OpenReadStream(maxAllowedSize: 524288000);
+            using var stream = file.OpenReadStream(maxAllowedSize: 524288000);
             using var ms = new MemoryStream();
             await stream.CopyToAsync(ms);
-            await LoadPdfBytes(e.File.Name, ms.ToArray());
+            await LoadPdfBytes(file.Name, ms.ToArray());
         }
-        catch (Exception ex) { ErrorMessage = $"Could not open PDF: {ex.Message}"; }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Could not open PDF: {ex.Message}";
+        }
         StateHasChanged();
+    }
+
+    private void HandleFileRemoved()
+    {
+        Reset();
     }
 
     private async Task LoadPdfBytes(string name, byte[] bytes)
@@ -145,6 +994,7 @@
         PdfBase64 = Convert.ToBase64String(bytes);
         TotalPages = await JS.InvokeAsync<int>("getPdfPageCount", PdfBase64);
         CurrentPage = 1;
+        PageInput = 1;
         IsLoaded = true;
         StateHasChanged();
         await RenderPage();
@@ -153,44 +1003,211 @@
     private async Task RenderPage()
     {
         if (string.IsNullOrEmpty(PdfBase64)) return;
+        PageInput = CurrentPage;
         await JS.InvokeVoidAsync("renderPdfReaderPage", PdfBase64, CurrentPage, Scale / 100.0);
     }
 
-    private async Task PreviousPage() { if (CurrentPage <= 1) return; CurrentPage--; await RenderPage(); }
-    private async Task NextPage() { if (CurrentPage >= TotalPages) return; CurrentPage++; await RenderPage(); }
-    private async Task ZoomIn() { if (Scale >= 200) return; Scale += 25; await RenderPage(); }
-    private async Task ZoomOut() { if (Scale <= 50) return; Scale -= 25; await RenderPage(); }
+    private async Task PreviousPage()
+    {
+        if (CurrentPage <= 1) return;
+        CurrentPage--;
+        await RenderPage();
+    }
+
+    private async Task NextPage()
+    {
+        if (CurrentPage >= TotalPages) return;
+        CurrentPage++;
+        await RenderPage();
+    }
+
+    private async Task JumpToPage()
+    {
+        if (!IsLoaded) return;
+        CurrentPage = Math.Clamp(PageInput, 1, TotalPages);
+        await RenderPage();
+    }
+
+    private async Task HandlePageInputKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+            await JumpToPage();
+    }
+
+    private async Task ZoomIn()
+    {
+        if (Scale >= 200) return;
+        Scale += 25;
+        await RenderPage();
+    }
+
+    private async Task ZoomOut()
+    {
+        if (Scale <= 50) return;
+        Scale -= 25;
+        await RenderPage();
+    }
+
+    private async Task DownloadPdf()
+    {
+        if (string.IsNullOrEmpty(PdfBase64)) return;
+
+        var fileName = string.IsNullOrWhiteSpace(FileName)
+            ? "document.pdf"
+            : FileName;
+
+        await JS.InvokeVoidAsync("downloadFile", fileName, PdfBase64);
+    }
 
     private void Reset()
     {
-        IsLoaded = false; CurrentPage = 1; TotalPages = 1;
+        IsLoaded = false; CurrentPage = 1; PageInput = 1; TotalPages = 1;
         Scale = 100; FileName = null; PdfBase64 = null; ErrorMessage = null;
+        _cloudError = string.Empty; _cloudLoading = false;
     }
 
-    // ── Cloud pickers ──────────────────────────────────────────────────────
+    // Cloud pickers
     private bool _cloudLoading = false;
+    private bool _handledOneDriveCallback = false;
     private string _cloudError = string.Empty;
 
     private async Task PickGoogleDrive()
     {
-        _cloudError = string.Empty; _cloudLoading = true; StateHasChanged();
-        try { var f = await CloudPicker.OpenGoogleDriveAsync(); if (f != null) await LoadFromCloud(f.Name, f.Url, f.AccessToken); }
-        catch (Exception ex) { _cloudError = $"Google Drive: {ex.Message}"; }
-        finally { _cloudLoading = false; StateHasChanged(); }
+        await PickCloudFile("Google Drive", async () =>
+            await CloudPicker.OpenGoogleDriveAsync());
     }
 
     private async Task PickDropbox()
     {
-        _cloudError = string.Empty; _cloudLoading = true; StateHasChanged();
-        try { var f = await CloudPicker.OpenDropboxAsync(); if (f != null) await LoadFromCloud(f.Name, f.Url, f.AccessToken); }
-        catch (Exception ex) { _cloudError = $"Dropbox: {ex.Message}"; }
-        finally { _cloudLoading = false; StateHasChanged(); }
+        await PickCloudFile("Dropbox", async () =>
+            await CloudPicker.OpenDropboxAsync());
+    }
+
+    private async Task PickOneDrive()
+    {
+        _cloudError = string.Empty;
+        _cloudLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            await CloudPicker.OpenOneDriveAsync();
+        }
+        catch (Exception ex)
+        {
+            _cloudError = $"OneDrive: {ex.Message}";
+            _cloudLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task PickCloudFile(
+        string providerName,
+        Func<Task<CloudPickerService.CloudFileInfo?>> picker)
+    {
+        _cloudError = string.Empty;
+        _cloudLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            var file = await picker();
+            if (file != null)
+                await LoadFromCloud(file.Name, file.Url, file.AccessToken);
+        }
+        catch (Exception ex)
+        {
+            _cloudError = $"{providerName}: {ex.Message}";
+        }
+        finally
+        {
+            _cloudLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task HandleOneDriveCallbackIfNeeded()
+    {
+        var currentUrl = Navigation.Uri;
+        if (_handledOneDriveCallback ||
+            !CloudPicker.HasPendingOneDriveCallback(currentUrl))
+        {
+            return;
+        }
+
+        _handledOneDriveCallback = true;
+        _cloudLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            var query = System.Web.HttpUtility.ParseQueryString(
+                new Uri(currentUrl).Query);
+
+            var cloudError = query["cloud_error"];
+            if (!string.IsNullOrEmpty(cloudError))
+            {
+                _cloudError = cloudError switch
+                {
+                    "auth_denied" => "OneDrive access was denied.",
+                    "token_failed" => "Could not connect to OneDrive. Please try again.",
+                    "no_pdfs" => "No PDF files found in your OneDrive root folder.",
+                    _ => "OneDrive connection failed. Please try again."
+                };
+                await CloudPicker.CleanCallbackUrlAsync();
+                return;
+            }
+
+            var files = CloudPicker.ParseCallbackFiles(currentUrl);
+            if (files is null || files.Count == 0)
+            {
+                await CloudPicker.CleanCallbackUrlAsync();
+                return;
+            }
+
+            var chosen = await JS.InvokeAsync<OneDriveFileSelection?>(
+                "cloudPickers._showOneDrivePicker",
+                files.Select(f => new
+                {
+                    name = f.Name,
+                    url = f.Url,
+                    size = f.Size,
+                    accessToken = f.AccessToken
+                }).ToArray());
+
+            await CloudPicker.CleanCallbackUrlAsync();
+
+            if (chosen is not null)
+                await LoadFromCloud(
+                    chosen.Name,
+                    chosen.Url,
+                    chosen.AccessToken);
+        }
+        catch (Exception ex)
+        {
+            _cloudError = $"OneDrive: {ex.Message}";
+        }
+        finally
+        {
+            _cloudLoading = false;
+            StateHasChanged();
+        }
     }
 
     private async Task LoadFromCloud(string name, string url, string? accessToken)
     {
         var bytes = await CloudPicker.DownloadFileAsync(url, accessToken);
-        if (bytes is null || bytes.Length == 0) { _cloudError = "Could not download file."; return; }
+        if (bytes is null || bytes.Length == 0)
+        {
+            _cloudError = "Could not download file.";
+            return;
+        }
         await LoadPdfBytes(name, bytes);
     }
+
+    private sealed record OneDriveFileSelection(
+        string Name,
+        string Url,
+        long Size,
+        string? AccessToken = null);
 }

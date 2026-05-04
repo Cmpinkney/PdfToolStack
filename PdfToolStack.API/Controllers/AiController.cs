@@ -327,12 +327,15 @@ namespace PdfToolStack.API.Controllers
             if (!result.IsSuccess)
                 return UnprocessableEntity(new { error = result.ErrorMessage });
 
-            return Ok(new
-            {
-                translatedText = result.TranslatedText,
-                targetLanguage = result.TargetLanguage,
-                languageName = result.LanguageName
-            });
+            var outputName =
+                $"{Path.GetFileNameWithoutExtension(file.FileName)}" +
+                $"_translated_{targetLanguage}.pdf";
+
+            var pdfBytes = BuildPdf(
+                result.TranslatedText,
+                $"Translated to {result.LanguageName}");
+
+            return File(pdfBytes, "application/pdf", outputName);
         }
 
         // POST api/ai/rewrite
@@ -474,33 +477,295 @@ namespace PdfToolStack.API.Controllers
                 .GetInstance(document, ms);
             writer.CloseStream = false;
 
+            document.AddTitle(title);
             document.Open();
 
-            var font = iTextSharp.text.FontFactory.GetFont(
-                iTextSharp.text.FontFactory.HELVETICA, 11,
+            var bodyFont = iTextSharp.text.FontFactory.GetFont(
+                iTextSharp.text.FontFactory.HELVETICA,
+                11,
+                iTextSharp.text.Font.NORMAL,
+                iTextSharp.text.BaseColor.Black);
+            var h1Font = iTextSharp.text.FontFactory.GetFont(
+                iTextSharp.text.FontFactory.HELVETICA,
+                18,
+                iTextSharp.text.Font.BOLD,
+                iTextSharp.text.BaseColor.Black);
+            var h2Font = iTextSharp.text.FontFactory.GetFont(
+                iTextSharp.text.FontFactory.HELVETICA,
+                14,
+                iTextSharp.text.Font.BOLD,
+                iTextSharp.text.BaseColor.Black);
+            var tableHeaderFont = iTextSharp.text.FontFactory.GetFont(
+                iTextSharp.text.FontFactory.HELVETICA,
+                9,
+                iTextSharp.text.Font.BOLD,
+                iTextSharp.text.BaseColor.Black);
+            var tableCellFont = iTextSharp.text.FontFactory.GetFont(
+                iTextSharp.text.FontFactory.HELVETICA,
+                9,
+                iTextSharp.text.Font.NORMAL,
                 iTextSharp.text.BaseColor.Black);
 
-            var paragraphs = text.Split('\n',
-                StringSplitOptions.None);
+            var lines = text
+                .Replace("\r\n", "\n")
+                .Replace('\r', '\n')
+                .Split('\n', StringSplitOptions.None);
 
-            foreach (var para in paragraphs)
+            var paragraphLines = new List<string>();
+
+            void FlushParagraph()
             {
-                if (string.IsNullOrWhiteSpace(para))
+                if (paragraphLines.Count == 0)
+                    return;
+
+                document.Add(new iTextSharp.text.Paragraph(
+                    string.Join(" ", paragraphLines), bodyFont)
                 {
-                    document.Add(new iTextSharp.text.Paragraph(" ", font));
-                }
-                else
-                {
-                    document.Add(new iTextSharp.text.Paragraph(para, font)
-                    {
-                        SpacingAfter = 4f
-                    });
-                }
+                    Leading = 15f,
+                    SpacingAfter = 8f
+                });
+                paragraphLines.Clear();
             }
+
+            for (var i = 0; i < lines.Length; i++)
+            {
+                var line = lines[i].Trim();
+
+                if (string.IsNullOrWhiteSpace(line))
+                {
+                    FlushParagraph();
+                    continue;
+                }
+
+                if (IsPipeTableStart(lines, i))
+                {
+                    FlushParagraph();
+                    i = AddPipeTable(
+                        document,
+                        lines,
+                        i,
+                        tableHeaderFont,
+                        tableCellFont);
+                    continue;
+                }
+
+                if (TryGetHeading(line, out var level, out var heading))
+                {
+                    FlushParagraph();
+                    document.Add(new iTextSharp.text.Paragraph(
+                        heading,
+                        level == 1 ? h1Font : h2Font)
+                    {
+                        SpacingBefore = level == 1 ? 10f : 8f,
+                        SpacingAfter = 6f
+                    });
+                    continue;
+                }
+
+                if (TryGetBullet(line, out var bulletText))
+                {
+                    FlushParagraph();
+                    AddIndentedLine(document, $"- {bulletText}", bodyFont);
+                    continue;
+                }
+
+                if (TryGetNumberedItem(line, out var numberedText))
+                {
+                    FlushParagraph();
+                    AddIndentedLine(document, numberedText, bodyFont);
+                    continue;
+                }
+
+                paragraphLines.Add(line);
+            }
+
+            FlushParagraph();
 
             document.Close();
             ms.Position = 0;
             return ms.ToArray();
+        }
+
+        private static bool TryGetHeading(
+            string line,
+            out int level,
+            out string text)
+        {
+            level = 0;
+            text = string.Empty;
+
+            if (!line.StartsWith("#"))
+                return false;
+
+            var count = line.TakeWhile(c => c == '#').Count();
+            if (count > 3 ||
+                line.Length <= count ||
+                line[count] != ' ')
+                return false;
+
+            level = count == 1 ? 1 : 2;
+            text = line[count..].Trim();
+            return text.Length > 0;
+        }
+
+        private static bool TryGetBullet(
+            string line,
+            out string text)
+        {
+            text = string.Empty;
+
+            if (line.Length <= 2)
+                return false;
+
+            if ((line[0] == '-' || line[0] == '*' || line[0] == '•') &&
+                char.IsWhiteSpace(line[1]))
+            {
+                text = line[2..].Trim();
+                return text.Length > 0;
+            }
+
+            return false;
+        }
+
+        private static bool TryGetNumberedItem(
+            string line,
+            out string text)
+        {
+            text = string.Empty;
+            var index = 0;
+
+            while (index < line.Length && char.IsDigit(line[index]))
+                index++;
+
+            if (index == 0 ||
+                index + 1 >= line.Length ||
+                (line[index] != '.' && line[index] != ')') ||
+                !char.IsWhiteSpace(line[index + 1]))
+                return false;
+
+            text = line[..(index + 1)] + " " + line[(index + 1)..].Trim();
+            return true;
+        }
+
+        private static void AddIndentedLine(
+            iTextSharp.text.Document document,
+            string text,
+            iTextSharp.text.Font font)
+        {
+            document.Add(new iTextSharp.text.Paragraph(text, font)
+            {
+                IndentationLeft = 18f,
+                FirstLineIndent = -10f,
+                Leading = 15f,
+                SpacingAfter = 4f
+            });
+        }
+
+        private static bool IsPipeTableStart(string[] lines, int index)
+        {
+            return index + 1 < lines.Length &&
+                IsPipeTableLine(lines[index]) &&
+                IsPipeTableSeparator(lines[index + 1]);
+        }
+
+        private static bool IsPipeTableLine(string line) =>
+            line.Trim().Contains('|');
+
+        private static bool IsPipeTableSeparator(string line)
+        {
+            var cells = ParsePipeCells(line);
+            return cells.Count > 0 &&
+                cells.All(cell =>
+                    cell.Length > 0 &&
+                    cell.All(c => c == '-' ||
+                        c == ':' ||
+                        char.IsWhiteSpace(c)));
+        }
+
+        private static int AddPipeTable(
+            iTextSharp.text.Document document,
+            string[] lines,
+            int startIndex,
+            iTextSharp.text.Font headerFont,
+            iTextSharp.text.Font cellFont)
+        {
+            var headerCells = ParsePipeCells(lines[startIndex]);
+            var rows = new List<List<string>>();
+            var index = startIndex + 2;
+
+            while (index < lines.Length && IsPipeTableLine(lines[index]))
+            {
+                var row = ParsePipeCells(lines[index]);
+                if (row.Count == 0)
+                    break;
+
+                rows.Add(row);
+                index++;
+            }
+
+            var columnCount = Math.Max(
+                headerCells.Count,
+                rows.Count == 0 ? 0 : rows.Max(r => r.Count));
+
+            if (columnCount == 0)
+                return startIndex;
+
+            var table = new iTextSharp.text.pdf.PdfPTable(columnCount)
+            {
+                WidthPercentage = 100,
+                SpacingBefore = 4f,
+                SpacingAfter = 10f,
+                HeaderRows = 1
+            };
+
+            foreach (var cell in PadCells(headerCells, columnCount))
+                table.AddCell(CreateTableCell(cell, headerFont, true));
+
+            foreach (var row in rows)
+            {
+                foreach (var cell in PadCells(row, columnCount))
+                    table.AddCell(CreateTableCell(cell, cellFont, false));
+            }
+
+            document.Add(table);
+            return index - 1;
+        }
+
+        private static iTextSharp.text.pdf.PdfPCell CreateTableCell(
+            string text,
+            iTextSharp.text.Font font,
+            bool isHeader)
+        {
+            return new iTextSharp.text.pdf.PdfPCell(
+                new iTextSharp.text.Phrase(text, font))
+            {
+                Padding = 5f,
+                BackgroundColor = isHeader
+                    ? new iTextSharp.text.BaseColor(241, 245, 249)
+                    : iTextSharp.text.BaseColor.White
+            };
+        }
+
+        private static List<string> ParsePipeCells(string line)
+        {
+            var trimmed = line.Trim();
+            if (trimmed.StartsWith('|'))
+                trimmed = trimmed[1..];
+            if (trimmed.EndsWith('|'))
+                trimmed = trimmed[..^1];
+
+            return trimmed
+                .Split('|')
+                .Select(cell => cell.Trim())
+                .ToList();
+        }
+
+        private static IEnumerable<string> PadCells(
+            List<string> cells,
+            int count)
+        {
+            for (var i = 0; i < count; i++)
+                yield return i < cells.Count ? cells[i] : string.Empty;
         }
 
         // GET api/ai/usage/{userId}

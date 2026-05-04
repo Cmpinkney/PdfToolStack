@@ -25,6 +25,8 @@ namespace PdfToolStack.Infrastructure.Processors
             string language = "eng",
             CancellationToken cancellationToken = default)
         {
+            language = ValidateLanguageData(language);
+
             return await Task.Run(() =>
             {
                 var images = RenderPages(pdfBytes, cancellationToken);
@@ -83,6 +85,8 @@ namespace PdfToolStack.Infrastructure.Processors
             string language = "eng",
             CancellationToken cancellationToken = default)
         {
+            language = ValidateLanguageData(language);
+
             var images = RenderPages(pdfBytes, cancellationToken);
             var sb = new System.Text.StringBuilder();
 
@@ -98,6 +102,49 @@ namespace PdfToolStack.Infrastructure.Processors
             }
 
             return sb.ToString();
+        }
+
+        private string ValidateLanguageData(string language)
+        {
+            if (string.IsNullOrWhiteSpace(language))
+                throw new ArgumentException(
+                    "Please choose a valid OCR language.",
+                    nameof(language));
+
+            var languages = language
+                .Split('+')
+                .Select(part => part.Trim())
+                .ToArray();
+
+            if (languages.Any(string.IsNullOrWhiteSpace))
+                throw new ArgumentException(
+                    "Please choose a valid OCR language.",
+                    nameof(language));
+
+            foreach (var item in languages)
+            {
+                if (item.Contains('/') ||
+                    item.Contains('\\') ||
+                    item.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
+                {
+                    throw new ArgumentException(
+                        "Please choose a valid OCR language.",
+                        nameof(language));
+                }
+
+                var trainedDataPath = Path.Combine(
+                    _tessDataPath,
+                    $"{item}.traineddata");
+
+                if (!File.Exists(trainedDataPath))
+                {
+                    throw new InvalidOperationException(
+                        $"OCR language '{item}' is not available. " +
+                        $"Missing tessdata file '{item}.traineddata'.");
+                }
+            }
+
+            return string.Join('+', languages);
         }
 
         private static List<(byte[] Bytes, int Width, int Height)>
@@ -122,7 +169,7 @@ namespace PdfToolStack.Infrastructure.Processors
                 var raw = pageReader.GetImage();
 
                 using var bmp = new SystemDrawing.Bitmap(w, h,
-     SystemImaging.PixelFormat.Format32bppArgb);
+                SystemImaging.PixelFormat.Format32bppArgb);
                 var data = bmp.LockBits(
                     new SystemDrawing.Rectangle(0, 0, w, h),
                     SystemImaging.ImageLockMode.WriteOnly,
@@ -132,6 +179,7 @@ namespace PdfToolStack.Infrastructure.Processors
 
                 using var ms = new MemoryStream();
                 bmp.Save(ms, SystemImaging.ImageFormat.Png);
+                results.Add((ms.ToArray(), w, h));
             }
 
             return results;

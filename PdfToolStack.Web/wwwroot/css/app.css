@@ -9230,6 +9230,11 @@ div.picker-dialog,
     grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.ocr-tool-page .faq-section {
+    max-width: min(1320px, calc(100% - 64px));
+    margin: 3rem auto 4rem;
+}
+
 /* PDF Scanner coming soon page */
 .scanner-coming-page {
     width: 100%;

@@ -304,12 +304,19 @@ namespace PdfToolStack.Infrastructure.Services
                 system = $"""
             You are a professional document translator.
             Translate the provided document text into {languageName}.
+            Return structured Markdown so it can be rendered as a readable PDF.
             Rules:
             - Translate ALL text faithfully and completely
-            - Preserve the document structure (headings, paragraphs, lists)
+            - Preserve document structure with Markdown:
+              - Use # for the document title or main heading
+              - Use ## for section headings and subheadings
+              - Use bullets and numbered lists where the source uses lists
+              - Use simple Markdown pipe tables when the source has tabular data
+              - Keep paragraph spacing with blank lines between blocks
             - Keep numbers, dates, names, and proper nouns unchanged
+            - Do NOT wrap the response in code fences
             - Do NOT add explanations or commentary
-            - Return ONLY the translated text, nothing else
+            - Return ONLY the translated Markdown, nothing else
             """,
                 messages = new[]
                 {
@@ -322,6 +329,10 @@ namespace PdfToolStack.Infrastructure.Services
             };
 
             var translated = await CallApiAsync(requestBody, cancellationToken);
+            translated = translated
+                .Replace("```markdown", "")
+                .Replace("```", "")
+                .Trim();
 
             if (string.IsNullOrWhiteSpace(translated) ||
                 translated.StartsWith("AI service"))
