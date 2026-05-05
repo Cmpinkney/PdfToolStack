@@ -39,6 +39,7 @@ namespace PdfToolStack.API.Controllers
 
         // POST api/ai/extract
         [HttpPost("extract")]
+        [Authorize]
         [RequestSizeLimit(52428800)]
         public async Task<IActionResult> Extract(
             IFormFile file,
@@ -48,7 +49,9 @@ namespace PdfToolStack.API.Controllers
             if (!IsValidPdf(file))
                 return BadRequest(new { error = "Please upload a valid PDF file under 50MB." });
 
-            var userId = User.FindFirst("sub")?.Value ?? "anonymous";
+            var userId = GetRequiredUserId();
+            if (userId == null) return Unauthorized();
+
             (bool allowed, IActionResult? limitResponse) = await CheckAiUsageAsync(
                 userId, "extract", HaikuModel);
             if (!allowed) return limitResponse!;
@@ -75,6 +78,7 @@ namespace PdfToolStack.API.Controllers
 
         // POST api/ai/extract/excel
         [HttpPost("extract/excel")]
+        [Authorize]
         [RequestSizeLimit(52428800)]
         public async Task<IActionResult> ExtractToExcel(
             IFormFile file,
@@ -84,7 +88,9 @@ namespace PdfToolStack.API.Controllers
             if (!IsValidPdf(file))
                 return BadRequest(new { error = "Please upload a valid PDF file under 50MB." });
 
-            var userId = User.FindFirst("sub")?.Value ?? "anonymous";
+            var userId = GetRequiredUserId();
+            if (userId == null) return Unauthorized();
+
             (bool allowed, IActionResult? limitResponse) = await CheckAiUsageAsync(
                 userId, "extract-excel", HaikuModel);
             if (!allowed) return limitResponse!;
@@ -115,6 +121,7 @@ namespace PdfToolStack.API.Controllers
 
         // POST api/ai/summarize
         [HttpPost("summarize")]
+        [Authorize]
         [RequestSizeLimit(52428800)]
         public async Task<IActionResult> Summarize(
             IFormFile file,
@@ -123,7 +130,9 @@ namespace PdfToolStack.API.Controllers
             if (!IsValidPdf(file))
                 return BadRequest(new { error = "Please upload a valid PDF file under 50MB." });
 
-            var userId = User.FindFirst("sub")?.Value ?? "anonymous";
+            var userId = GetRequiredUserId();
+            if (userId == null) return Unauthorized();
+
             (bool allowed, IActionResult? limitResponse) = await CheckAiUsageAsync(
                 userId, "summarize", HaikuModel);
             if (!allowed) return limitResponse!;
@@ -139,6 +148,7 @@ namespace PdfToolStack.API.Controllers
 
         // POST api/ai/chat
         [HttpPost("chat")]
+        [Authorize]
         [RequestSizeLimit(52428800)]
         public async Task<IActionResult> Chat(
             IFormFile file,
@@ -151,7 +161,9 @@ namespace PdfToolStack.API.Controllers
             if (string.IsNullOrWhiteSpace(question))
                 return BadRequest(new { error = "No question provided." });
 
-            var userId = User.FindFirst("sub")?.Value ?? "anonymous";
+            var userId = GetRequiredUserId();
+            if (userId == null) return Unauthorized();
+
             (bool allowed, IActionResult? limitResponse) = await CheckAiUsageAsync(
                 userId, "chat", HaikuModel);
             if (!allowed) return limitResponse!;
@@ -167,6 +179,7 @@ namespace PdfToolStack.API.Controllers
 
         // POST api/ai/questions
         [HttpPost("questions")]
+        [Authorize]
         [RequestSizeLimit(52428800)]
         public async Task<IActionResult> GenerateQuestions(
             IFormFile file,
@@ -176,7 +189,9 @@ namespace PdfToolStack.API.Controllers
             if (!IsValidPdf(file))
                 return BadRequest(new { error = "Please upload a valid PDF file under 50MB." });
 
-            var userId = User.FindFirst("sub")?.Value ?? "anonymous";
+            var userId = GetRequiredUserId();
+            if (userId == null) return Unauthorized();
+
             (bool allowed, IActionResult? limitResponse) = await CheckAiUsageAsync(
                 userId, "questions", HaikuModel);
             if (!allowed) return limitResponse!;
@@ -224,6 +239,7 @@ namespace PdfToolStack.API.Controllers
 
         // POST api/ai/review
         [HttpPost("review")]
+        [Authorize]
         [RequestSizeLimit(52428800)]
         public async Task<IActionResult> ReviewContract(
             IFormFile file,
@@ -232,7 +248,9 @@ namespace PdfToolStack.API.Controllers
             if (!IsValidPdf(file))
                 return BadRequest(new { error = "Please upload a valid PDF file under 50MB." });
 
-            var userId = User.FindFirst("sub")?.Value ?? "anonymous";
+            var userId = GetRequiredUserId();
+            if (userId == null) return Unauthorized();
+
             (bool allowed, IActionResult? limitResponse) = await CheckAiUsageAsync(
                 userId, "contract-review", OpusModel);
             if (!allowed) return limitResponse!;
@@ -258,15 +276,12 @@ namespace PdfToolStack.API.Controllers
         public async Task<IActionResult> OcrPdf(
             IFormFile file,
             [FromQuery] string language = "eng",
+            [FromQuery] string processMode = "free-preview",
+            [FromQuery] int? maxPages = null,
             CancellationToken cancellationToken = default)
         {
             if (!IsValidPdf(file))
                 return BadRequest(new { error = "Please upload a valid PDF file under 50MB." });
-
-            var userId = User.FindFirst("sub")?.Value ?? "anonymous";
-            (bool allowed, IActionResult? limitResponse) = await CheckAiUsageAsync(
-                userId, "ocr", HaikuModel);
-            if (!allowed) return limitResponse!;
 
             _logger.LogInformation(
                 "OCR request. Language: {Lang}, File: {File}",
@@ -276,6 +291,47 @@ namespace PdfToolStack.API.Controllers
             {
                 using var ms = new MemoryStream();
                 await file.CopyToAsync(ms, cancellationToken);
+                var pdfBytes = ms.ToArray();
+                var pageCount = CountPdfPages(pdfBytes);
+                var userId = GetOptionalUserId() ?? "anonymous";
+                var normalizedLanguage = NormalizeOcrLanguage(language);
+                var normalizedProcessMode = NormalizeOcrProcessMode(processMode);
+                var premiumRequired =
+                    normalizedProcessMode == OcrProcessModeFullDocument ||
+                    normalizedLanguage != "eng";
+                var isPro = await IsProUserAsync(userId);
+
+                _logger.LogInformation(
+                    "OCR validation. UserId: {UserId}, Pages: {PageCount}, Language: {Language}, ProcessMode: {ProcessMode}, PremiumRequired: {PremiumRequired}, IsPro: {IsPro}",
+                    userId,
+                    pageCount,
+                    normalizedLanguage,
+                    normalizedProcessMode,
+                    premiumRequired,
+                    isPro);
+
+                if (normalizedLanguage != "eng" && userId == "anonymous")
+                {
+                    return StatusCode(403, new
+                    {
+                        error = "Multilingual OCR requires Pro.",
+                        upgradePath = "/pricing"
+                    });
+                }
+
+                if (normalizedProcessMode == OcrProcessModeFullDocument &&
+                    userId == "anonymous" &&
+                    pageCount > 3)
+                {
+                    return StatusCode(402, new
+                    {
+                        error = "Free OCR supports up to 3 pages. Upgrade to process the full document.",
+                        upgradePath = "/pricing"
+                    });
+                }
+
+                if (premiumRequired && !isPro)
+                    return UpgradeRequired();
 
                 var tessDataPath = Path.Combine(
                     AppContext.BaseDirectory, "tessdata");
@@ -283,12 +339,62 @@ namespace PdfToolStack.API.Controllers
                 var processor = new PdfToolStack.Infrastructure
                     .Processors.PdfOcrProcessor(tessDataPath);
 
-                var outputBytes = await processor.ProcessAsync(
-                    ms.ToArray(), language, cancellationToken);
+                var pagesToProcess = normalizedProcessMode == OcrProcessModeFreePreview
+                    ? 3
+                    : (int?)null;
 
-                return File(outputBytes, "application/pdf",
+                var result = await processor.ProcessWithInfoAsync(
+                    pdfBytes, normalizedLanguage, cancellationToken, pagesToProcess);
+
+                if (result.PdfBytes.Length == 0)
+                    return UnprocessableEntity(new
+                    {
+                        error = "OCR generated an empty PDF. Please try again."
+                    });
+
+                _logger.LogInformation(
+                    "OCR completed. UserId: {UserId}, Pages: {PageCount}, ProcessedPages: {ProcessedPages}, Language: {Language}, ProcessMode: {ProcessMode}, PremiumRequired: {PremiumRequired}, OutputBytes: {OutputBytes}, HasExtractedText: {HasExtractedText}, ExtractedTextLength: {ExtractedTextLength}",
+                    userId,
+                    pageCount,
+                    result.PageCount,
+                    result.Language,
+                    normalizedProcessMode,
+                    premiumRequired,
+                    result.PdfBytes.Length,
+                    result.HasExtractedText,
+                    result.ExtractedTextLength);
+
+                return File(result.PdfBytes, "application/pdf",
                     Path.GetFileNameWithoutExtension(file.FileName)
                     + "_searchable.pdf");
+            }
+            catch (PdfToolStack.Infrastructure.Processors.OcrLanguageUnavailableException ex)
+            {
+                _logger.LogWarning(
+                    ex,
+                    "OCR unavailable language requested. Language: {Language}",
+                    language);
+
+                return BadRequest(new { error = ex.Message });
+            }
+            catch (ArgumentException ex)
+            {
+                _logger.LogWarning(
+                    ex,
+                    "Invalid OCR language requested. Language: {Language}",
+                    language);
+
+                return BadRequest(new { error = "Please choose a valid OCR language." });
+            }
+            catch (PdfToolStack.Infrastructure.Processors.OcrProcessingException ex)
+            {
+                _logger.LogWarning(
+                    ex,
+                    "OCR processing failed. Language: {Language}, File: {File}",
+                    language,
+                    file.FileName);
+
+                return UnprocessableEntity(new { error = ex.Message });
             }
             catch (Exception ex)
             {
@@ -299,6 +405,7 @@ namespace PdfToolStack.API.Controllers
 
         // POST api/ai/translate
         [HttpPost("translate")]
+        [Authorize]
         [RequestSizeLimit(52428800)]
         public async Task<IActionResult> Translate(
             IFormFile file,
@@ -309,7 +416,9 @@ namespace PdfToolStack.API.Controllers
             if (!IsValidPdf(file))
                 return BadRequest(new { error = "Please upload a valid PDF file under 50MB." });
 
-            var userId = User.FindFirst("sub")?.Value ?? "anonymous";
+            var userId = GetRequiredUserId();
+            if (userId == null) return Unauthorized();
+
             (bool allowed, IActionResult? limitResponse) = await CheckAiUsageAsync(
                 userId, "translate", HaikuModel);
             if (!allowed) return limitResponse!;
@@ -340,6 +449,7 @@ namespace PdfToolStack.API.Controllers
 
         // POST api/ai/rewrite
         [HttpPost("rewrite")]
+        [Authorize]
         [RequestSizeLimit(52428800)]
         public async Task<IActionResult> Rewrite(
             IFormFile file,
@@ -353,7 +463,9 @@ namespace PdfToolStack.API.Controllers
             if (string.IsNullOrWhiteSpace(instruction))
                 return BadRequest(new { error = "Please provide a rewrite instruction." });
 
-            var userId = User.FindFirst("sub")?.Value ?? "anonymous";
+            var userId = GetRequiredUserId();
+            if (userId == null) return Unauthorized();
+
             (bool allowed, IActionResult? limitResponse) = await CheckAiUsageAsync(
                 userId, "rewrite", HaikuModel);
             if (!allowed) return limitResponse!;
@@ -424,7 +536,8 @@ namespace PdfToolStack.API.Controllers
             if (_subscriptionService != null)
             {
                 var status = await _subscriptionService.GetStatusAsync(userId);
-                var (used, limit) = await _usageService.GetUsageAsync(userId, status.PlanType);
+                var planType = status.IsActive ? status.PlanType : "free";
+                var (used, limit) = await _usageService.GetUsageAsync(userId, planType);
                 return Ok(new { used, limit });
             }
 
@@ -770,6 +883,7 @@ namespace PdfToolStack.API.Controllers
 
         // GET api/ai/usage/{userId}
         [HttpGet("usage/{userId}")]
+        [Authorize]
         public async Task<IActionResult> GetUsage(string userId)
         {
             if (_subscriptionService == null)
@@ -779,8 +893,9 @@ namespace PdfToolStack.API.Controllers
             if (status?.PlanType == null)
                 return Ok(new { used = 0, limit = 5, remaining = 5, percentage = 0 });
 
+            var planType = status.IsActive ? status.PlanType : "free";
             var (used, limit) = await _usageService.GetUsageAsync(
-                userId, status.PlanType);
+                userId, planType);
             return Ok(new
             {
                 used,
@@ -838,7 +953,7 @@ namespace PdfToolStack.API.Controllers
             try
             {
                 var planType = "free"; // default to free limits
-                if (_subscriptionService != null && userId != "anonymous")
+                if (_subscriptionService != null)
                 {
                     var status = await _subscriptionService.GetStatusAsync(userId);
                     planType = status.IsActive ? status.PlanType : "free";
@@ -861,9 +976,71 @@ namespace PdfToolStack.API.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Usage check failed — allowing request");
-                return (true, null);
+                _logger.LogError(ex, "Usage check failed for AI feature {Feature}", feature);
+                return (false, StatusCode(503, new
+                {
+                    error = "AI usage credits could not be verified. Please try again."
+                }));
             }
+        }
+
+        private string? GetRequiredUserId() =>
+            User.FindFirst("sub")?.Value ??
+            User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+        private string? GetOptionalUserId() =>
+            User.Identity?.IsAuthenticated == true
+                ? GetRequiredUserId()
+                : null;
+
+        private const string OcrProcessModeFreePreview = "free-preview";
+        private const string OcrProcessModeFullDocument = "full-document";
+
+        private static string NormalizeOcrProcessMode(string? processMode)
+        {
+            if (string.IsNullOrWhiteSpace(processMode))
+                return OcrProcessModeFreePreview;
+
+            var normalized = processMode.Trim().ToLowerInvariant();
+
+            return normalized switch
+            {
+                OcrProcessModeFreePreview => normalized,
+                OcrProcessModeFullDocument => normalized,
+                _ => throw new ArgumentException(
+                    "Please choose a valid OCR process mode.",
+                    nameof(processMode))
+            };
+        }
+
+        private static string NormalizeOcrLanguage(string? language)
+        {
+            if (string.IsNullOrWhiteSpace(language))
+                return "eng";
+
+            return language.Trim().ToLowerInvariant();
+        }
+
+        private async Task<bool> IsProUserAsync(string userId)
+        {
+            if (userId == "anonymous" || _subscriptionService == null)
+                return false;
+
+            var status = await _subscriptionService.GetStatusAsync(userId);
+            return status.HasPro;
+        }
+
+        private IActionResult UpgradeRequired() =>
+            StatusCode(402, new
+            {
+                error = "This OCR feature requires Pro. Upgrade to process the full document.",
+                upgradePath = "/pricing"
+            });
+
+        private static int CountPdfPages(byte[] pdfBytes)
+        {
+            using var reader = new iTextSharp.text.pdf.PdfReader(pdfBytes);
+            return reader.NumberOfPages;
         }
 
         private static bool IsValidPdf(IFormFile? file)

@@ -54,7 +54,13 @@ namespace PdfToolStack.Infrastructure.Services
 
         public async Task<(int Used, int Limit)> GetUsageAsync(string userId, string planType)
         {
-            var limit = planType == "teams" ? TeamsMonthlyLimit : ProMonthlyLimit;
+            var limit = planType switch
+            {
+                "teams" => TeamsMonthlyLimit,
+                "monthly" or "yearly" => ProMonthlyLimit,
+                _ => FreeMonthlyLimit
+            };
+
             var monthStart = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1);
             var used = await _db.AiUsageLogs.CountAsync(l => l.UserId == userId && l.UsedAt >= monthStart);
             return (used, limit);

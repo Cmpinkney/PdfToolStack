@@ -67,6 +67,7 @@ Services/
  CloudPickerService.cs
  CookieConsentService.cs
  FileValidationService.cs
+ OptionalAuthorizationMessageHandler.cs
  PaymentService.cs
  SessionUsageService.cs
  SubscriptionService.cs
@@ -376,6 +377,7 @@ Components/
  LargeFileUpgrade.razor
  LoginDisplay.razor
  PdfLoadingOverlay.razor
+ PostSuccessUpsell.razor
  ProUpsellModal.razor
  RecentFiles.razor
  RedirectToLogin.razor
@@ -383,6 +385,7 @@ Components/
  SupportChat.razor
  ThemeSwitcher.razor
  ToastContainer.razor
+ TrustSignals.razor
  UpgradeModal.razor
 Layout/
  CookiePolicy.razor
@@ -478,6 +481,7 @@ Components/
  LargeFileUpgrade.razor
  LoginDisplay.razor
  PdfLoadingOverlay.razor
+ PostSuccessUpsell.razor
  ProUpsellModal.razor
  RecentFiles.razor
  RedirectToLogin.razor
@@ -485,6 +489,7 @@ Components/
  SupportChat.razor
  ThemeSwitcher.razor
  ToastContainer.razor
+ TrustSignals.razor
  UpgradeModal.razor
 Layout/
  CookiePolicy.razor

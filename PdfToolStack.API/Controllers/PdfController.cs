@@ -1,14 +1,17 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
+using Microsoft.AspNetCore.Authorization;
 using PdfToolStack.API.Configuration;
 using PdfToolStack.API.Services;
 using PdfToolStack.Application.DTOs;
+using PdfToolStack.Application.Interfaces;
 using PdfToolStack.Application.Services;
 using PdfToolStack.Domain.Entities;
 using PdfToolStack.Domain.Enums;
 using PdfToolStack.Infrastructure.Processors;
 using PdfToolStack.Infrastructure.Services;
 using System.IO.Compression;
+using System.Security.Claims;
 using SharpCompress.Writers.Zip;
 using SharpCompress.Common;
 using DomainRedactionRegion = PdfToolStack.Domain.Entities.RedactionRegion;
@@ -23,6 +26,7 @@ namespace PdfToolStack.API.Controllers
         private readonly ProcessingOptions _options;
         private readonly ILogger<PdfController> _logger;
         private readonly IFileValidationService _fileValidationService;
+        private readonly IAiUsageService _aiUsageService;
         private readonly SubscriptionService? _subscriptionService;
 
         public PdfController(
@@ -30,12 +34,14 @@ namespace PdfToolStack.API.Controllers
             IOptions<ProcessingOptions> options,
             ILogger<PdfController> logger,
             IFileValidationService fileValidationService,
+            IAiUsageService aiUsageService,
             SubscriptionService? subscriptionService = null)
         {
             _pdfService = pdfService;
             _options = options.Value;
             _logger = logger;
             _fileValidationService = fileValidationService;
+            _aiUsageService = aiUsageService;
             _subscriptionService = subscriptionService;
         }
 
@@ -902,6 +908,7 @@ namespace PdfToolStack.API.Controllers
 
         // POST api/pdf/compare
         [HttpPost("compare")]
+        [Authorize]
         [RequestSizeLimit(104857600)] // 100MB total (two files)
         public async Task<IActionResult> ComparePdf(
             IFormFile original,
@@ -915,6 +922,14 @@ namespace PdfToolStack.API.Controllers
 
             var v2 = await ValidateRequiredPdfAsync(revised, cancellationToken);
             if (v2 != null) return v2;
+
+            var userId = GetRequiredUserId();
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized();
+
+            var usageCheck = await CheckAiUsageAsync(userId, "compare", "pdf-compare");
+            if (usageCheck != null)
+                return usageCheck;
 
             using var ms1 = new MemoryStream();
             await original!.CopyToAsync(ms1, cancellationToken);
@@ -946,6 +961,49 @@ namespace PdfToolStack.API.Controllers
         }
 
         // Helpers
+
+        private string? GetRequiredUserId() =>
+            User.FindFirst("sub")?.Value ??
+            User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        private async Task<IActionResult?> CheckAiUsageAsync(
+            string userId,
+            string feature,
+            string model)
+        {
+            try
+            {
+                var planType = "free";
+                if (_subscriptionService != null)
+                {
+                    var status = await _subscriptionService.GetStatusAsync(userId);
+                    planType = status.IsActive ? status.PlanType : "free";
+                }
+
+                var (allowed, used, limit) = await _aiUsageService
+                    .CheckAndLogAsync(userId, feature, model, planType);
+
+                if (allowed)
+                    return null;
+
+                return StatusCode(429, new
+                {
+                    error = $"You've used your {limit} free AI requests this month. " +
+                            "Upgrade to Pro for 200 requests/month.",
+                    used,
+                    limit,
+                    upgradePath = "/pricing"
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Usage check failed for AI feature {Feature}", feature);
+                return StatusCode(503, new
+                {
+                    error = "AI usage credits could not be verified. Please try again."
+                });
+            }
+        }
 
         private async Task<IActionResult?> ValidateRequiredPdfAsync(
     IFormFile? file,

@@ -14,7 +14,10 @@ var apiBaseUrl = builder.Configuration["ApiBaseUrl"]
     ?? "https://localhost:7100/";
 
 builder.Services.AddHttpClient<ApiService>(
-    client => client.BaseAddress = new Uri(apiBaseUrl));
+    client => client.BaseAddress = new Uri(apiBaseUrl))
+    .AddHttpMessageHandler<OptionalAuthorizationMessageHandler>();
+
+builder.Services.AddTransient<OptionalAuthorizationMessageHandler>();
 
 builder.Services.AddOidcAuthentication(options =>
 {

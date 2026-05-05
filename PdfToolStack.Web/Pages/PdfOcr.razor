@@ -1,7 +1,10 @@
 ﻿@page "/pdf-ocr"
 @inject ApiService ApiService
+@inject AuthenticationStateProvider Auth
 @inject IJSRuntime JS
 @inject FileValidationService Validator
+@inject NavigationManager Navigation
+@inject PdfToolStack.Web.Services.SubscriptionService SubService
 @inject ToastService Toast
 @inject SessionUsageService SessionUsage
 
@@ -54,9 +57,66 @@
 
                     @if (_fileBytes != null)
                     {
-                        <button class="process-button ocr-primary-cta" @onclick="RunOcr">
-                            🔍 Make Searchable with OCR
-                        </button>
+                        <div class="ocr-upload-status">
+                            @if (_isPageCountLoading)
+                            {
+                                <span>Checking page count...</span>
+                            }
+                            else if (_pageCount <= FreePageLimit)
+                            {
+                                <strong>Free OCR available</strong>
+                                <span>@_pageCount page@(_pageCount == 1 ? "" : "s") detected. English searchable PDF is included.</span>
+                            }
+                            else
+                            {
+                                <strong>@_pageCount pages detected</strong>
+                                <span>Free OCR includes the first @FreePageLimit pages.</span>
+                            }
+                        </div>
+                        @if (_showUpgradeRequired)
+                        {
+                            <div class="ocr-upgrade-card">
+                                <span class="ocr-upgrade-kicker">Upgrade required</span>
+                                    <h3>@_upgradeTitle</h3>
+                                    <p>@_upgradeMessage</p>
+
+                                <div class="ocr-upgrade-actions">
+                                <button class="process-button ocr-secondary-cta"
+                                        @onclick="() => RunOcr(OcrProcessMode.FreePreview)">
+                                    OCR first @FreePageLimit pages free
+                                </button>
+
+                                <button class="process-button"
+                                        @onclick="GoToPricing">
+                                    Upgrade to Pro
+                                </button>
+                                </div>
+                            </div>
+                        }
+
+                        @if (!_isPageCountLoading && _pageCount <= FreePageLimit)
+                        {
+                            <button class="process-button ocr-primary-cta" @onclick="() => RunOcr(OcrProcessMode.FreePreview)">
+                                🔍 Make Searchable with Free OCR
+                            </button>
+                        }
+
+                        @if (!_isPageCountLoading && _pageCount > FreePageLimit)
+                        {
+                            <div class="ocr-upgrade-card">
+                                <span class="ocr-upgrade-kicker">Full document OCR is Pro</span>
+                                <h3>This PDF has @_pageCount pages. Free OCR includes @FreePageLimit pages.</h3>
+                                <p>Try the first @FreePageLimit pages now, or upgrade to OCR the full document with multilingual and export workflows.</p>
+                                <div class="ocr-upgrade-actions">
+                                    <button class="process-button ocr-secondary-cta" @onclick="() => RunOcr(OcrProcessMode.FreePreview)">
+                                        OCR first @FreePageLimit pages free
+                                    </button>
+                                    <a class="ocr-upgrade-link" href="/pricing">
+                                        Upgrade to OCR full document
+                                    </a>
+                                </div>
+                            </div>
+                        }
                     }
                 }
 
@@ -88,7 +148,7 @@
                                 <span class="ocr-result-kicker">Searchable document ready</span>
                                 <h2>OCR complete</h2>
                                 <p style="color:var(--text-secondary); font-size:0.875rem;">
-                                    @_fileName — now fully searchable
+                                    @_fileName — @OcrCompletionDescription
                                 </p>
                             </div>
                             <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
@@ -136,6 +196,34 @@
                             </div>
                         </div>
 
+                        <div class="ocr-next-actions" aria-label="Next OCR actions">
+                            <a class="ocr-next-card pro" href="/extract-invoice-data">
+                                <span>Pro/AI</span>
+                                <strong>Extract tables</strong>
+                                <p>Turn scanned tables and invoices into structured data.</p>
+                            </a>
+                            <a class="ocr-next-card ai" href="/ai-summarizer">
+                                <span>AI</span>
+                                <strong>Summarize document</strong>
+                                <p>Get key points from the OCR text in seconds.</p>
+                            </a>
+                            <a class="ocr-next-card ai" href="/chat-with-pdf">
+                                <span>AI</span>
+                                <strong>Ask questions</strong>
+                                <p>Chat with the searchable PDF content.</p>
+                            </a>
+                            <a class="ocr-next-card pro" href="/pdf-to-word">
+                                <span>Pro</span>
+                                <strong>Convert to Word</strong>
+                                <p>Export searchable content into an editable workflow.</p>
+                            </a>
+                            <a class="ocr-next-card pro" href="/batch">
+                                <span>Pro</span>
+                                <strong>Batch OCR similar files</strong>
+                                <p>Process repeated scanned documents together.</p>
+                            </a>
+                        </div>
+
                         <div class="extract-download-cta" style="margin-top:1rem;">
                             <div class="extract-download-cta-text">
                                 <svg width="20" height="20" viewBox="0 0 24 24"
@@ -176,6 +264,32 @@
                     <p>Choose the document language, then convert image-based text into a searchable PDF layer.</p>
                 </div>
 
+                <div class="ocr-plan-card">
+                    @if (_isPro)
+                    {
+                        <div class="ocr-pro-unlocked">
+                            Pro OCR unlocked — full document OCR is available.
+                        </div>
+                    }
+                    <div>
+                        <span class="ocr-plan-label">Free OCR includes</span>
+                        <ul>
+                            <li>English OCR</li>
+                            <li>@FreePageLimit pages per PDF</li>
+                            <li>Searchable PDF output</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <span class="ocr-plan-label pro">Pro unlocks</span>
+                        <ul>
+                            <li>Full document OCR</li>
+                            <li>Multilingual OCR</li>
+                            <li>Batch OCR</li>
+                            <li>Export to Word/Excel</li>
+                        </ul>
+                    </div>
+                </div>
+
                 <div class="ocr-lang-section">
                     <p class="ocr-lang-label">Document language</p>
                     <div class="ocr-lang-grid">
@@ -200,6 +314,12 @@
                     </div>
                     <p class="ocr-quality-note">Results may vary depending on scan quality.</p>
                 </div>
+
+                <div class="ocr-trust-card">
+                    <span>Files deleted in 1 hour</span>
+                    <span>Searchable PDF output</span>
+                    <span>Copy and paste enabled</span>
+                </div>
             </aside>
         </section>
 
@@ -221,7 +341,7 @@
         </div>
         <div class="faq-item">
             <h3>Which languages are supported?</h3>
-            <p>English, French, German, Spanish, Italian, Portuguese, Chinese (Simplified), Japanese, and Arabic. Select your language before uploading for best accuracy.</p>
+            <p>English is currently available. Additional OCR languages will be added as their language data is deployed.</p>
         </div>
         <div class="faq-item">
             <h3>Is my document stored anywhere?</h3>
@@ -230,29 +350,212 @@
     </div>
 </div>
 
+<style>
+    .ocr-upload-status,
+    .ocr-upgrade-card,
+    .ocr-plan-card,
+    .ocr-trust-card,
+    .ocr-next-card {
+        border: 1px solid rgba(148,163,184,.18);
+        background: rgba(255,255,255,.92);
+        box-shadow: 0 10px 28px rgba(15,23,42,.05);
+    }
+
+    .ocr-upload-status {
+        display: grid;
+        gap: .25rem;
+        margin-top: 1rem;
+        border-radius: 16px;
+        padding: 1rem 1.1rem;
+        color: var(--text-secondary);
+        font-size: .9rem;
+    }
+
+    .ocr-upload-status strong {
+        color: var(--text);
+        font-size: 1rem;
+    }
+
+    .ocr-upgrade-card {
+        display: grid;
+        gap: .8rem;
+        margin-top: 1rem;
+        border-radius: 18px;
+        padding: 1.2rem;
+    }
+
+    .ocr-upgrade-kicker,
+    .ocr-plan-label,
+    .ocr-next-card span {
+        color: var(--brand-primary);
+        font-size: .74rem;
+        font-weight: 900;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+    }
+
+    .ocr-plan-label.pro,
+    .ocr-next-card.pro span {
+        color: var(--accent);
+    }
+
+    .ocr-upgrade-card h3 {
+        margin: 0;
+        color: var(--text);
+        font-size: 1.05rem;
+        line-height: 1.35;
+    }
+
+    .ocr-upgrade-card p {
+        margin: 0;
+        color: var(--text-secondary);
+        line-height: 1.6;
+    }
+
+    .ocr-upgrade-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .75rem;
+        align-items: center;
+    }
+
+    .ocr-secondary-cta {
+        width: auto;
+        min-width: 210px;
+        margin: 0;
+    }
+
+    .ocr-upgrade-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 44px;
+        border-radius: 14px;
+        padding: .75rem 1rem;
+        background: #111827;
+        color: #fff;
+        font-weight: 900;
+        text-decoration: none;
+    }
+
+    .ocr-plan-card {
+        display: grid;
+        gap: 1rem;
+        margin: 1rem 0;
+        border-radius: 18px;
+        padding: 1.2rem;
+    }
+
+    .ocr-plan-card ul {
+        display: grid;
+        gap: .45rem;
+        margin: .65rem 0 0;
+        padding: 0;
+        list-style: none;
+        color: var(--text-secondary);
+        font-size: .9rem;
+    }
+
+    .ocr-plan-card li::before,
+    .ocr-trust-card span::before {
+        content: "";
+        display: inline-block;
+        width: .42rem;
+        height: .42rem;
+        margin-right: .55rem;
+        border-radius: 999px;
+        background: var(--brand-primary);
+        vertical-align: .08em;
+    }
+
+    .ocr-trust-card {
+        display: grid;
+        gap: .55rem;
+        margin-top: 1rem;
+        border-radius: 16px;
+        padding: 1rem 1.1rem;
+        color: var(--text-secondary);
+        font-size: .88rem;
+        font-weight: 700;
+    }
+
+    .ocr-next-actions {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: .75rem;
+        margin-top: 1rem;
+    }
+
+    .ocr-next-card {
+        display: grid;
+        gap: .35rem;
+        min-height: 132px;
+        border-radius: 18px;
+        padding: 1rem;
+        color: var(--text);
+        text-decoration: none;
+    }
+
+    .ocr-next-card strong {
+        font-size: .98rem;
+        line-height: 1.25;
+    }
+
+    .ocr-next-card p {
+        margin: 0;
+        color: var(--text-secondary);
+        font-size: .84rem;
+        line-height: 1.45;
+    }
+
+    @@media (max-width: 980px) {
+        .ocr-next-actions {
+            grid-template-columns: 1fr;
+        }
+
+        .ocr-upgrade-actions,
+        .ocr-secondary-cta,
+        .ocr-upgrade-link {
+            width: 100%;
+        }
+    }
+</style>
+
 @code {
     private enum PageState { Upload, Processing, Complete, Error }
     private PageState CurrentState = PageState.Upload;
+    private const int FreePageLimit = 3;
     private byte[]? _fileBytes;
     private string? _fileName;
     private byte[]? _outputBytes;
     private string _language = "eng";
     private string _error = string.Empty;
     private int _step = 0;
+    private int _pageCount = 1;
+    private bool _isPageCountLoading;
+    private bool _processedFirstThreeOnly;
+    private bool _isAuthenticated;
+    private bool _isPro;
+    private bool _showUpgradeRequired;
+    private string _upgradeTitle = string.Empty;
+    private string _upgradeMessage = string.Empty;
+
+    private enum OcrProcessMode
+    {
+        FreePreview,
+        FullDocument
+    }
+
+    private string OcrCompletionDescription =>
+        _processedFirstThreeOnly && _pageCount > FreePageLimit
+            ? $"first {FreePageLimit} pages are searchable"
+            : "now fully searchable";
 
     private record LangOption(string Code, string Name, string Flag);
 
     private readonly List<LangOption> _languages = new()
     {
-        new("eng",     "English",    "🇬🇧"),
-        new("fra",     "French",     "🇫🇷"),
-        new("deu",     "German",     "🇩🇪"),
-        new("spa",     "Spanish",    "🇪🇸"),
-        new("ita",     "Italian",    "🇮🇹"),
-        new("por",     "Portuguese", "🇵🇹"),
-        new("chi_sim", "Chinese",    "🇨🇳"),
-        new("jpn",     "Japanese",   "🇯🇵"),
-        new("ara",     "Arabic",     "🇸🇦"),
+        new("eng", "English", "🇬🇧"),
     };
 
     private async Task HandleFileSelected(IBrowserFile file)
@@ -269,19 +572,50 @@
         await stream.CopyToAsync(ms);
         _fileBytes = ms.ToArray();
         _fileName = file.Name;
+        _outputBytes = null;
+        _processedFirstThreeOnly = false;
+        _isPageCountLoading = true;
         Toast.ShowSuccess($"File ready — {Validator.FormatSize(file.Size)}");
         StateHasChanged();
+
+        try
+        {
+            _pageCount = await ApiService.GetPageCountAsync(_fileBytes, file.Name);
+        }
+        catch
+        {
+            _pageCount = 1;
+            Toast.ShowWarning("Could not detect page count. Free OCR will continue with the first pages.");
+        }
+        finally
+        {
+            _isPageCountLoading = false;
+            StateHasChanged();
+        }
     }
 
     private void HandleFileRemoved()
     {
         _fileBytes = null;
         _fileName = null;
+        _outputBytes = null;
+        _pageCount = 1;
+        _processedFirstThreeOnly = false;
     }
 
-    private async Task RunOcr()
+    private async Task RunOcr(OcrProcessMode mode)
     {
         if (_fileBytes == null) return;
+
+        _showUpgradeRequired = false;
+        _upgradeTitle = string.Empty;
+        _upgradeMessage = string.Empty;
+
+        var processMode = mode == OcrProcessMode.FullDocument
+            ? "full-document"
+            : "free-preview";
+
+        _processedFirstThreeOnly = mode == OcrProcessMode.FreePreview && _pageCount > FreePageLimit;
 
         CurrentState = PageState.Processing;
         _step = 1;
@@ -289,17 +623,16 @@
 
         try
         {
-            // Animate steps while processing
             _ = AnimateSteps();
 
             using var content = new MultipartFormDataContent();
             var fc = new ByteArrayContent(_fileBytes);
-            fc.Headers.ContentType = new System.Net.Http.Headers
-                .MediaTypeHeaderValue("application/pdf");
+            fc.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/pdf");
             content.Add(fc, "file", _fileName ?? "document.pdf");
 
             _outputBytes = await ApiService.PostMultipartBytesAsync(
-                $"api/ai/ocr?language={_language}", content);
+                $"api/ai/ocr?language={_language}&processMode={processMode}",
+                content);
 
             if (_outputBytes == null || _outputBytes.Length == 0)
             {
@@ -311,7 +644,30 @@
 
             _step = 3;
             CurrentState = PageState.Complete;
-            Toast.ShowSuccess("OCR complete — your PDF is now searchable!");
+
+            Toast.ShowSuccess(_processedFirstThreeOnly
+                ? $"Free preview complete — first {FreePageLimit} pages are searchable."
+                : "OCR complete — full document is searchable!");
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.PaymentRequired)
+        {
+            _showUpgradeRequired = true;
+            _upgradeTitle = "Upgrade to OCR the full document";
+            _upgradeMessage = $"Free OCR supports up to {FreePageLimit} pages. Upgrade to Pro to process the full document.";
+            _error = _upgradeMessage;
+            CurrentState = PageState.Upload;
+            Toast.ShowWarning(_upgradeMessage);
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.Forbidden)
+        {
+            _showUpgradeRequired = true;
+            _upgradeTitle = "Pro OCR required";
+            _upgradeMessage = _language != "eng"
+                ? "Multilingual OCR requires Pro."
+                : "This OCR feature requires Pro.";
+            _error = _upgradeMessage;
+            CurrentState = PageState.Upload;
+            Toast.ShowWarning(_upgradeMessage);
         }
         catch (Exception ex)
         {
@@ -323,6 +679,56 @@
         StateHasChanged();
     }
 
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var authState = await Auth.GetAuthenticationStateAsync();
+            _isAuthenticated = authState.User.Identity?.IsAuthenticated == true;
+
+            if (_isAuthenticated)
+            {
+                var userId = authState.User.FindFirst("sub")?.Value
+                          ?? authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+                if (!string.IsNullOrWhiteSpace(userId))
+                {
+                    var status = await SubService.GetStatusAsync(userId);
+                    _isPro = status?.IsActive == true;
+                }
+            }
+        }
+        catch
+        {
+            _isAuthenticated = false;
+            _isPro = false;
+        }
+    }
+
+    private OcrProcessMode GetDefaultProcessMode()
+    {
+        if (_isPro && _pageCount > FreePageLimit)
+        {
+            return OcrProcessMode.FullDocument;
+        }
+
+        return OcrProcessMode.FreePreview;
+    }
+
+    private string GetPrimaryButtonText()
+{
+    if (_isPro && _pageCount > FreePageLimit)
+    {
+        return "OCR full document";
+    }
+
+    return "Make searchable with free OCR";
+}
+
+    private void GoToPricing()
+    {
+        Navigation.NavigateTo("/pricing");
+    }
     private async Task AnimateSteps()
     {
         await Task.Delay(1500);
@@ -340,7 +746,7 @@
             _fileName ?? "document") + "_searchable.pdf";
         await JS.InvokeVoidAsync("downloadFile", name,
             Convert.ToBase64String(_outputBytes));
-        SessionUsage.RecordToolCompletion("Tool Name");
+        SessionUsage.RecordToolCompletion("PDF OCR");
     }
 
     private void Reset()
@@ -351,5 +757,8 @@
         _outputBytes = null;
         _error = string.Empty;
         _step = 0;
+        _pageCount = 1;
+        _isPageCountLoading = false;
+        _processedFirstThreeOnly = false;
     }
 }
