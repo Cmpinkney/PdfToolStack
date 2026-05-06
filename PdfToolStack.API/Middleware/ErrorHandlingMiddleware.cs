@@ -24,10 +24,15 @@ namespace PdfToolStack.API.Middleware
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex,
-                    "Unhandled exception for request {Method} {Path}",
+                _logger.LogError(
+                    ex,
+                    "Unhandled exception for request {Method} {Path}. ExceptionType: {ExceptionType}, ExceptionMessage: {ExceptionMessage}, InnerException: {InnerException}, StackTrace: {StackTrace}",
                     context.Request.Method,
-                    context.Request.Path);
+                    context.Request.Path,
+                    ex.GetType().FullName,
+                    ex.Message,
+                    ex.InnerException?.ToString(),
+                    ex.StackTrace);
 
                 await HandleExceptionAsync(context, ex);
             }

@@ -4,7 +4,7 @@ using PdfToolStack.Domain.Enums;
 
 namespace PdfToolStack.Infrastructure.Processors
 {
-    public class ProtectPdfProcessor : IPdfProcessor
+    public class ProtectPdfProcessor : IProtectPdfProcessor
     {
         public ToolType ToolType => ToolType.ProtectPdf;
 

@@ -1,5 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using PdfToolStack.Application.DTOs;
+using PdfToolStack.Infrastructure.Services.Ocr;
+using System.Diagnostics;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
@@ -16,8 +18,19 @@ namespace PdfToolStack.Infrastructure.Services
         private readonly string _model;
         private readonly int _maxTokens;
         private readonly ILogger<AiService> _logger;
+        private readonly SmartOcrTextService? _smartOcrTextService;
         // Add these constants inside AiService class
         private const string HaikuModel = "claude-haiku-4-5-20251001";
+        private const int MinContractReviewTextChars = 800;
+        private const int MinSinglePageContractReviewTextChars = 200;
+        private const string ScannedPdfTranslateMessage =
+            "This PDF appears to be scanned or image-based. Run OCR first, then translate the searchable PDF.";
+        private const string OcrContractReviewWarning =
+            "This review was generated from OCR text. Handwriting and poor scans may reduce accuracy.";
+        private const string ScannedLowQualityContractMessage =
+            "This appears to be a scanned PDF and the text quality is too low for contract review. Try a clearer scan.";
+        private const int MinInvoiceExtractionTextChars = 40;
+        private const int TextPreviewLength = 1200;
         // _model field stays as Opus for contract review
 
         public AiService(
@@ -25,27 +38,137 @@ namespace PdfToolStack.Infrastructure.Services
             string apiKey,
             string model,
             int maxTokens,
-            ILogger<AiService> logger)
+            ILogger<AiService> logger,
+            SmartOcrTextService? smartOcrTextService = null)
         {
             _http = http;
             _apiKey = apiKey;
             _model = model;
             _maxTokens = maxTokens;
             _logger = logger;
+            _smartOcrTextService = smartOcrTextService;
         }
 
         public async Task<ExtractResult> ExtractDataAsync(
             byte[] pdfBytes,
             string extractionType,
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken = default,
+            string userId = "unknown",
+            bool isProUser = false,
+            int? totalPageCount = null)
         {
-            // Extract text from PDF using PdfPig
-            var text = ExtractText(pdfBytes);
+            var stopwatch = Stopwatch.StartNew();
+            var ocrFallbackUsed = false;
+            string? ocrWarning = null;
+            string? ocrFailureReason = null;
 
-            if (string.IsNullOrWhiteSpace(text))
+            _logger.LogInformation(
+                "Invoice extraction started. ExtractionType: {ExtractionType}, PdfBytes: {PdfBytes}, PageCount: {PageCount}, IsPro: {IsPro}",
+                extractionType,
+                pdfBytes.Length,
+                totalPageCount,
+                isProUser);
+
+            var text = ExtractText(pdfBytes, "invoice-extraction");
+            var extractedTextLength =
+                OcrTextQuality.CountMeaningfulCharacters(text);
+
+            _logger.LogInformation(
+                "Invoice PDF text extraction completed. ExtractionType: {ExtractionType}, ExtractedTextLength: {ExtractedTextLength}, RawTextLength: {RawTextLength}, PageCount: {PageCount}",
+                extractionType,
+                extractedTextLength,
+                text.Length,
+                totalPageCount);
+
+            if (extractedTextLength < MinInvoiceExtractionTextChars &&
+                _smartOcrTextService != null)
+            {
+                _logger.LogInformation(
+                    "Invoice OCR fallback starting. ExtractionType: {ExtractionType}, ExtractedTextLength: {ExtractedTextLength}, PageCount: {PageCount}, IsPro: {IsPro}",
+                    extractionType,
+                    extractedTextLength,
+                    totalPageCount,
+                    isProUser);
+
+                try
+                {
+                    var smartOcrResult =
+                        await _smartOcrTextService.ExtractTextAsync(
+                            new OcrTextRequest(pdfBytes)
+                            {
+                                Language = "eng",
+                                TotalPageCount = totalPageCount,
+                                AllowGoogleVisionFallback = true,
+                                RequireCompleteDocument = false,
+                                UserId = userId,
+                                IsAnonymous = string.IsNullOrWhiteSpace(userId) ||
+                                    userId == "anonymous" ||
+                                    userId == "unknown",
+                                IsProUser = isProUser
+                            },
+                            cancellationToken);
+
+                    if (smartOcrResult.RequiresUpgrade)
+                    {
+                        return ExtractResult.Failure(
+                            smartOcrResult.ErrorMessage ??
+                            "Upgrade to Pro to extract scanned invoices with OCR fallback.",
+                            ExtractionFailureKind.RequiresUpgrade,
+                            text,
+                            smartOcrResult.WasGoogleVisionFallbackUsed,
+                            smartOcrResult.FallbackReason);
+                    }
+
+                    if (smartOcrResult.IsSuccess)
+                    {
+                        text = smartOcrResult.Text;
+                        extractedTextLength = smartOcrResult.ExtractedTextLength;
+                        ocrFallbackUsed = smartOcrResult.WasGoogleVisionFallbackUsed;
+                        ocrWarning = smartOcrResult.IsPartial
+                            ? "OCR fallback processed only part of this document."
+                            : "OCR fallback was used for this document.";
+
+                        _logger.LogInformation(
+                            "Invoice OCR fallback completed. Provider: {Provider}, GoogleFallbackUsed: {GoogleFallbackUsed}, ExtractedTextLength: {ExtractedTextLength}, PagesProcessed: {PagesProcessed}, PageCount: {PageCount}, FallbackReason: {FallbackReason}",
+                            smartOcrResult.ProviderUsed,
+                            smartOcrResult.WasGoogleVisionFallbackUsed,
+                            smartOcrResult.ExtractedTextLength,
+                            smartOcrResult.PagesProcessed,
+                            smartOcrResult.PageCount,
+                            smartOcrResult.FallbackReason);
+                    }
+                    else
+                    {
+                        ocrFailureReason = smartOcrResult.FallbackReason;
+                        _logger.LogWarning(
+                            "Invoice OCR fallback did not produce readable text. Error: {ErrorMessage}, FallbackReason: {FallbackReason}, PageCount: {PageCount}, PagesProcessed: {PagesProcessed}",
+                            smartOcrResult.ErrorMessage,
+                            smartOcrResult.FallbackReason,
+                            smartOcrResult.PageCount,
+                            smartOcrResult.PagesProcessed);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    ocrFailureReason = "ocr-exception";
+                    LogExceptionDetails(
+                        ex,
+                        "Invoice OCR fallback threw. ExtractionType: {ExtractionType}, PageCount: {PageCount}",
+                        extractionType,
+                        totalPageCount);
+                }
+            }
+
+            if (OcrTextQuality.CountMeaningfulCharacters(text) <
+                MinInvoiceExtractionTextChars)
+            {
                 return ExtractResult.Failure(
-                    "Could not extract text from this PDF. " +
-                    "It may be a scanned image — try OCR first.");
+                    "No readable invoice text detected.",
+                    ExtractionFailureKind.NoReadableText,
+                    text,
+                    ocrFallbackUsed,
+                    ocrFailureReason ?? ocrWarning);
+            }
 
             // Truncate to avoid token limits (~12K chars ≈ 3K tokens)
             if (text.Length > 12000)
@@ -66,32 +189,71 @@ namespace PdfToolStack.Infrastructure.Services
                 }
             };
 
-            var json = JsonSerializer.Serialize(requestBody);
-            var request = new HttpRequestMessage(
-                HttpMethod.Post,
-                "https://api.anthropic.com/v1/messages");
-
-            request.Headers.Add("x-api-key", _apiKey);
-            request.Headers.Add("anthropic-version", "2023-06-01");
-            request.Content = new StringContent(
-                json, Encoding.UTF8, "application/json");
-
             try
             {
+                if (string.IsNullOrWhiteSpace(_apiKey))
+                {
+                    _logger.LogError(
+                        "Invoice extraction AI request blocked because Anthropic:ApiKey is missing or empty. ExtractionType: {ExtractionType}",
+                        extractionType);
+
+                    return ExtractResult.Failure(
+                        "AI extraction is not configured.",
+                        ExtractionFailureKind.AiConfiguration,
+                        text,
+                        ocrFallbackUsed,
+                        ocrWarning);
+                }
+
+                var json = JsonSerializer.Serialize(requestBody);
+                using var request = new HttpRequestMessage(
+                    HttpMethod.Post,
+                    "https://api.anthropic.com/v1/messages");
+
+                request.Headers.Add("x-api-key", _apiKey);
+                request.Headers.Add("anthropic-version", "2023-06-01");
+                request.Content = new StringContent(
+                    json, Encoding.UTF8, "application/json");
+
+                _logger.LogInformation(
+                    "Invoice AI request sending. ExtractionType: {ExtractionType}, Model: {Model}, MaxTokens: {MaxTokens}, PromptTextLength: {PromptTextLength}, OcrFallbackUsed: {OcrFallbackUsed}",
+                    extractionType,
+                    HaikuModel,
+                    _maxTokens,
+                    text.Length,
+                    ocrFallbackUsed);
+
                 var response = await _http.SendAsync(
                     request, cancellationToken);
 
                 var responseBody = await response.Content
                     .ReadAsStringAsync(cancellationToken);
 
+                _logger.LogInformation(
+                    "Invoice AI response received. ExtractionType: {ExtractionType}, StatusCode: {StatusCode}, ResponseLength: {ResponseLength}, ElapsedMs: {ElapsedMs}",
+                    extractionType,
+                    (int)response.StatusCode,
+                    responseBody.Length,
+                    stopwatch.ElapsedMilliseconds);
+
                 if (!response.IsSuccessStatusCode)
                 {
                     _logger.LogError(
-                        "Anthropic API error {Status}: {Body}",
-                        response.StatusCode, responseBody);
+                        "Anthropic API error during invoice extraction. Status: {Status}, Body: {Body}",
+                        response.StatusCode,
+                        responseBody);
                     return ExtractResult.Failure(
-                        "AI service unavailable. Please try again.");
+                        "AI service unavailable. Please try again.",
+                        ExtractionFailureKind.AiProvider,
+                        text,
+                        ocrFallbackUsed,
+                        ocrWarning);
                 }
+
+                _logger.LogInformation(
+                    "Invoice AI response parsing started. ExtractionType: {ExtractionType}, ResponseLength: {ResponseLength}",
+                    extractionType,
+                    responseBody.Length);
 
                 var parsed = JsonSerializer.Deserialize<AnthropicResponse>(
                     responseBody,
@@ -110,21 +272,55 @@ namespace PdfToolStack.Infrastructure.Services
                     .Replace("```", "")
                     .Trim();
 
-                // Validate it's parseable JSON
-                JsonDocument.Parse(content);
+                _logger.LogInformation(
+                    "Invoice AI content extracted. ExtractionType: {ExtractionType}, ContentLength: {ContentLength}, Preview: {Preview}",
+                    extractionType,
+                    content.Length,
+                    CreateTextPreview(content, 500));
 
-                return ExtractResult.Success(content, extractionType);
+                using var extractedJson = JsonDocument.Parse(content);
+
+                _logger.LogInformation(
+                    "Invoice JSON validation completed. ExtractionType: {ExtractionType}, RootKind: {RootKind}, OcrFallbackUsed: {OcrFallbackUsed}, ElapsedMs: {ElapsedMs}",
+                    extractionType,
+                    extractedJson.RootElement.ValueKind,
+                    ocrFallbackUsed,
+                    stopwatch.ElapsedMilliseconds);
+
+                return ExtractResult.Success(
+                    content,
+                    extractionType,
+                    CreateTextPreview(text),
+                    ocrFallbackUsed,
+                    ocrWarning);
             }
             catch (JsonException ex)
             {
-                _logger.LogError(ex, "Failed to parse AI JSON response");
+                LogExceptionDetails(
+                    ex,
+                    "Failed to parse invoice AI JSON response. ExtractionType: {ExtractionType}, TextPreview: {TextPreview}",
+                    extractionType,
+                    CreateTextPreview(text));
                 return ExtractResult.Failure(
-                    "AI returned unexpected output. Please try again.");
+                    "Unable to extract structured invoice data from this document.",
+                    ExtractionFailureKind.StructuredExtraction,
+                    text,
+                    ocrFallbackUsed,
+                    ocrWarning);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "AI extraction error");
-                return ExtractResult.Failure($"Extraction failed: {ex.Message}");
+                LogExceptionDetails(
+                    ex,
+                    "AI extraction error. ExtractionType: {ExtractionType}, TextLength: {TextLength}",
+                    extractionType,
+                    text.Length);
+                return ExtractResult.Failure(
+                    "Unable to extract structured invoice data from this document.",
+                    ExtractionFailureKind.Unexpected,
+                    text,
+                    ocrFallbackUsed,
+                    ocrWarning);
             }
         }
 
@@ -132,7 +328,7 @@ namespace PdfToolStack.Infrastructure.Services
             byte[] pdfBytes,
             CancellationToken cancellationToken = default)
         {
-            var text = ExtractText(pdfBytes);
+            var text = ExtractText(pdfBytes, "summarize");
 
             if (string.IsNullOrWhiteSpace(text))
                 return "Could not extract text from this PDF.";
@@ -165,12 +361,65 @@ namespace PdfToolStack.Infrastructure.Services
             byte[] pdfBytes,
             CancellationToken cancellationToken = default)
         {
-            var text = ExtractText(pdfBytes);
+            return await ReviewContractAsync(
+                pdfBytes,
+                userId: "unknown",
+                isProUser: false,
+                totalPageCount: null,
+                cancellationToken);
+        }
 
-            if (string.IsNullOrWhiteSpace(text))
+        public async Task<ContractReviewResult> ReviewContractAsync(
+            byte[] pdfBytes,
+            string userId,
+            bool isProUser,
+            int? totalPageCount,
+            CancellationToken cancellationToken = default,
+            bool highAccuracy = false)
+        {
+            var text = ExtractText(pdfBytes, "contract-review");
+            var ocrFallbackUsed = false;
+            string? ocrWarning = null;
+
+            if (IsTooShortForContractReview(text, totalPageCount) &&
+                _smartOcrTextService != null)
+            {
+                var smartOcrResult =
+                    await _smartOcrTextService.ExtractTextAsync(
+                        new OcrTextRequest(pdfBytes)
+                        {
+                            Language = "eng",
+                            TotalPageCount = totalPageCount,
+                            HighAccuracy = highAccuracy,
+                            AllowGoogleVisionFallback = true,
+                            RequireCompleteDocument = true,
+                            UserId = userId,
+                            IsAnonymous = string.IsNullOrWhiteSpace(userId) ||
+                                userId == "anonymous" ||
+                                userId == "unknown",
+                            IsProUser = isProUser
+                        },
+                        cancellationToken);
+
+                if (smartOcrResult.RequiresUpgrade)
+                {
+                    return ContractReviewResult.Failure(
+                        smartOcrResult.ErrorMessage ??
+                        "Upgrade to Pro to review scanned contracts with OCR fallback.",
+                        requiresUpgrade: true);
+                }
+
+                if (smartOcrResult.IsSuccess)
+                {
+                    text = smartOcrResult.Text;
+                    ocrFallbackUsed = smartOcrResult.WasOcrUsed;
+                    ocrWarning = OcrContractReviewWarning;
+                }
+            }
+
+            if (IsTooShortForContractReview(text, totalPageCount))
                 return ContractReviewResult.Failure(
-                    "Could not extract text from this PDF. " +
-                    "It may be a scanned image — try OCR first.");
+                    ScannedLowQualityContractMessage);
 
             if (text.Length > 16000)
                 text = text[..16000] + "\n[Document truncated]";
@@ -230,7 +479,10 @@ namespace PdfToolStack.Infrastructure.Services
             if (content.EndsWith("```"))
                 content = content[..^3];
 
-            return ContractReviewResult.Success(content.Trim());
+            return ContractReviewResult.Success(
+                content.Trim(),
+                ocrFallbackUsed,
+                ocrWarning);
         }
 
         public class ContractReviewResult
@@ -238,12 +490,31 @@ namespace PdfToolStack.Infrastructure.Services
             public bool IsSuccess { get; private set; }
             public string JsonData { get; private set; } = string.Empty;
             public string? ErrorMessage { get; private set; }
+            public bool OcrFallbackUsed { get; private set; }
+            public string? OcrWarning { get; private set; }
+            public bool RequiresUpgrade { get; private set; }
 
-            public static ContractReviewResult Success(string json) =>
-                new() { IsSuccess = true, JsonData = json };
+            public static ContractReviewResult Success(
+                string json,
+                bool ocrFallbackUsed = false,
+                string? ocrWarning = null) =>
+                new()
+                {
+                    IsSuccess = true,
+                    JsonData = json,
+                    OcrFallbackUsed = ocrFallbackUsed,
+                    OcrWarning = ocrWarning
+                };
 
-            public static ContractReviewResult Failure(string error) =>
-                new() { IsSuccess = false, ErrorMessage = error };
+            public static ContractReviewResult Failure(
+                string error,
+                bool requiresUpgrade = false) =>
+                new()
+                {
+                    IsSuccess = false,
+                    ErrorMessage = error,
+                    RequiresUpgrade = requiresUpgrade
+                };
         }
 
         public async Task<string> ChatAsync(
@@ -251,7 +522,7 @@ namespace PdfToolStack.Infrastructure.Services
             string question,
             CancellationToken cancellationToken = default)
         {
-            var text = ExtractText(pdfBytes);
+            var text = ExtractText(pdfBytes, "chat");
 
             if (string.IsNullOrWhiteSpace(text))
                 return "Could not extract text from this PDF.";
@@ -287,12 +558,14 @@ namespace PdfToolStack.Infrastructure.Services
             string languageName,
             CancellationToken cancellationToken = default)
         {
-            var text = ExtractText(pdfBytes);
+            var text = ExtractText(pdfBytes, "translate");
+            var sourceTextLength = text.Length;
 
-            if (string.IsNullOrWhiteSpace(text))
+            if (string.IsNullOrWhiteSpace(text) ||
+                OcrTextQuality.CountMeaningfulCharacters(text) == 0)
                 return TranslateResult.Failure(
-                    "Could not extract text from this PDF. " +
-                    "It may be a scanned image — try OCR first.");
+                    ScannedPdfTranslateMessage,
+                    sourceTextLength);
 
             if (text.Length > 14000)
                 text = text[..14000] + "\n[Document truncated]";
@@ -320,12 +593,12 @@ namespace PdfToolStack.Infrastructure.Services
             """,
                 messages = new[]
                 {
-            new
-            {
-                role = "user",
-                content = $"Translate this document into {languageName}:\n\n{text}"
-            }
-        }
+                    new
+                    {
+                        role = "user",
+                        content = $"Translate this document into {languageName}:\n\n{text}"
+                    }
+                }
             };
 
             var translated = await CallApiAsync(requestBody, cancellationToken);
@@ -334,12 +607,21 @@ namespace PdfToolStack.Infrastructure.Services
                 .Replace("```", "")
                 .Trim();
 
-            if (string.IsNullOrWhiteSpace(translated) ||
-                translated.StartsWith("AI service"))
+            if (string.IsNullOrWhiteSpace(translated))
                 return TranslateResult.Failure(
-                    "Translation failed. Please try again.");
+                    "Translation result was empty. Please try again.",
+                    sourceTextLength);
 
-            return TranslateResult.Success(translated, targetLanguage, languageName);
+            if (translated.StartsWith("AI service"))
+                return TranslateResult.Failure(
+                    "Translation failed. Please try again.",
+                    sourceTextLength);
+
+            return TranslateResult.Success(
+                translated,
+                targetLanguage,
+                languageName,
+                sourceTextLength);
         }
 
         public async Task<RewriteResult> RewriteAsync(
@@ -348,7 +630,7 @@ namespace PdfToolStack.Infrastructure.Services
             string tone,
             CancellationToken cancellationToken = default)
         {
-            var text = ExtractText(pdfBytes);
+            var text = ExtractText(pdfBytes, "rewrite");
 
             if (string.IsNullOrWhiteSpace(text))
                 return RewriteResult.Failure(
@@ -501,29 +783,66 @@ namespace PdfToolStack.Infrastructure.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "AI API call failed");
+                LogExceptionDetails(ex, "AI API call failed");
                 return "AI service error. Please try again.";
             }
         }
 
-        private static string ExtractText(byte[] pdfBytes)
+        private string ExtractText(byte[] pdfBytes, string operation)
         {
+            var stopwatch = Stopwatch.StartNew();
+
             try
             {
                 using var doc = PdfDocument.Open(pdfBytes);
                 var sb = new StringBuilder();
+                var pageCount = 0;
                 foreach (var page in doc.GetPages())
                 {
+                    pageCount++;
                     sb.AppendLine(string.Join(" ",
                         page.GetWords().Select(w => w.Text)));
                     sb.AppendLine();
                 }
-                return sb.ToString().Trim();
+
+                var text = sb.ToString().Trim();
+
+                _logger.LogInformation(
+                    "PDF text extraction completed. Operation: {Operation}, PageCount: {PageCount}, TextLength: {TextLength}, MeaningfulCharacters: {MeaningfulCharacters}, ElapsedMs: {ElapsedMs}",
+                    operation,
+                    pageCount,
+                    text.Length,
+                    OcrTextQuality.CountMeaningfulCharacters(text),
+                    stopwatch.ElapsedMilliseconds);
+
+                return text;
             }
-            catch
+            catch (Exception ex)
             {
+                LogExceptionDetails(
+                    ex,
+                    "PDF text extraction failed. Operation: {Operation}, PdfBytes: {PdfBytes}",
+                    operation,
+                    pdfBytes.Length);
                 return string.Empty;
             }
+        }
+
+        private static bool IsTooShortForContractReview(
+            string? text,
+            int? pageCount)
+        {
+            var meaningfulCharacters =
+                OcrTextQuality.CountMeaningfulCharacters(text);
+
+            if (meaningfulCharacters == 0)
+                return true;
+
+            var threshold = pageCount.GetValueOrDefault(1) > 1
+                ? MinContractReviewTextChars
+                : MinSinglePageContractReviewTextChars;
+
+            return meaningfulCharacters < threshold;
         }
 
         private static string GetSystemPrompt(string extractionType) =>
@@ -588,21 +907,119 @@ namespace PdfToolStack.Infrastructure.Services
             public string Type { get; set; } = string.Empty;
             public string Text { get; set; } = string.Empty;
         }
+
+        private static string CreateTextPreview(
+            string? text,
+            int maxLength = TextPreviewLength)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+                return string.Empty;
+
+            var normalized = string.Join(
+                " ",
+                text.Split(
+                    [' ', '\r', '\n', '\t'],
+                    StringSplitOptions.RemoveEmptyEntries));
+
+            return normalized.Length <= maxLength
+                ? normalized
+                : normalized[..maxLength];
+        }
+
+        private void LogExceptionDetails(
+            Exception ex,
+            string message,
+            params object?[] args)
+        {
+            var fullMessage =
+                message +
+                " ExceptionType: {ExceptionType}, ExceptionMessage: {ExceptionMessage}, InnerException: {InnerException}, StackTrace: {StackTrace}";
+
+            var fullArgs = args
+                .Concat(new object?[]
+                {
+                    ex.GetType().FullName,
+                    ex.Message,
+                    ex.InnerException?.ToString(),
+                    ex.StackTrace
+                })
+                .ToArray();
+
+            _logger.LogError(ex, fullMessage, fullArgs);
+        }
     }
 
     public record SupportMessage(string Role, string Content);
+
+    public enum ExtractionFailureKind
+    {
+        None,
+        NoReadableText,
+        StructuredExtraction,
+        AiConfiguration,
+        AiProvider,
+        RequiresUpgrade,
+        Unexpected
+    }
+
     public class ExtractResult
     {
         public bool IsSuccess { get; private set; }
         public string JsonData { get; private set; } = string.Empty;
         public string ExtractionType { get; private set; } = string.Empty;
         public string? ErrorMessage { get; private set; }
+        public string TextPreview { get; private set; } = string.Empty;
+        public bool OcrFallbackUsed { get; private set; }
+        public string? OcrWarning { get; private set; }
+        public ExtractionFailureKind FailureKind { get; private set; }
 
-        public static ExtractResult Success(string json, string type) =>
-            new() { IsSuccess = true, JsonData = json, ExtractionType = type };
+        public static ExtractResult Success(
+            string json,
+            string type,
+            string textPreview = "",
+            bool ocrFallbackUsed = false,
+            string? ocrWarning = null) =>
+            new()
+            {
+                IsSuccess = true,
+                JsonData = json,
+                ExtractionType = type,
+                TextPreview = textPreview,
+                OcrFallbackUsed = ocrFallbackUsed,
+                OcrWarning = ocrWarning
+            };
 
-        public static ExtractResult Failure(string error) =>
-            new() { IsSuccess = false, ErrorMessage = error };
+        public static ExtractResult Failure(
+            string error,
+            ExtractionFailureKind failureKind = ExtractionFailureKind.Unexpected,
+            string? textPreviewSource = null,
+            bool ocrFallbackUsed = false,
+            string? ocrWarning = null) =>
+            new()
+            {
+                IsSuccess = false,
+                ErrorMessage = error,
+                FailureKind = failureKind,
+                TextPreview = CreatePreview(textPreviewSource),
+                OcrFallbackUsed = ocrFallbackUsed,
+                OcrWarning = ocrWarning
+            };
+
+        private static string CreatePreview(string? text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+                return string.Empty;
+
+            var normalized = string.Join(
+                " ",
+                text.Split(
+                    [' ', '\r', '\n', '\t'],
+                    StringSplitOptions.RemoveEmptyEntries));
+
+            return normalized.Length <= 1200
+                ? normalized
+                : normalized[..1200];
+        }
     }
 
     public class TranslateResult
@@ -611,20 +1028,32 @@ namespace PdfToolStack.Infrastructure.Services
         public string TranslatedText { get; private set; } = string.Empty;
         public string TargetLanguage { get; private set; } = string.Empty;
         public string LanguageName { get; private set; } = string.Empty;
+        public int SourceTextLength { get; private set; }
         public string? ErrorMessage { get; private set; }
 
         public static TranslateResult Success(
-            string text, string lang, string name) =>
+            string text,
+            string lang,
+            string name,
+            int sourceTextLength) =>
             new()
             {
                 IsSuccess = true,
                 TranslatedText = text,
                 TargetLanguage = lang,
-                LanguageName = name
+                LanguageName = name,
+                SourceTextLength = sourceTextLength
             };
 
-        public static TranslateResult Failure(string error) =>
-            new() { IsSuccess = false, ErrorMessage = error };
+        public static TranslateResult Failure(
+            string error,
+            int sourceTextLength = 0) =>
+            new()
+            {
+                IsSuccess = false,
+                ErrorMessage = error,
+                SourceTextLength = sourceTextLength
+            };
 
         public class RewriteResult
         {

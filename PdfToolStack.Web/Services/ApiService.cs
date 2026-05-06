@@ -971,7 +971,10 @@ namespace PdfToolStack.Web.Services
                 {
                     IsSuccess = false,
                     IsRateLimit = isRateLimit,
-                    ErrorMessage = errorBody
+                    ErrorBody = errorBody,
+                    ErrorMessage = ExtractApiErrorMessage(
+                        errorBody,
+                        response.StatusCode)
                 };
             }
             catch (Exception ex)
@@ -983,7 +986,8 @@ namespace PdfToolStack.Web.Services
 
         public async Task<byte[]?> PostMultipartBytesAsync(
             string endpoint,
-            MultipartFormDataContent content)
+            MultipartFormDataContent content,
+            bool throwOnError = false)
         {
             try
             {
@@ -992,15 +996,76 @@ namespace PdfToolStack.Web.Services
                     return await response.Content.ReadAsByteArrayAsync();
 
                 var error = await response.Content.ReadAsStringAsync();
+                var message = ExtractApiErrorMessage(
+                    error,
+                    response.StatusCode);
+
                 _logger.LogWarning("PostMultipartBytes {Endpoint} failed: {Error}",
                     endpoint, error);
+
+                if (throwOnError)
+                    throw new HttpRequestException(
+                        message,
+                        null,
+                        response.StatusCode);
+
                 return null;
+            }
+            catch (HttpRequestException) when (throwOnError)
+            {
+                throw;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "PostMultipartBytes error: {Endpoint}", endpoint);
+
+                if (throwOnError)
+                    throw new HttpRequestException(
+                        "The request failed. Please try again.",
+                        ex);
+
                 return null;
             }
+        }
+
+        private static string ExtractApiErrorMessage(
+            string errorBody,
+            System.Net.HttpStatusCode statusCode)
+        {
+            if (!string.IsNullOrWhiteSpace(errorBody))
+            {
+                try
+                {
+                    using var doc = System.Text.Json.JsonDocument.Parse(errorBody);
+
+                    if (doc.RootElement.ValueKind == System.Text.Json.JsonValueKind.Object &&
+                        doc.RootElement.TryGetProperty("error", out var error) &&
+                        error.ValueKind == System.Text.Json.JsonValueKind.String)
+                    {
+                        var message = error.GetString();
+                        if (!string.IsNullOrWhiteSpace(message))
+                            return message;
+                    }
+                }
+                catch (System.Text.Json.JsonException)
+                {
+                    // Some endpoints return plain text errors.
+                }
+
+                return errorBody;
+            }
+
+            return statusCode switch
+            {
+                System.Net.HttpStatusCode.Unauthorized =>
+                    "Please sign in to use this tool.",
+                (System.Net.HttpStatusCode)429 =>
+                    "You've reached your AI usage limit. Upgrade to continue.",
+                System.Net.HttpStatusCode.UnprocessableEntity =>
+                    "The PDF could not be processed.",
+                _ =>
+                    $"Request failed with status {(int)statusCode}."
+            };
         }
 
         public async Task<List<ApiKeyDto>?> GetApiKeysAsync()
@@ -1054,5 +1119,6 @@ namespace PdfToolStack.Web.Services
         public bool IsSuccess { get; set; }
         public bool IsRateLimit { get; set; }
         public string ErrorMessage { get; set; } = string.Empty;
+        public string ErrorBody { get; set; } = string.Empty;
     }
 }

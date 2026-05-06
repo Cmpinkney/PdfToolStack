@@ -270,6 +270,13 @@
                                 <div class="error-container" role="alert">
                                     <span class="error-icon" aria-hidden="true">❌</span>
                                     <p class="error-message">@_error</p>
+                                    @if (!string.IsNullOrWhiteSpace(_textPreview))
+                                    {
+                                        <details class="extract-guidance-card">
+                                            <summary>Extracted text preview</summary>
+                                            <p>@_textPreview</p>
+                                        </details>
+                                    }
                                     <button class="reset-button" @onclick="Reset">Try Again</button>
                                 </div>
                             }
@@ -374,6 +381,9 @@
     private List<Dictionary<string, string>> _lineItems = new();
     private byte[]? _excelBytes;
     private bool _excelReady = false;
+    private string _textPreview = string.Empty;
+    private bool _ocrFallbackUsed = false;
+    private string? _ocrWarning;
 
     protected override async Task OnInitializedAsync()
     {
@@ -404,6 +414,9 @@
         _fields.Clear();
         _lineItems.Clear();
         _error = string.Empty;
+        _textPreview = string.Empty;
+        _ocrFallbackUsed = false;
+        _ocrWarning = null;
     }
 
     private void HandleFileRemoved()
@@ -426,14 +439,6 @@
             _step = 2; StateHasChanged();
 
             var (json, error) = await PostExtractAsync("api/ai/extract");
-
-            if (error == "rate_limit")
-            {
-                _isRateLimit = true;
-                _isFreeLimit = !_isPro;
-                CurrentState = PageState.Error;
-                return;
-            }
 
             if (error != null)
             {
@@ -479,13 +484,91 @@
         var result = await ApiService.PostMultipartWithStatusAsync<ExtractResponse>(
             $"{endpoint}?type={_type}", content);
 
-        if (result.IsRateLimit)
-            return (null, "rate_limit");
-
         if (!result.IsSuccess || result.Data == null)
-            return (null, "Extraction failed. Please try again.");
+        {
+            var backendError = TryLoadExtractionError(result.ErrorBody);
+            var message = !string.IsNullOrWhiteSpace(backendError)
+                ? backendError
+                : result.ErrorMessage;
+
+            return (null, string.IsNullOrWhiteSpace(message)
+                ? "Extraction failed. Please try again."
+                : message);
+        }
+
+        _textPreview = result.Data.ExtractedTextPreview ??
+            result.Data.TextPreview ??
+            string.Empty;
+        _ocrFallbackUsed = result.Data.OcrFallbackUsed;
+        _ocrWarning = result.Data.OcrWarning;
 
         return (result.Data.Json, null);
+    }
+
+    private string? TryLoadExtractionError(string errorBody)
+    {
+        if (string.IsNullOrWhiteSpace(errorBody))
+            return null;
+
+        try
+        {
+            using var doc = JsonDocument.Parse(errorBody);
+            var root = doc.RootElement;
+            string? backendError = null;
+
+            if (root.TryGetProperty("error", out var error) &&
+                error.ValueKind == JsonValueKind.String)
+            {
+                backendError = error.GetString();
+            }
+            else if (root.TryGetProperty("message", out var message) &&
+                message.ValueKind == JsonValueKind.String)
+            {
+                backendError = message.GetString();
+            }
+
+            if (TryGetStringProperty(root, "extractedTextPreview", out var extractedPreview) ||
+                TryGetStringProperty(root, "textPreview", out extractedPreview))
+            {
+                _textPreview = extractedPreview;
+            }
+
+            if (root.TryGetProperty("ocrFallbackUsed", out var ocrUsed) &&
+                (ocrUsed.ValueKind == JsonValueKind.True ||
+                 ocrUsed.ValueKind == JsonValueKind.False))
+            {
+                _ocrFallbackUsed = ocrUsed.GetBoolean();
+            }
+
+            if (root.TryGetProperty("ocrWarning", out var warning) &&
+                warning.ValueKind == JsonValueKind.String)
+            {
+                _ocrWarning = warning.GetString();
+            }
+
+            return backendError;
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
+
+    private static bool TryGetStringProperty(
+        JsonElement root,
+        string name,
+        out string value)
+    {
+        value = string.Empty;
+
+        if (!root.TryGetProperty(name, out var property) ||
+            property.ValueKind != JsonValueKind.String)
+        {
+            return false;
+        }
+
+        value = property.GetString() ?? string.Empty;
+        return !string.IsNullOrWhiteSpace(value);
     }
 
     private async Task<(byte[]? Bytes, string? Error)> PostExtractBytesAsync(string endpoint)
@@ -552,6 +635,9 @@
         _fields.Clear();
         _lineItems.Clear();
         _error = string.Empty;
+        _textPreview = string.Empty;
+        _ocrFallbackUsed = false;
+        _ocrWarning = null;
         _step = 0;
         _isRateLimit = false;
         _isFreeLimit = false;
@@ -566,6 +652,10 @@
     {
         public string Json { get; set; } = string.Empty;
         public string ExtractionType { get; set; } = string.Empty;
+        public string? ExtractedTextPreview { get; set; }
+        public string? TextPreview { get; set; }
+        public bool OcrFallbackUsed { get; set; }
+        public string? OcrWarning { get; set; }
     }
 
     private class AiUsageResponse

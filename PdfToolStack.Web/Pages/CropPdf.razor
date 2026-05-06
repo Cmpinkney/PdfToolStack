@@ -162,10 +162,16 @@
                         <span class="cp-thumb-num">@pg</span>
                     </div>
                 }
-                <button class="cp-add-pages-btn">
+                <label class="cp-add-pages-btn @(_addingPages ? "cp-add-pages-btn--disabled" : "")">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
-                    Add pages
-                </button>
+                    @(_addingPages ? "Adding..." : "Add pages")
+                    <InputFile @key="_addPagesInputKey"
+                               OnChange="AddPagesSelected"
+                               multiple
+                               accept=".pdf"
+                               disabled="@_addingPages"
+                               class="cp-add-pages-input" />
+                </label>
             </div>
 
             <!-- Canvas area with crop overlay -->
@@ -222,7 +228,7 @@
             </div>
 
             <!-- Settings panel -->
-            <div class="cp-settings">
+            <div class="cp-settings crop-settings-panel">
                 <div class="cp-settings-title">Crop Settings</div>
 
                 <!-- Preset buttons -->
@@ -691,6 +697,7 @@
         align-items: center;
         gap: .3rem;
         justify-content: center;
+        position: relative;
         padding: .35rem;
         border-radius: 6px;
         border: 1.5px dashed var(--border,#D1D5DB);
@@ -699,12 +706,25 @@
         font-size: .62rem;
         cursor: pointer;
         margin-top: .25rem;
+        overflow: hidden;
     }
 
         .cp-add-pages-btn:hover {
             border-color: #0D9488;
             color: #0D9488;
         }
+
+    .cp-add-pages-btn--disabled {
+        opacity: .6;
+        pointer-events: none;
+    }
+
+    .cp-add-pages-input {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        cursor: pointer;
+    }
 
     /* Canvas area */
     .cp-canvas-area {
@@ -1598,7 +1618,6 @@
     .cp-settings {
         border-radius: 24px;
         border: 1px solid rgba(148, 163, 184, .24);
-        overflow: hidden;
     }
 
     .cp-thumbs {
@@ -1606,6 +1625,10 @@
         border-right: 1px solid rgba(148, 163, 184, .24);
         max-height: 720px;
         overflow-y: auto;
+    }
+
+    .cp-canvas-area {
+        overflow: hidden;
     }
 
     .cp-thumb {
@@ -1726,7 +1749,19 @@
         background: rgba(255, 255, 255, .9);
         padding: 1.1rem;
         gap: .95rem;
-        max-height: 720px;
+    }
+
+    .crop-settings-panel {
+        align-self: start;
+        position: sticky;
+        top: 5.5rem;
+        box-sizing: border-box;
+        max-height: calc(100vh - 7rem);
+        overflow-y: auto;
+        overflow-x: visible;
+        overscroll-behavior: contain;
+        padding-bottom: 2rem;
+        scroll-padding-bottom: 1.5rem;
     }
 
     .cp-settings-title {
@@ -1783,6 +1818,7 @@
 
     .cp-apply-btn {
         min-height: 48px;
+        flex: 0 0 auto;
         border-radius: 14px;
         background: linear-gradient(135deg, #0F172A 0%, #0D9488 52%, #14B8A6 100%);
         box-shadow: 0 16px 34px rgba(13, 148, 136, .28);
@@ -1845,9 +1881,13 @@
             max-height: none;
         }
 
-        .cp-settings {
+        .crop-settings-panel {
+            position: static;
             max-height: none;
+            overflow: visible;
+            padding-bottom: 2rem;
         }
+
     }
 
     @@media (max-width: 900px) {
@@ -1972,6 +2012,8 @@
     private int _currentPage = 1;
     private int _zoomPercent = 100;
     private string _activeTool = "select";
+    private bool _addingPages;
+    private int _addPagesInputKey;
 
     // Crop settings
     private float _marginTop;
@@ -2031,6 +2073,136 @@
             await JS.InvokeVoidAsync("renderCropPreview", Convert.ToBase64String(_uploadedBytes), _currentPage);
         }
         catch (Exception ex) { Toast.ShowError($"Could not read file: {ex.Message}"); }
+    }
+
+    private async Task AddPagesSelected(InputFileChangeEventArgs e)
+    {
+        if (_uploadedBytes == null || _addingPages)
+            return;
+
+        try
+        {
+            if (e.FileCount > 9)
+            {
+                Toast.ShowError("You can add up to 9 PDF files at a time.");
+                return;
+            }
+
+            var files = e.GetMultipleFiles(9).ToList();
+            if (files.Count == 0)
+                return;
+
+            var totalSize = _uploadedBytes.LongLength + files.Sum(f => f.Size);
+            if (totalSize > 209_715_200)
+            {
+                Toast.ShowError("The combined PDF upload is too large. Add fewer pages or use a smaller PDF.");
+                return;
+            }
+
+            _addingPages = true;
+            _errorMessage = string.Empty;
+            StateHasChanged();
+
+            var addedFiles = new List<(string Name, byte[] Bytes)>();
+            foreach (var file in files)
+            {
+                var validation = Validator.ValidatePdfFile(file);
+                if (!validation.IsValid)
+                {
+                    Toast.ShowError(validation.Message!);
+                    return;
+                }
+
+                if (validation.IsWarning)
+                    Toast.ShowWarning(validation.Message!);
+
+                using var stream = file.OpenReadStream(maxAllowedSize: 524_288_000);
+                using var ms = new MemoryStream();
+                await stream.CopyToAsync(ms);
+
+                var bytes = ms.ToArray();
+                var bytesValidation = Validator.ValidatePdfBytes(bytes);
+                if (!bytesValidation.IsValid)
+                {
+                    Toast.ShowError(bytesValidation.Message!);
+                    return;
+                }
+
+                if (bytesValidation.IsWarning)
+                    Toast.ShowWarning(bytesValidation.Message!);
+
+                addedFiles.Add((file.Name, bytes));
+            }
+
+            using var content = new MultipartFormDataContent();
+            AddPdfPart(content, _uploadedBytes, _fileName);
+            foreach (var (name, bytes) in addedFiles)
+                AddPdfPart(content, bytes, name);
+
+            var oldPageCount = _pageCount;
+            var response = await ApiService.MergePdfsAsync(content);
+            if (response?.IsSuccess != true)
+            {
+                Toast.ShowError(response?.ErrorMessage ?? "Could not add pages. Please try again.");
+                return;
+            }
+
+            var mergedBytes = await ApiService.GetMergedBytesAsync();
+            if (mergedBytes == null || mergedBytes.Length == 0)
+            {
+                Toast.ShowError("Could not add pages. Please try again.");
+                return;
+            }
+
+            _uploadedBytes = mergedBytes;
+            _resultBytes = null;
+            _fileName = BuildAddedPagesFileName(_fileName);
+            _pageCount = await ApiService.GetPageCountAsync(_uploadedBytes, _fileName);
+            _currentPage = Math.Clamp(_currentPage, 1, Math.Max(1, _pageCount));
+
+            StateHasChanged();
+            await JS.InvokeVoidAsync(
+                "renderCropPreview",
+                Convert.ToBase64String(_uploadedBytes),
+                _currentPage);
+
+            var addedPageCount = Math.Max(0, _pageCount - oldPageCount);
+            Toast.ShowSuccess(addedPageCount > 0
+                ? $"Added {addedPageCount} page{(addedPageCount == 1 ? "" : "s")}."
+                : "Pages added.");
+        }
+        catch (Exception ex)
+        {
+            Toast.ShowError($"Could not add pages: {ex.Message}");
+        }
+        finally
+        {
+            _addingPages = false;
+            _addPagesInputKey++;
+            StateHasChanged();
+        }
+    }
+
+    private static void AddPdfPart(
+        MultipartFormDataContent content,
+        byte[] bytes,
+        string fileName)
+    {
+        var fileContent = new ByteArrayContent(bytes);
+        fileContent.Headers.ContentType =
+            new System.Net.Http.Headers.MediaTypeHeaderValue("application/pdf");
+        content.Add(fileContent, "files", fileName);
+    }
+
+    private static string BuildAddedPagesFileName(string fileName)
+    {
+        var baseName = Path.GetFileNameWithoutExtension(fileName);
+        if (string.IsNullOrWhiteSpace(baseName))
+            return "combined.pdf";
+
+        return baseName.EndsWith("-with-pages", StringComparison.OrdinalIgnoreCase)
+            ? $"{baseName}.pdf"
+            : $"{baseName}-with-pages.pdf";
     }
 
     private async Task GoToPage(int page)

@@ -9,4 +9,15 @@ namespace PdfToolStack.Domain.Interfaces
             byte[] inputBytes,
             CancellationToken cancellationToken = default);
     }
+
+    public interface IProtectPdfProcessor : IPdfProcessor
+    {
+        Task<byte[]> ProcessAsync(
+            byte[] inputBytes,
+            string userPassword,
+            string ownerPassword,
+            bool allowPrinting = true,
+            bool allowCopying = false,
+            CancellationToken cancellationToken = default);
+    }
 }

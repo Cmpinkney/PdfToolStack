@@ -6,9 +6,9 @@
 @inject SessionUsageService SessionUsage
 @using Microsoft.AspNetCore.Components.Authorization
 
-<PageTitle>Translate PDF Online — 50+ Languages | PdfToolStack</PageTitle>
+<PageTitle>Translate PDF Online | PdfToolStack</PageTitle>
 <HeadContent>
-    <meta name="description" content="Translate any PDF into 50+ languages instantly with AI. Spanish, French, German, Chinese, Arabic and more. Keeps document structure, headings, lists, and tables readable." />
+    <meta name="description" content="Translate text-based PDFs into supported Latin-script languages with AI. Clean translated PDF with readable document structure preserved where possible." />
     <meta name="keywords" content="translate pdf, pdf translator online, translate pdf to spanish, pdf translation tool, translate document online free" />
     <link rel="canonical" href="https://pdftoolstack.com/translate-pdf" />
 </HeadContent>
@@ -19,7 +19,7 @@
             <div>
                 <span class="tp-eyebrow">PDF workspace</span>
                 <h1 class="tp-title">Translate PDF in <span class="hero-gradient-text">seconds</span></h1>
-                <p class="tp-subtitle">Accurate AI translations that keep the original document structure, headings, lists, and tables readable.</p>
+                <p class="tp-subtitle">Clean translated PDF with readable document structure preserved where possible.</p>
             </div>
             <div class="tp-trust-badges" aria-label="Privacy and security">
                 <span class="tp-trust-badge">
@@ -28,7 +28,7 @@
                 </span>
                 <span class="tp-trust-badge">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16" /><path d="M4 12h16" /><path d="M4 17h10" /></svg>
-                    Creates a clean translated document
+                    Readable structure preserved where possible
                 </span>
                 <span class="tp-trust-badge">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
@@ -57,7 +57,7 @@
                             AI-powered translation
                         </div>
                         <h2 class="tp-upload-title">Upload your document</h2>
-                        <p class="tp-upload-copy">Choose a PDF, select a language, then generate a clean structured PDF download.</p>
+                        <p class="tp-upload-copy">Choose a text-based PDF, select a supported language, then generate a clean structured PDF download.</p>
                         <div class="tp-trust-chips">
                             <span class="tp-chip">
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
@@ -79,7 +79,7 @@
                             <div class="tp-auth-gate">
                                 <div class="tp-auth-icon">PDF</div>
                                 <h3>Try PDF Translator — 5 free uses</h3>
-                                <p>Sign in to get 5 free AI uses per month. Translate PDFs into 50+ languages.</p>
+                                <p>Sign in to get 5 free AI uses per month. Translate text-based PDFs into supported languages.</p>
                                 <a href="authentication/login?screen_hint=signup" class="tp-primary-btn" style="text-decoration:none;display:inline-flex;">Get started free</a>
                                 <a href="authentication/login" class="tp-secondary-btn" style="text-decoration:none;display:inline-flex;">Sign in</a>
                             </div>
@@ -284,7 +284,7 @@
 
                         <div class="tp-ai-note">
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10" /><path d="M12 6v6l4 2" /></svg>
-                            AI translates your document while preserving the original layout, fonts, tables, and images.
+                            Clean translated PDF with readable document structure preserved where possible. Complex formatting may vary.
                         </div>
 
                         <button class="tp-translate-btn" @onclick="RunTranslate"
@@ -333,7 +333,7 @@
     }
 
     <!-- ── COMPLETE STATE ────────────────────────────────────────────── -->
-    @if (CurrentState == PageState.Complete && _translatedPdfBytes != null)
+    @if (CurrentState == PageState.Complete && _outputBytes != null)
     {
         <div class="tp-result">
             <div class="tp-result-header">
@@ -365,7 +365,7 @@
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 0 1 6.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" /></svg>
                     <div>
                         <strong>Download your translation</strong>
-                        <p>Structured PDF ready to share, review, or archive.</p>
+                        <p>Structured PDF ready to share, review, or archive. Complex formatting may vary.</p>
                     </div>
                 </div>
                 <button class="tp-download-btn" @onclick="DownloadTranslation">
@@ -393,17 +393,44 @@
             <div class="tp-error">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" /></svg>
                 <p>@_error</p>
-                <button class="tp-secondary-btn" @onclick="Reset">Try Again</button>
+                @if (_isAuthError)
+                {
+                    <a href="authentication/login" class="tp-secondary-btn" style="text-decoration:none;display:inline-flex;">Sign in</a>
+                }
+                else
+                {
+                    <button class="tp-secondary-btn" @onclick="Reset">Try Again</button>
+                }
             </div>
         }
     }
 
     <!-- ── FAQ ──────────────────────────────────────────────────────── -->
     <div class="tp-faq">
+        <h2>Related PDF tools</h2>
+        <details class="tp-faq-item" open>
+            <summary><a href="/pdf-ocr">OCR PDF</a></summary>
+            <p>Add a searchable text layer to scanned PDFs before translating or extracting text.</p>
+        </details>
+        <details class="tp-faq-item" open>
+            <summary><a href="/ai-summarizer">Summarize PDF</a></summary>
+            <p>Summarize long translated or source documents with AI.</p>
+        </details>
+        <details class="tp-faq-item" open>
+            <summary><a href="/chat-with-pdf">Chat with PDF</a></summary>
+            <p>Ask questions about the document after translation or review.</p>
+        </details>
+        <details class="tp-faq-item" open>
+            <summary><a href="/pdf-to-word">PDF to Word</a></summary>
+            <p>Convert text-based PDFs into editable Word documents for manual edits.</p>
+        </details>
+    </div>
+
+    <div class="tp-faq">
         <h2>Frequently Asked Questions</h2>
         @foreach (var (q, a) in new[] {
-                ("What languages are supported?", "50+ languages including Spanish, French, German, Italian, Portuguese, Chinese (Simplified & Traditional), Japanese, Korean, Arabic, Hindi, Russian, Dutch, Polish, Turkish, Swedish, and many more."),
-                ("Does it preserve document structure?", "The translated PDF preserves headings, paragraphs, bullets, numbering, and simple tables. Full layout overlay is not applied yet."),
+                ("What languages are supported?", "PDF output currently supports Latin-script target languages while Unicode PDF font support is being added."),
+                ("Does it preserve document structure?", "The translated PDF preserves readable headings, paragraphs, bullets, numbering, and simple tables where possible. Complex formatting may vary."),
                 ("How accurate is the translation?", "Very accurate for standard documents. Powered by Claude AI, which understands context and produces natural-sounding translations rather than word-for-word substitutions."),
                 ("Is my document stored?", "No. Your PDF is processed in memory and deleted within 1 hour. We never store document contents permanently."),
                 })
@@ -2185,9 +2212,10 @@
     private string _tone = "default";
     private bool _showAllLangs = false;
     private int _step = 0;
-    private byte[]? _translatedPdfBytes;
-    private string _translatedFileName = string.Empty;
+    private byte[]? _outputBytes;
+    private string _outputFileName = string.Empty;
     private string _error = string.Empty;
+    private bool _isAuthError = false;
     private bool _isRateLimit = false;
     private bool _isFreeLimit = false;
 
@@ -2197,19 +2225,13 @@
     {
         new("es", "Spanish",    "🇪🇸"), new("fr", "French",     "🇫🇷"),
         new("de", "German",     "🇩🇪"), new("it", "Italian",    "🇮🇹"),
-        new("pt", "Portuguese", "🇵🇹"), new("zh", "Chinese",    "🇨🇳"),
-        new("ja", "Japanese",   "🇯🇵"), new("ko", "Korean",     "🇰🇷"),
-        new("ar", "Arabic",     "🇸🇦"), new("hi", "Hindi",      "🇮🇳"),
-        new("ru", "Russian",    "🇷🇺"), new("nl", "Dutch",      "🇳🇱"),
+        new("pt", "Portuguese", "🇵🇹"), new("nl", "Dutch",      "🇳🇱"),
         new("pl", "Polish",     "🇵🇱"), new("tr", "Turkish",    "🇹🇷"),
         new("sv", "Swedish",    "🇸🇪"), new("da", "Danish",     "🇩🇰"),
         new("fi", "Finnish",    "🇫🇮"), new("no", "Norwegian",  "🇳🇴"),
         new("cs", "Czech",      "🇨🇿"), new("ro", "Romanian",   "🇷🇴"),
-        new("hu", "Hungarian",  "🇭🇺"), new("el", "Greek",      "🇬🇷"),
-        new("he", "Hebrew",     "🇮🇱"), new("th", "Thai",       "🇹🇭"),
-        new("vi", "Vietnamese", "🇻🇳"), new("id", "Indonesian", "🇮🇩"),
-        new("ms", "Malay",      "🇲🇾"), new("uk", "Ukrainian",  "🇺🇦"),
-        new("other", "Other",   "🌐"),
+        new("hu", "Hungarian",  "🇭🇺"), new("vi", "Vietnamese", "🇻🇳"),
+        new("id", "Indonesian", "🇮🇩"), new("ms", "Malay",      "🇲🇾"),
     };
 
     private Language[] PopularLanguages => new[]
@@ -2217,8 +2239,8 @@
         _languages.First(l => l.Code == "es"),
         _languages.First(l => l.Code == "fr"),
         _languages.First(l => l.Code == "de"),
-        _languages.First(l => l.Code == "zh"),
-        _languages.First(l => l.Code == "ja"),
+        _languages.First(l => l.Code == "it"),
+        _languages.First(l => l.Code == "pt"),
     };
 
     private IEnumerable<Language> FilteredLanguages =>
@@ -2235,8 +2257,8 @@
         await file.OpenReadStream(maxAllowedSize: 52_428_800).CopyToAsync(ms);
         _fileBytes = ms.ToArray();
         _fileName = file.Name;
-        _translatedPdfBytes = null;
-        _translatedFileName = string.Empty;
+        _outputBytes = null;
+        _outputFileName = string.Empty;
         _error = string.Empty;
     }
 
@@ -2244,8 +2266,8 @@
     {
         _fileBytes = null;
         _fileName = null;
-        _translatedPdfBytes = null;
-        _translatedFileName = string.Empty;
+        _outputBytes = null;
+        _outputFileName = string.Empty;
     }
 
     private void SelectLanguage(Language lang)
@@ -2264,6 +2286,10 @@
         _selectedLangName = langName;
         CurrentState = PageState.Processing;
         _step = 1;
+        _error = string.Empty;
+        _isAuthError = false;
+        _isRateLimit = false;
+        _isFreeLimit = false;
         StateHasChanged();
 
         try
@@ -2279,14 +2305,16 @@
             content.Add(new StringContent(langName), "languageName");
 
             var pdfBytes = await ApiService.PostMultipartBytesAsync(
-                "api/ai/translate", content);
+                "api/ai/translate",
+                content,
+                throwOnError: true);
 
             _step = 3; StateHasChanged();
 
             if (pdfBytes is { Length: > 0 })
             {
-                _translatedPdfBytes = pdfBytes;
-                _translatedFileName =
+                _outputBytes = pdfBytes;
+                _outputFileName =
                     $"translated_{_selectedLang}_{Path.GetFileNameWithoutExtension(_fileName ?? "document")}.pdf";
                 CurrentState = PageState.Complete;
                 SessionUsage.RecordToolCompletion("Translate PDF");
@@ -2297,9 +2325,42 @@
                 CurrentState = PageState.Error;
             }
         }
+        catch (AccessTokenNotAvailableException)
+        {
+            _isAuthError = true;
+            _error = "Please sign in to translate PDFs. Your AI credits are tied to your account.";
+            CurrentState = PageState.Error;
+        }
+        catch (HttpRequestException ex)
+            when (ex.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+        {
+            _isAuthError = true;
+            _error = "Please sign in to translate PDFs. Your AI credits are tied to your account.";
+            CurrentState = PageState.Error;
+        }
+        catch (HttpRequestException ex)
+            when (ex.StatusCode == (System.Net.HttpStatusCode)429)
+        {
+            _isRateLimit = true;
+            _isFreeLimit = true;
+            _error = string.IsNullOrWhiteSpace(ex.Message)
+                ? "You've reached your AI usage limit. Upgrade to continue."
+                : ex.Message;
+            CurrentState = PageState.Error;
+        }
+        catch (HttpRequestException ex)
+            when (ex.StatusCode == System.Net.HttpStatusCode.UnprocessableEntity)
+        {
+            _error = string.IsNullOrWhiteSpace(ex.Message)
+                ? "Translation failed. Please try another text-based PDF."
+                : ex.Message;
+            CurrentState = PageState.Error;
+        }
         catch (Exception ex)
         {
-            _error = $"Error: {ex.Message}";
+            _error = string.IsNullOrWhiteSpace(ex.Message)
+                ? "Translation failed. Please try again."
+                : ex.Message;
             CurrentState = PageState.Error;
         }
         StateHasChanged();
@@ -2307,25 +2368,25 @@
 
     private async Task DownloadTranslation()
     {
-        if (_translatedPdfBytes == null) return;
+        if (_outputBytes == null) return;
 
-        var name = string.IsNullOrWhiteSpace(_translatedFileName)
+        var name = string.IsNullOrWhiteSpace(_outputFileName)
             ? $"translated_{_selectedLang}_{Path.GetFileNameWithoutExtension(_fileName ?? "document")}.pdf"
-            : _translatedFileName;
+            : _outputFileName;
 
         await JS.InvokeVoidAsync(
             "downloadFile",
             name,
-            Convert.ToBase64String(_translatedPdfBytes));
+            Convert.ToBase64String(_outputBytes));
     }
 
     private void Reset()
     {
         CurrentState = PageState.Upload;
         _fileBytes = null; _fileName = null;
-        _translatedPdfBytes = null; _translatedFileName = string.Empty;
+        _outputBytes = null; _outputFileName = string.Empty;
         _error = string.Empty;
-        _step = 0; _isRateLimit = false; _isFreeLimit = false;
+        _step = 0; _isAuthError = false; _isRateLimit = false; _isFreeLimit = false;
         _selectedLang = "es"; _selectedLangName = "Spanish";
         _customLanguage = string.Empty; _langSearch = string.Empty;
     }

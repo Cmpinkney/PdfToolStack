@@ -21,6 +21,25 @@ namespace PdfToolStack.API.Controllers
 
         private const string HaikuModel = "claude-haiku-4-5-20251001";
         private const string OpusModel = "claude-opus-4-6";
+        private const string UnsupportedUnicodePdfMessage =
+            "PDF translation output currently supports Latin-script languages only. Choose a Latin-script target language while Unicode PDF font support is added.";
+
+        private static readonly HashSet<string> LatinScriptPdfLanguageCodes =
+            new(StringComparer.OrdinalIgnoreCase)
+            {
+                "es", "fr", "de", "it", "pt", "nl", "pl", "tr",
+                "sv", "da", "fi", "no", "cs", "ro", "hu", "vi",
+                "id", "ms"
+            };
+
+        private static readonly HashSet<string> LatinScriptPdfLanguageNames =
+            new(StringComparer.OrdinalIgnoreCase)
+            {
+                "spanish", "french", "german", "italian", "portuguese",
+                "dutch", "polish", "turkish", "swedish", "danish",
+                "finnish", "norwegian", "czech", "romanian", "hungarian",
+                "vietnamese", "indonesian", "malay"
+            };
 
         private static readonly ConcurrentDictionary<string,
             (int Count, DateTime WindowStart)> _supportCounts = new();
@@ -46,34 +65,81 @@ namespace PdfToolStack.API.Controllers
             [FromQuery] string type = "invoice",
             CancellationToken cancellationToken = default)
         {
-            if (!IsValidPdf(file))
-                return BadRequest(new { error = "Please upload a valid PDF file under 50MB." });
+            string? userId = null;
+            int? pageCount = null;
+            var fileName = file?.FileName ?? "(missing)";
+            var fileSize = file?.Length ?? 0;
 
-            var userId = GetRequiredUserId();
-            if (userId == null) return Unauthorized();
-
-            (bool allowed, IActionResult? limitResponse) = await CheckAiUsageAsync(
-                userId, "extract", HaikuModel);
-            if (!allowed) return limitResponse!;
-
-            _logger.LogInformation(
-                "AI extract request. Type: {Type}, File: {File}",
-                type, file.FileName);
-
-            using var ms = new MemoryStream();
-            await file.CopyToAsync(ms, cancellationToken);
-
-            var result = await _aiService.ExtractDataAsync(
-                ms.ToArray(), type, cancellationToken);
-
-            if (!result.IsSuccess)
-                return UnprocessableEntity(new { error = result.ErrorMessage });
-
-            return Ok(new
+            try
             {
-                json = result.JsonData,
-                extractionType = result.ExtractionType
-            });
+                _logger.LogInformation(
+                    "Invoice extract upload received. Type: {Type}, FileName: {FileName}, FileSize: {FileSize}",
+                    type,
+                    fileName,
+                    fileSize);
+
+                if (!IsValidPdf(file))
+                    return BadRequest(new { error = "Please upload a valid PDF file under 50MB." });
+
+                userId = GetRequiredUserId();
+                if (userId == null) return Unauthorized();
+
+                (bool allowed, IActionResult? limitResponse) = await CheckAiUsageAsync(
+                    userId, "extract", HaikuModel);
+                if (!allowed) return limitResponse!;
+
+                using var ms = new MemoryStream();
+                await file!.CopyToAsync(ms, cancellationToken);
+                var pdfBytes = ms.ToArray();
+                pageCount = TryCountPdfPages(pdfBytes);
+                var isPro = await IsProUserAsync(userId);
+
+                _logger.LogInformation(
+                    "Invoice extract upload processed. UserId: {UserId}, Type: {Type}, FileName: {FileName}, FileSize: {FileSize}, PdfBytes: {PdfBytes}, PageCount: {PageCount}, IsPro: {IsPro}",
+                    userId,
+                    type,
+                    fileName,
+                    fileSize,
+                    pdfBytes.Length,
+                    pageCount,
+                    isPro);
+
+                var result = await _aiService.ExtractDataAsync(
+                    pdfBytes,
+                    type,
+                    cancellationToken,
+                    userId,
+                    isPro,
+                    pageCount);
+
+                if (!result.IsSuccess)
+                    return ToExtractionFailureResponse(result);
+
+                return Ok(new
+                {
+                    json = result.JsonData,
+                    extractionType = result.ExtractionType,
+                    textPreview = result.TextPreview,
+                    ocrFallbackUsed = result.OcrFallbackUsed,
+                    ocrWarning = result.OcrWarning
+                });
+            }
+            catch (Exception ex)
+            {
+                LogExceptionDetails(
+                    ex,
+                    "Invoice extract failed unexpectedly. UserId: {UserId}, Type: {Type}, FileName: {FileName}, FileSize: {FileSize}, PageCount: {PageCount}",
+                    userId,
+                    type,
+                    fileName,
+                    fileSize,
+                    pageCount);
+
+                return UnprocessableEntity(new
+                {
+                    error = "Unable to extract structured invoice data from this document."
+                });
+            }
         }
 
         // POST api/ai/extract/excel
@@ -85,37 +151,93 @@ namespace PdfToolStack.API.Controllers
             [FromQuery] string type = "invoice",
             CancellationToken cancellationToken = default)
         {
-            if (!IsValidPdf(file))
-                return BadRequest(new { error = "Please upload a valid PDF file under 50MB." });
-
-            var userId = GetRequiredUserId();
-            if (userId == null) return Unauthorized();
-
-            (bool allowed, IActionResult? limitResponse) = await CheckAiUsageAsync(
-                userId, "extract-excel", HaikuModel);
-            if (!allowed) return limitResponse!;
-
-            using var ms = new MemoryStream();
-            await file.CopyToAsync(ms, cancellationToken);
-
-            var result = await _aiService.ExtractDataAsync(
-                ms.ToArray(), type, cancellationToken);
-
-            if (!result.IsSuccess)
-                return UnprocessableEntity(new { error = result.ErrorMessage });
+            string? userId = null;
+            int? pageCount = null;
+            var fileName = file?.FileName ?? "(missing)";
+            var fileSize = file?.Length ?? 0;
 
             try
             {
+                _logger.LogInformation(
+                    "Invoice extract Excel upload received. Type: {Type}, FileName: {FileName}, FileSize: {FileSize}",
+                    type,
+                    fileName,
+                    fileSize);
+
+                if (!IsValidPdf(file))
+                    return BadRequest(new { error = "Please upload a valid PDF file under 50MB." });
+
+                userId = GetRequiredUserId();
+                if (userId == null) return Unauthorized();
+
+                (bool allowed, IActionResult? limitResponse) = await CheckAiUsageAsync(
+                    userId, "extract-excel", HaikuModel);
+                if (!allowed) return limitResponse!;
+
+                using var ms = new MemoryStream();
+                await file!.CopyToAsync(ms, cancellationToken);
+                var pdfBytes = ms.ToArray();
+                pageCount = TryCountPdfPages(pdfBytes);
+                var isPro = await IsProUserAsync(userId);
+
+                _logger.LogInformation(
+                    "Invoice extract Excel upload processed. UserId: {UserId}, Type: {Type}, FileName: {FileName}, FileSize: {FileSize}, PdfBytes: {PdfBytes}, PageCount: {PageCount}, IsPro: {IsPro}",
+                    userId,
+                    type,
+                    fileName,
+                    fileSize,
+                    pdfBytes.Length,
+                    pageCount,
+                    isPro);
+
+                var result = await _aiService.ExtractDataAsync(
+                    pdfBytes,
+                    type,
+                    cancellationToken,
+                    userId,
+                    isPro,
+                    pageCount);
+
+                if (!result.IsSuccess)
+                    return ToExtractionFailureResponse(result);
+
+                _logger.LogInformation(
+                    "Invoice Excel export generation starting. UserId: {UserId}, Type: {Type}, FileName: {FileName}, JsonLength: {JsonLength}",
+                    userId,
+                    type,
+                    fileName,
+                    result.JsonData.Length);
+
                 var excelBytes = BuildExcel(result.JsonData, type);
                 var outName = $"extracted_{type}_{DateTime.UtcNow:yyyyMMdd}.xlsx";
+
+                _logger.LogInformation(
+                    "Invoice Excel export generation completed. UserId: {UserId}, Type: {Type}, FileName: {FileName}, OutputBytes: {OutputBytes}, OcrFallbackUsed: {OcrFallbackUsed}",
+                    userId,
+                    type,
+                    fileName,
+                    excelBytes.Length,
+                    result.OcrFallbackUsed);
+
                 return File(excelBytes,
                     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                     outName);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Excel build failed");
-                return StatusCode(500, new { error = ex.Message });
+                LogExceptionDetails(
+                    ex,
+                    "Invoice Excel export failed. UserId: {UserId}, Type: {Type}, FileName: {FileName}, FileSize: {FileSize}, PageCount: {PageCount}",
+                    userId,
+                    type,
+                    fileName,
+                    fileSize,
+                    pageCount);
+
+                return UnprocessableEntity(new
+                {
+                    error = "Unable to generate Excel output for this extraction."
+                });
             }
         }
 
@@ -260,14 +382,37 @@ namespace PdfToolStack.API.Controllers
 
             using var ms = new MemoryStream();
             await file.CopyToAsync(ms, cancellationToken);
+            var pdfBytes = ms.ToArray();
+            var pageCount = CountPdfPages(pdfBytes);
+            var isPro = await IsProUserAsync(userId);
 
             var result = await _aiService.ReviewContractAsync(
-                ms.ToArray(), cancellationToken);
+                pdfBytes,
+                userId,
+                isPro,
+                pageCount,
+                cancellationToken);
 
             if (!result.IsSuccess)
-                return UnprocessableEntity(new { error = result.ErrorMessage });
+            {
+                if (result.RequiresUpgrade)
+                {
+                    return StatusCode(402, new
+                    {
+                        error = result.ErrorMessage,
+                        upgradePath = "/pricing"
+                    });
+                }
 
-            return Ok(new { json = result.JsonData });
+                return UnprocessableEntity(new { error = result.ErrorMessage });
+            }
+
+            return Ok(new
+            {
+                json = result.JsonData,
+                ocrFallbackUsed = result.OcrFallbackUsed,
+                ocrWarning = result.OcrWarning
+            });
         }
 
         // POST api/ai/ocr
@@ -413,38 +558,179 @@ namespace PdfToolStack.API.Controllers
             [FromForm] string languageName = "Spanish",
             CancellationToken cancellationToken = default)
         {
-            if (!IsValidPdf(file))
-                return BadRequest(new { error = "Please upload a valid PDF file under 50MB." });
+            _logger.LogInformation("TRANSLATE ENDPOINT HIT - updated code is running");
 
-            var userId = GetRequiredUserId();
-            if (userId == null) return Unauthorized();
+            string? userId = null;
+            int? extractedTextLength = null;
+            int? translatedTextLength = null;
+            int? outputPdfBytesLength = null;
 
-            (bool allowed, IActionResult? limitResponse) = await CheckAiUsageAsync(
-                userId, "translate", HaikuModel);
-            if (!allowed) return limitResponse!;
+            try
+            {
+                if (!IsValidPdf(file))
+                    return BadRequest(new { error = "Please upload a valid PDF file under 50MB." });
 
-            _logger.LogInformation(
-                "Translate request. Language: {Lang}, File: {File}",
-                languageName, file.FileName);
+                userId = GetRequiredUserId();
+                if (userId == null) return Unauthorized();
 
-            using var ms = new MemoryStream();
-            await file.CopyToAsync(ms, cancellationToken);
+                if (!SupportsLatinScriptPdfOutput(targetLanguage, languageName))
+                {
+                    _logger.LogWarning(
+                        "Translate rejected. UserId: {UserId}, FileName: {FileName}, FileSize: {FileSize}, TargetLanguage: {TargetLanguage}, LanguageName: {LanguageName}, TranslatedTextLength: {TranslatedTextLength}, OutputPdfBytesLength: {OutputPdfBytesLength}, FailureReason: {FailureReason}",
+                        userId,
+                        file.FileName,
+                        file.Length,
+                        targetLanguage,
+                        languageName,
+                        translatedTextLength,
+                        outputPdfBytesLength,
+                        UnsupportedUnicodePdfMessage);
 
-            var result = await _aiService.TranslateAsync(
-                ms.ToArray(), targetLanguage, languageName, cancellationToken);
+                    return UnprocessableEntity(new
+                    {
+                        error = UnsupportedUnicodePdfMessage
+                    });
+                }
 
-            if (!result.IsSuccess)
-                return UnprocessableEntity(new { error = result.ErrorMessage });
+                (bool allowed, IActionResult? limitResponse) = await CheckAiUsageAsync(
+                    userId, "translate", HaikuModel);
+                if (!allowed)
+                {
+                    _logger.LogWarning(
+                        "Translate usage check failed. UserId: {UserId}, FileName: {FileName}, FileSize: {FileSize}, TargetLanguage: {TargetLanguage}, LanguageName: {LanguageName}, TranslatedTextLength: {TranslatedTextLength}, OutputPdfBytesLength: {OutputPdfBytesLength}",
+                        userId,
+                        file.FileName,
+                        file.Length,
+                        targetLanguage,
+                        languageName,
+                        translatedTextLength,
+                        outputPdfBytesLength);
 
-            var outputName =
-                $"{Path.GetFileNameWithoutExtension(file.FileName)}" +
-                $"_translated_{targetLanguage}.pdf";
+                    return limitResponse!;
+                }
 
-            var pdfBytes = BuildPdf(
-                result.TranslatedText,
-                $"Translated to {result.LanguageName}");
+                _logger.LogInformation(
+                    "Translate request. UserId: {UserId}, TargetLanguage: {TargetLanguage}, LanguageName: {LanguageName}, FileName: {FileName}, FileSize: {FileSize}",
+                    userId,
+                    targetLanguage,
+                    languageName,
+                    file.FileName,
+                    file.Length);
 
-            return File(pdfBytes, "application/pdf", outputName);
+                using var ms = new MemoryStream();
+                await file.CopyToAsync(ms, cancellationToken);
+
+                var result = await _aiService.TranslateAsync(
+                    ms.ToArray(), targetLanguage, languageName, cancellationToken);
+
+                extractedTextLength = result.SourceTextLength;
+                translatedTextLength = result.TranslatedText.Length;
+
+                if (!result.IsSuccess)
+                {
+                    var failureReason = string.IsNullOrWhiteSpace(result.ErrorMessage)
+                        ? "Translation failed. Please try again."
+                        : result.ErrorMessage;
+
+                    _logger.LogWarning(
+                        "Translate failed. UserId: {UserId}, FileName: {FileName}, FileSize: {FileSize}, TargetLanguage: {TargetLanguage}, LanguageName: {LanguageName}, ExtractedTextLength: {ExtractedTextLength}, TranslatedTextLength: {TranslatedTextLength}, OutputPdfBytesLength: {OutputPdfBytesLength}, FailureReason: {FailureReason}",
+                        userId,
+                        file.FileName,
+                        file.Length,
+                        targetLanguage,
+                        languageName,
+                        extractedTextLength,
+                        translatedTextLength,
+                        outputPdfBytesLength,
+                        failureReason);
+
+                    return UnprocessableEntity(new { error = failureReason });
+                }
+
+                if (string.IsNullOrWhiteSpace(result.TranslatedText))
+                {
+                    const string failureReason =
+                        "Translation result was empty. Please try again.";
+
+                    _logger.LogWarning(
+                        "Translate returned empty output. UserId: {UserId}, FileName: {FileName}, FileSize: {FileSize}, TargetLanguage: {TargetLanguage}, LanguageName: {LanguageName}, ExtractedTextLength: {ExtractedTextLength}, TranslatedTextLength: {TranslatedTextLength}, OutputPdfBytesLength: {OutputPdfBytesLength}, FailureReason: {FailureReason}",
+                        userId,
+                        file.FileName,
+                        file.Length,
+                        targetLanguage,
+                        languageName,
+                        extractedTextLength,
+                        translatedTextLength,
+                        outputPdfBytesLength,
+                        failureReason);
+
+                    return UnprocessableEntity(new { error = failureReason });
+                }
+
+                var outputName =
+                    $"{Path.GetFileNameWithoutExtension(file.FileName)}" +
+                    $"_translated_{targetLanguage}.pdf";
+
+                byte[] pdfBytes;
+                try
+                {
+                    pdfBytes = BuildPdf(
+                        result.TranslatedText,
+                        $"Translated to {result.LanguageName}");
+                    outputPdfBytesLength = pdfBytes.Length;
+                }
+                catch (Exception ex)
+                {
+                    const string failureReason =
+                        "Translation completed, but PDF generation failed. Please try a different language.";
+
+                    _logger.LogError(
+                        ex,
+                        "Translate PDF generation failed. UserId: {UserId}, FileName: {FileName}, FileSize: {FileSize}, TargetLanguage: {TargetLanguage}, LanguageName: {LanguageName}, ExtractedTextLength: {ExtractedTextLength}, TranslatedTextLength: {TranslatedTextLength}, OutputPdfBytesLength: {OutputPdfBytesLength}",
+                        userId,
+                        file.FileName,
+                        file.Length,
+                        targetLanguage,
+                        languageName,
+                        extractedTextLength,
+                        translatedTextLength,
+                        outputPdfBytesLength);
+
+                    return UnprocessableEntity(new { error = failureReason });
+                }
+
+                _logger.LogInformation(
+                    "Translate completed. UserId: {UserId}, FileName: {FileName}, FileSize: {FileSize}, TargetLanguage: {TargetLanguage}, LanguageName: {LanguageName}, ExtractedTextLength: {ExtractedTextLength}, TranslatedTextLength: {TranslatedTextLength}, OutputPdfBytesLength: {OutputPdfBytesLength}",
+                    userId,
+                    file.FileName,
+                    file.Length,
+                    targetLanguage,
+                    languageName,
+                    extractedTextLength,
+                    translatedTextLength,
+                    outputPdfBytesLength);
+
+                return File(pdfBytes, "application/pdf", outputName);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Translate PDF failed. UserId: {UserId}, FileName: {FileName}, FileSize: {FileSize}, TargetLanguage: {TargetLanguage}, LanguageName: {LanguageName}, ExtractedTextLength: {ExtractedTextLength}, TranslatedTextLength: {TranslatedTextLength}, OutputPdfBytesLength: {OutputPdfBytesLength}",
+                    userId,
+                    file?.FileName,
+                    file?.Length,
+                    targetLanguage,
+                    languageName,
+                    extractedTextLength,
+                    translatedTextLength,
+                    outputPdfBytesLength);
+
+                return UnprocessableEntity(new
+                {
+                    error = "Translate PDF failed. Check API logs for the exact failure."
+                });
+            }
         }
 
         // POST api/ai/rewrite
@@ -993,6 +1279,32 @@ namespace PdfToolStack.API.Controllers
                 ? GetRequiredUserId()
                 : null;
 
+        private static bool SupportsLatinScriptPdfOutput(
+            string? targetLanguage,
+            string? languageName)
+        {
+            if (!string.IsNullOrWhiteSpace(targetLanguage) &&
+                LatinScriptPdfLanguageCodes.Contains(targetLanguage.Trim()))
+            {
+                return true;
+            }
+
+            return !string.IsNullOrWhiteSpace(languageName) &&
+                LatinScriptPdfLanguageNames.Contains(
+                    NormalizeLanguageName(languageName));
+        }
+
+        private static string NormalizeLanguageName(string languageName)
+        {
+            var normalized = languageName.Trim().ToLowerInvariant();
+            var parenthesisIndex = normalized.IndexOf('(');
+
+            if (parenthesisIndex >= 0)
+                normalized = normalized[..parenthesisIndex].Trim();
+
+            return normalized;
+        }
+
         private const string OcrProcessModeFreePreview = "free-preview";
         private const string OcrProcessModeFullDocument = "full-document";
 
@@ -1041,6 +1353,63 @@ namespace PdfToolStack.API.Controllers
         {
             using var reader = new iTextSharp.text.pdf.PdfReader(pdfBytes);
             return reader.NumberOfPages;
+        }
+
+        private int? TryCountPdfPages(byte[] pdfBytes)
+        {
+            try
+            {
+                return CountPdfPages(pdfBytes);
+            }
+            catch (Exception ex)
+            {
+                LogExceptionDetails(
+                    ex,
+                    "PDF page count failed during invoice extraction. PdfBytes: {PdfBytes}",
+                    pdfBytes.Length);
+                return null;
+            }
+        }
+
+        private IActionResult ToExtractionFailureResponse(ExtractResult result)
+        {
+            var body = new
+            {
+                error = result.ErrorMessage,
+                textPreview = result.TextPreview,
+                ocrFallbackUsed = result.OcrFallbackUsed,
+                ocrWarning = result.OcrWarning
+            };
+
+            return result.FailureKind switch
+            {
+                ExtractionFailureKind.NoReadableText => BadRequest(body),
+                ExtractionFailureKind.RequiresUpgrade => StatusCode(402, body),
+                ExtractionFailureKind.AiConfiguration => StatusCode(503, body),
+                _ => UnprocessableEntity(body)
+            };
+        }
+
+        private void LogExceptionDetails(
+            Exception ex,
+            string message,
+            params object?[] args)
+        {
+            var fullMessage =
+                message +
+                " ExceptionType: {ExceptionType}, ExceptionMessage: {ExceptionMessage}, InnerException: {InnerException}, StackTrace: {StackTrace}";
+
+            var fullArgs = args
+                .Concat(new object?[]
+                {
+                    ex.GetType().FullName,
+                    ex.Message,
+                    ex.InnerException?.ToString(),
+                    ex.StackTrace
+                })
+                .ToArray();
+
+            _logger.LogError(ex, fullMessage, fullArgs);
         }
 
         private static bool IsValidPdf(IFormFile? file)

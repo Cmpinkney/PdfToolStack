@@ -183,12 +183,12 @@
         {
             <div class="mob-section-body">
                 <a href="/compress-pdf" class="mob-link" @onclick="CloseMobileMenu"><span class="mob-link-icon">🗜️</span><div><div class="mob-link-name">Compress PDF</div><div class="mob-link-desc">Reduce file size</div></div></a>
-                <a href="/compress-for-email" class="mob-link" @onclick="CloseMobileMenu"><span class="mob-link-icon">📧</span><div><div class="mob-link-name">Fix PDF for Email</div><div class="mob-link-desc">Make it email-ready</div></div></a>
+                <a href="/compress-pdf" class="mob-link" @onclick="CloseMobileMenu"><span class="mob-link-icon">📧</span><div><div class="mob-link-name">Fix PDF for Email</div><div class="mob-link-desc">Make it email-ready</div></div></a>
                 <a href="/pdf-to-word" class="mob-link" @onclick="CloseMobileMenu"><span class="mob-link-icon">📝</span><div><div class="mob-link-name">PDF to Word</div><div class="mob-link-desc">Convert to editable DOCX</div></div></a>
                 <a href="/word-to-pdf" class="mob-link" @onclick="CloseMobileMenu"><span class="mob-link-icon">📄</span><div><div class="mob-link-name">Word to PDF</div><div class="mob-link-desc">DOCX to PDF</div></div></a>
                 <a href="/pdf-to-jpg" class="mob-link" @onclick="CloseMobileMenu"><span class="mob-link-icon">🖼️</span><div><div class="mob-link-name">PDF to JPG</div><div class="mob-link-desc">Pages to images</div></div></a>
                 <a href="/jpg-to-pdf" class="mob-link" @onclick="CloseMobileMenu"><span class="mob-link-icon">🖼️</span><div><div class="mob-link-name">JPG to PDF</div><div class="mob-link-desc">Images to PDF</div></div></a>
-                <a href="/pdf-to-excel-converter" class="mob-link" @onclick="CloseMobileMenu"><span class="mob-link-icon">📈</span><div><div class="mob-link-name">PDF to Excel</div><div class="mob-link-desc">Tables to XLSX</div></div></a>
+                <a href="/pdf-to-excel" class="mob-link" @onclick="CloseMobileMenu"><span class="mob-link-icon">📈</span><div><div class="mob-link-name">PDF to Excel</div><div class="mob-link-desc">Tables to XLSX</div></div></a>
                 <a href="/ppt-to-pdf" class="mob-link" @onclick="CloseMobileMenu"><span class="mob-link-icon">📊</span><div><div class="mob-link-name">PPT to PDF</div><div class="mob-link-desc">Presentation to PDF</div></div></a>
                 <a href="/converter" class="mob-link mob-link--more" @onclick="CloseMobileMenu"><span class="mob-link-icon">🔄</span><div><div class="mob-link-name">All Converters</div><div class="mob-link-desc">View every format option</div></div></a>
             </div>
@@ -212,7 +212,7 @@
             <div class="mob-section-body">
                 <a href="/edit-pdf" class="mob-link" @onclick="CloseMobileMenu"><span class="mob-link-icon">🖊️</span><div><div class="mob-link-name">Edit PDF</div><div class="mob-link-desc">Add text and shapes</div></div></a>
                 <a href="/sign-pdf" class="mob-link" @onclick="CloseMobileMenu"><span class="mob-link-icon">✒️</span><div><div class="mob-link-name">Sign PDF</div><div class="mob-link-desc">Electronic signature</div></div></a>
-                <a href="/sign-contract" class="mob-link" @onclick="CloseMobileMenu"><span class="mob-link-icon">📋</span><div><div class="mob-link-name">Sign a Contract</div><div class="mob-link-desc">Legally binding e-sign</div></div></a>
+                <a href="/sign-pdf" class="mob-link" @onclick="CloseMobileMenu"><span class="mob-link-icon">📋</span><div><div class="mob-link-name">Sign a Contract</div><div class="mob-link-desc">Electronic signature</div></div></a>
                 <a href="/pdf-annotator" class="mob-link" @onclick="CloseMobileMenu"><span class="mob-link-icon">🖍️</span><div><div class="mob-link-name">PDF Annotator</div><div class="mob-link-desc">Highlight and markup</div></div></a>
                 <a href="/watermark-pdf" class="mob-link" @onclick="CloseMobileMenu"><span class="mob-link-icon">💧</span><div><div class="mob-link-name">Watermark PDF</div><div class="mob-link-desc">Add watermark text</div></div></a>
                 <a href="/redact-pdf" class="mob-link" @onclick="CloseMobileMenu"><span class="mob-link-icon">🔒</span><div><div class="mob-link-name">Redact PDF</div><div class="mob-link-desc">Remove sensitive info</div></div></a>
@@ -263,7 +263,7 @@
         @if (OpenSection == "security")
         {
             <div class="mob-section-body">
-                <a href="/protect-pdf" class="mob-link" @onclick="CloseMobileMenu"><span class="mob-link-icon">🔐</span><div><div class="mob-link-name">Protect PDF</div><div class="mob-link-desc">Add password protection</div></div></a>
+                <a href="/lock-pdf" class="mob-link" @onclick="CloseMobileMenu"><span class="mob-link-icon">🔐</span><div><div class="mob-link-name">Lock PDF</div><div class="mob-link-desc">Password protect files</div></div></a>
                 <a href="/unlock-pdf" class="mob-link" @onclick="CloseMobileMenu"><span class="mob-link-icon">🔓</span><div><div class="mob-link-name">Unlock PDF</div><div class="mob-link-desc">Remove password</div></div></a>
                 <a href="/flatten-pdf" class="mob-link" @onclick="CloseMobileMenu"><span class="mob-link-icon">📄</span><div><div class="mob-link-name">Flatten PDF</div><div class="mob-link-desc">Make uneditable</div></div></a>
                 <a href="/redact-pdf" class="mob-link" @onclick="CloseMobileMenu"><span class="mob-link-icon">🔒</span><div><div class="mob-link-name">Redact PDF</div><div class="mob-link-desc">Permanently remove sensitive data</div></div></a>
@@ -311,7 +311,7 @@
         new("Extract Pages",        "Extract PDF pages",                 "/extract-pdf-pages",       "📌"),
         new("Number Pages",         "Add page numbers",                  "/number-pages",            "🔢"),
         new("Flatten PDF",          "Make PDF uneditable",               "/flatten-pdf",             "📄"),
-        new("Protect PDF",          "Add password",                      "/protect-pdf",             "🔐"),
+        new("Lock PDF",             "Password protect files",            "/lock-pdf",                "🔐"),
         new("Unlock PDF",           "Remove password",                   "/unlock-pdf",              "🔓"),
         new("JPG to PDF",           "Images to PDF",                     "/jpg-to-pdf",              "🖼️"),
         new("PPT to PDF",           "PowerPoint to PDF",                 "/ppt-to-pdf",              "📊"),
@@ -329,10 +329,10 @@
         new("Compare PDF",          "Find differences between PDFs",     "/compare-pdf",             "🔍"),
         new("Extract Invoice Data", "AI extracts invoice to Excel",      "/extract-invoice-data",    "📊"),
         new("Batch Process",        "Process 20 files at once",          "/batch",                   "📦"),
-        new("Compress for Email",   "Fix PDF too large for email",       "/compress-for-email",      "🗜️"),
-        new("Sign Contract",        "Sign contracts online",             "/sign-contract",           "✒️"),
-        new("Merge for Submission", "Combine PDFs for filing",           "/merge-pdfs-for-submission","🔗"),
-        new("Compare Contracts",    "Find differences in contracts",     "/compare-contracts",       "🔍"),
+        new("Compress for Email",   "Fix PDF too large for email",       "/compress-pdf",            "🗜️"),
+        new("Sign Contract",        "Sign contracts online",             "/sign-pdf",                "✒️"),
+        new("Merge for Submission", "Combine PDFs for filing",           "/merge-pdf",               "🔗"),
+        new("Compare Contracts",    "Find differences in contracts",     "/compare-pdf",             "🔍"),
         new("AI Rewriter",          "Rewrite PDF content with AI",       "/ai-rewrite",              "✍️"),
         new("Contract Reviewer",    "Catch risky clauses with AI",       "/review-contract",         "⚖️"),
     };

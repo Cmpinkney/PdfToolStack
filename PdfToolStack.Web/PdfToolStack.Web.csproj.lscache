@@ -395,6 +395,7 @@ Pages/
  AboutUs.razor
  Account.razor
  AiPdfAssist.razor
+ AiPdfToolsHub.razor
  AiQuestions.razor
  AiRewrite.razor
  AiSummarizer.razor
@@ -411,6 +412,7 @@ Pages/
   HowToCompressPdfForEmail.razor
   HowToExtractInvoiceDataFromPdf.razor
  Blog/Index.razor
+ BusinessPdfToolsHub.razor
  ChatPdfLanding.razor
  ChatWithPdf.razor
  ComparePdf.razor
@@ -432,6 +434,7 @@ Pages/
  Home.razor
  InvoiceExtractionLanding.razor
  JpgToPdf.razor
+ LockPdf.razor
  MergePdf.razor
  MergePdfLanding.razor
  NotFound.razor
@@ -440,8 +443,10 @@ Pages/
  PaymentSuccess.razor
  PdfAnnotator.razor
  PdfOcr.razor
+ PdfOrganizerToolsHub.razor
  PdfReader.razor
  PdfScanner.razor
+ PdfSecurityToolsHub.razor
  PdfToExcel.razor
  PdfToExcelLanding.razor
  PdfToJpg.razor
@@ -499,6 +504,7 @@ Pages/
  AboutUs.razor
  Account.razor
  AiPdfAssist.razor
+ AiPdfToolsHub.razor
  AiQuestions.razor
  AiRewrite.razor
  AiSummarizer.razor
@@ -515,6 +521,7 @@ Pages/
   HowToCompressPdfForEmail.razor
   HowToExtractInvoiceDataFromPdf.razor
  Blog/Index.razor
+ BusinessPdfToolsHub.razor
  ChatPdfLanding.razor
  ChatWithPdf.razor
  ComparePdf.razor
@@ -536,6 +543,7 @@ Pages/
  Home.razor
  InvoiceExtractionLanding.razor
  JpgToPdf.razor
+ LockPdf.razor
  MergePdf.razor
  MergePdfLanding.razor
  NotFound.razor
@@ -544,8 +552,10 @@ Pages/
  PaymentSuccess.razor
  PdfAnnotator.razor
  PdfOcr.razor
+ PdfOrganizerToolsHub.razor
  PdfReader.razor
  PdfScanner.razor
+ PdfSecurityToolsHub.razor
  PdfToExcel.razor
  PdfToExcelLanding.razor
  PdfToJpg.razor

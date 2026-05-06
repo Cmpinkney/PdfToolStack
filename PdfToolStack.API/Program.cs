@@ -14,6 +14,7 @@ using PdfToolStack.Infrastructure.Data;
 using PdfToolStack.Infrastructure.Processors;
 using PdfToolStack.Infrastructure.Repositories;
 using PdfToolStack.Infrastructure.Services;
+using PdfToolStack.Infrastructure.Services.Ocr;
 using PdfToolStack.Infrastructure.Storage;
 using Serilog;
 using Syncfusion.Blazor;
@@ -51,6 +52,9 @@ try
 
     builder.Services.Configure<StripeOptions>(
     builder.Configuration.GetSection("Stripe"));
+
+    builder.Services.Configure<GoogleVisionOptions>(
+        builder.Configuration.GetSection(GoogleVisionOptions.SectionName));
 
     builder.Services.AddScoped<IFeatureAccessService, FeatureAccessService>();
 
@@ -124,6 +128,11 @@ try
     builder.Services.AddScoped<PdfToJpgProcessor>();
     builder.Services.AddScoped<PdfToExcelProcessor>();
     builder.Services.AddScoped<CropPdfProcessor>();
+    builder.Services.AddScoped(_ =>
+        new PdfOcrProcessor(Path.Combine(AppContext.BaseDirectory, "tessdata")));
+    builder.Services.AddScoped<TesseractOcrTextProvider>();
+    builder.Services.AddScoped<GoogleVisionOcrTextProvider>();
+    builder.Services.AddScoped<SmartOcrTextService>();
 
     if (hasDatabase)
     {
@@ -289,7 +298,8 @@ try
             config["Anthropic:Model"] ?? "claude-opus-4-6",
             int.TryParse(config["Anthropic:MaxTokens"],
                 out var mt) ? mt : 2000,
-            logger);
+            logger,
+            sp.GetRequiredService<SmartOcrTextService>());
     });
 
     // ── Cloud Service ────────────────────────────────────────────────────────────
@@ -355,6 +365,33 @@ try
         builder.Services.AddHostedService<JobCleanupService>();
     }
 
+    // ── Authentication — Auth0 JWT Bearer ────────────────────────────────
+    var auth0Domain = builder.Configuration["Auth0:Domain"] ?? "";
+    var auth0Audience = builder.Configuration["Auth0:Audience"] ?? "";
+
+    builder.Services
+        .AddAuthentication(Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme)
+        .AddJwtBearer(options =>
+        {
+            if (!string.IsNullOrWhiteSpace(auth0Domain))
+                options.Authority = $"https://{auth0Domain}/";
+
+            if (!string.IsNullOrWhiteSpace(auth0Audience))
+            {
+                options.Audience = auth0Audience;
+            }
+            else
+            {
+                options.TokenValidationParameters =
+                    new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+                    {
+                        ValidateAudience = false,
+                        NameClaimType =
+                            System.Security.Claims.ClaimTypes.NameIdentifier
+                    };
+            }
+        });
+
     var app = builder.Build();
 
     // ── Middleware Pipeline ───────────────────────────────────────────────
@@ -417,6 +454,7 @@ try
 
     app.UseHttpsRedirection();
     app.UseCors("BlazorPolicy");
+    app.UseAuthentication();
     app.UseAuthorization();
     app.MapControllers();
 

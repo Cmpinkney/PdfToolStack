@@ -11,11 +11,26 @@ using SystemImaging = System.Drawing.Imaging;
 
 namespace PdfToolStack.Infrastructure.Processors
 {
+    public sealed record PdfOcrPageImage(
+        byte[] Bytes,
+        int Width,
+        int Height);
+
     public sealed record PdfOcrResult(
         byte[] PdfBytes,
         int PageCount,
         string Language,
         int ExtractedTextLength)
+    {
+        public bool HasExtractedText => ExtractedTextLength > 0;
+    }
+
+    public sealed record PdfOcrTextResult(
+        string Text,
+        int PageCount,
+        string Language,
+        int ExtractedTextLength,
+        float? AverageConfidence)
     {
         public bool HasExtractedText => ExtractedTextLength > 0;
     }
@@ -156,6 +171,60 @@ namespace PdfToolStack.Infrastructure.Processors
             }
 
             return sb.ToString();
+        }
+
+        public async Task<PdfOcrTextResult> ExtractTextWithInfoAsync(
+            byte[] pdfBytes,
+            string language = "eng",
+            CancellationToken cancellationToken = default,
+            int? maxPages = null)
+        {
+            language = ValidateLanguageData(language);
+
+            return await Task.Run(() =>
+            {
+                var images = RenderPages(pdfBytes, cancellationToken, maxPages);
+
+                if (images.Count == 0)
+                    throw new OcrProcessingException(
+                        "OCR could not render any pages from this PDF.");
+
+                var sb = new System.Text.StringBuilder();
+                var extractedTextLength = 0;
+                var confidences = new List<float>();
+
+                using var engine = new TesseractEngine(
+                    _tessDataPath, language, EngineMode.Default);
+
+                foreach (var (imageBytes, _, _) in images)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                    using var pix = Pix.LoadFromMemory(imageBytes);
+                    using var page = engine.Process(pix);
+                    var pageText = page.GetText() ?? string.Empty;
+                    extractedTextLength += CountMeaningfulCharacters(pageText);
+                    sb.AppendLine(pageText);
+
+                    var confidence = page.GetMeanConfidence();
+                    if (confidence > 0)
+                        confidences.Add(confidence);
+                }
+
+                if (extractedTextLength == 0)
+                    throw new OcrProcessingException(
+                        "OCR did not detect any text in this PDF. Please try a clearer scan.");
+
+                return new PdfOcrTextResult(
+                    sb.ToString().Trim(),
+                    images.Count,
+                    language,
+                    extractedTextLength,
+                    confidences.Count > 0
+                        ? confidences.Average()
+                        : null);
+
+            }, cancellationToken);
         }
 
         private string ValidateLanguageData(string language)
@@ -422,12 +491,12 @@ namespace PdfToolStack.Infrastructure.Processors
         private static int CountMeaningfulCharacters(string text) =>
             text.Count(c => !char.IsWhiteSpace(c));
 
-        private static List<(byte[] Bytes, int Width, int Height)>
+        public static List<PdfOcrPageImage>
             RenderPages(byte[] pdfBytes,
                 CancellationToken cancellationToken,
                 int? maxPages = null)
         {
-            var results = new List<(byte[], int, int)>();
+            var results = new List<PdfOcrPageImage>();
 
             using var lib = DocLib.Instance;
             using var doc = lib.GetDocReader(
@@ -463,7 +532,7 @@ namespace PdfToolStack.Infrastructure.Processors
 
                 using var ms = new MemoryStream();
                 bmp.Save(ms, SystemImaging.ImageFormat.Png);
-                results.Add((ms.ToArray(), w, h));
+                results.Add(new PdfOcrPageImage(ms.ToArray(), w, h));
             }
 
             return results;

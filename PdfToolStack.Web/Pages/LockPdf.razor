@@ -1,0 +1,1369 @@
+@page "/lock-pdf"
+@inject ApiService ApiService
+@inject IJSRuntime JS
+@inject PaymentService PaymentService
+@inject FileValidationService Validator
+@inject ToastService Toast
+@inject SessionUsageService SessionUsage
+
+<PageTitle>Lock PDF Online — Password Protect PDF Files | PdfToolStack</PageTitle>
+
+<HeadContent>
+    <meta name="description"
+          content="Password protect PDF files online with secure encryption. Lock sensitive PDFs for sharing, contracts, HR files, and financial documents." />
+    <meta name="keywords"
+          content="lock pdf, password protect pdf, secure pdf, encrypt pdf online, protect pdf files" />
+    <link rel="canonical" href="https://pdftoolstack.com/lock-pdf" />
+</HeadContent>
+
+<div class="tool-page lock-pdf-page">
+    <AdSlot Size="banner" />
+
+    <div class="tool-container lock-pdf-container">
+        <section class="lock-pdf-hero">
+            <div class="lock-pdf-hero-copy">
+                <div class="lock-pdf-trust-row">
+                    <span>Secure encryption</span>
+                    <span>Files deleted in 1 hour</span>
+                    <span>No permanent storage</span>
+                </div>
+                <h1>
+                    Lock PDFs with <span class="lock-pdf-gradient-text">secure password</span> protection
+                </h1>
+                <p>
+                    Add password protection to sensitive PDFs before sharing contracts,
+                    invoices, HR documents, and private files.
+                </p>
+            </div>
+
+            <div class="lock-pdf-hero-visual" aria-hidden="true">
+                <div class="lock-pdf-visual-frame">
+                    <div class="lock-pdf-document-card">
+                        <div class="lock-pdf-doc-top">
+                            <span>PDF</span>
+                            <small>Confidential</small>
+                        </div>
+                        <div class="lock-pdf-doc-line lock-pdf-doc-line-wide"></div>
+                        <div class="lock-pdf-doc-line"></div>
+                        <div class="lock-pdf-doc-line lock-pdf-doc-line-short"></div>
+                        <div class="lock-pdf-doc-seal">
+                            <span></span>
+                            Locked before sharing
+                        </div>
+                    </div>
+
+                    <div class="lock-pdf-lock-mark">
+                        <svg viewBox="0 0 64 64" role="img">
+                            <path class="lock-pdf-lock-shackle"
+                                  d="M20 29v-8c0-7.2 5-12 12-12s12 4.8 12 12v8" />
+                            <rect x="15" y="27" width="34" height="27" rx="8" />
+                            <circle cx="32" cy="39" r="3.5" />
+                            <path d="M32 42.5v5" />
+                        </svg>
+                    </div>
+
+                    <div class="lock-pdf-shield-badge">
+                        <svg viewBox="0 0 48 48" role="img">
+                            <path d="M24 5l15 6v10c0 10-6.4 17.4-15 21C15.4 38.4 9 31 9 21V11l15-6Z" />
+                            <path d="M17 24l5 5 10-12" />
+                        </svg>
+                    </div>
+
+                    <div class="lock-pdf-scan-line"></div>
+                </div>
+            </div>
+        </section>
+
+        <div class="stepper lock-pdf-stepper" aria-label="Lock PDF workflow progress">
+            <div class="step lock-pdf-step @(CurrentState == PageState.Upload && SelectedFile == null ? "active" : SelectedFile != null || CurrentState == PageState.Processing || CurrentState == PageState.Complete ? "complete" : "")">
+                <span>1</span>
+                <strong>Upload</strong>
+            </div>
+            <div class="step lock-pdf-step @(CurrentState == PageState.Upload && SelectedFile != null ? "active" : CurrentState == PageState.Processing || CurrentState == PageState.Complete ? "complete" : "")">
+                <span>2</span>
+                <strong>Set Password</strong>
+            </div>
+            <div class="step lock-pdf-step @(CurrentState == PageState.Processing ? "active" : CurrentState == PageState.Complete ? "complete" : "")">
+                <span>3</span>
+                <strong>Protect</strong>
+            </div>
+            <div class="step lock-pdf-step @(CurrentState == PageState.Complete ? "active complete" : "")">
+                <span>4</span>
+                <strong>Download</strong>
+            </div>
+        </div>
+
+        <section class="workflow-grid lock-pdf-workflow-grid">
+            <div class="workspace-card lock-pdf-workspace-card">
+                @if (CurrentState == PageState.Upload)
+                {
+                    <div class="lock-pdf-panel-header">
+                        <span class="lock-pdf-panel-eyebrow">Secure upload</span>
+                        <h2>Start with your PDF</h2>
+                        <p>Upload a file from your device, Dropbox, or Google Drive.</p>
+                    </div>
+
+                    <FileUpload @key="_uploadKey"
+                                OnFileSelected="HandleFileSelected"
+                                OnFileRemoved="HandleFileRemoved"
+                                ActionSummary="Will lock this PDF with password protection" />
+
+                    @if (SelectedFile != null)
+                    {
+                        <div class="lock-pdf-file-summary">
+                            <div>
+                                <span class="lock-pdf-file-name">@SelectedFile.Name</span>
+                                <span class="lock-pdf-file-size">@Validator.FormatSize(SelectedFile.Size)</span>
+                            </div>
+                            <span class="lock-pdf-status-pill">Ready</span>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="lock-pdf-empty-state">
+                            <strong>Built for sensitive sharing</strong>
+                            <span>Lock contracts, invoices, HR files, and private documents before sending them out.</span>
+                        </div>
+                    }
+                }
+
+                @if (CurrentState == PageState.LargeFile)
+                {
+                    <LargeFileUpgrade
+                        FileSizeBytes="@(SelectedFile?.Size ?? 0)"
+                        FileName="@(SelectedFile?.Name ?? "")"
+                        ToolType="ProtectPdf"
+                        OnCancel="Reset" />
+                }
+
+                @if (CurrentState == PageState.Processing)
+                {
+                    <div class="lock-pdf-processing-container" role="status">
+                        <div class="lock-pdf-spinner"></div>
+                        <h2>Locking your PDF</h2>
+                        <p>Encrypting the document, applying permissions, and preparing your protected download.</p>
+                    </div>
+                }
+
+                @if (CurrentState == PageState.Complete && ResultBytes != null)
+                {
+                    <AdSlot Size="rectangle" />
+                    <div class="lock-pdf-result-container">
+                        <span class="lock-pdf-result-icon">Protected</span>
+                        <h2>Your PDF is protected</h2>
+                        <p>Your file is locked with PDF password protection and ready to share.</p>
+
+                        <button class="download-button lock-pdf-download-button"
+                                @onclick="DownloadFile">
+                            Download protected PDF
+                        </button>
+                        <button class="reset-button lock-pdf-reset-button"
+                                @onclick="Reset">
+                            Process another
+                        </button>
+
+                        <div class="lock-pdf-upsell-card">
+                            <div>
+                                <strong>Protect multiple PDFs at once with Pro</strong>
+                                <span>Batch lock larger folders of sensitive PDFs and download everything together.</span>
+                            </div>
+                            <a href="/pricing">View Pro</a>
+                        </div>
+
+                        <RecentFiles FileName="@(SelectedFile?.Name ?? "Protected PDF")"
+                                     ToolName="Lock PDF"
+                                     OnDownloadAgain="@DownloadFile" />
+                    </div>
+                }
+
+                @if (CurrentState == PageState.Error)
+                {
+                    <div class="lock-pdf-error-container" role="alert">
+                        <span class="lock-pdf-error-icon">Issue</span>
+                        <h2>We could not lock this PDF</h2>
+                        <p class="lock-pdf-error-message">@ErrorMessage</p>
+                        <button class="reset-button lock-pdf-reset-button"
+                                @onclick="Reset">
+                            Try again
+                        </button>
+                    </div>
+                }
+            </div>
+
+            <aside class="settings-card lock-pdf-settings-card">
+                <div class="lock-pdf-panel-header">
+                    <span class="lock-pdf-panel-eyebrow">Security settings</span>
+                    <h2>Set password protection</h2>
+                    <p>Choose the password and permission behavior for the protected copy.</p>
+                </div>
+
+                @if (SelectedFile != null && CurrentState == PageState.Upload)
+                {
+                    <div class="lock-pdf-field-card">
+                        <label for="lock-pdf-password">Password</label>
+                        <input id="lock-pdf-password"
+                               type="password"
+                               class="lock-pdf-field-input"
+                               placeholder="Enter a strong password"
+                               autocomplete="new-password"
+                               @bind="Password"
+                               @bind:event="oninput" />
+                        <p>@PasswordHint</p>
+                    </div>
+
+                    <div class="lock-pdf-field-card">
+                        <label for="lock-pdf-confirm-password">Confirm password</label>
+                        <input id="lock-pdf-confirm-password"
+                               type="password"
+                               class="lock-pdf-field-input"
+                               placeholder="Re-enter password"
+                               autocomplete="new-password"
+                               @bind="ConfirmPassword"
+                               @bind:event="oninput" />
+                        @if (!string.IsNullOrEmpty(ConfirmPassword) && Password != ConfirmPassword)
+                        {
+                            <p class="lock-pdf-error-message">Passwords do not match.</p>
+                        }
+                    </div>
+
+                    <label class="lock-pdf-checkbox-card">
+                        <input type="checkbox" @bind="RequirePasswordToOpen" />
+                        <span>
+                            <strong>Require password to open</strong>
+                            <small>Recipients must enter the password before viewing the PDF.</small>
+                        </span>
+                    </label>
+
+                    <label class="lock-pdf-checkbox-card">
+                        <input type="checkbox" @bind="RestrictEditingAndCopying" />
+                        <span>
+                            <strong>Restrict editing/copying</strong>
+                            <small>Applies supported PDF permission controls for sharing.</small>
+                        </span>
+                    </label>
+                }
+
+                <div class="lock-pdf-security-notes">
+                    <div>
+                        <strong>AES encryption</strong>
+                        <span>Uses the existing secure PDF protection backend.</span>
+                    </div>
+                    <div>
+                        <strong>Password is never stored</strong>
+                        <span>It is used only for this protection request.</span>
+                    </div>
+                    <div>
+                        <strong>Files deleted within 1 hour</strong>
+                        <span>No permanent storage for uploaded or protected files.</span>
+                    </div>
+                </div>
+
+                <p class="lock-pdf-legal-note">
+                    Use this tool only for PDFs you own or are authorized to protect.
+                </p>
+
+                @if (!string.IsNullOrWhiteSpace(ErrorMessage) && CurrentState == PageState.Upload)
+                {
+                    <p class="lock-pdf-error-message">@ErrorMessage</p>
+                }
+
+                @if (CurrentState == PageState.Upload && SelectedFile != null)
+                {
+                    <button class="process-button lock-pdf-process-button @(CanAttemptLock ? "" : "disabled")"
+                            disabled="@(!CanAttemptLock)"
+                            @onclick="ProcessFile">
+                        Lock PDF &amp; Download
+                    </button>
+                }
+                else if (CurrentState == PageState.Upload)
+                {
+                    <button class="process-button lock-pdf-process-button disabled" disabled>
+                        Upload a PDF to continue
+                    </button>
+                }
+            </aside>
+        </section>
+
+        <section class="lock-pdf-faq-section" aria-labelledby="lock-pdf-related-title">
+            <div class="lock-pdf-section-header">
+                <span class="lock-pdf-panel-eyebrow">Related tools</span>
+                <h2 id="lock-pdf-related-title">Security and sharing tools</h2>
+            </div>
+
+            <div class="lock-pdf-faq-grid">
+                <article>
+                    <h3><a href="/unlock-pdf">Unlock PDF</a></h3>
+                    <p>Remove supported protection from PDFs you own or are authorized to modify.</p>
+                </article>
+                <article>
+                    <h3><a href="/redact-pdf">Redact PDF</a></h3>
+                    <p>Permanently cover sensitive details before sharing a document.</p>
+                </article>
+                <article>
+                    <h3><a href="/sign-pdf">Sign PDF</a></h3>
+                    <p>Add an electronic signature to forms, contracts, and approvals.</p>
+                </article>
+                <article>
+                    <h3><a href="/compress-pdf">Compress PDF</a></h3>
+                    <p>Reduce file size before sending a protected document.</p>
+                </article>
+            </div>
+        </section>
+
+        <section class="lock-pdf-faq-section" aria-labelledby="lock-pdf-faq-title">
+            <div class="lock-pdf-section-header">
+                <span class="lock-pdf-panel-eyebrow">Security FAQ</span>
+                <h2 id="lock-pdf-faq-title">Password protect PDFs online</h2>
+            </div>
+
+            <div class="lock-pdf-faq-grid">
+                <article>
+                    <h3>What encryption is used?</h3>
+                    <p>The existing protect backend applies AES-based PDF encryption to the output file.</p>
+                </article>
+                <article>
+                    <h3>Do you store my password?</h3>
+                    <p>No. The password is used for the protection request and is not saved by the page.</p>
+                </article>
+                <article>
+                    <h3>Can I restrict copying?</h3>
+                    <p>Yes. The permission option applies supported PDF controls for editing and copying.</p>
+                </article>
+            </div>
+        </section>
+    </div>
+</div>
+
+<style>
+    .lock-pdf-page {
+        width: 100%;
+        max-width: none;
+        min-height: calc(100vh - 72px);
+        min-width: 0;
+        margin: 0;
+        padding: 48px 0 72px;
+        box-sizing: border-box;
+        background:
+            radial-gradient(circle at 12% 0%, rgba(37, 99, 235, 0.13), transparent 28%),
+            radial-gradient(circle at 88% 6%, rgba(5, 150, 105, 0.11), transparent 30%),
+            linear-gradient(135deg, #f8fbff 0%, #f7f8fb 46%, #f5fbf8 100%);
+        color: #172033;
+    }
+
+    .lock-pdf-container {
+        width: min(1320px, calc(100% - 64px));
+        max-width: 1320px;
+        margin: 0 auto;
+    }
+
+    .lock-pdf-hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1.08fr) minmax(360px, 0.72fr);
+        gap: 32px;
+        align-items: center;
+        margin: 28px 0 28px;
+    }
+
+    .lock-pdf-hero-copy {
+        min-width: 0;
+    }
+
+    .lock-pdf-trust-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 18px;
+    }
+
+    .lock-pdf-trust-row span {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.42rem;
+        border: 1px solid rgba(37, 99, 235, 0.14);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.78);
+        box-shadow: 0 10px 28px rgba(15, 23, 42, 0.06);
+        color: #334155;
+        font-size: 0.84rem;
+        font-weight: 850;
+        padding: 0.5rem 0.8rem;
+    }
+
+    .lock-pdf-trust-row span::before {
+        content: "";
+        width: 0.45rem;
+        height: 0.45rem;
+        flex: 0 0 auto;
+        border-radius: 999px;
+        background: linear-gradient(135deg, #10b981, #2563eb);
+        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+    }
+
+    .lock-pdf-hero h1 {
+        max-width: 920px;
+        margin: 0 0 16px;
+        color: #0f172a;
+        font-size: clamp(2.55rem, 5vw, 5.1rem);
+        line-height: 0.98;
+        letter-spacing: 0;
+    }
+
+    .lock-pdf-hero p {
+        max-width: 760px;
+        margin: 0;
+        color: #526173;
+        font-size: 1.05rem;
+        line-height: 1.7;
+    }
+
+    .lock-pdf-gradient-text {
+        background: linear-gradient(135deg, #6d5dfc 0%, #2563eb 52%, #06b6d4 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+
+    .lock-pdf-hero-visual {
+        min-width: 0;
+    }
+
+    .lock-pdf-visual-frame {
+        position: relative;
+        min-height: 340px;
+        overflow: hidden;
+        border: 1px solid rgba(148, 163, 184, 0.18);
+        border-radius: 28px;
+        background:
+            linear-gradient(135deg, rgba(255, 255, 255, 0.94), rgba(239, 246, 255, 0.86)),
+            radial-gradient(circle at 72% 20%, rgba(16, 185, 129, 0.14), transparent 32%);
+        box-shadow: 0 24px 60px rgba(15, 23, 42, 0.1);
+    }
+
+    .lock-pdf-visual-frame::before {
+        content: "";
+        position: absolute;
+        inset: 24px;
+        border: 1px dashed rgba(37, 99, 235, 0.18);
+        border-radius: 22px;
+    }
+
+    .lock-pdf-document-card {
+        position: absolute;
+        left: 15%;
+        top: 52px;
+        width: min(250px, 58%);
+        min-height: 250px;
+        border: 1px solid rgba(99, 102, 241, 0.2);
+        border-radius: 24px;
+        background: #ffffff;
+        box-shadow: 0 24px 52px rgba(30, 41, 59, 0.14);
+        padding: 22px;
+        animation: lock-pdf-document-float 6.4s ease-in-out infinite;
+    }
+
+    .lock-pdf-doc-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 26px;
+    }
+
+    .lock-pdf-doc-top span {
+        border-radius: 999px;
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+        color: #ffffff;
+        font-size: 0.72rem;
+        font-weight: 950;
+        padding: 0.4rem 0.62rem;
+    }
+
+    .lock-pdf-doc-top small {
+        color: #64748b;
+        font-size: 0.78rem;
+        font-weight: 850;
+        text-transform: uppercase;
+    }
+
+    .lock-pdf-doc-line {
+        height: 10px;
+        width: 74%;
+        margin-top: 14px;
+        border-radius: 999px;
+        background: #e2e8f0;
+    }
+
+    .lock-pdf-doc-line-wide {
+        width: 92%;
+        background: #c7d2fe;
+    }
+
+    .lock-pdf-doc-line-short {
+        width: 52%;
+    }
+
+    .lock-pdf-doc-seal {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 32px;
+        border-radius: 999px;
+        background: #ecfdf5;
+        color: #047857;
+        font-size: 0.78rem;
+        font-weight: 900;
+        padding: 0.55rem 0.72rem;
+    }
+
+    .lock-pdf-doc-seal span {
+        width: 9px;
+        height: 9px;
+        border-radius: 999px;
+        background: #10b981;
+        box-shadow: 0 0 0 5px rgba(16, 185, 129, 0.14);
+    }
+
+    .lock-pdf-lock-mark {
+        position: absolute;
+        right: 15%;
+        top: 116px;
+        display: grid;
+        place-items: center;
+        width: 116px;
+        height: 116px;
+        border: 1px solid rgba(37, 99, 235, 0.16);
+        border-radius: 30px;
+        background:
+            radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.9), transparent 34%),
+            linear-gradient(135deg, #6d5dfc 0%, #2563eb 62%, #06b6d4 100%);
+        box-shadow: 0 22px 42px rgba(37, 99, 235, 0.28);
+        animation: lock-pdf-lock-close 6.4s ease-in-out infinite;
+    }
+
+    .lock-pdf-lock-mark svg {
+        width: 72px;
+        height: 72px;
+        fill: none;
+        stroke: #ffffff;
+        stroke-width: 4;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+
+    .lock-pdf-lock-mark rect {
+        fill: rgba(255, 255, 255, 0.16);
+    }
+
+    .lock-pdf-lock-shackle {
+        transform-box: fill-box;
+        transform-origin: center bottom;
+        animation: lock-pdf-shackle-drop 6.4s ease-in-out infinite;
+    }
+
+    .lock-pdf-shield-badge {
+        position: absolute;
+        right: 12%;
+        bottom: 44px;
+        display: grid;
+        place-items: center;
+        width: 78px;
+        height: 78px;
+        border: 1px solid rgba(16, 185, 129, 0.22);
+        border-radius: 24px;
+        background: #ffffff;
+        box-shadow: 0 18px 38px rgba(5, 150, 105, 0.18);
+        animation: lock-pdf-shield-pop 6.4s ease-in-out infinite;
+    }
+
+    .lock-pdf-shield-badge svg {
+        width: 48px;
+        height: 48px;
+        fill: #dcfce7;
+        stroke: #059669;
+        stroke-width: 3;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+
+    .lock-pdf-shield-badge svg path:last-child {
+        fill: none;
+        stroke: #059669;
+    }
+
+    .lock-pdf-scan-line {
+        position: absolute;
+        left: 12%;
+        right: 12%;
+        top: 66px;
+        height: 3px;
+        border-radius: 999px;
+        background: linear-gradient(90deg, transparent, rgba(6, 182, 212, 0.85), transparent);
+        opacity: 0;
+        animation: lock-pdf-scan 6.4s ease-in-out infinite;
+    }
+
+    .lock-pdf-workflow-grid {
+        width: 100%;
+        max-width: none;
+        display: grid;
+        grid-template-columns: minmax(0, 1.55fr) minmax(360px, 0.75fr);
+        gap: 28px;
+        align-items: start;
+    }
+
+    .lock-pdf-workspace-card,
+    .lock-pdf-settings-card {
+        width: 100%;
+        max-width: none;
+        min-width: 0;
+        box-sizing: border-box;
+        border: 1px solid rgba(148, 163, 184, 0.18);
+        border-radius: 24px;
+        background: rgba(255, 255, 255, 0.94);
+        box-shadow: 0 20px 50px rgba(15, 23, 42, 0.08);
+        padding: 28px;
+    }
+
+    .lock-pdf-settings-card {
+        position: sticky;
+        top: 24px;
+    }
+
+    .lock-pdf-workspace-card .upload-container {
+        width: 100%;
+        max-width: none;
+    }
+
+    .lock-pdf-panel-header,
+    .lock-pdf-section-header {
+        margin-bottom: 20px;
+    }
+
+    .lock-pdf-panel-eyebrow {
+        display: inline-flex;
+        margin-bottom: 10px;
+        background: linear-gradient(135deg, #6d5dfc 0%, #2563eb 55%, #06b6d4 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        font-size: 0.76rem;
+        font-weight: 950;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    .lock-pdf-panel-header h2,
+    .lock-pdf-section-header h2 {
+        margin: 0 0 8px;
+        color: #111827;
+        font-size: 1.35rem;
+        line-height: 1.2;
+    }
+
+    .lock-pdf-panel-header p {
+        margin: 0;
+        color: #64748b;
+        line-height: 1.6;
+    }
+
+    .lock-pdf-file-summary,
+    .lock-pdf-empty-state,
+    .lock-pdf-field-card,
+    .lock-pdf-checkbox-card,
+    .lock-pdf-security-notes div,
+    .lock-pdf-legal-note {
+        border: 1px solid rgba(148, 163, 184, 0.16);
+        border-radius: 18px;
+        background: #f8fafc;
+        padding: 16px;
+    }
+
+    .lock-pdf-file-summary {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        align-items: center;
+        margin-top: 18px;
+    }
+
+    .lock-pdf-file-name,
+    .lock-pdf-file-size,
+    .lock-pdf-empty-state strong,
+    .lock-pdf-empty-state span,
+    .lock-pdf-security-notes strong,
+    .lock-pdf-security-notes span {
+        display: block;
+    }
+
+    .lock-pdf-file-name {
+        color: #111827;
+        font-weight: 900;
+        overflow-wrap: anywhere;
+    }
+
+    .lock-pdf-file-size,
+    .lock-pdf-empty-state span,
+    .lock-pdf-security-notes span,
+    .lock-pdf-field-card p,
+    .lock-pdf-legal-note {
+        color: #64748b;
+        font-size: 0.9rem;
+        line-height: 1.5;
+    }
+
+    .lock-pdf-status-pill {
+        border-radius: 999px;
+        background: #dcfce7;
+        color: #166534;
+        font-size: 0.78rem;
+        font-weight: 900;
+        padding: 0.35rem 0.6rem;
+        white-space: nowrap;
+    }
+
+    .lock-pdf-empty-state {
+        display: grid;
+        gap: 0.35rem;
+        margin-top: 18px;
+    }
+
+    .lock-pdf-empty-state strong {
+        color: #111827;
+    }
+
+    .lock-pdf-field-card {
+        display: grid;
+        gap: 8px;
+        margin-bottom: 14px;
+    }
+
+    .lock-pdf-field-card label {
+        color: #111827;
+        font-weight: 900;
+    }
+
+    .lock-pdf-field-card p {
+        margin: 0;
+    }
+
+    .lock-pdf-field-input {
+        width: 100%;
+        box-sizing: border-box;
+        border: 1px solid rgba(148, 163, 184, 0.35);
+        border-radius: 14px;
+        background: #ffffff;
+        color: #111827;
+        padding: 0.9rem 0.95rem;
+    }
+
+    .lock-pdf-field-input:focus {
+        border-color: rgba(37, 99, 235, 0.56);
+        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+        outline: none;
+    }
+
+    .lock-pdf-checkbox-card {
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+        margin-bottom: 12px;
+        cursor: pointer;
+    }
+
+    .lock-pdf-checkbox-card input {
+        width: 18px;
+        height: 18px;
+        margin-top: 2px;
+        accent-color: #2563eb;
+    }
+
+    .lock-pdf-checkbox-card span {
+        display: grid;
+        gap: 4px;
+    }
+
+    .lock-pdf-checkbox-card strong {
+        color: #111827;
+        font-size: 0.94rem;
+    }
+
+    .lock-pdf-checkbox-card small {
+        color: #64748b;
+        line-height: 1.45;
+    }
+
+    .lock-pdf-security-notes {
+        display: grid;
+        gap: 12px;
+        margin: 18px 0;
+    }
+
+    .lock-pdf-security-notes strong {
+        color: #111827;
+        margin-bottom: 4px;
+    }
+
+    .lock-pdf-legal-note {
+        margin: 0 0 18px;
+        background: linear-gradient(135deg, #fff7ed, #fffbeb);
+        color: #92400e;
+        font-weight: 800;
+    }
+
+    .lock-pdf-process-button,
+    .lock-pdf-download-button {
+        width: 100%;
+        border: 0;
+        border-radius: 16px;
+        background: linear-gradient(135deg, #6d5dfc 0%, #2563eb 55%, #06b6d4 100%);
+        box-shadow: 0 18px 36px rgba(37, 99, 235, 0.25);
+        color: #ffffff;
+        cursor: pointer;
+        font-weight: 950;
+        padding: 1rem 1.15rem;
+        transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+    }
+
+    .lock-pdf-process-button:hover:not(:disabled),
+    .lock-pdf-download-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 24px 45px rgba(37, 99, 235, 0.32);
+        filter: saturate(1.08);
+    }
+
+    .lock-pdf-process-button.disabled {
+        cursor: not-allowed;
+        opacity: 0.58;
+        transform: none;
+        box-shadow: none;
+        filter: grayscale(0.4);
+    }
+
+    .lock-pdf-processing-container,
+    .lock-pdf-result-container,
+    .lock-pdf-error-container {
+        display: grid;
+        justify-items: center;
+        gap: 0.9rem;
+        border-radius: 24px;
+        background: #f8fafc;
+        padding: 2rem;
+        text-align: center;
+    }
+
+    .lock-pdf-processing-container h2,
+    .lock-pdf-result-container h2,
+    .lock-pdf-error-container h2 {
+        margin: 0;
+        color: #111827;
+        font-size: 1.35rem;
+    }
+
+    .lock-pdf-processing-container p,
+    .lock-pdf-result-container p,
+    .lock-pdf-error-container p {
+        max-width: 560px;
+        margin: 0;
+        color: #64748b;
+        line-height: 1.6;
+    }
+
+    .lock-pdf-spinner {
+        width: 3rem;
+        height: 3rem;
+        border: 4px solid #dbeafe;
+        border-top-color: #6d5dfc;
+        border-radius: 50%;
+        animation: lock-pdf-spin 0.9s linear infinite;
+    }
+
+    .lock-pdf-result-icon,
+    .lock-pdf-error-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 2.4rem;
+        border-radius: 999px;
+        font-size: 0.82rem;
+        font-weight: 900;
+        letter-spacing: 0.04em;
+        padding: 0.55rem 0.8rem;
+        text-transform: uppercase;
+    }
+
+    .lock-pdf-result-icon {
+        background: #dcfce7;
+        color: #15803d;
+    }
+
+    .lock-pdf-error-icon {
+        background: #fee2e2;
+        color: #b91c1c;
+    }
+
+    .lock-pdf-error-message {
+        color: #b91c1c !important;
+        font-size: 0.88rem;
+        font-weight: 800;
+        line-height: 1.5;
+    }
+
+    .lock-pdf-reset-button {
+        width: 100%;
+        border: 0;
+        border-radius: 14px;
+        background: #eef2ff;
+        color: #3730a3;
+        cursor: pointer;
+        font-weight: 900;
+        padding: 0.9rem 1rem;
+    }
+
+    .lock-pdf-upsell-card {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 16px;
+        align-items: center;
+        width: 100%;
+        margin-top: 8px;
+        border: 1px solid rgba(109, 93, 252, 0.18);
+        border-radius: 18px;
+        background:
+            radial-gradient(circle at top left, rgba(109, 93, 252, 0.12), transparent 38%),
+            linear-gradient(135deg, rgba(255, 255, 255, 0.94), rgba(239, 246, 255, 0.86));
+        box-shadow: 0 14px 34px rgba(37, 99, 235, 0.08);
+        padding: 1rem 1.1rem;
+        text-align: left;
+    }
+
+    .lock-pdf-upsell-card strong,
+    .lock-pdf-upsell-card span {
+        display: block;
+    }
+
+    .lock-pdf-upsell-card strong {
+        color: #111827;
+        font-size: 0.98rem;
+        font-weight: 950;
+        margin-bottom: 0.25rem;
+    }
+
+    .lock-pdf-upsell-card span {
+        color: #64748b;
+        font-size: 0.88rem;
+        line-height: 1.5;
+    }
+
+    .lock-pdf-upsell-card a {
+        border-radius: 14px;
+        background: linear-gradient(135deg, #6d5dfc 0%, #2563eb 65%, #06b6d4 100%);
+        box-shadow: 0 14px 28px rgba(37, 99, 235, 0.22);
+        color: #ffffff;
+        font-size: 0.84rem;
+        font-weight: 950;
+        padding: 0.78rem 0.95rem;
+        text-decoration: none;
+        white-space: nowrap;
+    }
+
+    .lock-pdf-faq-section {
+        margin-top: 42px;
+    }
+
+    .lock-pdf-faq-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+    }
+
+    .lock-pdf-faq-grid article {
+        border: 1px solid rgba(148, 163, 184, 0.18);
+        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.88);
+        box-shadow: 0 18px 44px rgba(15, 23, 42, 0.06);
+        padding: 20px;
+    }
+
+    .lock-pdf-faq-grid h3 {
+        margin: 0 0 8px;
+        color: #111827;
+        font-size: 1rem;
+        line-height: 1.28;
+    }
+
+    .lock-pdf-faq-grid p {
+        margin: 0;
+        color: #64748b;
+        font-size: 0.93rem;
+        line-height: 1.6;
+    }
+
+    @@keyframes lock-pdf-document-float {
+        0%, 100% {
+            transform: translateY(0) translateX(0) rotate(-1.2deg);
+        }
+
+        50% {
+            transform: translateY(-9px) translateX(4px) rotate(1deg);
+        }
+    }
+
+    @@keyframes lock-pdf-lock-close {
+        0%, 18% {
+            transform: translateY(-14px) scale(0.94);
+        }
+
+        34%, 100% {
+            transform: translateY(0) scale(1);
+        }
+    }
+
+    @@keyframes lock-pdf-shackle-drop {
+        0%, 20% {
+            transform: translateY(-8px);
+            opacity: 0.62;
+        }
+
+        38%, 100% {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    @@keyframes lock-pdf-shield-pop {
+        0%, 48% {
+            opacity: 0;
+            transform: translateY(12px) scale(0.88);
+        }
+
+        62%, 100% {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+
+    @@keyframes lock-pdf-scan {
+        0%, 22% {
+            opacity: 0;
+            transform: translateY(0);
+        }
+
+        34% {
+            opacity: 0.9;
+        }
+
+        62%, 100% {
+            opacity: 0;
+            transform: translateY(222px);
+        }
+    }
+
+    @@keyframes lock-pdf-spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    @@media (prefers-reduced-motion: reduce) {
+        .lock-pdf-document-card,
+        .lock-pdf-lock-mark,
+        .lock-pdf-lock-shackle,
+        .lock-pdf-shield-badge,
+        .lock-pdf-scan-line,
+        .lock-pdf-spinner {
+            animation: none !important;
+        }
+
+        .lock-pdf-shield-badge,
+        .lock-pdf-scan-line {
+            opacity: 1;
+        }
+    }
+
+    @@media (max-width: 980px) {
+        .lock-pdf-container {
+            width: min(100%, calc(100% - 24px));
+        }
+
+        .lock-pdf-hero,
+        .lock-pdf-workflow-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .lock-pdf-hero {
+            margin-top: 12px;
+        }
+
+        .lock-pdf-hero h1 {
+            font-size: clamp(2.25rem, 8vw, 3.5rem);
+        }
+
+        .lock-pdf-visual-frame {
+            min-height: 300px;
+        }
+
+        .lock-pdf-settings-card {
+            position: static;
+        }
+
+        .lock-pdf-stepper {
+            overflow-x: auto;
+            border-radius: 20px;
+            grid-template-columns: repeat(4, minmax(150px, 1fr));
+        }
+
+        .lock-pdf-faq-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @@media (max-width: 640px) {
+        .lock-pdf-page {
+            padding: 32px 0 56px;
+        }
+
+        .lock-pdf-workspace-card,
+        .lock-pdf-settings-card {
+            border-radius: 22px;
+            padding: 1rem;
+        }
+
+        .lock-pdf-visual-frame {
+            min-height: 280px;
+        }
+
+        .lock-pdf-document-card {
+            left: 8%;
+            width: 64%;
+            padding: 18px;
+        }
+
+        .lock-pdf-lock-mark {
+            right: 8%;
+            width: 96px;
+            height: 96px;
+        }
+
+        .lock-pdf-file-summary,
+        .lock-pdf-upsell-card {
+            grid-template-columns: 1fr;
+        }
+
+        .lock-pdf-file-summary {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+
+        .lock-pdf-upsell-card a {
+            text-align: center;
+            white-space: normal;
+        }
+    }
+</style>
+
+@code {
+    private enum PageState
+    {
+        Upload, Processing, Complete, Error, LargeFile
+    }
+
+    private PageState CurrentState = PageState.Upload;
+    private IBrowserFile? SelectedFile;
+    private byte[]? UploadedBytes;
+    private byte[]? ResultBytes;
+    private string? ErrorMessage;
+    private string Password = string.Empty;
+    private string ConfirmPassword = string.Empty;
+    private bool RequirePasswordToOpen = true;
+    private bool RestrictEditingAndCopying = true;
+    private int _uploadKey;
+
+    [SupplyParameterFromQuery]
+    private string? Paid { get; set; }
+
+    private bool CanAttemptLock =>
+        SelectedFile != null
+        && UploadedBytes != null
+        && !string.IsNullOrWhiteSpace(Password)
+        && !string.IsNullOrWhiteSpace(ConfirmPassword);
+
+    private string PasswordHint =>
+        RequirePasswordToOpen
+            ? "This password will be required to open the protected PDF."
+            : "This password is used for PDF permission controls.";
+
+    protected override void OnInitialized()
+    {
+        if (Paid == "true")
+            CurrentState = PageState.Upload;
+    }
+
+    private async Task HandleFileSelected(IBrowserFile file)
+    {
+        SelectedFile = null;
+        UploadedBytes = null;
+        ResultBytes = null;
+        ErrorMessage = null;
+
+        var validation = Validator.ValidatePdfFile(file);
+        if (!validation.IsValid)
+        {
+            Toast.ShowError(validation.Message!);
+            return;
+        }
+
+        if (validation.IsWarning)
+            Toast.ShowWarning(validation.Message!);
+
+        try
+        {
+            if (PaymentService.IsFileTooLargeForFree(file.Size))
+            {
+                SelectedFile = file;
+                CurrentState = PageState.LargeFile;
+                StateHasChanged();
+                return;
+            }
+
+            using var stream = file.OpenReadStream(maxAllowedSize: 524288000);
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            UploadedBytes = ms.ToArray();
+
+            var bytesValidation = Validator.ValidatePdfBytes(UploadedBytes);
+            if (!bytesValidation.IsValid)
+            {
+                Toast.ShowError(bytesValidation.Message!);
+                UploadedBytes = null;
+                return;
+            }
+
+            if (bytesValidation.IsWarning)
+                Toast.ShowWarning(bytesValidation.Message!);
+
+            SelectedFile = file;
+            Toast.ShowSuccess($"File ready - {Validator.FormatSize(file.Size)}");
+        }
+        catch (Exception ex)
+        {
+            UploadedBytes = null;
+            Toast.ShowError($"Could not read file: {ex.Message}");
+        }
+
+        StateHasChanged();
+    }
+
+    private void HandleFileRemoved()
+    {
+        SelectedFile = null;
+        UploadedBytes = null;
+        ResultBytes = null;
+        ErrorMessage = null;
+        Password = string.Empty;
+        ConfirmPassword = string.Empty;
+        _uploadKey++;
+    }
+
+    private async Task ProcessFile()
+    {
+        ErrorMessage = null;
+
+        if (SelectedFile == null || UploadedBytes == null)
+        {
+            ErrorMessage = "Upload a PDF before locking it.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(Password))
+        {
+            ErrorMessage = "Enter a password for the protected PDF.";
+            return;
+        }
+
+        if (!string.Equals(Password, ConfirmPassword, StringComparison.Ordinal))
+        {
+            ErrorMessage = "Passwords do not match.";
+            return;
+        }
+
+        if (!RequirePasswordToOpen && !RestrictEditingAndCopying)
+        {
+            ErrorMessage = "Require an open password or enable permission restrictions.";
+            return;
+        }
+
+        var userPassword = RequirePasswordToOpen ? Password : string.Empty;
+        var ownerPassword = Password;
+        var allowPrinting = true;
+        var allowCopying = !RestrictEditingAndCopying;
+
+        CurrentState = PageState.Processing;
+        StateHasChanged();
+
+        try
+        {
+            ResultBytes = await ApiService.ProtectPdfAsync(
+                UploadedBytes,
+                SelectedFile.Name,
+                userPassword,
+                ownerPassword,
+                allowPrinting,
+                allowCopying);
+
+            Password = string.Empty;
+            ConfirmPassword = string.Empty;
+
+            if (ResultBytes?.Length > 0)
+            {
+                CurrentState = PageState.Complete;
+                Toast.ShowSuccess("PDF locked successfully.");
+            }
+            else
+            {
+                ErrorMessage = "Failed to lock PDF. Please try again.";
+                Toast.ShowError(ErrorMessage);
+                CurrentState = PageState.Error;
+            }
+        }
+        catch (Exception ex)
+        {
+            Password = string.Empty;
+            ConfirmPassword = string.Empty;
+            ErrorMessage = $"Error: {ex.Message}";
+            Toast.ShowError(ErrorMessage);
+            CurrentState = PageState.Error;
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task DownloadFile()
+    {
+        if (ResultBytes == null)
+            return;
+
+        var baseName = Path.GetFileNameWithoutExtension(SelectedFile?.Name ?? "document");
+        var fileName = $"{baseName}_locked.pdf";
+
+        await JS.InvokeVoidAsync(
+            "downloadFile",
+            fileName,
+            Convert.ToBase64String(ResultBytes));
+
+        SessionUsage.RecordToolCompletion("Lock PDF");
+    }
+
+    private void Reset()
+    {
+        CurrentState = PageState.Upload;
+        SelectedFile = null;
+        UploadedBytes = null;
+        ResultBytes = null;
+        ErrorMessage = null;
+        Password = string.Empty;
+        ConfirmPassword = string.Empty;
+        RequirePasswordToOpen = true;
+        RestrictEditingAndCopying = true;
+        _uploadKey++;
+    }
+}

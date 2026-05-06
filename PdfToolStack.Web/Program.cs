@@ -23,12 +23,24 @@ builder.Services.AddOidcAuthentication(options =>
 {
     options.ProviderOptions.Authority =
         builder.Configuration["Auth0:Authority"];
+
     options.ProviderOptions.ClientId =
         builder.Configuration["Auth0:ClientId"];
+
     options.ProviderOptions.ResponseType = "code";
+
     options.ProviderOptions.DefaultScopes.Add("openid");
     options.ProviderOptions.DefaultScopes.Add("profile");
     options.ProviderOptions.DefaultScopes.Add("email");
+
+    var audience = builder.Configuration["Auth0:Audience"];
+
+    if (!string.IsNullOrWhiteSpace(audience))
+    {
+        options.ProviderOptions.AdditionalProviderParameters
+            .Add("audience", audience);
+    }
+
     options.ProviderOptions.AdditionalProviderParameters
         .Add("post_logout_redirect_uri",
             builder.HostEnvironment.BaseAddress);

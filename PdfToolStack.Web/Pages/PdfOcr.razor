@@ -31,7 +31,7 @@
                 <span>Auto-delete after 1 hour</span>
             </div>
             <h1>Make scanned PDFs <span class="hero-gradient-text">searchable</span></h1>
-            <p>Convert scanned documents into searchable, selectable text instantly.</p>
+            <p>Add a searchable text layer where OCR succeeds, so recognized text can be searched and copied.</p>
         </section>
 
         <div class="stepper ai-tool-stepper ocr-tool-stepper" aria-label="OCR steps">
@@ -190,8 +190,8 @@
                             <div class="ocr-result-feat">
                                 <div class="ocr-result-feat-icon">🌐</div>
                                 <div>
-                                    <strong>Search engine indexed</strong>
-                                    <p>Google can now read and index the content</p>
+                                    <strong>Searchable text layer</strong>
+                                    <p>Recognized text can be searched and copied</p>
                                 </div>
                             </div>
                         </div>
@@ -235,7 +235,7 @@
                                 </svg>
                                 <div>
                                     <strong>Your PDF is ready</strong>
-                                    <p>Same layout, same pages — now fully searchable and selectable.</p>
+                                    <p>Recognized text can be searched and copied. Highlight alignment may vary depending on scan quality.</p>
                                 </div>
                             </div>
                             <button class="download-button"
@@ -323,6 +323,26 @@
             </aside>
         </section>
 
+    </div>
+
+    <div class="faq-section" aria-labelledby="ocr-related-title">
+        <h2 id="ocr-related-title">Related OCR workflows</h2>
+        <div class="faq-item">
+            <h3><a href="/translate-pdf">Translate PDF</a></h3>
+            <p>Translate recognized text from text-based PDFs into supported languages.</p>
+        </div>
+        <div class="faq-item">
+            <h3><a href="/chat-with-pdf">Chat with PDF</a></h3>
+            <p>Ask questions after OCR makes recognized text available.</p>
+        </div>
+        <div class="faq-item">
+            <h3><a href="/ai-summarizer">Summarize PDF</a></h3>
+            <p>Turn long recognized documents into concise summaries.</p>
+        </div>
+        <div class="faq-item">
+            <h3><a href="/extract-invoice-data">Extract Invoice Data</a></h3>
+            <p>Extract structured fields from invoices and business PDFs.</p>
+        </div>
     </div>
 
     <div class="faq-section">
@@ -549,7 +569,7 @@
     private string OcrCompletionDescription =>
         _processedFirstThreeOnly && _pageCount > FreePageLimit
             ? $"first {FreePageLimit} pages are searchable"
-            : "now fully searchable";
+            : "has a searchable text layer where OCR succeeded";
 
     private record LangOption(string Code, string Name, string Flag);
 

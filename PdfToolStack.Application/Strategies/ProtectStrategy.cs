@@ -8,9 +8,9 @@ namespace PdfToolStack.Application.Strategies
     public class ProtectStrategy : IProcessingStrategy
     {
         public ToolType ToolType => ToolType.ProtectPdf;
-        private readonly IPdfProcessor _processor;
+        private readonly IProtectPdfProcessor _processor;
 
-        public ProtectStrategy(IPdfProcessor processor)
+        public ProtectStrategy(IProtectPdfProcessor processor)
             => _processor = processor;
 
         public async Task<ProcessingResult> ExecuteAsync(
@@ -19,8 +19,24 @@ namespace PdfToolStack.Application.Strategies
         {
             try
             {
+                var ownerPassword = string.IsNullOrWhiteSpace(request.OwnerPassword)
+                    ? request.UserPassword
+                    : request.OwnerPassword;
+
+                if (string.IsNullOrWhiteSpace(request.UserPassword) &&
+                    string.IsNullOrWhiteSpace(ownerPassword))
+                {
+                    return ProcessingResult.Failure(
+                        "A password is required to protect the PDF.");
+                }
+
                 var output = await _processor.ProcessAsync(
-                    request.FileBytes, cancellationToken);
+                    request.FileBytes,
+                    request.UserPassword,
+                    ownerPassword,
+                    request.AllowPrinting,
+                    request.AllowCopying,
+                    cancellationToken);
                 return ProcessingResult.Success(output, request.FileSizeBytes);
             }
             catch (Exception ex)
