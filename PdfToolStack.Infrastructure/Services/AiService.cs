@@ -560,12 +560,21 @@ namespace PdfToolStack.Infrastructure.Services
         {
             var text = ExtractText(pdfBytes, "translate");
             var sourceTextLength = text.Length;
+            var meaningfulChars = OcrTextQuality.CountMeaningfulCharacters(text);
 
-            if (string.IsNullOrWhiteSpace(text) ||
-                OcrTextQuality.CountMeaningfulCharacters(text) == 0)
+            _logger.LogInformation(
+                "Translate text extraction. TargetLanguage: {TargetLanguage}, LanguageName: {LanguageName}, TextLength: {TextLength}, MeaningfulChars: {MeaningfulChars}",
+                targetLanguage, languageName, sourceTextLength, meaningfulChars);
+
+            if (string.IsNullOrWhiteSpace(text) || meaningfulChars == 0)
+            {
+                _logger.LogWarning(
+                    "Translate rejected — no readable text. TargetLanguage: {TargetLanguage}, TextLength: {TextLength}, MeaningfulChars: {MeaningfulChars}",
+                    targetLanguage, sourceTextLength, meaningfulChars);
                 return TranslateResult.Failure(
                     ScannedPdfTranslateMessage,
                     sourceTextLength);
+            }
 
             if (text.Length > 14000)
                 text = text[..14000] + "\n[Document truncated]";
@@ -601,21 +610,39 @@ namespace PdfToolStack.Infrastructure.Services
                 }
             };
 
-            var translated = await CallApiAsync(requestBody, cancellationToken);
+            _logger.LogInformation(
+                "Translate AI request sending. TargetLanguage: {TargetLanguage}, LanguageName: {LanguageName}, TextLength: {TextLength}, Model: {Model}, MaxTokens: 4000",
+                targetLanguage, languageName, text.Length, HaikuModel);
+
+            var translated = await CallApiAsync(requestBody, cancellationToken, timeoutSeconds: 90);
             translated = translated
                 .Replace("```markdown", "")
                 .Replace("```", "")
                 .Trim();
 
+            _logger.LogInformation(
+                "Translate AI response received. TargetLanguage: {TargetLanguage}, TranslatedLength: {TranslatedLength}",
+                targetLanguage, translated.Length);
+
             if (string.IsNullOrWhiteSpace(translated))
+            {
+                _logger.LogWarning(
+                    "Translate AI returned empty result. TargetLanguage: {TargetLanguage}, LanguageName: {LanguageName}",
+                    targetLanguage, languageName);
                 return TranslateResult.Failure(
                     "Translation result was empty. Please try again.",
                     sourceTextLength);
+            }
 
             if (translated.StartsWith("AI service"))
+            {
+                _logger.LogWarning(
+                    "Translate AI call failed. TargetLanguage: {TargetLanguage}, LanguageName: {LanguageName}, Response: {Response}",
+                    targetLanguage, languageName, translated);
                 return TranslateResult.Failure(
                     "Translation failed. Please try again.",
                     sourceTextLength);
+            }
 
             return TranslateResult.Success(
                 translated,
@@ -746,7 +773,8 @@ namespace PdfToolStack.Infrastructure.Services
 
         private async Task<string> CallApiAsync(
             object requestBody,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken,
+            int timeoutSeconds = 30)
         {
             try
             {
@@ -761,7 +789,7 @@ namespace PdfToolStack.Infrastructure.Services
                     json, Encoding.UTF8, "application/json");
 
                 using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-                cts.CancelAfter(TimeSpan.FromSeconds(30));
+                cts.CancelAfter(TimeSpan.FromSeconds(timeoutSeconds));
 
                 var response = await _http.SendAsync(request, cts.Token);
                 var responseBody = await response.Content
