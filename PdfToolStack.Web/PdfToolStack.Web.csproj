@@ -26,4 +26,13 @@
 	<ItemGroup>
 	  <Folder Include="wwwroot\images\icons\" />
 	</ItemGroup>
+	<Target Name="RemoveUnusedSyncfusionThemes" AfterTargets="Publish">
+		<ItemGroup>
+			<UnusedSyncfusionThemes Include="$(PublishDir)wwwroot\_content\Syncfusion.Blazor.Themes\**\*.css" />
+			<UnusedSyncfusionThemes Remove="$(PublishDir)wwwroot\_content\Syncfusion.Blazor.Themes\material3.css" />
+			<UnusedSyncfusionThemes Remove="$(PublishDir)wwwroot\_content\Syncfusion.Blazor.Themes\material3-lite.css" />
+		</ItemGroup>
+
+		<Delete Files="@(UnusedSyncfusionThemes)" />
+	</Target>
 </Project>
