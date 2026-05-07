@@ -1,5 +1,6 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using PdfToolStack.API.Configuration;
 using System.Security.Claims;
@@ -14,23 +15,34 @@ namespace PdfToolStack.API.Controllers
     {
         private readonly SubscriptionService? _service;
         private readonly StripeOptions _stripeOptions;
+        private readonly IConfiguration _config;
         private readonly ILogger<SubscriptionController> _logger;
 
         public SubscriptionController(
             IOptions<StripeOptions> stripeOptions,
+            IConfiguration config,
             ILogger<SubscriptionController> logger,
             SubscriptionService? service = null)
         {
             _service = service;
             _stripeOptions = stripeOptions.Value;
+            _config = config;
             _logger = logger;
         }
 
         // ── Subscription status ───────────────────────────────────────────────────
 
         [HttpGet("status/{userId}")]
+        [Authorize]
         public async Task<IActionResult> GetStatus(string userId)
         {
+            var callerId = GetCallerId();
+            if (string.IsNullOrEmpty(callerId))
+                return Unauthorized();
+
+            if (!IsCallerAuthorizedForUser(callerId, userId))
+                return Forbid();
+
             if (_service == null)
                 return StatusCode(503, new { error = "Database not configured." });
 
@@ -47,11 +59,18 @@ namespace PdfToolStack.API.Controllers
             if (_service == null)
                 return StatusCode(503, new { error = "Database not configured." });
 
-            dto.UserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
-                ?? User.FindFirst("sub")?.Value
-                ?? string.Empty;
+            dto.UserId = GetCallerId() ?? string.Empty;
             if (string.IsNullOrEmpty(dto.UserId))
                 return Unauthorized();
+
+            // Validate the price ID is one of the configured subscription prices
+            if (!IsValidSubscriptionPriceId(dto.PriceId))
+            {
+                _logger.LogWarning(
+                    "Checkout rejected — invalid PriceId: {PriceId}, UserId: {UserId}",
+                    dto.PriceId, dto.UserId);
+                return BadRequest(new { error = "Invalid pricing option." });
+            }
 
             _logger.LogInformation(
                 "Checkout initiated — UserId: {UserId}, PriceId: {PriceId}",
@@ -72,12 +91,12 @@ namespace PdfToolStack.API.Controllers
             catch (Stripe.StripeException ex)
             {
                 _logger.LogError("Stripe error: {Code} — {Message}", ex.StripeError?.Code, ex.Message);
-                return BadRequest(new { error = ex.Message });
+                return BadRequest(new { error = "Payment provider error. Please try again." });
             }
             catch (Exception ex)
             {
-                _logger.LogError("Checkout error: {Message}", ex.Message);
-                return BadRequest(new { error = ex.Message });
+                _logger.LogError(ex, "Checkout error for UserId: {UserId}", dto.UserId);
+                return StatusCode(500, new { error = "An unexpected error occurred." });
             }
         }
 
@@ -90,15 +109,24 @@ namespace PdfToolStack.API.Controllers
             if (_service == null)
                 return StatusCode(503, new { error = "Database not configured." });
 
-            request.UserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
-                ?? User.FindFirst("sub")?.Value
-                ?? string.Empty;
+            request.UserId = GetCallerId() ?? string.Empty;
             if (string.IsNullOrEmpty(request.UserId))
                 return Unauthorized();
 
             var validTypes = new[] { "large_file", "ai_day_pass", "ai_credit_pack", "batch_unlock" };
             if (!validTypes.Contains(request.AddonType))
                 return BadRequest(new { error = $"Unknown addon type: {request.AddonType}" });
+
+            // Validate the price ID matches the configured price for this addon type
+            var expectedPriceId = GetExpectedAddonPriceId(request.AddonType);
+            if (string.IsNullOrWhiteSpace(expectedPriceId) ||
+                !string.Equals(request.PriceId, expectedPriceId, StringComparison.Ordinal))
+            {
+                _logger.LogWarning(
+                    "Addon checkout rejected — invalid PriceId: {PriceId} for AddonType: {AddonType}, UserId: {UserId}",
+                    request.PriceId, request.AddonType, request.UserId);
+                return BadRequest(new { error = "Invalid pricing option." });
+            }
 
             _logger.LogInformation(
                 "Addon checkout initiated — UserId: {UserId}, AddonType: {AddonType}, PriceId: {PriceId}",
@@ -127,27 +155,13 @@ namespace PdfToolStack.API.Controllers
             catch (Stripe.StripeException ex)
             {
                 _logger.LogError("Stripe error for addon: {Code} — {Message}", ex.StripeError?.Code, ex.Message);
-                return BadRequest(new { error = ex.Message });
+                return BadRequest(new { error = "Payment provider error. Please try again." });
             }
             catch (Exception ex)
             {
-                _logger.LogError("Addon checkout error: {Message}", ex.Message);
-                return BadRequest(new { error = ex.Message });
+                _logger.LogError(ex, "Addon checkout error for UserId: {UserId}", request.UserId);
+                return StatusCode(500, new { error = "An unexpected error occurred." });
             }
-        }
-
-        private static Dictionary<string, string> GetSafeAddonMetadata(AddonCheckoutRequest request)
-        {
-            var metadata = new Dictionary<string, string>();
-
-            if (request.AddonType == "batch_unlock" &&
-                request.Metadata?.TryGetValue("pendingBatchId", out var pendingBatchId) == true &&
-                Guid.TryParse(pendingBatchId, out _))
-            {
-                metadata["pendingBatchId"] = pendingBatchId;
-            }
-
-            return metadata;
         }
 
         // ── Portal ────────────────────────────────────────────────────────────────
@@ -159,11 +173,7 @@ namespace PdfToolStack.API.Controllers
             if (_service == null)
                 return StatusCode(503, new { error = "Database not configured." });
 
-            var userId =
-                User.FindFirst(ClaimTypes.NameIdentifier)?.Value
-                ?? User.FindFirst("sub")?.Value
-                ?? string.Empty;
-
+            var userId = GetCallerId() ?? string.Empty;
             if (string.IsNullOrEmpty(userId))
                 return Unauthorized();
 
@@ -189,43 +199,28 @@ namespace PdfToolStack.API.Controllers
             catch (Stripe.StripeException ex)
             {
                 _logger.LogError("Stripe billing portal error for user {UserId}: {Code} — {Message}", userId, ex.StripeError?.Code, ex.Message);
-                return BadRequest(new { error = ex.Message });
+                return BadRequest(new { error = "Payment provider error. Please try again." });
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Billing portal error for user {UserId}", userId);
-                return BadRequest(new { error = ex.Message });
-            }
-        }
-
-        // ── Webhook ───────────────────────────────────────────────────────────────
-
-        [HttpPost("webhook")]
-        public async Task<IActionResult> Webhook()
-        {
-            if (_service == null)
-                return StatusCode(503, new { error = "Database not configured." });
-
-            var json = await new StreamReader(HttpContext.Request.Body).ReadToEndAsync();
-            var signature = Request.Headers["Stripe-Signature"].ToString();
-
-            try
-            {
-                await _service.HandleWebhookAsync(json, signature);
-                return Ok();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError("Webhook error: {Message}", ex.Message);
-                return BadRequest(ex.Message);
+                return StatusCode(500, new { error = "An unexpected error occurred." });
             }
         }
 
         // ── History ───────────────────────────────────────────────────────────────
 
         [HttpGet("history/{userId}")]
+        [Authorize]
         public async Task<IActionResult> GetHistory(string userId)
         {
+            var callerId = GetCallerId();
+            if (string.IsNullOrEmpty(callerId))
+                return Unauthorized();
+
+            if (!IsCallerAuthorizedForUser(callerId, userId))
+                return Forbid();
+
             if (_service == null)
                 return StatusCode(503, new { error = "Database not configured." });
 
@@ -298,6 +293,67 @@ namespace PdfToolStack.API.Controllers
                     label = "$4.99"
                 }
             });
+        }
+
+        // ── Helpers ───────────────────────────────────────────────────────────────
+
+        private string? GetCallerId() =>
+            User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+            ?? User.FindFirst("sub")?.Value;
+
+        private bool IsCallerAuthorizedForUser(string callerId, string userId)
+        {
+            if (callerId == userId) return true;
+
+            var adminIds = (_config["AdminUserIds"] ?? string.Empty)
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+            return adminIds.Contains(callerId);
+        }
+
+        private bool IsValidSubscriptionPriceId(string priceId)
+        {
+            if (string.IsNullOrWhiteSpace(priceId)) return false;
+
+            var allowed = new HashSet<string>(StringComparer.Ordinal);
+            AddIfSet(allowed, _stripeOptions.ProMonthlyPriceIdV2);
+            AddIfSet(allowed, _stripeOptions.ProYearlyPriceIdV2);
+            AddIfSet(allowed, _stripeOptions.TeamsMonthlyPriceId);
+            // Legacy price IDs kept for existing subscriber flows
+            AddIfSet(allowed, _stripeOptions.ProMonthlyPriceId);
+            AddIfSet(allowed, _stripeOptions.ProYearlyPriceId);
+
+            return allowed.Contains(priceId);
+        }
+
+        private string? GetExpectedAddonPriceId(string addonType) =>
+            addonType switch
+            {
+                "large_file"     => _stripeOptions.LargeFilePriceId,
+                "ai_day_pass"    => _stripeOptions.AiDayPassPriceId,
+                "ai_credit_pack" => _stripeOptions.AiCredits50PriceId,
+                "batch_unlock"   => _stripeOptions.BatchUnlockPriceId,
+                _                => null
+            };
+
+        private static void AddIfSet(HashSet<string> set, string? value)
+        {
+            if (!string.IsNullOrWhiteSpace(value))
+                set.Add(value);
+        }
+
+        private static Dictionary<string, string> GetSafeAddonMetadata(AddonCheckoutRequest request)
+        {
+            var metadata = new Dictionary<string, string>();
+
+            if (request.AddonType == "batch_unlock" &&
+                request.Metadata?.TryGetValue("pendingBatchId", out var pendingBatchId) == true &&
+                Guid.TryParse(pendingBatchId, out _))
+            {
+                metadata["pendingBatchId"] = pendingBatchId;
+            }
+
+            return metadata;
         }
     }
 }

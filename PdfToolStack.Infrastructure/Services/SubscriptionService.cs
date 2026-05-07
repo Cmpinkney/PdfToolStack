@@ -1,11 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using PdfToolStack.Application.DTOs;
-using PdfToolStack.Application.Interfaces;
 using PdfToolStack.Domain.Entities;
-using PdfToolStack.Domain.Interfaces;
 using PdfToolStack.Infrastructure.Data;
 using Stripe;
 using Stripe.Checkout;
@@ -16,21 +13,15 @@ namespace PdfToolStack.Infrastructure.Services
     {
         private readonly AppDbContext _db;
         private readonly IConfiguration _config;
-        private readonly IEmailService _emailService;
-        private readonly IServiceProvider _serviceProvider;
         private readonly ILogger<SubscriptionService> _logger;
 
         public SubscriptionService(
             AppDbContext db,
             IConfiguration config,
-            IEmailService emailService,
-            IServiceProvider serviceProvider,
             ILogger<SubscriptionService> logger)
         {
             _db = db;
             _config = config;
-            _emailService = emailService;
-            _serviceProvider = serviceProvider;
             _logger = logger;
             StripeConfiguration.ApiKey = _config["Stripe:SecretKey"];
         }
@@ -177,202 +168,6 @@ namespace PdfToolStack.Infrastructure.Services
             var service = new Stripe.BillingPortal.SessionService();
             var session = await service.CreateAsync(options);
             return session.Url;
-        }
-
-        // ── Webhook ───────────────────────────────────────────────────────────────
-
-        public async Task HandleWebhookAsync(string json, string signature)
-        {
-            var webhookSecret = _config["Stripe:WebhookSecret"]!;
-            var stripeEvent = EventUtility.ConstructEvent(json, signature, webhookSecret);
-
-            switch (stripeEvent.Type)
-            {
-                case "checkout.session.completed":
-                    await HandleCheckoutCompletedAsync(stripeEvent);
-                    break;
-                case "customer.subscription.updated":
-                    await HandleSubscriptionUpdatedAsync(stripeEvent);
-                    break;
-                case "customer.subscription.deleted":
-                    await HandleSubscriptionDeletedAsync(stripeEvent);
-                    break;
-            }
-        }
-
-        private async Task HandleCheckoutCompletedAsync(Event stripeEvent)
-        {
-            var session = stripeEvent.Data.Object as Stripe.Checkout.Session;
-            if (session == null) return;
-
-            // Route by checkout_type in metadata — never assume SubscriptionId exists
-            var checkoutType = session.Metadata.TryGetValue("checkout_type", out var ct)
-                ? ct : "subscription";
-
-            if (checkoutType == "addon")
-            {
-                await HandleAddonPurchaseAsync(session);
-            }
-            else
-            {
-                // Only try to fetch SubscriptionId for actual subscription checkouts
-                if (string.IsNullOrEmpty(session.SubscriptionId)) return;
-                await HandleSubscriptionPurchaseAsync(session);
-            }
-        }
-
-        private async Task HandleSubscriptionPurchaseAsync(Stripe.Checkout.Session session)
-        {
-            var subService = new Stripe.SubscriptionService();
-            var stripeSub = await subService.GetAsync(session.SubscriptionId);
-
-            var userId = session.Metadata["userId"];
-            var planType = stripeSub.Items.Data[0].Price.Recurring?.Interval == "month"
-                ? "monthly" : "yearly";
-
-            var existing = await _db.UserSubscriptions
-                .FirstOrDefaultAsync(s => s.UserId == userId);
-
-            if (existing != null)
-            {
-                existing.StripeSubscriptionId = stripeSub.Id;
-                existing.StripeCustomerId = stripeSub.CustomerId;
-                existing.PlanType = planType;
-                existing.Status = stripeSub.Status;
-                existing.CurrentPeriodStart = stripeSub.Items.Data[0].CurrentPeriodStart;
-                existing.CurrentPeriodEnd = stripeSub.Items.Data[0].CurrentPeriodEnd;
-                existing.CancelAtPeriodEnd = stripeSub.CancelAtPeriodEnd;
-                existing.UpdatedAt = DateTime.UtcNow;
-            }
-            else
-            {
-                _db.UserSubscriptions.Add(new UserSubscription
-                {
-                    UserId = userId,
-                    Email = session.CustomerEmail ?? string.Empty,
-                    StripeCustomerId = stripeSub.CustomerId,
-                    StripeSubscriptionId = stripeSub.Id,
-                    PlanType = planType,
-                    Status = stripeSub.Status,
-                    CurrentPeriodStart = stripeSub.Items.Data[0].CurrentPeriodStart,
-                    CurrentPeriodEnd = stripeSub.Items.Data[0].CurrentPeriodEnd,
-                    CancelAtPeriodEnd = stripeSub.CancelAtPeriodEnd,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
-                });
-            }
-
-            await _db.SaveChangesAsync();
-
-            // Referral reward
-            var referralService = _serviceProvider.GetService(typeof(IReferralService)) as IReferralService;
-            if (referralService != null)
-                await referralService.ConvertReferralAsync(userId, session.CustomerEmail ?? string.Empty);
-
-            // Welcome email
-            var email = session.CustomerEmail ?? string.Empty;
-            if (!string.IsNullOrEmpty(email))
-                await _emailService.SendProWelcomeEmailAsync(email, email.Split('@')[0]);
-        }
-
-        private async Task HandleAddonPurchaseAsync(Stripe.Checkout.Session session)
-        {
-            var userId = session.Metadata.TryGetValue("userId", out var uid) ? uid : string.Empty;
-            var addonType = session.Metadata.TryGetValue("addon_type", out var at) ? at : string.Empty;
-
-            if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(addonType)) return;
-
-            // Idempotency — webhook may fire more than once for the same session
-            if (await _db.OneTimePurchases.AnyAsync(p => p.StripeSessionId == session.Id)) return;
-
-            DateTime? expiry = addonType switch
-            {
-                "ai_day_pass" => DateTime.UtcNow.AddHours(24),
-                "large_file" => DateTime.UtcNow.AddDays(7),
-                "batch_unlock" => DateTime.UtcNow.AddDays(7),
-                "ai_credit_pack" => null,
-                _ => DateTime.UtcNow.AddDays(7)
-            };
-
-            var uses = addonType switch
-            {
-                "ai_day_pass" => 20,
-                "ai_credit_pack" => 50,
-                _ => 1    // large_file, batch_unlock: single use
-            };
-
-            _db.OneTimePurchases.Add(new OneTimePurchase
-            {
-                UserId = userId,
-                StripeSessionId = session.Id,
-                PurchaseType = addonType,
-                UsesRemaining = uses,
-                IsConsumed = false,
-                CreatedAt = DateTime.UtcNow,
-                ExpiresAt = expiry
-            });
-
-            if (addonType == "batch_unlock" &&
-                session.Metadata.TryGetValue("pendingBatchId", out var pendingBatchIdText) &&
-                Guid.TryParse(pendingBatchIdText, out var pendingBatchId))
-            {
-                var pendingBatch = await _db.PendingBatchJobs
-                    .FirstOrDefaultAsync(x => x.PendingBatchId == pendingBatchId);
-
-                if (pendingBatch != null &&
-                    pendingBatch.UserId == userId &&
-                    pendingBatch.Status == Domain.Enums.PendingBatchStatus.PendingPayment &&
-                    pendingBatch.ExpiresAtUtc > DateTime.UtcNow &&
-                    !pendingBatch.IsUsed)
-                {
-                    pendingBatch.Status = Domain.Enums.PendingBatchStatus.Paid;
-                    pendingBatch.PaymentSessionId = session.Id;
-                }
-            }
-
-            // AI credit packs also top up AiCreditPurchases so AiUsageService can draw from them
-            if (addonType == "ai_credit_pack")
-            {
-                var aiUsageService = _serviceProvider.GetService<IAiUsageService>();
-                if (aiUsageService != null)
-                    await aiUsageService.RecordCreditPurchaseAsync(userId, session.Id, uses);
-            }
-
-            await _db.SaveChangesAsync();
-        }
-
-        private async Task HandleSubscriptionUpdatedAsync(Event stripeEvent)
-        {
-            var stripeSub = stripeEvent.Data.Object as Stripe.Subscription;
-            if (stripeSub == null) return;
-
-            var sub = await _db.UserSubscriptions
-                .FirstOrDefaultAsync(s => s.StripeSubscriptionId == stripeSub.Id);
-
-            if (sub == null) return;
-
-            sub.Status = stripeSub.Status;
-            sub.CurrentPeriodStart = stripeSub.Items.Data[0].CurrentPeriodStart;
-            sub.CurrentPeriodEnd = stripeSub.Items.Data[0].CurrentPeriodEnd;
-            sub.CancelAtPeriodEnd = stripeSub.CancelAtPeriodEnd;
-            sub.UpdatedAt = DateTime.UtcNow;
-
-            await _db.SaveChangesAsync();
-        }
-
-        private async Task HandleSubscriptionDeletedAsync(Event stripeEvent)
-        {
-            var stripeSub = stripeEvent.Data.Object as Stripe.Subscription;
-            if (stripeSub == null) return;
-
-            var sub = await _db.UserSubscriptions
-                .FirstOrDefaultAsync(s => s.StripeSubscriptionId == stripeSub.Id);
-
-            if (sub == null) return;
-
-            sub.Status = "canceled";
-            sub.UpdatedAt = DateTime.UtcNow;
-            await _db.SaveChangesAsync();
         }
 
         // ── OneTimePurchase entitlement helpers ───────────────────────────────────

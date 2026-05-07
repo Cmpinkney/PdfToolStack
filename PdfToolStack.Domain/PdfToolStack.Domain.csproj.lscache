@@ -66,6 +66,7 @@ Entities/
  ProcessingResult.cs
  RedactionRegion.cs
  Referral.cs
+ StripeProcessedEvent.cs
  Team.cs
  TeamInvite.cs
  TeamMember.cs

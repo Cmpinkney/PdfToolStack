@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using PdfToolStack.API.Configuration;
@@ -12,6 +12,10 @@ using Stripe.Checkout;
 
 namespace PdfToolStack.API.Controllers
 {
+    /// <summary>
+    /// Single production Stripe webhook endpoint: POST api/stripe/webhook
+    /// Configure exactly this URL in the Stripe dashboard.
+    /// </summary>
     [ApiController]
     [Route("api/stripe/webhook")]
     public class StripeWebhookController : ControllerBase
@@ -47,6 +51,12 @@ namespace PdfToolStack.API.Controllers
             if (string.IsNullOrWhiteSpace(signature))
                 return BadRequest("Missing Stripe signature.");
 
+            if (string.IsNullOrWhiteSpace(_stripeOptions.WebhookSecret))
+            {
+                _logger.LogError("Stripe:WebhookSecret is not configured — webhook rejected.");
+                return StatusCode(503, "Webhook endpoint is not configured.");
+            }
+
             Event stripeEvent;
             try
             {
@@ -61,8 +71,20 @@ namespace PdfToolStack.API.Controllers
                 return BadRequest("Invalid webhook signature.");
             }
 
+            // Everything from deduplication check onward is wrapped in one try/catch
+            // so that ANY exception (including a missing StripeProcessedEvents table)
+            // returns a safe 400 instead of a raw 500.
             try
             {
+                // Idempotency: return 200 immediately if this event was already processed
+                if (await _db.StripeProcessedEvents.AnyAsync(e => e.EventId == stripeEvent.Id))
+                {
+                    _logger.LogDebug(
+                        "Skipping duplicate Stripe event {EventId} ({EventType})",
+                        stripeEvent.Id, stripeEvent.Type);
+                    return Ok();
+                }
+
                 switch (stripeEvent.Type)
                 {
                     case "checkout.session.completed":
@@ -77,6 +99,10 @@ namespace PdfToolStack.API.Controllers
                         await HandleSubscriptionDeletedAsync(stripeEvent);
                         break;
 
+                    case "invoice.payment_failed":
+                        await HandleInvoicePaymentFailedAsync(stripeEvent);
+                        break;
+
                     case "charge.refunded":
                         await HandleChargeRefundedAsync(stripeEvent);
                         break;
@@ -84,22 +110,56 @@ namespace PdfToolStack.API.Controllers
                     case "charge.dispute.created":
                         await HandleChargeDisputeCreatedAsync(stripeEvent);
                         break;
+
+                    default:
+                        // All unhandled Stripe events (product.created, price.created,
+                        // payment_intent.*, charge.succeeded, invoice.paid, etc.)
+                        // are acknowledged silently with 200 — no processing needed.
+                        _logger.LogDebug(
+                            "Stripe event {EventType} ({EventId}) acknowledged — no handler",
+                            stripeEvent.Type, stripeEvent.Id);
+                        break;
+                }
+
+                // Record this event so duplicate deliveries are skipped.
+                // Catch ANY exception here to prevent a DB error from surfacing as 500.
+                try
+                {
+                    _db.StripeProcessedEvents.Add(new StripeProcessedEvent
+                    {
+                        EventId = stripeEvent.Id,
+                        EventType = stripeEvent.Type,
+                        ProcessedAt = DateTime.UtcNow
+                    });
+                    await _db.SaveChangesAsync();
+                }
+                catch (Exception recordEx)
+                {
+                    // Log but do not fail the webhook response — Stripe expects 200.
+                    _logger.LogWarning(
+                        recordEx,
+                        "Could not record Stripe event {EventId} to deduplication store",
+                        stripeEvent.Id);
                 }
 
                 return Ok();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error processing Stripe webhook.");
-                return BadRequest(ex.Message);
+                _logger.LogError(
+                    ex,
+                    "Error processing Stripe event {EventId} ({EventType})",
+                    stripeEvent.Id, stripeEvent.Type);
+                return BadRequest("Webhook processing error.");
             }
         }
+
+        // ── checkout.session.completed ────────────────────────────────────────────
 
         private async Task HandleCheckoutSessionCompletedAsync(Event stripeEvent)
         {
             var session = stripeEvent.Data.Object as Session;
-            if (session == null)
-                return;
+            if (session == null) return;
 
             if (string.Equals(session.Mode, "subscription", StringComparison.OrdinalIgnoreCase))
             {
@@ -115,11 +175,16 @@ namespace PdfToolStack.API.Controllers
 
         private async Task HandleSubscriptionCheckoutCompletedAsync(Session session)
         {
-            if (string.IsNullOrWhiteSpace(session.SubscriptionId))
-                return;
+            if (string.IsNullOrWhiteSpace(session.SubscriptionId)) return;
 
-            if (!session.Metadata.TryGetValue("userId", out var userId) || string.IsNullOrWhiteSpace(userId))
+            if (!session.Metadata.TryGetValue("userId", out var userId) ||
+                string.IsNullOrWhiteSpace(userId))
+            {
+                _logger.LogWarning(
+                    "checkout.session.completed (subscription) missing userId metadata. SessionId: {SessionId}",
+                    session.Id);
                 return;
+            }
 
             var subscriptionService = new Stripe.SubscriptionService();
             var stripeSubscription = await subscriptionService.GetAsync(session.SubscriptionId);
@@ -163,10 +228,12 @@ namespace PdfToolStack.API.Controllers
 
             await _db.SaveChangesAsync();
 
+            _logger.LogInformation(
+                "Subscription checkout completed. UserId: {UserId}, Plan: {PlanType}, SubscriptionId: {SubscriptionId}",
+                userId, planType, stripeSubscription.Id);
+
             if (_referralService != null)
-            {
                 await _referralService.ConvertReferralAsync(userId, session.CustomerEmail ?? string.Empty);
-            }
 
             if (!string.IsNullOrWhiteSpace(session.CustomerEmail))
             {
@@ -177,8 +244,19 @@ namespace PdfToolStack.API.Controllers
 
         private async Task HandleOneTimePaymentCompletedAsync(Session session)
         {
-            if (!session.Metadata.TryGetValue("userId", out var userId) || string.IsNullOrWhiteSpace(userId))
+            if (!session.Metadata.TryGetValue("userId", out var userId) ||
+                string.IsNullOrWhiteSpace(userId))
+            {
+                _logger.LogWarning(
+                    "checkout.session.completed (payment) missing userId metadata. SessionId: {SessionId}",
+                    session.Id);
                 return;
+            }
+
+            // Idempotency: session ID already exists in OneTimePurchases
+            var existingPurchase = await _db.OneTimePurchases
+                .FirstOrDefaultAsync(x => x.StripeSessionId == session.Id);
+            if (existingPurchase != null) return;
 
             var sessionService = new SessionService();
             var fullSession = await sessionService.GetAsync(
@@ -189,14 +267,7 @@ namespace PdfToolStack.API.Controllers
                 });
 
             var priceId = fullSession.LineItems?.Data?.FirstOrDefault()?.Price?.Id;
-            if (string.IsNullOrWhiteSpace(priceId))
-                return;
-
-            var existingPurchase = await _db.OneTimePurchases
-                .FirstOrDefaultAsync(x => x.StripeSessionId == session.Id);
-
-            if (existingPurchase != null)
-                return;
+            if (string.IsNullOrWhiteSpace(priceId)) return;
 
             if (priceId == _stripeOptions.AiCredits50PriceId)
             {
@@ -214,10 +285,12 @@ namespace PdfToolStack.API.Controllers
                         PurchasedAt = DateTime.UtcNow,
                         ExpiresAt = DateTime.MaxValue
                     });
-
                     await _db.SaveChangesAsync();
                 }
 
+                _logger.LogInformation(
+                    "AI credit purchase completed. UserId: {UserId}, SessionId: {SessionId}",
+                    userId, session.Id);
                 return;
             }
 
@@ -231,8 +304,11 @@ namespace PdfToolStack.API.Controllers
                     CreatedAt = DateTime.UtcNow,
                     UsesRemaining = 1
                 });
-
                 await _db.SaveChangesAsync();
+
+                _logger.LogInformation(
+                    "Large file unlock purchased. UserId: {UserId}, SessionId: {SessionId}",
+                    userId, session.Id);
                 return;
             }
 
@@ -247,8 +323,11 @@ namespace PdfToolStack.API.Controllers
                     ExpiresAt = DateTime.UtcNow.AddHours(24),
                     UsesRemaining = 20
                 });
-
                 await _db.SaveChangesAsync();
+
+                _logger.LogInformation(
+                    "AI day pass purchased. UserId: {UserId}, SessionId: {SessionId}",
+                    userId, session.Id);
                 return;
             }
 
@@ -281,20 +360,28 @@ namespace PdfToolStack.API.Controllers
                 }
 
                 await _db.SaveChangesAsync();
+
+                _logger.LogInformation(
+                    "Batch unlock purchased. UserId: {UserId}, SessionId: {SessionId}",
+                    userId, session.Id);
+                return;
             }
+
+            _logger.LogInformation(
+                "One-time payment received for unrecognised price {PriceId} — no entitlement granted. SessionId: {SessionId}",
+                priceId, session.Id);
         }
+
+        // ── customer.subscription.updated ────────────────────────────────────────
 
         private async Task HandleSubscriptionUpdatedAsync(Event stripeEvent)
         {
             var stripeSubscription = stripeEvent.Data.Object as Stripe.Subscription;
-            if (stripeSubscription == null)
-                return;
+            if (stripeSubscription == null) return;
 
             var sub = await _db.UserSubscriptions
                 .FirstOrDefaultAsync(x => x.StripeSubscriptionId == stripeSubscription.Id);
-
-            if (sub == null)
-                return;
+            if (sub == null) return;
 
             sub.Status = stripeSubscription.Status;
             sub.CurrentPeriodStart = stripeSubscription.Items.Data[0].CurrentPeriodStart;
@@ -303,41 +390,72 @@ namespace PdfToolStack.API.Controllers
             sub.UpdatedAt = DateTime.UtcNow;
 
             await _db.SaveChangesAsync();
+
+            _logger.LogInformation(
+                "Subscription updated. UserId: {UserId}, Status: {Status}, CancelAtPeriodEnd: {Cancel}",
+                sub.UserId, sub.Status, sub.CancelAtPeriodEnd);
         }
+
+        // ── customer.subscription.deleted ────────────────────────────────────────
 
         private async Task HandleSubscriptionDeletedAsync(Event stripeEvent)
         {
             var stripeSubscription = stripeEvent.Data.Object as Stripe.Subscription;
-            if (stripeSubscription == null)
-                return;
+            if (stripeSubscription == null) return;
 
             var sub = await _db.UserSubscriptions
                 .FirstOrDefaultAsync(x => x.StripeSubscriptionId == stripeSubscription.Id);
-
-            if (sub == null)
-                return;
+            if (sub == null) return;
 
             sub.Status = "canceled";
             sub.UpdatedAt = DateTime.UtcNow;
-
             await _db.SaveChangesAsync();
+
+            _logger.LogInformation(
+                "Subscription canceled. UserId: {UserId}, SubscriptionId: {SubscriptionId}",
+                sub.UserId, stripeSubscription.Id);
         }
+
+        // ── invoice.payment_failed ────────────────────────────────────────────────
+
+        private async Task HandleInvoicePaymentFailedAsync(Event stripeEvent)
+        {
+            var invoice = stripeEvent.Data.Object as Invoice;
+            if (invoice == null) return;
+
+            _logger.LogWarning(
+                "Invoice payment failed. EventId: {EventId}, CustomerId: {CustomerId}, InvoiceId: {InvoiceId}",
+                stripeEvent.Id, invoice.CustomerId, invoice.Id);
+
+            if (string.IsNullOrWhiteSpace(invoice.CustomerId)) return;
+
+            var sub = await _db.UserSubscriptions
+                .FirstOrDefaultAsync(s => s.StripeCustomerId == invoice.CustomerId);
+            if (sub == null) return;
+
+            sub.Status = "past_due";
+            sub.UpdatedAt = DateTime.UtcNow;
+            await _db.SaveChangesAsync();
+
+            _logger.LogWarning(
+                "Subscription set to past_due — Pro access revoked. UserId: {UserId}, CustomerId: {CustomerId}",
+                sub.UserId, invoice.CustomerId);
+        }
+
+        // ── charge.refunded ───────────────────────────────────────────────────────
 
         private async Task HandleChargeRefundedAsync(Event stripeEvent)
         {
             var charge = stripeEvent.Data.Object as Charge;
-            if (charge?.CustomerId == null)
-                return;
+            if (charge?.CustomerId == null) return;
 
             _logger.LogWarning(
-                "Charge refunded: {ChargeId}, Customer: {CustomerId}",
+                "Charge refunded. ChargeId: {ChargeId}, CustomerId: {CustomerId}",
                 charge.Id, charge.CustomerId);
 
             var sub = await _db.UserSubscriptions
                 .FirstOrDefaultAsync(s => s.StripeCustomerId == charge.CustomerId);
-
-            if (sub == null)
-                return;
+            if (sub == null) return;
 
             sub.Status = "canceled";
             sub.UpdatedAt = DateTime.UtcNow;
@@ -348,26 +466,24 @@ namespace PdfToolStack.API.Controllers
                 sub.UserId);
         }
 
+        // ── charge.dispute.created ────────────────────────────────────────────────
+
         private async Task HandleChargeDisputeCreatedAsync(Event stripeEvent)
         {
             var dispute = stripeEvent.Data.Object as Dispute;
-            if (dispute?.ChargeId == null)
-                return;
+            if (dispute?.ChargeId == null) return;
 
             _logger.LogWarning(
-                "Dispute created: {DisputeId}, ChargeId: {ChargeId}",
+                "Dispute created. DisputeId: {DisputeId}, ChargeId: {ChargeId}",
                 dispute.Id, dispute.ChargeId);
 
             var chargeService = new ChargeService();
             var charge = await chargeService.GetAsync(dispute.ChargeId);
-            if (charge?.CustomerId == null)
-                return;
+            if (charge?.CustomerId == null) return;
 
             var sub = await _db.UserSubscriptions
                 .FirstOrDefaultAsync(s => s.StripeCustomerId == charge.CustomerId);
-
-            if (sub == null)
-                return;
+            if (sub == null) return;
 
             sub.Status = "disputed";
             sub.UpdatedAt = DateTime.UtcNow;

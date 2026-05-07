@@ -22,6 +22,7 @@ namespace PdfToolStack.Infrastructure.Data
         public DbSet<Team> Teams => Set<Team>();
         public DbSet<TeamMember> TeamMembers => Set<TeamMember>();
         public DbSet<TeamInvite> TeamInvites => Set<TeamInvite>();
+        public DbSet<StripeProcessedEvent> StripeProcessedEvents => Set<StripeProcessedEvent>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -142,6 +143,15 @@ namespace PdfToolStack.Infrastructure.Data
                       .WithMany(t => t.Invites)
                       .HasForeignKey(e => e.TeamId)
                       .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<StripeProcessedEvent>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.EventId).IsRequired().HasMaxLength(256);
+                entity.Property(e => e.EventType).IsRequired().HasMaxLength(128);
+                entity.HasIndex(e => e.EventId).IsUnique();
+                entity.HasIndex(e => e.ProcessedAt);
             });
         }
     }
