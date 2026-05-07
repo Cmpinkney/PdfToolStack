@@ -1,4 +1,5 @@
-﻿using Azure.Storage.Blobs;
+using Azure.Storage.Blobs;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
 using PdfToolStack.API.Configuration;
 using PdfToolStack.API.Middleware;
@@ -50,13 +51,16 @@ try
     builder.Services.Configure<FileLimit>(
         builder.Configuration.GetSection(FileLimit.SectionName));
 
-    builder.Services.Configure<StripeOptions>(
-    builder.Configuration.GetSection("Stripe"));
-
     builder.Services.Configure<GoogleVisionOptions>(
         builder.Configuration.GetSection(GoogleVisionOptions.SectionName));
 
     builder.Services.AddScoped<IFeatureAccessService, FeatureAccessService>();
+
+    // ── Multipart upload limit — must cover 500 MB batch/merge endpoints ──
+    builder.Services.Configure<FormOptions>(options =>
+    {
+        options.MultipartBodyLengthLimit = 524288000; // 500 MB
+    });
 
     // ── Config Values ─────────────────────────────────────────────────────
     var defaultConnection = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -359,15 +363,42 @@ try
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddSwaggerGen();
 
+    // ── Health Checks ─────────────────────────────────────────────────────
+    var healthChecks = builder.Services.AddHealthChecks();
+    if (hasDatabase)
+    {
+        healthChecks.AddDbContextCheck<AppDbContext>("database");
+    }
+
     // ── Background Services ───────────────────────────────────────────────
     if (hasDatabase && hasBlobStorage)
     {
         builder.Services.AddHostedService<JobCleanupService>();
     }
 
+    // ── Application Insights — no-op if connection string is absent ───────
+    var appInsightsConnectionString =
+    builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"];
+
+    if (!string.IsNullOrWhiteSpace(appInsightsConnectionString))
+    {
+        builder.Services.AddApplicationInsightsTelemetry(options =>
+        {
+            options.ConnectionString = appInsightsConnectionString;
+        });
+    }
+
     // ── Authentication — Auth0 JWT Bearer ────────────────────────────────
     var auth0Domain = builder.Configuration["Auth0:Domain"] ?? "";
     var auth0Audience = builder.Configuration["Auth0:Audience"] ?? "";
+
+    // In production, a missing audience allows any JWT to pass — fail fast.
+    if (!builder.Environment.IsDevelopment() && string.IsNullOrWhiteSpace(auth0Audience))
+    {
+        throw new InvalidOperationException(
+            "Auth0:Audience must be configured in production. " +
+            "Set Auth0__Audience in Azure App Settings.");
+    }
 
     builder.Services
         .AddAuthentication(Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme)
@@ -382,6 +413,7 @@ try
             }
             else
             {
+                // Development only: audience not configured, skip validation.
                 options.TokenValidationParameters =
                     new Microsoft.IdentityModel.Tokens.TokenValidationParameters
                     {
@@ -415,30 +447,42 @@ try
         context.Response.Headers.Append("Permissions-Policy",
             "camera=(), microphone=(), geolocation=(), payment=()");
 
+        // connect-src: include localhost only in development
+        var connectSrcLocalhost = app.Environment.IsDevelopment()
+            ? "https://localhost:7100 "
+            : "";
+
+        var auth0ConnectSrc = string.IsNullOrWhiteSpace(auth0Domain)
+            ? ""
+            : $"https://{auth0Domain} ";
+
+        // CSP — clarity domains are placed inside the correct directives.
+        // script-src includes https://www.clarity.ms for the Clarity snippet.
+        // connect-src includes https://*.clarity.ms for Clarity beacons.
         context.Response.Headers.Append("Content-Security-Policy",
-        "default-src 'self'; " +
-        "script-src 'self' 'unsafe-inline' 'unsafe-eval' " +
-            "https://js.stripe.com " +
-            "https://cdn.jsdelivr.net " +
-            "https://cdnjs.cloudflare.com; " +
-            "https://www.clarity.ms; " +
-        "style-src 'self' 'unsafe-inline' " +
-            "https://fonts.googleapis.com; " +
-        "font-src 'self' " +
-            "https://fonts.gstatic.com; " +
-        "img-src 'self' data: blob: " +
-            "https://*.stripe.com; " +
-        "frame-src 'self' " +
-            "https://js.stripe.com " +
-            "https://hooks.stripe.com; " +
-        "connect-src 'self' " +
-            "https://localhost:7100 " +
-            "https://pdftoolstack-api-grcxhqergtgcd0g7.westus2-01.azurewebsites.net " +
-            "https://dev-62zkpqjtgw3x0j7a.us.auth0.com " +
-            "https://api.anthropic.com; " +
-            "https://*.clarity.ms; " +
-        "object-src 'none'; " +
-        "base-uri 'self';"
+            "default-src 'self'; " +
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' " +
+                "https://js.stripe.com " +
+                "https://cdn.jsdelivr.net " +
+                "https://cdnjs.cloudflare.com " +
+                "https://www.clarity.ms; " +
+            "style-src 'self' 'unsafe-inline' " +
+                "https://fonts.googleapis.com; " +
+            "font-src 'self' " +
+                "https://fonts.gstatic.com; " +
+            "img-src 'self' data: blob: " +
+                "https://*.stripe.com; " +
+            "frame-src 'self' " +
+                "https://js.stripe.com " +
+                "https://hooks.stripe.com; " +
+            "connect-src 'self' " +
+                connectSrcLocalhost +
+                "https://pdftoolstack-api-grcxhqergtgcd0g7.westus2-01.azurewebsites.net " +
+                auth0ConnectSrc +
+                "https://api.anthropic.com " +
+                "https://*.clarity.ms; " +
+            "object-src 'none'; " +
+            "base-uri 'self';"
         );
 
         // HSTS — only in production
@@ -457,6 +501,9 @@ try
     app.UseAuthentication();
     app.UseAuthorization();
     app.MapControllers();
+
+    // ── /healthz — suitable for Azure App Service Health Check probe ──────
+    app.MapHealthChecks("/healthz");
 
     // ── Auto-migrate database on startup ──────────────────────────────────
     if (hasDatabase)

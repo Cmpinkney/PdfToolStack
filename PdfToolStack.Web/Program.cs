@@ -5,8 +5,13 @@ using PdfToolStack.Web.Services;
 using Syncfusion.Blazor;
 using Syncfusion.Licensing;
 
-SyncfusionLicenseProvider.RegisterLicense("Ngo9BigBOggjHTQxAR8/V1JHaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdlWXtfeXVSRmddWUF2WUtWYEo=");
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
+
+var syncfusionKey = builder.Configuration["Syncfusion:LicenseKey"];
+if (!string.IsNullOrWhiteSpace(syncfusionKey))
+{
+    SyncfusionLicenseProvider.RegisterLicense(syncfusionKey);
+}
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
