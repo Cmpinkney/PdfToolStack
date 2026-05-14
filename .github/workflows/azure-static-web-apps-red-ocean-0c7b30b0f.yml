@@ -36,7 +36,9 @@ jobs:
         run: rm -rf publish_output
 
       - name: Publish Blazor app
-        run: dotnet publish PdfToolStack.Web/PdfToolStack.Web.csproj --configuration Release --output publish_output /p:BlazorEnableCompression=true
+        env:
+          BLAZOR_ENV: ${{ github.ref_name == 'staging' && 'Staging' || 'Production' }}
+        run: dotnet publish PdfToolStack.Web/PdfToolStack.Web.csproj --configuration Release --output publish_output /p:BlazorEnvironment=$BLAZOR_ENV /p:BlazorEnableCompression=true
 
       - name: Copy staticwebapp config
         run: cp PdfToolStack.Web/wwwroot/staticwebapp.config.json publish_output/wwwroot/staticwebapp.config.json
