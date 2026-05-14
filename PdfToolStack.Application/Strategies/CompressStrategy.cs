@@ -9,9 +9,9 @@ namespace PdfToolStack.Application.Strategies
     {
         public ToolType ToolType => ToolType.CompressPdf;
 
-        private readonly IPdfProcessor _processor;
+        private readonly ICompressProcessor _processor;
 
-        public CompressStrategy(IPdfProcessor processor)
+        public CompressStrategy(ICompressProcessor processor)
         {
             _processor = processor;
         }
@@ -31,13 +31,14 @@ namespace PdfToolStack.Application.Strategies
                     return ProcessingResult.Failure(
                         "File is not a valid PDF.");
 
-                // Call the real iTextSharp processor
                 var outputBytes = await _processor.ProcessAsync(
-                    request.FileBytes, cancellationToken);
+                    request.FileBytes,
+                    request.CompressionProfile,
+                    cancellationToken);
+
                 return ProcessingResult.Success(
                     outputBytes,
                     request.FileSizeBytes);
-
             }
             catch (Exception ex)
             {

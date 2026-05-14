@@ -10,6 +10,14 @@ namespace PdfToolStack.Domain.Interfaces
             CancellationToken cancellationToken = default);
     }
 
+    public interface ICompressProcessor : IPdfProcessor
+    {
+        Task<byte[]> ProcessAsync(
+            byte[] inputBytes,
+            CompressionProfile profile,
+            CancellationToken cancellationToken = default);
+    }
+
     public interface IProtectPdfProcessor : IPdfProcessor
     {
         Task<byte[]> ProcessAsync(

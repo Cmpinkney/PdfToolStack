@@ -49,6 +49,7 @@ namespace PdfToolStack.Web.Services
             byte[] fileBytes,
             string fileName,
             ToolType toolType,
+            string? compressionProfile = null,
             CancellationToken cancellationToken = default)
         {
             try
@@ -62,15 +63,44 @@ namespace PdfToolStack.Web.Services
 
                 content.Add(fileContent, "file", fileName);
 
+                var url = $"api/pdf/process?toolType={(int)toolType}";
+                if (!string.IsNullOrEmpty(compressionProfile))
+                    url += $"&compressionProfile={Uri.EscapeDataString(compressionProfile)}";
+
                 var response = await _httpClient.PostAsync(
-                    $"api/pdf/process?toolType={(int)toolType}",
+                    url,
                     content,
                     cancellationToken);
 
                 if (response.IsSuccessStatusCode)
-                    return await response.Content
+                {
+                    var result = await response.Content
                         .ReadFromJsonAsync<ProcessResponse>(
                             cancellationToken: cancellationToken);
+
+                    if (toolType == ToolType.PdfToWord)
+                    {
+                        _logger.LogDebug(
+                            "[PdfToWordDiag] ApiService deserialized outputBytesLength={OutputBytesLength}",
+                            result?.OutputBytes?.Length ?? 0);
+                    }
+
+                    if (toolType == ToolType.PdfToWord &&
+                        result?.IsSuccess == true &&
+                        (result.OutputBytes == null || result.OutputBytes.Length == 0))
+                    {
+                        _logger.LogError(
+                            "API returned successful PDF to Word response with missing DOCX bytes. JobId={JobId}, OutputSizeBytes={OutputSizeBytes}",
+                            result.JobId,
+                            result.OutputSizeBytes);
+
+                        result.IsSuccess = false;
+                        result.ErrorMessage =
+                            "The DOCX file could not be generated. Please try again.";
+                    }
+
+                    return result;
+                }
 
                 var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
 
@@ -83,7 +113,9 @@ namespace PdfToolStack.Web.Services
                 return new ProcessResponse
                 {
                     IsSuccess = false,
-                    ErrorMessage = $"API error ({(int)response.StatusCode}): {errorBody}"
+                    ErrorMessage = ExtractApiErrorMessage(
+                        errorBody,
+                        response.StatusCode)
                 };
             }
             catch (Exception ex)

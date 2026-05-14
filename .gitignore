@@ -365,3 +365,7 @@ FodyWeavers.xsd
 # App settings (secrets)
 appsettings.Development.json
 **/appsettings.Development.json
+
+*.lscache
+publish_output/
+.claude/

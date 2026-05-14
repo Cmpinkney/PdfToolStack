@@ -187,7 +187,8 @@ try
 
     builder.Services.AddScoped<IProcessingStrategy>(sp =>
         new PdfToWordStrategy(
-            sp.GetRequiredService<PdfToWordConverter>()));
+            sp.GetRequiredService<PdfToWordConverter>(),
+            sp.GetRequiredService<ILogger<PdfToWordStrategy>>()));
 
     builder.Services.AddScoped<IProcessingStrategy>(sp =>
         new FillFormStrategy(

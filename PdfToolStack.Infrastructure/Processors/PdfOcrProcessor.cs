@@ -2,12 +2,10 @@
 using Docnet.Core.Models;
 using iTextSharp.text;
 using iTextSharp.text.pdf;
-using System.Runtime.InteropServices;
-using System.Drawing;
-using System.Drawing.Imaging;
+using SixLabors.ImageSharp.Formats.Png;
+using SixLabors.ImageSharp.PixelFormats;
 using Tesseract;
-using SystemDrawing = System.Drawing;
-using SystemImaging = System.Drawing.Imaging;
+using ImageSharpImage = SixLabors.ImageSharp.Image;
 
 namespace PdfToolStack.Infrastructure.Processors
 {
@@ -521,17 +519,9 @@ namespace PdfToolStack.Infrastructure.Processors
                 var h = pageReader.GetPageHeight();
                 var raw = pageReader.GetImage();
 
-                using var bmp = new SystemDrawing.Bitmap(w, h,
-                SystemImaging.PixelFormat.Format32bppArgb);
-                var data = bmp.LockBits(
-                    new SystemDrawing.Rectangle(0, 0, w, h),
-                    SystemImaging.ImageLockMode.WriteOnly,
-                    SystemImaging.PixelFormat.Format32bppArgb);
-                Marshal.Copy(raw, 0, data.Scan0, raw.Length);
-                bmp.UnlockBits(data);
-
+                using var image = ImageSharpImage.LoadPixelData<Bgra32>(raw, w, h);
                 using var ms = new MemoryStream();
-                bmp.Save(ms, SystemImaging.ImageFormat.Png);
+                image.Save(ms, new PngEncoder());
                 results.Add(new PdfOcrPageImage(ms.ToArray(), w, h));
             }
 

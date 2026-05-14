@@ -2,8 +2,9 @@
 using Docnet.Core.Models;
 using PdfToolStack.Domain.Enums;
 using PdfToolStack.Domain.Interfaces;
-using System.Drawing;
-using System.Drawing.Imaging;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Formats.Jpeg;
+using SixLabors.ImageSharp.PixelFormats;
 
 namespace PdfToolStack.Infrastructure.Processors
 {
@@ -59,19 +60,10 @@ namespace PdfToolStack.Infrastructure.Processors
                 var height = pageReader.GetPageHeight();
                 var rawBytes = pageReader.GetImage();
 
-                using var bmp = new Bitmap(width, height,
-                    PixelFormat.Format32bppArgb);
-                var bmpData = bmp.LockBits(
-                    new Rectangle(0, 0, width, height),
-                    ImageLockMode.WriteOnly,
-                    PixelFormat.Format32bppArgb);
-
-                System.Runtime.InteropServices.Marshal.Copy(
-                    rawBytes, 0, bmpData.Scan0, rawBytes.Length);
-                bmp.UnlockBits(bmpData);
-
+                using var image = Image.LoadPixelData<Bgra32>(
+                    rawBytes, width, height);
                 using var ms = new System.IO.MemoryStream();
-                bmp.Save(ms, ImageFormat.Jpeg);
+                image.Save(ms, new JpegEncoder());
                 results.Add(ms.ToArray());
             }
 

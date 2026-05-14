@@ -13,8 +13,8 @@
 <HeadContent>
     <meta name="description"
           content="@(IsEditMode
-                        ? "Convert your PDF to an editable Word document instantly. Edit text, tables, and formatting. Free, no signup, files deleted in 1 hour."
-                        : "Convert PDF to Word document free online. No signup required. Download your DOCX file instantly.")" />
+                        ? "Convert text-based PDFs to editable Word documents. Scanned or image-only PDFs may need OCR first. Free, no signup, files deleted in 1 hour."
+                        : "Convert text-based PDFs to Word documents free online. Scanned or image-only PDFs may need OCR first.")" />
     <meta name="keywords" content="pdf to word, convert pdf to docx, pdf to word converter free" />
     <link rel="canonical" href="https://pdftoolstack.com/pdf-to-word" />
 </HeadContent>
@@ -34,8 +34,7 @@
 
                 <h1>Convert PDF to Word <span class="hero-gradient-text">cleanly</span></h1>
                 <p class="tool-subtitle">
-                    Turn PDFs into editable DOCX files with clean text extraction,
-                    preserved structure, and dependable layout conversion.
+                    Best for text-based PDFs. Scanned or image-only PDFs may need OCR first.
                 </p>
             </div>
         </section>
@@ -94,7 +93,7 @@
                             </div>
                             <div class="ready-metrics">
                                 <span>Editable text</span>
-                                <span>Layout preserved</span>
+                                <span>Document flow</span>
                                 <span>DOCX output</span>
                             </div>
                         </div>
@@ -114,7 +113,7 @@
                     <div class="processing-container">
                         <div class="spinner"></div>
                         <h2>Building your Word document</h2>
-                        <p>Extracting text, rebuilding layout, preserving structure, and preparing your DOCX file.</p>
+                        <p>Extracting readable text, keeping page order, and preparing your DOCX file.</p>
                     </div>
                 }
 
@@ -190,7 +189,7 @@
                     <div class="panel-header">
                         <span class="panel-eyebrow">Conversion profile</span>
                         <h2>Create editable DOCX</h2>
-                        <p>Built for clean document handoff: retained formatting, editable text, and a standard Word output.</p>
+                        <p>Best for text-based PDFs. Scanned or image-only PDFs may need OCR first.</p>
                     </div>
 
                     @if (SelectedFile != null)
@@ -202,9 +201,9 @@
                     }
 
                     <div class="option-list">
-                        <span><strong>Format retention</strong><small>Keeps the original reading order and structure.</small></span>
+                        <span><strong>Reading order</strong><small>Keeps extracted text in page order with page breaks.</small></span>
                         <span><strong>Editable text</strong><small>Converts PDF text into workable DOCX content.</small></span>
-                        <span><strong>Layout preserved</strong><small>Maintains headings, spacing, and document flow.</small></span>
+                        <span><strong>Text-based PDFs</strong><small>Use OCR first for scanned or image-only documents.</small></span>
                     </div>
 
                     @if (CurrentState == PageState.Upload && SelectedFile != null)
@@ -1021,7 +1020,15 @@
                 ToolType.PdfToWord);
             if (Response != null && Response.IsSuccess)
             {
-                ProcessedBytes = UploadedBytes;
+                if (Response.OutputBytes == null || Response.OutputBytes.Length == 0)
+                {
+                    ErrorMessage = "Conversion finished, but no DOCX file was returned. Please try again.";
+                    Toast.ShowError(ErrorMessage);
+                    CurrentState = PageState.Error;
+                    return;
+                }
+
+                ProcessedBytes = Response.OutputBytes;
                 CurrentState = PageState.Complete;
                 Toast.ShowSuccess("Converted to Word successfully!");
             }
@@ -1045,9 +1052,9 @@
             Toast.ShowError(ErrorMessage);
             CurrentState = PageState.Error;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            ErrorMessage = $"Error: {ex.Message}";
+            ErrorMessage = "Conversion failed. Please try again with a text-based PDF, or run OCR first if the file is scanned.";
             Toast.ShowError(ErrorMessage);
             CurrentState = PageState.Error;
         }
@@ -1065,7 +1072,7 @@
             "downloadFile",
             fileName,
             Convert.ToBase64String(ProcessedBytes));
-        SessionUsage.RecordToolCompletion("Tool Name");
+        SessionUsage.RecordToolCompletion("PDF to Word");
     }
 
     private bool IsEditMode =>

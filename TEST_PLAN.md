@@ -171,6 +171,39 @@ SEO + referral flywheel + word of mouth compounds.
 
 ---
 
+## PDF to Word — regression tests
+
+### Bug: DOCX bytes returned as 0 (fixed May 2026)
+
+**Root cause:** `outputStream.ToArray()` was called before `WordprocessingDocument` was
+disposed/flushed, so the ZIP package was never sealed and the byte array was empty.
+
+**Fix:** `WordprocessingDocument.Create(...)` is wrapped in a `using` block.
+`outputStream.ToArray()` is called only after that block exits, guaranteeing the package
+is fully written and closed.
+
+**Regression scenario to test on any refactor of `CreateWordDocument`:**
+1. POST a simple text-based PDF to `api/pdf/process?toolType=2`.
+2. Response must be HTTP 200 with `isSuccess: true`.
+3. `outputBytes` in the response must be non-null and length > 0 (expect > 1 000 bytes for even a one-page document).
+4. The decoded bytes must be a valid DOCX ZIP — first four bytes are `PK\x03\x04`, and the archive contains `[Content_Types].xml` and `word/document.xml`.
+5. Feeding a scanned-only PDF must return HTTP 422 with an `error` field containing "scanned or image-only pages".
+6. A corrupt or password-protected PDF must return HTTP 422 with a friendly error message, never HTTP 200 with empty bytes.
+
+---
+
+## PDF to Word production readiness
+
+- Frontend downloads the API-generated DOCX bytes, not the original uploaded PDF bytes.
+- API failures return clean user messages; OCR-required conversion failures should surface as HTTP 422 and should not become 500s.
+- Conversion keeps per-page extraction order, inserts page breaks, and sanitizes invalid control characters before writing DOCX text.
+- Scan detection treats empty pages as blank and treats low-text pages as effectively blank only when both meaningful characters and word count are low; PDFs with 40% or more blank/effectively blank pages are blocked with an OCR-required message.
+- Mixed PDFs below the blank-page threshold continue with warnings so usable text-based documents are not overblocked.
+
+Remaining limitation: scan detection is based on extracted text quality, so unusual PDFs with misleading hidden text or OCR artifacts can still miss edge cases.
+
+---
+
 ## Pre-launch checklist
 
 - [ ] Fix Sign PDF Y-coordinate placement

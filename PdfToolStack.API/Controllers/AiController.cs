@@ -1419,7 +1419,15 @@ namespace PdfToolStack.API.Controllers
 
             using var stream = file.OpenReadStream();
             var header = new byte[4];
-            stream.Read(header, 0, 4);
+            try
+            {
+                stream.ReadExactly(header);
+            }
+            catch (EndOfStreamException)
+            {
+                return false;
+            }
+
             return header[0] == 0x25 && header[1] == 0x50 &&
                    header[2] == 0x44 && header[3] == 0x46;
         }

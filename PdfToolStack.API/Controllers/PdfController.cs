@@ -22,6 +22,9 @@ namespace PdfToolStack.API.Controllers
     [Route("api/[controller]")]
     public class PdfController : ControllerBase
     {
+        private const string MissingDocxMessage =
+            "The DOCX file could not be generated. Please try again.";
+
         private readonly IPdfService _pdfService;
         private readonly ProcessingOptions _options;
         private readonly ILogger<PdfController> _logger;
@@ -51,7 +54,8 @@ namespace PdfToolStack.API.Controllers
         public async Task<IActionResult> Process(
             IFormFile file,
             [FromQuery] string toolType,
-            CancellationToken cancellationToken)
+            [FromQuery] string? compressionProfile = null,
+            CancellationToken cancellationToken = default)
         {
             _logger.LogInformation("Process endpoint hit. ToolType: {ToolType}", toolType);
 
@@ -78,6 +82,12 @@ namespace PdfToolStack.API.Controllers
                 FileSizeBytes = file.Length
             };
 
+            if (parsedToolType == ToolType.CompressPdf &&
+                Enum.TryParse<CompressionProfile>(compressionProfile, ignoreCase: true, out var parsedProfile))
+            {
+                request.CompressionProfile = parsedProfile;
+            }
+
             _logger.LogInformation("Calling PdfService.ProcessAsync for job {JobId}", request.JobId);
 
             try
@@ -97,6 +107,26 @@ namespace PdfToolStack.API.Controllers
                         response.ErrorMessage);
 
                     return UnprocessableEntity(new { error = response.ErrorMessage });
+                }
+
+                if (parsedToolType == ToolType.PdfToWord)
+                {
+                    var outputBytesLength = response.OutputBytes?.Length ?? 0;
+                    _logger.LogDebug(
+                        "[PdfToWordDiag] Controller response job={JobId} success={IsSuccess} outputSizeBytes={OutputSizeBytes} outputBytesLength={OutputBytesLength}",
+                        response.JobId,
+                        response.IsSuccess,
+                        response.OutputSizeBytes,
+                        outputBytesLength);
+
+                    if (outputBytesLength == 0)
+                    {
+                        _logger.LogError(
+                            "PDF to Word job {JobId} completed without DOCX bytes. Returning 422 instead of 200.",
+                            response.JobId);
+
+                        return UnprocessableEntity(new { error = MissingDocxMessage });
+                    }
                 }
 
                 _logger.LogInformation(

@@ -141,7 +141,7 @@
                     <div class="result-container">
                         <span class="result-icon">Done</span>
                         <h2>Your compressed PDF is ready</h2>
-                        <p class="result-copy">Download the smaller file now, or run another document through the same workflow.</p>
+                        <p class="result-copy">Download your processed PDF, or run another document through the same workflow.</p>
 
                         <div class="stats">
                             <div class="stat">
@@ -157,9 +157,9 @@
                                 </span>
                             </div>
                             <div class="stat highlight">
-                                <span class="stat-label">You Saved</span>
+                                <span class="stat-label">@(Response.CompressionRatio > 0 ? "You Saved" : "Savings")</span>
                                 <span class="stat-value">
-                                    @Response.CompressionRatio%
+                                    @(Response.CompressionRatio > 0 ? $"{Response.CompressionRatio}%" : "0%")
                                 </span>
                             </div>
                         </div>
@@ -200,7 +200,7 @@
                     <div class="panel-header">
                         <span class="panel-eyebrow">Compression profile</span>
                         <h2>Choose your output</h2>
-                        <p>Estimate savings before you process. Compression settings are preview-only for now.</p>
+                        <p>Each profile applies different compression settings to your PDF.</p>
                     </div>
 
                     <div class="file-summary">
@@ -1074,6 +1074,9 @@
     {
         if (Paid == "true")
             CurrentState = PageState.Upload;
+
+        if (IsEmailMode)
+            SelectedPreset = "Email";
     }
 
     private async Task HandleFileSelected(IBrowserFile file)
@@ -1171,7 +1174,8 @@
             Response = await ApiService.ProcessPdfAsync(
                 UploadedBytes,
                 SelectedFile.Name,
-                ToolType.CompressPdf);
+                ToolType.CompressPdf,
+                SelectedPreset);
 
             if (Response != null && Response.IsSuccess)
             {

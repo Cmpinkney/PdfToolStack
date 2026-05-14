@@ -3,20 +3,27 @@ using PdfToolStack.Application.Factories;
 using PdfToolStack.Domain.Entities;
 using PdfToolStack.Domain.Enums;
 using PdfToolStack.Domain.Interfaces;
+using Microsoft.Extensions.Logging;
 
 namespace PdfToolStack.Application.Services
 {
     public class PdfService : IPdfService
     {
+        private const string MissingDocxMessage =
+            "The DOCX file could not be generated. Please try again.";
+
         private readonly PdfProcessorFactory _factory;
         private readonly IJobRepository _jobRepository;
+        private readonly ILogger<PdfService> _logger;
 
         public PdfService(
             PdfProcessorFactory factory,
-            IJobRepository jobRepository)
+            IJobRepository jobRepository,
+            ILogger<PdfService> logger)
         {
             _factory = factory;
             _jobRepository = jobRepository;
+            _logger = logger;
         }
 
         public async Task<ProcessResponse> ProcessAsync(
@@ -43,6 +50,26 @@ namespace PdfToolStack.Application.Services
                 // Clear input bytes from memory immediately after processing
                 request.FileBytes = Array.Empty<byte>();
 
+                if (request.ToolType == ToolType.PdfToWord)
+                {
+                    var outputBytesLength = result.OutputBytes?.Length ?? 0;
+                    _logger.LogDebug(
+                        "[PdfToWordDiag] PdfService ProcessingResult job={JobId} success={IsSuccess} outputSizeBytes={OutputSizeBytes} outputBytesLength={OutputBytesLength}",
+                        request.JobId,
+                        result.IsSuccess,
+                        result.OutputSizeBytes,
+                        outputBytesLength);
+
+                    if (result.IsSuccess && outputBytesLength == 0)
+                    {
+                        _logger.LogError(
+                            "PDF to Word job {JobId} reported success with missing DOCX bytes.",
+                            request.JobId);
+
+                        result = ProcessingResult.Failure(MissingDocxMessage);
+                    }
+                }
+
                 job.Status = result.IsSuccess
                     ? JobStatus.Complete
                     : JobStatus.Failed;
@@ -51,7 +78,7 @@ namespace PdfToolStack.Application.Services
 
                 await _jobRepository.UpdateAsync(job);
 
-                return new ProcessResponse
+                var response = new ProcessResponse
                 {
                     JobId = job.Id,
                     IsSuccess = result.IsSuccess,
@@ -60,6 +87,16 @@ namespace PdfToolStack.Application.Services
                     OutputSizeBytes = result.OutputSizeBytes,
                     OutputBytes = result.OutputBytes
                 };
+
+                if (request.ToolType == ToolType.PdfToWord)
+                {
+                    _logger.LogDebug(
+                        "[PdfToWordDiag] PdfService ProcessResponse job={JobId} outputBytesLength={OutputBytesLength}",
+                        response.JobId,
+                        response.OutputBytes?.Length ?? 0);
+                }
+
+                return response;
             }
             catch (Exception ex)
             {

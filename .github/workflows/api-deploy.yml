@@ -1,0 +1,57 @@
+name: Deploy API to Azure App Service
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy-api:
+    name: Build, Publish, and Deploy API
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.x'
+
+      - name: Restore dependencies
+        run: dotnet restore PdfToolStack.sln
+
+      - name: Build solution
+        run: dotnet build PdfToolStack.sln --configuration Release --no-restore
+
+      - name: Publish API
+        run: dotnet publish PdfToolStack.API/PdfToolStack.API.csproj --configuration Release --no-build --output ./publish/api
+
+      - name: Deploy API to Azure App Service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: ./publish/api
+
+      - name: Verify API health
+        env:
+          API_HEALTH_URL: ${{ secrets.API_HEALTH_URL }}
+        run: |
+          for attempt in {1..12}; do
+            response="$(curl --silent --show-error --location --max-time 15 "$API_HEALTH_URL" || true)"
+            response="$(printf '%s' "$response" | tr -d '\r\n')"
+
+            if [ "$response" = "Healthy" ]; then
+              echo "API health check returned Healthy."
+              exit 0
+            fi
+
+            echo "Health check attempt $attempt did not return Healthy."
+            sleep 10
+          done
+
+          echo "Expected /healthz to return Healthy after deployment."
+          exit 1

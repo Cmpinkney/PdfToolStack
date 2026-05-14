@@ -6,6 +6,7 @@ namespace PdfToolStack.Application.DTOs
     {
         public Guid JobId { get; set; } = Guid.NewGuid();
         public ToolType ToolType { get; set; }
+        public CompressionProfile CompressionProfile { get; set; } = CompressionProfile.Balanced;
         public byte[] FileBytes { get; set; }
             = Array.Empty<byte>();
         public string FileName { get; set; }
