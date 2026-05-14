@@ -1,0 +1,58 @@
+@if (ShowAds)
+{
+    <div class="ad-placeholder ad-placeholder--@Variant @Class" role="complementary" aria-label="Advertisement">
+        <span>Advertisement</span>
+    </div>
+}
+
+<style>
+    .ad-placeholder {
+        display: grid;
+        place-items: center;
+        width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
+        border: 1px dashed rgba(100, 116, 139, 0.34);
+        border-radius: 18px;
+        background:
+            linear-gradient(135deg, rgba(255, 255, 255, 0.84), rgba(248, 250, 252, 0.9)),
+            repeating-linear-gradient(135deg, rgba(148, 163, 184, 0.08) 0 8px, transparent 8px 16px);
+        color: #64748b;
+        font-size: 0.72rem;
+        font-weight: 900;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+    }
+
+    .ad-placeholder--banner {
+        height: 96px;
+        max-width: 1320px;
+        margin: 0 auto 28px;
+    }
+
+    .ad-placeholder--sidebar {
+        height: 280px;
+    }
+
+    .ad-placeholder--result {
+        height: 120px;
+        margin-top: 1rem;
+    }
+
+    @@media (max-width: 640px) {
+        .ad-placeholder {
+            border-radius: 16px;
+        }
+
+        .ad-placeholder--banner,
+        .ad-placeholder--result {
+            height: 88px;
+        }
+    }
+</style>
+
+@code {
+    [Parameter] public bool ShowAds { get; set; }
+    [Parameter] public string Variant { get; set; } = "banner";
+    [Parameter] public string? Class { get; set; }
+}

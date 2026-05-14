@@ -24871,3 +24871,118 @@ img.brand-logo {
 }
 
 
+/* Production legal and trust pages */
+.trust-page {
+    min-height: calc(100vh - 72px);
+    padding: 56px 24px 80px;
+    background:
+        radial-gradient(circle at top left, rgba(109, 93, 252, 0.12), transparent 30%),
+        linear-gradient(135deg, #f8f7ff 0%, #eef5ff 100%);
+    color: #172033;
+}
+
+.trust-hero,
+.trust-grid {
+    width: min(1120px, 100%);
+    margin: 0 auto;
+}
+
+.trust-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+    gap: 28px;
+    align-items: end;
+    margin-bottom: 28px;
+}
+
+.trust-eyebrow {
+    display: inline-block;
+    margin-bottom: 12px;
+    color: #2563eb;
+    font-size: 0.78rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.trust-hero h1 {
+    max-width: 760px;
+    margin: 0 0 14px;
+    color: #111827;
+    font-size: clamp(2.35rem, 5vw, 4rem);
+    line-height: 1.02;
+}
+
+.trust-hero p,
+.trust-card p,
+.trust-card li {
+    color: #5b6475;
+    line-height: 1.7;
+}
+
+.trust-summary-card,
+.trust-card {
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow: 0 20px 50px rgba(15, 23, 42, 0.08);
+}
+
+.trust-summary-card {
+    display: grid;
+    gap: 8px;
+    padding: 22px;
+}
+
+.trust-summary-card span,
+.trust-summary-card small {
+    color: #64748b;
+    font-weight: 800;
+}
+
+.trust-summary-card strong {
+    color: #111827;
+    line-height: 1.45;
+}
+
+.trust-summary-card a,
+.trust-inline-link {
+    color: #2563eb;
+    font-weight: 900;
+    text-decoration: none;
+}
+
+.trust-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.trust-card {
+    padding: 24px;
+}
+
+.trust-card h2 {
+    margin: 0 0 10px;
+    color: #111827;
+    font-size: 1.25rem;
+}
+
+.trust-card ul {
+    margin: 0 0 1rem;
+    padding-left: 1.2rem;
+}
+
+.trust-placeholder {
+    border-left: 4px solid #2563eb;
+    border-radius: 12px;
+    background: #eef2ff;
+    padding: 0.9rem 1rem;
+}
+
+@media (max-width: 860px) {
+    .trust-hero,
+    .trust-grid {
+        grid-template-columns: 1fr;
+    }
+}

@@ -1,0 +1,22 @@
+@if (ShowAds)
+{
+    <div class="sidebar-ad-placeholder">
+        <AdPlaceholder ShowAds="true" Variant="sidebar" />
+    </div>
+}
+
+<style>
+    .sidebar-ad-placeholder {
+        margin-top: 1rem;
+    }
+
+    @@media (max-width: 980px) {
+        .sidebar-ad-placeholder {
+            display: none;
+        }
+    }
+</style>
+
+@code {
+    [Parameter] public bool ShowAds { get; set; }
+}

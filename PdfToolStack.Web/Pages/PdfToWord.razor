@@ -21,7 +21,7 @@
 
 <div class="tool-page">
 
-    <AdSlot Size="banner" />
+    <AdPlaceholder ShowAds="ShowAdsForCurrentUser" />
 
     <div class="tool-container">
         <section class="tool-hero">
@@ -120,8 +120,6 @@
                 @if (CurrentState == PageState.Complete
                         && Response != null)
                 {
-                    <AdSlot Size="rectangle" />
-
                     <div class="result-container">
                         <span class="result-icon">Ready</span>
                         <h2>Your Word document is ready</h2>
@@ -161,6 +159,8 @@
                                      ToolName="PDF to Word"
                                      OnDownloadAgain="@DownloadFile" />
                     </div>
+
+                    <ResultAdPlaceholder ShowAds="ShowAdsForCurrentUser" />
                 }
 
                 @if (CurrentState == PageState.Error)
@@ -223,6 +223,11 @@
                         </button>
                         <p class="action-hint">Upload a PDF to enable conversion.</p>
                     }
+                }
+
+                @if (CurrentState == PageState.Complete)
+                {
+                    <SidebarAdPlaceholder ShowAds="ShowAdsForCurrentUser" />
                 }
             </aside>
         </section>
@@ -922,6 +927,8 @@
     private byte[]? ProcessedBytes;
     private byte[]? UploadedBytes;
     private string? ErrorMessage;
+    private bool ShowAdsForCurrentUser = true; // TODO: Hide ads for paid users when subscription state is available here.
+    private const string ToolAnalyticsName = "PDF to Word";
 
     private string GetStepClass(PageState state)
     {
@@ -1011,6 +1018,7 @@
     private async Task ProcessFile()
     {
         if (SelectedFile == null || UploadedBytes == null) return;
+        await TrackToolAnalyticsAsync("pdfToolStackAnalytics.trackToolStarted");
         CurrentState = PageState.Processing;
         StateHasChanged();
         try
@@ -1030,6 +1038,7 @@
 
                 ProcessedBytes = Response.OutputBytes;
                 CurrentState = PageState.Complete;
+                await TrackToolAnalyticsAsync("pdfToolStackAnalytics.trackToolCompleted");
                 Toast.ShowSuccess("Converted to Word successfully!");
             }
             else
@@ -1072,7 +1081,20 @@
             "downloadFile",
             fileName,
             Convert.ToBase64String(ProcessedBytes));
+        await TrackToolAnalyticsAsync("pdfToolStackAnalytics.trackFileDownloaded");
         SessionUsage.RecordToolCompletion("PDF to Word");
+    }
+
+    private async Task TrackToolAnalyticsAsync(string methodName)
+    {
+        try
+        {
+            await JS.InvokeVoidAsync(methodName, ToolAnalyticsName);
+        }
+        catch
+        {
+            // Analytics should never interrupt PDF workflows.
+        }
     }
 
     private bool IsEditMode =>

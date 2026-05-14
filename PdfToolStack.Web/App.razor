@@ -1,4 +1,8 @@
-﻿<CascadingAuthenticationState>
+@implements IDisposable
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
+
+<CascadingAuthenticationState>
     <Router AppAssembly="@typeof(App).Assembly">
         <Found Context="routeData">
             <RouteView RouteData="@routeData"
@@ -29,3 +33,40 @@
         </NotFound>
     </Router>
 </CascadingAuthenticationState>
+
+@code {
+    protected override void OnInitialized()
+    {
+        Navigation.LocationChanged += OnLocationChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await TrackPageViewAsync();
+        }
+    }
+
+    private async void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        await TrackPageViewAsync();
+    }
+
+    private async Task TrackPageViewAsync()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("pdfToolStackAnalytics.trackPageView");
+        }
+        catch
+        {
+            // Analytics should never interrupt app navigation.
+        }
+    }
+
+    public void Dispose()
+    {
+        Navigation.LocationChanged -= OnLocationChanged;
+    }
+}

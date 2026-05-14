@@ -22,7 +22,7 @@
 </HeadContent>
 
 <div class="tool-page">
-    <AdSlot Size="banner" />
+    <AdPlaceholder ShowAds="ShowAdsForCurrentUser" />
     <div class="tool-container">
         <section class="tool-hero">
             <div>
@@ -139,6 +139,8 @@
                                      ToolName="PDF to JPG"
                                      OnDownloadAgain="@DownloadFile" />
                     </div>
+
+                    <ResultAdPlaceholder ShowAds="ShowAdsForCurrentUser" />
                 }
 
                 @if (CurrentState == PageState.Error)
@@ -188,6 +190,11 @@
                         Convert to JPG
                     </button>
                     <p class="action-hint">Upload a PDF to enable conversion.</p>
+                }
+
+                @if (CurrentState == PageState.Complete)
+                {
+                    <SidebarAdPlaceholder ShowAds="ShowAdsForCurrentUser" />
                 }
             </aside>
         </section>
@@ -836,6 +843,8 @@
     private string? ErrorMessage;
     private string ResultMessage = "";
     private string DownloadLabel = "Download JPG";
+    private bool ShowAdsForCurrentUser = true; // TODO: Hide ads for paid users when subscription state is available here.
+    private const string ToolAnalyticsName = "PDF to JPG";
 
     private string GetStepClass(PageState state)
     {
@@ -911,6 +920,8 @@
     {
         if (SelectedFile == null || UploadedBytes == null) return;
 
+        await TrackToolAnalyticsAsync("pdfToolStackAnalytics.trackToolStarted");
+
         CurrentState = PageState.Processing;
         StateHasChanged();
 
@@ -939,6 +950,7 @@
                     : "Download JPG";
 
                 CurrentState = PageState.Complete;
+                await TrackToolAnalyticsAsync("pdfToolStackAnalytics.trackToolCompleted");
                 Toast.ShowSuccess("Conversion complete!");
             }
             else
@@ -971,7 +983,20 @@
 
         await JS.InvokeVoidAsync("downloadFile", fileName,
             Convert.ToBase64String(OutputBytes));
+        await TrackToolAnalyticsAsync("pdfToolStackAnalytics.trackFileDownloaded");
         SessionUsage.RecordToolCompletion("Tool Name");
+    }
+
+    private async Task TrackToolAnalyticsAsync(string methodName)
+    {
+        try
+        {
+            await JS.InvokeVoidAsync(methodName, ToolAnalyticsName);
+        }
+        catch
+        {
+            // Analytics should never interrupt PDF workflows.
+        }
     }
 
     private void Reset()

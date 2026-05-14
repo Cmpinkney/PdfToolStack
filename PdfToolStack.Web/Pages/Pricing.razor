@@ -4,6 +4,7 @@
 @inject PdfToolStack.Web.Services.SubscriptionService SubService
 @inject PdfToolStack.Web.Services.ApiService ApiService
 @inject HttpClient Http
+@inject IJSRuntime JS
 @using Microsoft.AspNetCore.Components.Authorization
 @using System.Net.Http.Json
 
@@ -614,6 +615,21 @@
 
         await LoadPlansAsync();
         await LoadAddonsAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+            return;
+
+        try
+        {
+            await JS.InvokeVoidAsync("pdfToolStackAnalytics.trackPricingViewed");
+        }
+        catch
+        {
+            // Analytics should never interrupt pricing interactions.
+        }
     }
 
     private void ToggleBilling() => _isAnnual = !_isAnnual;

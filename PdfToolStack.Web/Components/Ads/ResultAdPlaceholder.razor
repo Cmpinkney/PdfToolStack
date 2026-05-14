@@ -1,0 +1,16 @@
+@if (ShowAds)
+{
+    <div class="result-ad-placeholder">
+        <AdPlaceholder ShowAds="true" Variant="result" />
+    </div>
+}
+
+<style>
+    .result-ad-placeholder {
+        width: 100%;
+    }
+</style>
+
+@code {
+    [Parameter] public bool ShowAds { get; set; }
+}
