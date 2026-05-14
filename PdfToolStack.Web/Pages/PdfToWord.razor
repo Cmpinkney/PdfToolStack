@@ -21,8 +21,6 @@
 
 <div class="tool-page">
 
-    <AdPlaceholder ShowAds="ShowAdsForCurrentUser" />
-
     <div class="tool-container">
         <section class="tool-hero">
             <div>
@@ -38,6 +36,8 @@
                 </p>
             </div>
         </section>
+
+        <AdPlaceholder ShowAds="ShowAdsForCurrentUser" />
 
         <div class="stepper" aria-label="Conversion progress">
             <div class="step @(CurrentState == PageState.Upload && SelectedFile == null ? "active" : SelectedFile != null || CurrentState == PageState.Processing || CurrentState == PageState.Complete ? "complete" : "")">

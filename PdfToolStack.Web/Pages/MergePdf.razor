@@ -22,8 +22,6 @@
 
 <div class="tool-page">
 
-    <AdSlot Size="banner" />
-
     <div class="tool-container">
         <section class="tool-hero">
             <div>
@@ -40,6 +38,8 @@
                 </p>
             </div>
         </section>
+
+        <AdPlaceholder ShowAds="ShowAdsForCurrentUser" />
 
         <div class="stepper" aria-label="Merge workflow progress">
             <div class="@GetStepClass("Upload")">
@@ -154,7 +154,7 @@
                 @if (CurrentState == PageState.Complete
                         && Response != null)
                 {
-                    <AdSlot Size="rectangle" />
+                    <ResultAdPlaceholder ShowAds="ShowAdsForCurrentUser" />
 
                     <div class="result-container">
                         <span class="result-icon">Ready</span>
@@ -281,6 +281,10 @@
                             Add at least two PDFs to enable merging.
                         </p>
                     }
+                }
+                @if (CurrentState == PageState.Complete)
+                {
+                    <SidebarAdPlaceholder ShowAds="ShowAdsForCurrentUser" />
                 }
             </aside>
         </section>
@@ -1062,6 +1066,7 @@
 </style>
 
 @code {
+    private bool ShowAdsForCurrentUser = true; // TODO: Hide ads for paid users when subscription state is available here.
     private enum PageState
     {
         Upload, Processing, Complete, Error, LargeFile

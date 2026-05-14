@@ -34,6 +34,8 @@
             <p>Add a searchable text layer where OCR succeeds, so recognized text can be searched and copied.</p>
         </section>
 
+        <AdPlaceholder ShowAds="ShowAdsForCurrentUser" />
+
         <div class="stepper ai-tool-stepper ocr-tool-stepper" aria-label="OCR steps">
             <div class="stepper-step active"><span>1</span>Upload</div>
             <div class="stepper-step"><span>2</span>OCR</div>
@@ -245,6 +247,7 @@
                             </button>
                         </div>
                     </div>
+                    <ResultAdPlaceholder ShowAds="ShowAdsForCurrentUser" />
                 }
 
                 @if (CurrentState == PageState.Error)
@@ -320,6 +323,10 @@
                     <span>Searchable PDF output</span>
                     <span>Copy and paste enabled</span>
                 </div>
+                @if (CurrentState == PageState.Complete)
+                {
+                    <SidebarAdPlaceholder ShowAds="ShowAdsForCurrentUser" />
+                }
             </aside>
         </section>
 
@@ -542,6 +549,7 @@
 </style>
 
 @code {
+    private bool ShowAdsForCurrentUser = true; // TODO: Hide ads for paid users when subscription state is available here.
     private enum PageState { Upload, Processing, Complete, Error }
     private PageState CurrentState = PageState.Upload;
     private const int FreePageLimit = 3;

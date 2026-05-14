@@ -23,8 +23,6 @@
 </HeadContent>
 
 <div class="tool-page">
-    <AdSlot Size="banner" />
-
     <div class="tool-container">
         <section class="tool-hero">
             <div class="trust-row">
@@ -38,6 +36,8 @@
                 archive, and send.
             </p>
         </section>
+
+        <AdPlaceholder ShowAds="ShowAdsForCurrentUser" />
 
         <div class="stepper" aria-label="Word to PDF workflow progress">
             <div class="step @(SelectedFile != null || CurrentState != PageState.Upload ? "complete" : "active")">
@@ -165,7 +165,7 @@
 
                 @if (CurrentState == PageState.Complete && ResultBytes != null)
                 {
-                    <AdSlot Size="rectangle" />
+                    <ResultAdPlaceholder ShowAds="ShowAdsForCurrentUser" />
                     <div class="result-container">
                         <span class="result-icon">Done</span>
                         <h2>Your PDF is ready</h2>
@@ -221,6 +221,10 @@
                     <button class="process-button disabled" disabled>
                         Upload a Word file to continue
                     </button>
+                }
+                @if (CurrentState == PageState.Complete)
+                {
+                    <SidebarAdPlaceholder ShowAds="ShowAdsForCurrentUser" />
                 }
             </aside>
         </section>
@@ -331,6 +335,7 @@
 </style>
 
 @code {
+    private bool ShowAdsForCurrentUser = true; // TODO: Hide ads for paid users when subscription state is available here.
     private enum PageState { Upload, Processing, Complete, Error, LargeFile }
 
     private PageState CurrentState = PageState.Upload;

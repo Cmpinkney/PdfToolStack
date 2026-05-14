@@ -22,7 +22,6 @@
 </HeadContent>
 
 <div class="tool-page">
-    <AdSlot Size="banner" />
     <div class="tool-container">
         <section class="tool-hero">
             <div class="trust-row">
@@ -33,6 +32,8 @@
             <h1>Convert Excel to PDF <span class="hero-gradient-text">cleanly</span></h1>
             <p>Turn spreadsheets into clean PDFs for sharing, reporting, and archiving.</p>
         </section>
+
+        <AdPlaceholder ShowAds="ShowAdsForCurrentUser" />
 
         <div class="stepper" aria-label="Excel to PDF workflow progress">
             <div class="step @(SelectedFile != null || CurrentState != PageState.Upload ? "complete" : "active")">
@@ -160,7 +161,7 @@
 
                 @if (CurrentState == PageState.Complete && ResultBytes != null)
                 {
-                    <AdSlot Size="rectangle" />
+                    <ResultAdPlaceholder ShowAds="ShowAdsForCurrentUser" />
                     <div class="result-container">
                         <span class="result-icon">Done</span>
                         <h2>Your PDF is ready</h2>
@@ -209,6 +210,10 @@
                 else if (CurrentState == PageState.Upload)
                 {
                     <button class="process-button disabled" disabled>Upload an Excel file to continue</button>
+                }
+                @if (CurrentState == PageState.Complete)
+                {
+                    <SidebarAdPlaceholder ShowAds="ShowAdsForCurrentUser" />
                 }
             </aside>
         </section>
@@ -315,6 +320,7 @@
 </style>
 
 @code {
+    private bool ShowAdsForCurrentUser = true; // TODO: Hide ads for paid users when subscription state is available here.
     private enum PageState { Upload, Processing, Complete, Error, LargeFile }
 
     private PageState CurrentState = PageState.Upload;

@@ -23,7 +23,6 @@
 </HeadContent>
 
 <div class="tool-page">
-    <AdSlot Size="banner" />
     <div class="tool-container">
         <section class="tool-hero">
             <div class="trust-row">
@@ -34,6 +33,8 @@
             <h1>Convert JPG to PDF <span class="hero-gradient-text">instantly</span></h1>
             <p>Combine JPG, PNG, and other images into one clean PDF for sharing or storage.</p>
         </section>
+
+        <AdPlaceholder ShowAds="ShowAdsForCurrentUser" />
 
         <div class="stepper" aria-label="JPG to PDF workflow progress">
             <div class="step @(UploadedFiles.Any() || CurrentState != PageState.Upload ? "complete" : "active")">
@@ -170,7 +171,7 @@
                 @if (CurrentState == PageState.Complete
                      && ResultBytes != null)
                 {
-                    <AdSlot Size="rectangle" />
+                    <ResultAdPlaceholder ShowAds="ShowAdsForCurrentUser" />
                     <div class="result-container">
                         <span class="result-icon">Done</span>
                         <h2>Your image PDF is ready</h2>
@@ -240,6 +241,10 @@
                     <button class="process-button disabled" disabled>
                         Add images to continue
                     </button>
+                }
+                @if (CurrentState == PageState.Complete)
+                {
+                    <SidebarAdPlaceholder ShowAds="ShowAdsForCurrentUser" />
                 }
             </aside>
         </section>
@@ -349,6 +354,7 @@
 </style>
 
 @code {
+    private bool ShowAdsForCurrentUser = true; // TODO: Hide ads for paid users when subscription state is available here.
     private enum PageState
     {
         Upload, Processing, Complete, Error, LargeFile

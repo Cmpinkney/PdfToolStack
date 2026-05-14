@@ -36,6 +36,8 @@
             </p>
         </section>
 
+        <AdPlaceholder ShowAds="ShowAdsForCurrentUser" />
+
         <div class="stepper fill-stepper">
             <div class="step @(CurrentState == PageState.Upload || CurrentState == PageState.LargeFile ? "active" : "complete")">
                 <span>1</span>
@@ -185,6 +187,7 @@
                             </button>
                         </div>
                     </div>
+                    <ResultAdPlaceholder ShowAds="ShowAdsForCurrentUser" />
                 }
 
                 @if (CurrentState == PageState.Error)
@@ -295,6 +298,10 @@
                         </div>
                     </div>
                 }
+                @if (CurrentState == PageState.Complete)
+                {
+                    <SidebarAdPlaceholder ShowAds="ShowAdsForCurrentUser" />
+                }
             </aside>
         </section>
     </div>
@@ -345,6 +352,7 @@
 </div>
 
 @code {
+    private bool ShowAdsForCurrentUser = true; // TODO: Hide ads for paid users when subscription state is available here.
     private enum PageState
     {
         Upload, FillFields, NoFields,

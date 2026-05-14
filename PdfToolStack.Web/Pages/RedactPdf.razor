@@ -46,6 +46,8 @@
         </div>
     </section>
 
+    <AdPlaceholder ShowAds="ShowAdsForCurrentUser" />
+
     <!-- ── UPLOAD STATE ──────────────────────────────────────────────── -->
     @if (CurrentState == PageState.Upload || CurrentState == PageState.LargeFile)
     {
@@ -441,6 +443,7 @@
                 <button class="rp-restart-btn" @onclick="Reset">Redact Another PDF</button>
             </div>
         </div>
+        <ResultAdPlaceholder ShowAds="ShowAdsForCurrentUser" />
     }
 
     <!-- ── ERROR STATE ───────────────────────────────────────────────── -->
@@ -2130,6 +2133,7 @@
 </style>
 
 @code {
+    private bool ShowAdsForCurrentUser = true; // TODO: Hide ads for paid users when subscription state is available here.
     private record RedactColorDef(string Hex, string Name);
     private static readonly RedactColorDef[] RedactColors = new[]
     {

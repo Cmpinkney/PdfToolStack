@@ -45,6 +45,8 @@
         </div>
     </section>
 
+    <AdPlaceholder ShowAds="ShowAdsForCurrentUser" />
+
     <!-- ── UPLOAD STATE ──────────────────────────────────────────────── -->
     @if (CurrentState == PageState.Upload)
     {
@@ -379,6 +381,7 @@
                          ToolName="Translate PDF"
                          OnDownloadAgain="@DownloadTranslation" />
         </div>
+        <ResultAdPlaceholder ShowAds="ShowAdsForCurrentUser" />
     }
 
     <!-- ── ERROR STATE ───────────────────────────────────────────────── -->
@@ -2199,6 +2202,7 @@
 </style>
 
 @code {
+    private bool ShowAdsForCurrentUser = true; // TODO: Hide ads for paid users when subscription state is available here.
     private enum PageState { Upload, Processing, Complete, Error }
     private PageState CurrentState = PageState.Upload;
 

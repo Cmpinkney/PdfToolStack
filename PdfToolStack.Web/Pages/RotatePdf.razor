@@ -15,7 +15,6 @@
 </HeadContent>
 
 <div class="tool-page">
-    <AdSlot Size="banner" />
     <div class="tool-container">
         <section class="tool-hero">
             <div class="trust-row">
@@ -26,6 +25,8 @@
             <h1>Rotate PDF <span class="hero-gradient-text">precisely</span></h1>
             <p class="tool-subtitle">Fix page orientation across an entire PDF or target specific pages.</p>
         </section>
+
+        <AdPlaceholder ShowAds="ShowAdsForCurrentUser" />
 
         <div class="stepper" aria-label="Rotate workflow progress">
             <div class="step @(CurrentState == PageState.Upload && SelectedFile == null ? "active" : SelectedFile != null || CurrentState == PageState.Processing || CurrentState == PageState.Complete ? "complete" : "")"><span>1</span><strong>Upload</strong></div>
@@ -90,7 +91,7 @@
 
                 @if (CurrentState == PageState.Complete && ResultBytes != null)
                 {
-                    <AdSlot Size="rectangle" />
+                    <ResultAdPlaceholder ShowAds="ShowAdsForCurrentUser" />
                     <div class="result-container">
                         <span class="result-icon">Ready</span>
                         <h2>Your rotated PDF is ready</h2>
@@ -158,6 +159,10 @@
                 {
                     <button class="process-button disabled" disabled>Rotate PDF</button>
                     <p class="action-hint">Upload a PDF to enable rotation.</p>
+                }
+                @if (CurrentState == PageState.Complete)
+                {
+                    <SidebarAdPlaceholder ShowAds="ShowAdsForCurrentUser" />
                 }
             </aside>
         </section>
@@ -229,6 +234,7 @@
 </style>
 
 @code {
+    private bool ShowAdsForCurrentUser = true; // TODO: Hide ads for paid users when subscription state is available here.
     private enum PageState { Upload, Processing, Complete, Error, LargeFile }
     private PageState CurrentState = PageState.Upload;
     private IBrowserFile? SelectedFile;

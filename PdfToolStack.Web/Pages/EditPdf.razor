@@ -11,7 +11,6 @@
 </HeadContent>
 
 <div class="tool-page edit-tool-page @(_viewerActive ? "viewer-active" : "")">
-    <AdSlot Size="banner" />
     <div class="tool-container edit-tool-container">
 
         <section class="edit-hero">
@@ -25,6 +24,8 @@
                 Add text, shapes, highlights and drawings to any PDF. Use the editor tools to make changes, then download your updated PDF.
             </p>
         </section>
+
+        <AdPlaceholder ShowAds="ShowAdsForCurrentUser" />
 
         <div class="edit-stepper" aria-label="Edit PDF workflow">
             <div class="edit-step active"><span>1</span>Upload</div>
@@ -113,6 +114,7 @@
 </div>
 
 @code {
+    private bool ShowAdsForCurrentUser = true; // TODO: Hide ads for paid users when subscription state is available here.
     private enum PageState { Upload, Error, LargeFile }
 
     private PageState CurrentState = PageState.Upload;

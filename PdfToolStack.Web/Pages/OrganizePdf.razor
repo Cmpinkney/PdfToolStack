@@ -21,7 +21,6 @@
 </HeadContent>
 
 <div class="tool-page">
-    <AdSlot Size="banner" />
     <div class="tool-container">
         <section class="tool-hero">
             <div>
@@ -38,6 +37,8 @@
                 </p>
             </div>
         </section>
+
+        <AdPlaceholder ShowAds="ShowAdsForCurrentUser" />
 
         <div class="stepper" aria-label="Organize PDF workflow progress">
             <div class="step @(CurrentState == PageState.Upload && SelectedFile == null ? "active" : SelectedFile != null || CurrentState == PageState.Processing || CurrentState == PageState.Complete ? "complete" : "")">
@@ -179,7 +180,7 @@
 
                 @if (CurrentState == PageState.Complete && ResultBytes != null)
                 {
-                    <AdSlot Size="rectangle" />
+                    <ResultAdPlaceholder ShowAds="ShowAdsForCurrentUser" />
                     <div class="result-container">
                         <span class="result-icon" aria-hidden="true">Ready</span>
                         <h2>Your organized PDF is ready</h2>
@@ -257,6 +258,10 @@
                         Apply Changes
                     </button>
                     <p class="action-hint">Upload a PDF to enable page organization.</p>
+                }
+                @if (CurrentState == PageState.Complete)
+                {
+                    <SidebarAdPlaceholder ShowAds="ShowAdsForCurrentUser" />
                 }
             </aside>
         </section>
@@ -366,6 +371,7 @@
 </style>
 
 @code {
+    private bool ShowAdsForCurrentUser = true; // TODO: Hide ads for paid users when subscription state is available here.
     private enum PageState
     {
         Upload, Processing, Complete, Error, LargeFile

@@ -20,7 +20,6 @@
 </HeadContent>
 
 <div class="tool-page">
-    <AdSlot Size="banner" />
     <div class="tool-container">
         <section class="tool-hero">
             <div class="trust-row">
@@ -34,6 +33,8 @@
                 for visibility, size, and polished output.
             </p>
         </section>
+
+        <AdPlaceholder ShowAds="ShowAdsForCurrentUser" />
 
         <div class="stepper" aria-label="Watermark workflow progress">
             <div class="step @(SelectedFile != null || CurrentState != PageState.Upload ? "complete" : "active")">Upload</div>
@@ -95,7 +96,7 @@
                 @if (CurrentState == PageState.Complete
                      && ResultBytes != null)
                 {
-                    <AdSlot Size="rectangle" />
+                    <ResultAdPlaceholder ShowAds="ShowAdsForCurrentUser" />
                     <div class="result-container">
                         <span class="result-icon">Done</span>
                         <h2>Your watermarked PDF is ready</h2>
@@ -191,6 +192,10 @@
                         Upload a PDF to continue
                     </button>
                 }
+                @if (CurrentState == PageState.Complete)
+                {
+                    <SidebarAdPlaceholder ShowAds="ShowAdsForCurrentUser" />
+                }
             </aside>
         </section>
     </div>
@@ -274,6 +279,7 @@
 </style>
 
 @code {
+    private bool ShowAdsForCurrentUser = true; // TODO: Hide ads for paid users when subscription state is available here.
     private enum PageState
     {
         Upload, Processing, Complete, Error, LargeFile
