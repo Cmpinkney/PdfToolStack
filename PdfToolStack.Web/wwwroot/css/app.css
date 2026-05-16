@@ -25045,3 +25045,78 @@ img.brand-logo {
         height: 88px;
     }
 }
+
+/* ════════════════════════════════════════════════════════
+   MOBILE VIEWPORT OVERFLOW FIX
+   Prevents horizontal scroll on iOS/Android at 320–768 px.
+   Must stay at the END of this file so cascade wins.
+════════════════════════════════════════════════════════ */
+
+/* 1. Global root guard — no child can push the viewport wider than 100 %. */
+html,
+body {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+#app {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+/* 2. Mobile ≤768 px — hide every desktop nav link so the navbar fits in 100 vw.
+      The hamburger drawer provides full navigation at these sizes. */
+@media (max-width: 768px) {
+    /* Hide ALL inline nav links — ai, tool, and plain variants */
+    .nav-link,
+    .nav-link-ai,
+    .nav-link-tool {
+        display: none !important;
+    }
+
+    /* Tighten navbar padding so logo + controls fit without overflow */
+    .navbar {
+        padding-inline: 0.875rem !important;
+        gap: 0.5rem !important;
+    }
+
+    /* Allow brand image to shrink on very narrow screens */
+    .nav-brand {
+        flex-shrink: 1;
+        min-width: 0;
+    }
+
+    /* Push login display + hamburger to the far right */
+    .navbar-right {
+        margin-left: auto !important;
+        flex-shrink: 0;
+    }
+
+    /* Align drawer with the actual 72 px navbar height (was 64 px — wrong) */
+    .mob-drawer {
+        top: 72px !important;
+    }
+
+    .mob-backdrop {
+        top: 72px !important;
+    }
+}
+
+/* 3. Stepper columns — minmax(130px,1fr) × 4 = 520 px minimum, too wide for
+      ≤480 px viewports. Allow columns to shrink to zero so they scale with vw. */
+@media (max-width: 480px) {
+    .tool-page .stepper,
+    .tool-page .fill-stepper {
+        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+        gap: 4px !important;
+        padding: 6px !important;
+    }
+
+    /* Keep step label text readable at smaller column widths */
+    .tool-page .step strong,
+    .tool-page .fill-stepper .step p {
+        font-size: 0.65rem !important;
+        white-space: normal !important;
+        line-height: 1.2 !important;
+    }
+}
