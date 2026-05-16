@@ -25064,7 +25064,10 @@ body {
     overflow-x: hidden;
 }
 
-/* 2. Mobile ≤768 px — hide every desktop nav link so the navbar fits in 100 vw.
+/* 2. CTA text variants — .cta-short is hidden by default; shown only at ≤480 px. */
+.cta-short { display: none; }
+
+/* 3. Mobile ≤768 px — hide every desktop nav link so the navbar fits in 100 vw.
       The hamburger drawer provides full navigation at these sizes. */
 @media (max-width: 768px) {
     /* Hide ALL inline nav links — ai, tool, and plain variants */
@@ -25074,25 +25077,57 @@ body {
         display: none !important;
     }
 
-    /* Tighten navbar padding so logo + controls fit without overflow */
+    /* Tighten navbar so logo + controls share 100 vw cleanly */
     .navbar {
-        padding-inline: 0.875rem !important;
-        gap: 0.5rem !important;
+        padding-inline: 0.75rem !important;
+        gap: 0.375rem !important;
     }
 
-    /* Allow brand image to shrink on very narrow screens */
+    /* Logo: shrink only as a last resort; never below 90 px wide */
     .nav-brand {
-        flex-shrink: 1;
-        min-width: 0;
+        flex-shrink: 1 !important;
+        min-width: 90px !important;
     }
 
-    /* Push login display + hamburger to the far right */
+    /* Let logo image scale down within the nav-brand container */
+    .nav-brand img.brand-logo {
+        width: auto !important;
+        max-width: 100% !important;
+        height: auto !important;
+        max-height: 40px !important;
+        object-fit: contain !important;
+    }
+
+    /* Push login / hamburger cluster to the far right */
     .navbar-right {
         margin-left: auto !important;
         flex-shrink: 0;
     }
 
-    /* Align drawer with the actual 72 px navbar height (was 64 px — wrong) */
+    /* Hide the dark-mode toggle on mobile to reclaim ~44 px of width.
+       Authenticated users can access theme via the hamburger profile menu. */
+    .theme-toggle-switch {
+        display: none !important;
+    }
+
+    /* Compact auth buttons: tighter gap and reduced CTA size */
+    .auth-buttons {
+        gap: 0.2rem !important;
+    }
+
+    .login-btn {
+        padding: 0.38rem 0.5rem !important;
+        font-size: 0.8rem !important;
+    }
+
+    .signup-btn {
+        padding: 0.38rem 0.65rem !important;
+        font-size: 0.8rem !important;
+        border-radius: 8px !important;
+        white-space: nowrap !important;
+    }
+
+    /* Align drawer top with the actual 72 px navbar (was 64 px) */
     .mob-drawer {
         top: 72px !important;
     }
@@ -25102,7 +25137,13 @@ body {
     }
 }
 
-/* 3. Stepper columns — minmax(130px,1fr) × 4 = 520 px minimum, too wide for
+/* 4. At ≤480 px, swap "Get started free" → "Start free" to save ~35 px. */
+@media (max-width: 480px) {
+    .cta-full { display: none !important; }
+    .cta-short { display: inline !important; }
+}
+
+/* 5. Stepper columns — minmax(130px,1fr) × 4 = 520 px minimum, too wide for
       ≤480 px viewports. Allow columns to shrink to zero so they scale with vw. */
 @media (max-width: 480px) {
     .tool-page .stepper,
