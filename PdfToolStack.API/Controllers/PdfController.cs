@@ -29,21 +29,27 @@ namespace PdfToolStack.API.Controllers
         private readonly ProcessingOptions _options;
         private readonly ILogger<PdfController> _logger;
         private readonly IFileValidationService _fileValidationService;
+        private readonly IFeatureAccessService _featureAccessService;
         private readonly IAiUsageService _aiUsageService;
+        private readonly FileLimit _fileLimits;
         private readonly SubscriptionService? _subscriptionService;
 
         public PdfController(
             IPdfService pdfService,
             IOptions<ProcessingOptions> options,
+            IOptions<FileLimit> fileLimits,
             ILogger<PdfController> logger,
             IFileValidationService fileValidationService,
+            IFeatureAccessService featureAccessService,
             IAiUsageService aiUsageService,
             SubscriptionService? subscriptionService = null)
         {
             _pdfService = pdfService;
             _options = options.Value;
+            _fileLimits = fileLimits.Value;
             _logger = logger;
             _fileValidationService = fileValidationService;
+            _featureAccessService = featureAccessService;
             _aiUsageService = aiUsageService;
             _subscriptionService = subscriptionService;
         }
@@ -134,16 +140,20 @@ namespace PdfToolStack.API.Controllers
                     response.JobId,
                     response.CompressionRatio);
 
-                    if (response.IsSuccess && _subscriptionService != null)
+                if (_subscriptionService != null)
+                {
+                    var userId = User.FindFirst("sub")?.Value;
+                    if (!string.IsNullOrEmpty(userId))
                     {
-                        var userId = User.FindFirst("sub")?.Value;
-                        if (!string.IsNullOrEmpty(userId))
-                        {
-                            _ = _subscriptionService.TrackDownloadAsync(
-                                userId, file.FileName, toolType, file.Length);
-                        }
+                        _ = _subscriptionService.TrackDownloadAsync(
+                            userId, file.FileName, toolType, file.Length);
                     }
-                
+                }
+
+                await ConsumeLargeFileUnlockIfNeededAsync(
+                    file,
+                    parsedToolType.ToString(),
+                    cancellationToken);
 
                 return Ok(response);
             }
@@ -210,10 +220,20 @@ namespace PdfToolStack.API.Controllers
                     var response = await _pdfService.ProcessAsync(
                         request, cancellationToken);
 
-                    results.Add(response.IsSuccess
-                        ? (file.FileName, response.OutputBytes!, null)
-                        : (file.FileName, Array.Empty<byte>(),
+                    if (response.IsSuccess)
+                    {
+                        await ConsumeLargeFileUnlockIfNeededAsync(
+                            file,
+                            parsedToolType.ToString(),
+                            cancellationToken);
+
+                        results.Add((file.FileName, response.OutputBytes!, null));
+                    }
+                    else
+                    {
+                        results.Add((file.FileName, Array.Empty<byte>(),
                             response.ErrorMessage));
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -305,6 +325,11 @@ namespace PdfToolStack.API.Controllers
                 var merger = new PdfMerger(request.AdditionalFiles);
                 var outputBytes = await merger.ProcessAsync(request.FileBytes, cancellationToken);
 
+                await ConsumeLargeFileUnlocksIfNeededAsync(
+                    files,
+                    ToolType.MergePdf.ToString(),
+                    cancellationToken);
+
                 return File(outputBytes, "application/pdf", "merged.pdf");
             }
             catch (Exception ex)
@@ -360,6 +385,11 @@ namespace PdfToolStack.API.Controllers
             var filler = new PdfFormFiller(fieldValues);
             var outputBytes = await filler.ProcessAsync(ms.ToArray(), cancellationToken);
 
+            await ConsumeLargeFileUnlockIfNeededAsync(
+                file!,
+                ToolType.FillPdfForm.ToString(),
+                cancellationToken);
+
             return File(outputBytes, "application/pdf", "filled_form.pdf");
         }
 
@@ -396,6 +426,11 @@ namespace PdfToolStack.API.Controllers
 
             var redactor = new PdfRedactor(processorRegions);
             var outputBytes = await redactor.ProcessAsync(ms.ToArray(), cancellationToken);
+
+            await ConsumeLargeFileUnlockIfNeededAsync(
+                file!,
+                ToolType.RedactPdf.ToString(),
+                cancellationToken);
 
             return File(outputBytes, "application/pdf", "redacted.pdf");
         }
@@ -461,9 +496,8 @@ namespace PdfToolStack.API.Controllers
             request.PageNumbers = pages;
 
             var response = await _pdfService.ProcessAsync(request, cancellationToken);
-            return response.IsSuccess
-                ? File(response.OutputBytes!, "application/pdf", "deleted_pages.pdf")
-                : UnprocessableEntity(new { error = response.ErrorMessage });
+            return await BuildSuccessfulFileResponseAsync(
+                response, file!, "deleted_pages.pdf", ToolType.DeletePages.ToString(), cancellationToken);
         }
 
         // POST api/pdf/extract-pages
@@ -485,9 +519,8 @@ namespace PdfToolStack.API.Controllers
             request.PageNumbers = pages;
 
             var response = await _pdfService.ProcessAsync(request, cancellationToken);
-            return response.IsSuccess
-                ? File(response.OutputBytes!, "application/pdf", "extracted_pages.pdf")
-                : UnprocessableEntity(new { error = response.ErrorMessage });
+            return await BuildSuccessfulFileResponseAsync(
+                response, file!, "extracted_pages.pdf", ToolType.ExtractPages.ToString(), cancellationToken);
         }
 
         // POST api/pdf/rotate
@@ -515,9 +548,8 @@ namespace PdfToolStack.API.Controllers
             request.Rotation = rotation;
 
             var response = await _pdfService.ProcessAsync(request, cancellationToken);
-            return response.IsSuccess
-                ? File(response.OutputBytes!, "application/pdf", "rotated.pdf")
-                : UnprocessableEntity(new { error = response.ErrorMessage });
+            return await BuildSuccessfulFileResponseAsync(
+                response, file!, "rotated.pdf", ToolType.RotatePdf.ToString(), cancellationToken);
         }
 
         // POST api/pdf/word-to-pdf
@@ -536,9 +568,8 @@ namespace PdfToolStack.API.Controllers
             var response = await _pdfService.ProcessAsync(request, cancellationToken);
             var outName = Path.GetFileNameWithoutExtension(file.FileName) + ".pdf";
 
-            return response.IsSuccess
-                ? File(response.OutputBytes!, "application/pdf", outName)
-                : UnprocessableEntity(new { error = response.ErrorMessage });
+            return await BuildSuccessfulFileResponseAsync(
+                response, file!, outName, ToolType.WordToPdf.ToString(), cancellationToken);
         }
 
         // POST api/pdf/ppt-to-pdf
@@ -557,9 +588,8 @@ namespace PdfToolStack.API.Controllers
             var response = await _pdfService.ProcessAsync(request, cancellationToken);
             var outName = Path.GetFileNameWithoutExtension(file.FileName) + ".pdf";
 
-            return response.IsSuccess
-                ? File(response.OutputBytes!, "application/pdf", outName)
-                : UnprocessableEntity(new { error = response.ErrorMessage });
+            return await BuildSuccessfulFileResponseAsync(
+                response, file!, outName, ToolType.PptToPdf.ToString(), cancellationToken);
         }
 
         // POST api/pdf/excel-to-pdf
@@ -578,9 +608,8 @@ namespace PdfToolStack.API.Controllers
             var response = await _pdfService.ProcessAsync(request, cancellationToken);
             var outName = Path.GetFileNameWithoutExtension(file.FileName) + ".pdf";
 
-            return response.IsSuccess
-                ? File(response.OutputBytes!, "application/pdf", outName)
-                : UnprocessableEntity(new { error = response.ErrorMessage });
+            return await BuildSuccessfulFileResponseAsync(
+                response, file!, outName, ToolType.ExcelToPdf.ToString(), cancellationToken);
         }
 
         // POST api/pdf/flatten
@@ -597,9 +626,8 @@ namespace PdfToolStack.API.Controllers
             var request = await BuildPdfRequestAsync(file!, ToolType.FlattenPdf, cancellationToken);
 
             var response = await _pdfService.ProcessAsync(request, cancellationToken);
-            return response.IsSuccess
-                ? File(response.OutputBytes!, "application/pdf", "flattened.pdf")
-                : UnprocessableEntity(new { error = response.ErrorMessage });
+            return await BuildSuccessfulFileResponseAsync(
+                response, file!, "flattened.pdf", ToolType.FlattenPdf.ToString(), cancellationToken);
         }
 
         [HttpPost("crop")]
@@ -635,9 +663,8 @@ namespace PdfToolStack.API.Controllers
             }
 
             var response = await _pdfService.ProcessAsync(request, cancellationToken);
-            return response.IsSuccess
-                ? File(response.OutputBytes!, "application/pdf", "cropped.pdf")
-                : UnprocessableEntity(new { error = response.ErrorMessage });
+            return await BuildSuccessfulFileResponseAsync(
+                response, file!, "cropped.pdf", ToolType.CropPdf.ToString(), cancellationToken);
         }
 
         // POST api/pdf/watermark
@@ -660,9 +687,8 @@ namespace PdfToolStack.API.Controllers
             request.WatermarkFontSize = fontSize;
 
             var response = await _pdfService.ProcessAsync(request, cancellationToken);
-            return response.IsSuccess
-                ? File(response.OutputBytes!, "application/pdf", "watermarked.pdf")
-                : UnprocessableEntity(new { error = response.ErrorMessage });
+            return await BuildSuccessfulFileResponseAsync(
+                response, file!, "watermarked.pdf", ToolType.WatermarkPdf.ToString(), cancellationToken);
         }
 
         // POST api/pdf/number-pages
@@ -683,9 +709,8 @@ namespace PdfToolStack.API.Controllers
             request.PageNumberStart = startNumber;
 
             var response = await _pdfService.ProcessAsync(request, cancellationToken);
-            return response.IsSuccess
-                ? File(response.OutputBytes!, "application/pdf", "numbered.pdf")
-                : UnprocessableEntity(new { error = response.ErrorMessage });
+            return await BuildSuccessfulFileResponseAsync(
+                response, file!, "numbered.pdf", ToolType.NumberPages.ToString(), cancellationToken);
         }
 
         // POST api/pdf/unlock
@@ -704,9 +729,8 @@ namespace PdfToolStack.API.Controllers
             request.Password = password;
 
             var response = await _pdfService.ProcessAsync(request, cancellationToken);
-            return response.IsSuccess
-                ? File(response.OutputBytes!, "application/pdf", "unlocked.pdf")
-                : UnprocessableEntity(new { error = response.ErrorMessage });
+            return await BuildSuccessfulFileResponseAsync(
+                response, file!, "unlocked.pdf", ToolType.UnlockPdf.ToString(), cancellationToken);
         }
 
         // POST api/pdf/protect
@@ -731,9 +755,8 @@ namespace PdfToolStack.API.Controllers
             request.AllowCopying = allowCopying;
 
             var response = await _pdfService.ProcessAsync(request, cancellationToken);
-            return response.IsSuccess
-                ? File(response.OutputBytes!, "application/pdf", "protected.pdf")
-                : UnprocessableEntity(new { error = response.ErrorMessage });
+            return await BuildSuccessfulFileResponseAsync(
+                response, file!, "protected.pdf", ToolType.ProtectPdf.ToString(), cancellationToken);
         }
 
         // POST api/pdf/split
@@ -764,6 +787,11 @@ namespace PdfToolStack.API.Controllers
                     var result = await processor.SplitRangeAsync(
                         bytes, fromPage.Value, toPage.Value, cancellationToken);
 
+                    await ConsumeLargeFileUnlockIfNeededAsync(
+                        file!,
+                        ToolType.SplitPdf.ToString(),
+                        cancellationToken);
+
                     return File(result, "application/pdf", $"pages_{fromPage}_{toPage}.pdf");
                 }
 
@@ -782,6 +810,12 @@ namespace PdfToolStack.API.Controllers
 
                 zipStream.Position = 0;
                 var baseName = Path.GetFileNameWithoutExtension(file.FileName);
+
+                await ConsumeLargeFileUnlockIfNeededAsync(
+                    file,
+                    ToolType.SplitPdf.ToString(),
+                    cancellationToken);
+
                 return File(zipStream.ToArray(), "application/zip", $"{baseName}_pages.zip");
             }
             catch (Exception ex)
@@ -824,9 +858,15 @@ namespace PdfToolStack.API.Controllers
             };
 
             var response = await _pdfService.ProcessAsync(request, cancellationToken);
-            return response.IsSuccess
-                ? File(response.OutputBytes!, "application/pdf", "images.pdf")
-                : UnprocessableEntity(new { error = response.ErrorMessage });
+            if (!response.IsSuccess)
+                return UnprocessableEntity(new { error = response.ErrorMessage });
+
+            await ConsumeLargeFileUnlocksIfNeededAsync(
+                files,
+                ToolType.JpgToPdf.ToString(),
+                cancellationToken);
+
+            return File(response.OutputBytes!, "application/pdf", "images.pdf");
         }
 
         // POST api/pdf/organize
@@ -847,9 +887,8 @@ namespace PdfToolStack.API.Controllers
                 ?? new List<PageOperationDto>();
 
             var response = await _pdfService.ProcessAsync(request, cancellationToken);
-            return response.IsSuccess
-                ? File(response.OutputBytes!, "application/pdf", "organized.pdf")
-                : UnprocessableEntity(new { error = response.ErrorMessage });
+            return await BuildSuccessfulFileResponseAsync(
+                response, file!, "organized.pdf", ToolType.OrganizePdf.ToString(), cancellationToken);
         }
 
         // POST api/pdf/sign
@@ -885,9 +924,15 @@ namespace PdfToolStack.API.Controllers
             request.SignaturePageNumber = pageNumber;
 
             var response = await _pdfService.ProcessAsync(request, cancellationToken);
-            return response.IsSuccess
-                ? File(response.OutputBytes!, "application/pdf", "signed.pdf")
-                : UnprocessableEntity(new { error = response.ErrorMessage });
+            if (!response.IsSuccess)
+                return UnprocessableEntity(new { error = response.ErrorMessage });
+
+            await ConsumeLargeFileUnlocksIfNeededAsync(
+                new[] { file!, signature! },
+                ToolType.SignPdf.ToString(),
+                cancellationToken);
+
+            return File(response.OutputBytes!, "application/pdf", "signed.pdf");
         }
 
         // POST api/pdf/edit
@@ -908,9 +953,8 @@ namespace PdfToolStack.API.Controllers
                 ?? new List<PdfAnnotationDto>();
 
             var response = await _pdfService.ProcessAsync(request, cancellationToken);
-            return response.IsSuccess
-                ? File(response.OutputBytes!, "application/pdf", "edited.pdf")
-                : UnprocessableEntity(new { error = response.ErrorMessage });
+            return await BuildSuccessfulFileResponseAsync(
+                response, file!, "edited.pdf", ToolType.EditPdf.ToString(), cancellationToken);
         }
 
         // POST api/pdf/annotate
@@ -931,9 +975,8 @@ namespace PdfToolStack.API.Controllers
                 ?? new List<PdfHighlightDto>();
 
             var response = await _pdfService.ProcessAsync(request, cancellationToken);
-            return response.IsSuccess
-                ? File(response.OutputBytes!, "application/pdf", "annotated.pdf")
-                : UnprocessableEntity(new { error = response.ErrorMessage });
+            return await BuildSuccessfulFileResponseAsync(
+                response, file!, "annotated.pdf", ToolType.AnnotatePdf.ToString(), cancellationToken);
         }
 
         // POST api/pdf/compare
@@ -980,6 +1023,11 @@ namespace PdfToolStack.API.Controllers
                 Response.Headers["X-Compare-Pages"] =
                     result.TotalPagesCompared.ToString();
 
+                await ConsumeLargeFileUnlocksIfNeededAsync(
+                    new[] { original!, revised! },
+                    ToolType.ComparePdf.ToString(),
+                    cancellationToken);
+
                 return File(result.ReportBytes,
                     "application/pdf", "comparison_report.pdf");
             }
@@ -995,6 +1043,104 @@ namespace PdfToolStack.API.Controllers
         private string? GetRequiredUserId() =>
             User.FindFirst("sub")?.Value ??
             User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        private async Task<IActionResult> BuildSuccessfulFileResponseAsync(
+            ProcessResponse response,
+            IFormFile sourceFile,
+            string downloadFileName,
+            string toolType,
+            CancellationToken cancellationToken)
+        {
+            if (!response.IsSuccess)
+                return UnprocessableEntity(new { error = response.ErrorMessage });
+
+            await ConsumeLargeFileUnlockIfNeededAsync(
+                sourceFile,
+                toolType,
+                cancellationToken);
+
+            return File(response.OutputBytes!, "application/pdf", downloadFileName);
+        }
+
+        private async Task ConsumeLargeFileUnlockIfNeededAsync(
+            IFormFile sourceFile,
+            string toolType,
+            CancellationToken cancellationToken)
+        {
+            if (sourceFile.Length <= _fileLimits.FreeTierMaxBytes)
+                return;
+
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var userId = GetRequiredUserId();
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                _logger.LogWarning(
+                    "Skipping LargeFileUnlock consumption for oversized {ToolType} file {FileName}: user id was not available.",
+                    toolType,
+                    sourceFile.FileName);
+                return;
+            }
+
+            if (await ResolveIsProAsync())
+            {
+                _logger.LogDebug(
+                    "Skipping LargeFileUnlock consumption for subscribed user {UserId} after {ToolType}. FileSizeBytes: {FileSizeBytes}",
+                    userId,
+                    toolType,
+                    sourceFile.Length);
+                return;
+            }
+
+            try
+            {
+                var consumed = await _featureAccessService
+                    .ConsumeLargeFileUnlockAsync(userId);
+
+                if (consumed)
+                {
+                    _logger.LogInformation(
+                        "Consumed LargeFileUnlock for user {UserId} after successful {ToolType} processing. FileName: {FileName}, FileSizeBytes: {FileSizeBytes}",
+                        userId,
+                        toolType,
+                        sourceFile.FileName,
+                        sourceFile.Length);
+                }
+                else
+                {
+                    _logger.LogWarning(
+                        "LargeFileUnlock was not consumed for user {UserId} after successful {ToolType} processing because no unused unlock was available. FileName: {FileName}, FileSizeBytes: {FileSizeBytes}",
+                        userId,
+                        toolType,
+                        sourceFile.FileName,
+                        sourceFile.Length);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Failed to consume LargeFileUnlock for user {UserId} after successful {ToolType} processing. FileName: {FileName}, FileSizeBytes: {FileSizeBytes}",
+                    userId,
+                    toolType,
+                    sourceFile.FileName,
+                    sourceFile.Length);
+            }
+        }
+
+        private async Task ConsumeLargeFileUnlocksIfNeededAsync(
+            IEnumerable<IFormFile> sourceFiles,
+            string toolType,
+            CancellationToken cancellationToken)
+        {
+            foreach (var sourceFile in sourceFiles)
+            {
+                await ConsumeLargeFileUnlockIfNeededAsync(
+                    sourceFile,
+                    toolType,
+                    cancellationToken);
+            }
+        }
 
         private async Task<IActionResult?> CheckAiUsageAsync(
             string userId,

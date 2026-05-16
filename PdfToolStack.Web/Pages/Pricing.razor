@@ -79,9 +79,8 @@
             <div class="pricing-price">
                 @if (_isAnnual)
                 {
-                    <span class="pricing-price-old">$19</span>
-                    <span class="pricing-price-main">$12.67</span>
-                    <span>/month</span>
+                    <span class="pricing-price-main">$152</span>
+                    <span>/year</span>
                 }
                 else
                 {
@@ -112,7 +111,7 @@
                 <li class="feat-yes">No ads</li>
             </ul>
             <button class="pricing-btn-pro"
-                    @onclick="() => Subscribe(_isAnnual ? _yearlyPriceId : _monthlyPriceId)"
+                    @onclick='() => Subscribe(_isAnnual ? _yearlyPriceId : _monthlyPriceId, "pro", SelectedBillingInterval)'
                     disabled="@(IsLoading || string.IsNullOrWhiteSpace(_isAnnual ? _yearlyPriceId : _monthlyPriceId))">
                 @if (IsLoading && _checkoutTarget == "pro")
                 {
@@ -145,11 +144,26 @@
             <div class="pricing-card-kicker">Shared document operations</div>
             <div class="pricing-plan-name">Teams</div>
             <div class="pricing-price">
-                <span class="pricing-price-main">$29</span>
-                <span>/month</span>
+                @if (_isAnnual)
+                {
+                    <span class="pricing-price-main">$232</span>
+                    <span>/year</span>
+                }
+                else
+                {
+                    <span class="pricing-price-main">$29</span>
+                    <span>/month</span>
+                }
             </div>
             <div class="pricing-billed-note">
-                Up to 5 users included — $6/mo per additional seat
+                @if (_isAnnual)
+                {
+                    <span>Billed $232/year — save $116</span>
+                }
+                else
+                {
+                    <span>Or $232/year and save $116</span>
+                }
             </div>
             <div class="pricing-desc">
                 For groups that need shared workflows, admin controls, and higher usage across a team.
@@ -165,20 +179,31 @@
                 <li class="feat-yes">Onboarding call included</li>
             </ul>
             <button class="pricing-btn-teams"
-                    @onclick='() => Subscribe(_teamsPriceId)'
-                    disabled="@(IsLoading || string.IsNullOrWhiteSpace(_teamsPriceId))">
+                    @onclick='() => Subscribe(_isAnnual ? _teamsYearlyPriceId : _teamsMonthlyPriceId, "teams", SelectedBillingInterval)'
+                    disabled="@(IsLoading || string.IsNullOrWhiteSpace(_isAnnual ? _teamsYearlyPriceId : _teamsMonthlyPriceId))">
                 @if (IsLoading && _checkoutTarget == "teams")
                 {
                     <span>Loading...</span>
+                }
+                else if (_isAnnual)
+                {
+                    <span>Start Teams — $232/year</span>
                 }
                 else
                 {
                     <span>Start Teams — $29/month</span>
                 }
             </button>
-            <div class="pricing-yearly-nudge">
-                5 seats = $29/mo — less than one billable hour
-            </div>
+            @if (!_isAnnual)
+            {
+                <div class="pricing-yearly-nudge">
+                    Or
+                    <button class="pricing-link-btn"
+                            @onclick='() => { _isAnnual = true; }'>
+                        save $116 with annual billing →
+                    </button>
+                </div>
+            }
         </div>
 
     </div>
@@ -561,11 +586,11 @@
             </div>
             <div class="faq-item">
                 <h3>Can I switch between monthly and yearly?</h3>
-                <p>Yes — upgrade to annual billing anytime from your account portal and save $76 immediately.</p>
+                <p>Yes — upgrade to annual billing anytime from your account portal. Pro saves $76/year and Teams saves $116/year.</p>
             </div>
             <div class="faq-item">
                 <h3>How does Teams billing work?</h3>
-                <p>$29/month includes 5 seats. Additional seats are $6/month each. We support invoice and purchase order billing for businesses. Start your plan and contact us to add more seats.</p>
+                <p>Teams is $29/month or $232/year for 5 seats. Additional seats are $6/month each. We support invoice and purchase order billing for businesses. Start your plan and contact us to add more seats.</p>
             </div>
             <div class="faq-item">
                 <h3>Is there a free trial for Pro?</h3>
@@ -597,7 +622,8 @@
 
     private string? _monthlyPriceId;
     private string? _yearlyPriceId;
-    private string? _teamsPriceId;
+    private string? _teamsMonthlyPriceId;
+    private string? _teamsYearlyPriceId;
 
     private string? _largeFilePriceId;
     private string? _aiDayPassPriceId;
@@ -605,6 +631,7 @@
     private string? _batchUnlockPriceId;
 
     private string? _addonError;
+    private string SelectedBillingInterval => _isAnnual ? "annual" : "monthly";
 
     protected override async Task OnInitializedAsync()
     {
@@ -644,7 +671,8 @@
             {
                 _monthlyPriceId = plans.Monthly?.PriceId;
                 _yearlyPriceId = plans.Yearly?.PriceId;
-                _teamsPriceId = plans.Teams?.PriceId;
+                _teamsMonthlyPriceId = plans.TeamsMonthly?.PriceId ?? plans.Teams?.PriceId;
+                _teamsYearlyPriceId = plans.TeamsYearly?.PriceId;
             }
         }
         catch
@@ -673,7 +701,7 @@
         }
     }
 
-    private async Task Subscribe(string? priceId)
+    private async Task Subscribe(string? priceId, string planType, string billingInterval)
     {
         if (string.IsNullOrEmpty(priceId)) return;
 
@@ -683,13 +711,13 @@
             return;
         }
 
-        _checkoutTarget = priceId == _teamsPriceId ? "teams" : "pro";
+        _checkoutTarget = priceId == _teamsMonthlyPriceId || priceId == _teamsYearlyPriceId ? "teams" : "pro";
         IsLoading = true;
         StateHasChanged();
 
         var baseUrl = Navigation.BaseUri.TrimEnd('/');
         var url = await SubService.CreateCheckoutSessionAsync(
-            priceId, UserId, UserEmail, baseUrl);
+            priceId, UserId, UserEmail, baseUrl, planType: planType, billingInterval: billingInterval);
 
         if (!string.IsNullOrEmpty(url))
         {
@@ -766,6 +794,8 @@
         public PlanInfo? Monthly { get; set; }
         public PlanInfo? Yearly { get; set; }
         public PlanInfo? Teams { get; set; }
+        public PlanInfo? TeamsMonthly { get; set; }
+        public PlanInfo? TeamsYearly { get; set; }
     }
 
     private class AddonsResponse

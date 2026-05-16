@@ -9,7 +9,7 @@
         Task<int> GetAiCreditsRemainingAsync(string userId);
         Task<bool> HasBatchUnlockAsync(string userId);
 
-        Task ConsumeLargeFileUnlockAsync(string userId);
+        Task<bool> ConsumeLargeFileUnlockAsync(string userId);
         Task ConsumeAiDayPassUseAsync(string userId);
         Task ConsumeBatchUnlockAsync(string userId);
     }

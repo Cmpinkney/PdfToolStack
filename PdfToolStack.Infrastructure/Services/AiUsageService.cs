@@ -34,8 +34,32 @@ namespace PdfToolStack.Infrastructure.Services
                 return (true, used + 1, limit);
             }
 
-            // Try purchased top-up credits (FIFO - oldest first)
             var now = DateTime.UtcNow;
+
+            // Try an active AI Day Pass before consuming purchased credit packs.
+            var dayPass = await _db.OneTimePurchases
+                .Where(p =>
+                    p.UserId == userId &&
+                    p.PurchaseType == "AiDayPass" &&
+                    !p.IsConsumed &&
+                    p.UsesRemaining > 0 &&
+                    p.ExpiresAt != null &&
+                    p.ExpiresAt > now)
+                .OrderBy(p => p.CreatedAt)
+                .FirstOrDefaultAsync();
+
+            if (dayPass != null)
+            {
+                dayPass.UsesRemaining -= 1;
+                if (dayPass.UsesRemaining <= 0)
+                    dayPass.IsConsumed = true;
+
+                _db.AiUsageLogs.Add(new AiUsageLog { UserId = userId, Feature = feature, Model = model, UsedAt = DateTime.UtcNow });
+                await _db.SaveChangesAsync();
+                return (true, used + 1, limit);
+            }
+
+            // Try purchased top-up credits (FIFO - oldest first)
             var topUp = await _db.AiCreditPurchases
                 .Where(p => p.UserId == userId && p.ExpiresAt > now && p.CreditsUsed < p.CreditsAdded)
                 .OrderBy(p => p.PurchasedAt)

@@ -18,6 +18,7 @@
 
         // Teams plan
         public string TeamsMonthlyPriceId { get; set; } = string.Empty;
+        public string TeamsYearlyPriceId { get; set; } = string.Empty;
 
         // AI Credit Top-Up — one-time purchases
         // Create these as one-time prices in Stripe (not recurring)

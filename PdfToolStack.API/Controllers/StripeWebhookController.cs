@@ -191,7 +191,8 @@ namespace PdfToolStack.API.Controllers
 
             var priceId = stripeSubscription.Items.Data[0].Price.Id;
             var interval = stripeSubscription.Items.Data[0].Price.Recurring?.Interval;
-            var planType = priceId == _stripeOptions.TeamsMonthlyPriceId
+            var planType = priceId == _stripeOptions.TeamsMonthlyPriceId ||
+                           priceId == _stripeOptions.TeamsYearlyPriceId
                 ? "teams"
                 : interval == "month" ? "monthly" : "yearly";
 

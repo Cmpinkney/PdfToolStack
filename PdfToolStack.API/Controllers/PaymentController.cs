@@ -31,8 +31,26 @@ namespace PdfToolStack.API.Controllers
             if (!IsSafeUrl(request.SuccessUrl) || !IsSafeUrl(request.CancelUrl))
                 return BadRequest(new { error = "Invalid redirect URL." });
 
+            if (string.IsNullOrWhiteSpace(_stripeOptions.LargeFilePriceId))
+            {
+                _logger.LogError("Stripe__LargeFilePriceId is not configured.");
+                return StatusCode(503, new { error = "Large file checkout is not configured." });
+            }
+
             try
             {
+                var metadata = new Dictionary<string, string>
+                {
+                    { "jobId", request.JobId },
+                    { "toolType", request.ToolType },
+                    { "checkout_type", "addon" },
+                    { "product_type", "large_file" },
+                    { "entitlement_type", "large_file_unlock" }
+                };
+
+                if (!string.IsNullOrWhiteSpace(request.UserId))
+                    metadata["userId"] = request.UserId;
+
                 var options = new SessionCreateOptions
                 {
                     PaymentMethodTypes = new List<string>
@@ -43,27 +61,14 @@ namespace PdfToolStack.API.Controllers
                     {
                         new SessionLineItemOptions
                         {
-                            PriceData = new SessionLineItemPriceDataOptions
-                            {
-                                UnitAmount = request.AmountCents,
-                                Currency = _stripeOptions.Currency,
-                                ProductData = new SessionLineItemPriceDataProductDataOptions
-                                {
-                                    Name = request.ProductName,
-                                    Description = request.ProductDescription
-                                }
-                            },
+                            Price = _stripeOptions.LargeFilePriceId,
                             Quantity = 1
                         }
                     },
                     Mode = "payment",
                     SuccessUrl = request.SuccessUrl,
                     CancelUrl = request.CancelUrl,
-                    Metadata = new Dictionary<string, string>
-                    {
-                        { "jobId", request.JobId },
-                        { "toolType", request.ToolType }
-                    }
+                    Metadata = metadata
                 };
 
                 var service = new SessionService();
@@ -149,6 +154,7 @@ namespace PdfToolStack.API.Controllers
 
     public class CreateSessionRequest
     {
+        public string UserId { get; set; } = string.Empty;
         public string JobId { get; set; } = string.Empty;
         public string ToolType { get; set; } = string.Empty;
         public string ProductName { get; set; } = string.Empty;

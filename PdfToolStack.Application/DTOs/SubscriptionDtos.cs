@@ -19,6 +19,10 @@
         public string Email { get; set; } = string.Empty;
         public string SuccessUrl { get; set; } = string.Empty;
         public string CancelUrl { get; set; } = string.Empty;
+        public string PlanType { get; set; } = string.Empty;
+        public string BillingInterval { get; set; } = string.Empty;
+        public string ProductType { get; set; } = string.Empty;
+        public string EntitlementType { get; set; } = string.Empty;
     }
 
     public class CreatePortalDto

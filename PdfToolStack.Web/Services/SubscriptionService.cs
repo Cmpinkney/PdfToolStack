@@ -53,7 +53,9 @@ namespace PdfToolStack.Web.Services
             string email,
             string baseUrl,
             string? returnPath = null,
-            string? cancelPath = null)
+            string? cancelPath = null,
+            string? planType = null,
+            string? billingInterval = null)
         {
             var dto = new CreateCheckoutDto
             {
@@ -65,7 +67,9 @@ namespace PdfToolStack.Web.Services
                     : baseUrl + returnPath,
                 CancelUrl = string.IsNullOrWhiteSpace(cancelPath)
                     ? baseUrl + "/pricing"
-                    : baseUrl + cancelPath
+                    : baseUrl + cancelPath,
+                PlanType = planType ?? string.Empty,
+                BillingInterval = billingInterval ?? string.Empty
             };
 
             var response = await _api.PostAsync<CreateCheckoutDto, CheckoutResponseDto>(

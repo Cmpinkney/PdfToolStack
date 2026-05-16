@@ -83,7 +83,11 @@ namespace PdfToolStack.Infrastructure.Services
                 Metadata = new Dictionary<string, string>
                 {
                     { "userId", dto.UserId },
-                    { "checkout_type", "subscription" }
+                    { "checkout_type", "subscription" },
+                    { "plan_type", dto.PlanType },
+                    { "billing_interval", dto.BillingInterval },
+                    { "product_type", dto.ProductType },
+                    { "entitlement_type", string.IsNullOrWhiteSpace(dto.EntitlementType) ? "subscription" : dto.EntitlementType }
                 }
             };
 
@@ -120,6 +124,15 @@ namespace PdfToolStack.Infrastructure.Services
             sessionMetadata["userId"] = userId;
             sessionMetadata["checkout_type"] = "addon";
             sessionMetadata["addon_type"] = addonType;
+            sessionMetadata["product_type"] = addonType;
+            sessionMetadata["entitlement_type"] = addonType switch
+            {
+                "large_file" => "large_file_unlock",
+                "ai_day_pass" => "ai_day_pass",
+                "ai_credit_pack" => "ai_credits",
+                "batch_unlock" => "batch_unlock",
+                _ => "one_time"
+            };
 
             var options = new SessionCreateOptions
             {

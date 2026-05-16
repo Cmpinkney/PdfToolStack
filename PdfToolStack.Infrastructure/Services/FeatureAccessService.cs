@@ -104,7 +104,7 @@ namespace PdfToolStack.Infrastructure.Services
                 (x.ExpiresAt == null || x.ExpiresAt > DateTime.UtcNow));
         }
 
-        public async Task ConsumeLargeFileUnlockAsync(string userId)
+        public async Task<bool> ConsumeLargeFileUnlockAsync(string userId)
         {
             var unlock = await _db.OneTimePurchases
                 .Where(x =>
@@ -117,7 +117,7 @@ namespace PdfToolStack.Infrastructure.Services
                 .FirstOrDefaultAsync();
 
             if (unlock == null)
-                return;
+                return false;
 
             unlock.UsesRemaining--;
 
@@ -125,6 +125,7 @@ namespace PdfToolStack.Infrastructure.Services
                 unlock.IsConsumed = true;
 
             await _db.SaveChangesAsync();
+            return true;
         }
 
         public async Task ConsumeAiDayPassUseAsync(string userId)

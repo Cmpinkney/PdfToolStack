@@ -72,6 +72,11 @@ namespace PdfToolStack.API.Controllers
                 return BadRequest(new { error = "Invalid pricing option." });
             }
 
+            dto.PlanType = GetSubscriptionPlanType(dto.PriceId);
+            dto.BillingInterval = GetSubscriptionBillingInterval(dto.PriceId);
+            dto.ProductType = GetSubscriptionProductType(dto.PriceId);
+            dto.EntitlementType = "subscription";
+
             _logger.LogInformation(
                 "Checkout initiated — UserId: {UserId}, PriceId: {PriceId}",
                 dto.UserId, dto.PriceId);
@@ -237,6 +242,10 @@ namespace PdfToolStack.API.Controllers
                 _logger.LogWarning("Stripe__ProMonthlyPriceIdV2 is not configured.");
             if (string.IsNullOrEmpty(_stripeOptions.ProYearlyPriceIdV2))
                 _logger.LogWarning("Stripe__ProYearlyPriceIdV2 is not configured.");
+            if (string.IsNullOrEmpty(_stripeOptions.TeamsMonthlyPriceId))
+                _logger.LogWarning("Stripe__TeamsMonthlyPriceId is not configured.");
+            if (string.IsNullOrEmpty(_stripeOptions.TeamsYearlyPriceId))
+                _logger.LogWarning("Stripe__TeamsYearlyPriceId is not configured.");
 
             return Ok(new
             {
@@ -257,6 +266,18 @@ namespace PdfToolStack.API.Controllers
                     priceId = _stripeOptions.TeamsMonthlyPriceId,
                     amount = 2900,
                     label = "$29 / month"
+                },
+                teamsMonthly = new
+                {
+                    priceId = _stripeOptions.TeamsMonthlyPriceId,
+                    amount = 2900,
+                    label = "$29 / month"
+                },
+                teamsYearly = new
+                {
+                    priceId = _stripeOptions.TeamsYearlyPriceId,
+                    amount = 23200,
+                    label = "$232 / year"
                 }
             });
         }
@@ -319,11 +340,50 @@ namespace PdfToolStack.API.Controllers
             AddIfSet(allowed, _stripeOptions.ProMonthlyPriceIdV2);
             AddIfSet(allowed, _stripeOptions.ProYearlyPriceIdV2);
             AddIfSet(allowed, _stripeOptions.TeamsMonthlyPriceId);
+            AddIfSet(allowed, _stripeOptions.TeamsYearlyPriceId);
             // Legacy price IDs kept for existing subscriber flows
             AddIfSet(allowed, _stripeOptions.ProMonthlyPriceId);
             AddIfSet(allowed, _stripeOptions.ProYearlyPriceId);
 
             return allowed.Contains(priceId);
+        }
+
+        private string GetSubscriptionProductType(string priceId)
+        {
+            if (string.Equals(priceId, _stripeOptions.ProMonthlyPriceIdV2, StringComparison.Ordinal) ||
+                string.Equals(priceId, _stripeOptions.ProMonthlyPriceId, StringComparison.Ordinal))
+                return "pro_monthly";
+
+            if (string.Equals(priceId, _stripeOptions.ProYearlyPriceIdV2, StringComparison.Ordinal) ||
+                string.Equals(priceId, _stripeOptions.ProYearlyPriceId, StringComparison.Ordinal))
+                return "pro_annual";
+
+            if (string.Equals(priceId, _stripeOptions.TeamsMonthlyPriceId, StringComparison.Ordinal))
+                return "teams_monthly";
+
+            if (string.Equals(priceId, _stripeOptions.TeamsYearlyPriceId, StringComparison.Ordinal))
+                return "teams_annual";
+
+            return "subscription";
+        }
+
+        private string GetSubscriptionPlanType(string priceId)
+        {
+            if (string.Equals(priceId, _stripeOptions.TeamsMonthlyPriceId, StringComparison.Ordinal) ||
+                string.Equals(priceId, _stripeOptions.TeamsYearlyPriceId, StringComparison.Ordinal))
+                return "teams";
+
+            return "pro";
+        }
+
+        private string GetSubscriptionBillingInterval(string priceId)
+        {
+            if (string.Equals(priceId, _stripeOptions.ProYearlyPriceIdV2, StringComparison.Ordinal) ||
+                string.Equals(priceId, _stripeOptions.ProYearlyPriceId, StringComparison.Ordinal) ||
+                string.Equals(priceId, _stripeOptions.TeamsYearlyPriceId, StringComparison.Ordinal))
+                return "annual";
+
+            return "monthly";
         }
 
         private string? GetExpectedAddonPriceId(string addonType) =>
