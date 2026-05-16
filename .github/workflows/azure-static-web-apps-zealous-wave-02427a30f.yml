@@ -39,6 +39,11 @@ jobs:
           BLAZOR_ENV: ${{ github.ref_name == 'staging' && 'Staging' || 'Production' }}
         run: dotnet publish PdfToolStack.Web/PdfToolStack.Web.csproj --configuration Release --output publish_output /p:BlazorEnvironment=$BLAZOR_ENV /p:BlazorEnableCompression=true
 
+      - name: Verify crawl files in publish output
+        run: |
+          ls -la publish_output/wwwroot/robots.txt
+          ls -la publish_output/wwwroot/sitemap.xml
+
       - name: Copy staticwebapp config
         run: cp PdfToolStack.Web/wwwroot/staticwebapp.config.json publish_output/wwwroot/staticwebapp.config.json
 

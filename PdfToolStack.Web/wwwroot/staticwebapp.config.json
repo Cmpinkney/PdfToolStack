@@ -1,6 +1,20 @@
 ﻿{
   "routes": [
     {
+      "route": "/robots.txt",
+      "rewrite": "/robots.txt",
+      "headers": {
+        "content-type": "text/plain; charset=utf-8"
+      }
+    },
+    {
+      "route": "/sitemap.xml",
+      "rewrite": "/sitemap.xml",
+      "headers": {
+        "content-type": "application/xml; charset=utf-8"
+      }
+    },
+    {
       "route": "/protect-pdf",
       "redirect": "/lock-pdf",
       "statusCode": 301
@@ -103,10 +117,12 @@
   ],
   "navigationFallback": {
     "rewrite": "/index.html",
-    "exclude": [ "/api/*", "/*.{css,js,png,jpg,svg,ico,wasm,gif,webp}", "/images/*", "/css/*", "/lib/*" ]
+    "exclude": [ "/api/*", "/robots.txt", "/sitemap.xml", "/*.{css,js,png,jpg,svg,ico,wasm,gif,webp,txt,xml}", "/images/*", "/css/*", "/lib/*" ]
   },
   "mimeTypes": {
     ".svg": "image/svg+xml",
+    ".txt": "text/plain",
+    ".xml": "application/xml",
     ".wasm": "application/wasm"
   }
 }
