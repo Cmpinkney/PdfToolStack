@@ -1,8 +1,4 @@
-﻿User-agent: *
+User-agent: *
 Allow: /
 
 Sitemap: https://pdftoolstack.com/sitemap.xml
-
-Disallow: /authentication/
-Disallow: /account/delete
-Disallow: /account/api-keys
