@@ -1,0 +1,157 @@
+<HeadContent>
+    <script type="application/ld+json">@((MarkupString)JsonLd)</script>
+</HeadContent>
+
+@code {
+    private const string SiteUrl = "https://pdftoolstack.com";
+    private const string OrganizationId = $"{SiteUrl}/#organization";
+
+    [Parameter]
+    public string PageKey { get; set; } = "home";
+
+    private string JsonLd => System.Text.Json.JsonSerializer.Serialize(
+        BuildGraph(),
+        new System.Text.Json.JsonSerializerOptions
+        {
+            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+        });
+
+    private Dictionary<string, object?> BuildGraph()
+    {
+        var page = Pages.TryGetValue(PageKey, out var metadata)
+            ? metadata
+            : Pages["home"];
+
+        var canonicalUrl = $"{SiteUrl}{page.CanonicalPath}";
+
+        return new Dictionary<string, object?>
+        {
+            ["@context"] = "https://schema.org",
+            ["@graph"] = new object[]
+            {
+                BuildOrganization(),
+                BuildSoftwareApplication(page, canonicalUrl),
+                BuildFaqPage(page, canonicalUrl)
+            }
+        };
+    }
+
+    private static Dictionary<string, object?> BuildOrganization() =>
+        new()
+        {
+            ["@type"] = "Organization",
+            ["@id"] = OrganizationId,
+            ["name"] = "PdfToolStack",
+            ["url"] = $"{SiteUrl}/",
+            ["logo"] = $"{SiteUrl}/images/pdftoolstack-logo-full.png"
+        };
+
+    private static Dictionary<string, object?> BuildSoftwareApplication(PageMetadata page, string canonicalUrl) =>
+        new()
+        {
+            ["@type"] = "SoftwareApplication",
+            ["@id"] = $"{canonicalUrl}#software",
+            ["name"] = page.ApplicationName,
+            ["applicationCategory"] = page.ApplicationCategory,
+            ["operatingSystem"] = "Web",
+            ["url"] = canonicalUrl,
+            ["description"] = page.Description,
+            ["publisher"] = new Dictionary<string, object?>
+            {
+                ["@id"] = OrganizationId
+            },
+            ["offers"] = new Dictionary<string, object?>
+            {
+                ["@type"] = "Offer",
+                ["price"] = "0",
+                ["priceCurrency"] = "USD"
+            }
+        };
+
+    private static Dictionary<string, object?> BuildFaqPage(PageMetadata page, string canonicalUrl) =>
+        new()
+        {
+            ["@type"] = "FAQPage",
+            ["@id"] = $"{canonicalUrl}#faq",
+            ["mainEntity"] = page.Faqs.Select(faq => new Dictionary<string, object?>
+            {
+                ["@type"] = "Question",
+                ["name"] = faq.Question,
+                ["acceptedAnswer"] = new Dictionary<string, object?>
+                {
+                    ["@type"] = "Answer",
+                    ["text"] = faq.Answer
+                }
+            }).ToArray()
+        };
+
+    private static readonly IReadOnlyDictionary<string, PageMetadata> Pages =
+        new Dictionary<string, PageMetadata>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["home"] = new(
+                "PdfToolStack",
+                "/",
+                "Free Online PDF Tools, AI PDF Tools & Converters | PdfToolStack",
+                "Compress, merge, split, convert, sign, redact, OCR, and summarize PDFs online. Fast privacy-minded PDF tools with no install and free tools to start.",
+                "BusinessApplication",
+                [
+                    new("What can I do with PdfToolStack?", "PdfToolStack provides online tools to compress, merge, split, convert, sign, redact, OCR, summarize, and work with PDF files."),
+                    new("Do I need to install software?", "No. PdfToolStack runs in your browser, so you can use the PDF tools online without installing desktop software."),
+                    new("Does PdfToolStack offer free PDF tools?", "Yes. PdfToolStack includes free PDF tools to start, with paid upgrades available for larger files, batch workflows, and AI features.")
+                ]),
+            ["compress-pdf"] = new(
+                "Compress PDF - PdfToolStack",
+                "/compress-pdf",
+                "Compress PDF Online Free - Reduce PDF File Size | PdfToolStack",
+                "Compress PDF files online in seconds. Reduce large PDFs for email, forms, and uploads with private processing, instant download, and no signup required.",
+                "BusinessApplication",
+                [
+                    new("How do I compress a PDF online?", "Upload your PDF, choose compression, and download the smaller file after processing finishes."),
+                    new("Can I compress a PDF for email?", "Yes. The Compress PDF tool is designed to reduce large PDFs for email attachments, forms, and upload limits."),
+                    new("Will compression reduce PDF quality?", "Compression may reduce file size by optimizing document data. Results depend on the original PDF content and selected compression behavior.")
+                ]),
+            ["merge-pdf"] = new(
+                "Merge PDF - PdfToolStack",
+                "/merge-pdf",
+                "Merge PDF Files Online Free - Combine PDFs | PdfToolStack",
+                "Merge PDF files into one clean document online. Reorder files, combine submissions, and download instantly with secure processing and no signup.",
+                "BusinessApplication",
+                [
+                    new("How do I merge PDF files?", "Upload two or more PDFs, arrange them in the order you want, and download the combined document."),
+                    new("Can I reorder PDFs before merging?", "Yes. You can reorder uploaded PDFs before creating the final merged file."),
+                    new("What is merging PDFs useful for?", "Merging PDFs helps combine applications, reports, contracts, receipts, tax documents, and other files into one document.")
+                ]),
+            ["pdf-to-word"] = new(
+                "PDF to Word Converter - PdfToolStack",
+                "/pdf-to-word",
+                "PDF to Word Converter Online - Convert PDF to DOCX | PdfToolStack",
+                "Convert text-based PDFs to editable Word documents online. Create DOCX files quickly, keep document structure, and use OCR first for scanned PDFs.",
+                "BusinessApplication",
+                [
+                    new("Can I convert a PDF to Word online?", "Yes. Upload a text-based PDF and PdfToolStack converts it into a downloadable DOCX file."),
+                    new("Does PDF to Word work with scanned PDFs?", "Scanned or image-only PDFs may need OCR first before they can be converted into editable Word text."),
+                    new("What file format do I download?", "The PDF to Word converter produces a DOCX file that can be opened in Microsoft Word and compatible editors.")
+                ]),
+            ["chat-with-pdf"] = new(
+                "Chat with PDF - PdfToolStack",
+                "/chat-with-pdf",
+                "Chat with PDF Online - Ask Questions About PDFs | PdfToolStack",
+                "Upload a PDF and ask questions, find details, or summarize sections with AI. Get document answers faster with private processing.",
+                "BusinessApplication",
+                [
+                    new("What is Chat with PDF?", "Chat with PDF lets you upload a document and ask questions about its contents using AI."),
+                    new("What can I ask a PDF?", "You can ask for summaries, specific details, explanations, and answers grounded in the document content."),
+                    new("Is Chat with PDF useful for long documents?", "Yes. It is designed to help review long PDFs like contracts, manuals, research papers, and reports more quickly.")
+                ])
+        };
+
+    private sealed record PageMetadata(
+        string ApplicationName,
+        string CanonicalPath,
+        string Title,
+        string Description,
+        string ApplicationCategory,
+        Faq[] Faqs);
+
+    private sealed record Faq(string Question, string Answer);
+}
