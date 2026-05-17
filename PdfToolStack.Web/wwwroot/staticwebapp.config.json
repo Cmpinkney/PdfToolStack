@@ -4,14 +4,16 @@
       "route": "/robots.txt",
       "rewrite": "/robots.txt",
       "headers": {
-        "content-type": "text/plain; charset=utf-8"
+        "content-type": "text/plain; charset=utf-8",
+        "cache-control": "public, max-age=3600"
       }
     },
     {
       "route": "/sitemap.xml",
       "rewrite": "/sitemap.xml",
       "headers": {
-        "content-type": "application/xml; charset=utf-8"
+        "content-type": "application/xml; charset=utf-8",
+        "cache-control": "public, max-age=3600"
       }
     },
     {
@@ -117,7 +119,18 @@
   ],
   "navigationFallback": {
     "rewrite": "/index.html",
-    "exclude": [ "/api/*", "/robots.txt", "/sitemap.xml", "/*.{css,js,png,jpg,svg,ico,wasm,gif,webp,txt,xml}", "/images/*", "/css/*", "/lib/*" ]
+    "exclude": [
+      "/api/*",
+      "/robots.txt",
+      "/sitemap.xml",
+      "/_framework/*",
+      "/_content/*",
+      "/images/*",
+      "/css/*",
+      "/js/*",
+      "/lib/*",
+      "/*.{css,js,json,map,png,jpg,jpeg,svg,ico,wasm,gif,webp,txt,xml,br,gz,dat,dll,pdb}"
+    ]
   },
   "mimeTypes": {
     ".svg": "image/svg+xml",
