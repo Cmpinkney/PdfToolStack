@@ -26,6 +26,9 @@
 	<ItemGroup>
 	  <Folder Include="wwwroot\images\icons\" />
 	</ItemGroup>
+	<ItemGroup>
+		<Content Update="wwwroot\appsettings.Development.json" CopyToPublishDirectory="Never" />
+	</ItemGroup>
 	<Target Name="RemoveUnusedSyncfusionThemes" AfterTargets="Publish">
 		<ItemGroup>
 			<UnusedSyncfusionThemes Include="$(PublishDir)wwwroot\_content\Syncfusion.Blazor.Themes\**\*.css" />
@@ -35,5 +38,8 @@
 		</ItemGroup>
 
 		<Delete Files="@(UnusedSyncfusionThemes)" />
+	</Target>
+	<Target Name="RemoveDevelopmentAppSettings" AfterTargets="Publish">
+		<Delete Files="$(PublishDir)wwwroot\appsettings.Development.json" />
 	</Target>
 </Project>

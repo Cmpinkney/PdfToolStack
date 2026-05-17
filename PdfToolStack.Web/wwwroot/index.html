@@ -7,6 +7,7 @@
     <base href="/" />
     <link rel="icon" type="image/svg+xml" href="/images/icons/favicon.svg" />
     <link rel="apple-touch-icon" href="/images/icons/favicon.svg" />
+    <link rel="canonical" href="https://pdftoolstack.com/" />
     <link rel="stylesheet" href="css/app.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -28,6 +29,35 @@
 </head>
 <body>
     <script>
+        window.pdfToolStackConfig = {
+            _apiBaseUrl: null,
+            getApiBaseUrl: async function () {
+                if (this._apiBaseUrl) return this._apiBaseUrl;
+
+                try {
+                    const response = await fetch('/appsettings.json', { cache: 'no-cache' });
+                    if (response.ok) {
+                        const config = await response.json();
+                        if (config && typeof config.ApiBaseUrl === 'string' && config.ApiBaseUrl.trim()) {
+                            this._apiBaseUrl = config.ApiBaseUrl.endsWith('/')
+                                ? config.ApiBaseUrl
+                                : config.ApiBaseUrl + '/';
+                            return this._apiBaseUrl;
+                        }
+                    }
+                } catch (err) {
+                    console.warn('Unable to load PdfToolStack config.', err);
+                }
+
+                this._apiBaseUrl = window.location.origin + '/';
+                return this._apiBaseUrl;
+            },
+            apiUrl: async function (path) {
+                const baseUrl = await this.getApiBaseUrl();
+                return new URL(path.replace(/^\/+/, ''), baseUrl).toString();
+            }
+        };
+
         // ── MUST BE FIRST: patch navigator.permissions before Blazor WASM loads ──
         (function () {
             if (navigator.permissions && navigator.permissions.query) {
@@ -72,8 +102,22 @@
     </script>
 
     <div id="app">
-        <div style="text-align:center;padding:4rem;">
-            <p>Loading...</p>
+        <div class="crawl-fallback" style="max-width:960px;margin:0 auto;padding:4rem 1.5rem;font-family:Inter,Arial,sans-serif;line-height:1.55;color:#172033;">
+            <h1 style="font-size:2.5rem;margin:0 0 1rem;">Free online PDF tools</h1>
+            <p style="font-size:1.125rem;margin:0 0 1.5rem;">
+                PdfToolStack helps you compress, merge, split, convert, sign, redact, OCR, and summarize PDFs online.
+            </p>
+            <nav aria-label="Popular PDF tools" style="display:flex;flex-wrap:wrap;gap:.75rem;">
+                <a href="/compress-pdf">Compress PDF</a>
+                <a href="/merge-pdf">Merge PDF</a>
+                <a href="/split-pdf">Split PDF</a>
+                <a href="/pdf-to-word">PDF to Word</a>
+                <a href="/word-to-pdf">Word to PDF</a>
+                <a href="/chat-with-pdf">Chat with PDF</a>
+                <a href="/ai-summarizer">AI PDF Summarizer</a>
+                <a href="/pdf-ocr">PDF OCR</a>
+                <a href="/pricing">Pricing</a>
+            </nav>
         </div>
     </div>
 
@@ -108,8 +152,10 @@
         };
 
         // ── PDF.js worker ─────────────────────────────────────────────────
-        pdfjsLib.GlobalWorkerOptions.workerSrc =
-            'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+        if (window.pdfjsLib) {
+            pdfjsLib.GlobalWorkerOptions.workerSrc =
+                'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+        }
 
         // ── Redact PDF ────────────────────────────────────────────────────
         let dotNetHelper = null;
@@ -910,7 +956,8 @@
                         fileName: window._pdfFileName,
                         annotations: annotations
                     };
-                    const response = await fetch('https://localhost:7100/api/annotation/apply', {
+                    const endpoint = await window.pdfToolStackConfig.apiUrl('api/annotation/apply');
+                    const response = await fetch(endpoint, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
@@ -973,6 +1020,12 @@
 
             openGoogleDrive: function () {
                 return new Promise((resolve) => {
+                    if (!window.gapi || !window.google?.accounts?.oauth2 || !window.google?.picker) {
+                        console.warn('Google Drive picker scripts are unavailable.');
+                        resolve(null);
+                        return;
+                    }
+
                     gapi.load('picker', () => {
                         const tokenClient = google.accounts.oauth2.initTokenClient({
                             client_id: window.cloudPickers._googleClientId,
@@ -1008,6 +1061,12 @@
 
             openDropbox: function () {
                 return new Promise((resolve) => {
+                    if (!window.Dropbox?.choose) {
+                        console.warn('Dropbox picker script is unavailable.');
+                        resolve(null);
+                        return;
+                    }
+
                     Dropbox.choose({
                         success: (files) => resolve({ name: files[0].name, url: files[0].link, accessToken: null }),
                         cancel: () => resolve(null),
@@ -1023,6 +1082,11 @@
 
             openOneDrive: async function () {
                 try {
+                    if (!window.msal?.PublicClientApplication) {
+                        console.warn('Microsoft authentication script is unavailable.');
+                        return null;
+                    }
+
                     if (!window.cloudPickers._msalInstance) {
                         window.cloudPickers._msalInstance = new msal.PublicClientApplication({
                             auth: {
@@ -1117,7 +1181,8 @@
 
             downloadFileAsBase64: async function (url, accessToken) {
                 try {
-                    const proxyUrl = `https://localhost:7100/api/cloud/download?url=${encodeURIComponent(url)}${accessToken ? '&token=' + encodeURIComponent(accessToken) : ''}`;
+                    const proxyPath = `api/cloud/download?url=${encodeURIComponent(url)}${accessToken ? '&token=' + encodeURIComponent(accessToken) : ''}`;
+                    const proxyUrl = await window.pdfToolStackConfig.apiUrl(proxyPath);
                     const controller = new AbortController();
                     const timeout = setTimeout(() => controller.abort(), 30000);
                     const response = await fetch(proxyUrl, { signal: controller.signal });

@@ -16,7 +16,7 @@ builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
 var apiBaseUrl = builder.Configuration["ApiBaseUrl"]
-    ?? "https://localhost:7100/";
+    ?? "https://pdftoolstack-api-grcxhqergtgcd0g7.westus2-01.azurewebsites.net/";
 
 builder.Services.AddHttpClient<ApiService>(
     client => client.BaseAddress = new Uri(apiBaseUrl))
