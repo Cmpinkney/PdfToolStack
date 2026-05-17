@@ -466,13 +466,15 @@ try
                 "https://js.stripe.com " +
                 "https://cdn.jsdelivr.net " +
                 "https://cdnjs.cloudflare.com " +
+                "https://www.googletagmanager.com " +
                 "https://www.clarity.ms; " +
             "style-src 'self' 'unsafe-inline' " +
                 "https://fonts.googleapis.com; " +
             "font-src 'self' " +
                 "https://fonts.gstatic.com; " +
             "img-src 'self' data: blob: " +
-                "https://*.stripe.com; " +
+                "https://*.stripe.com " +
+                "https://www.google-analytics.com; " +
             "frame-src 'self' " +
                 "https://js.stripe.com " +
                 "https://hooks.stripe.com; " +
@@ -481,6 +483,8 @@ try
                 "https://pdftoolstack-api-grcxhqergtgcd0g7.westus2-01.azurewebsites.net " +
                 auth0ConnectSrc +
                 "https://api.anthropic.com " +
+                "https://www.google-analytics.com " +
+                "https://region1.google-analytics.com " +
                 "https://*.clarity.ms; " +
             "object-src 'none'; " +
             "base-uri 'self';"
