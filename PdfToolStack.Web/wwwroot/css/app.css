@@ -25661,3 +25661,69 @@ body {
         aspect-ratio: 4 / 3;
     }
 }
+
+/* Visible article metadata */
+.article-meta[aria-label="Article metadata"],
+.blog-article-meta[aria-label="Article metadata"] {
+    display: flex !important;
+    align-items: stretch !important;
+    flex-wrap: wrap !important;
+    gap: 0.65rem 0.75rem !important;
+    margin: 0.85rem 0 1rem !important;
+    padding: 0 !important;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+}
+
+.article-meta[aria-label="Article metadata"] > div,
+.blog-article-meta[aria-label="Article metadata"] > div {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    min-height: 34px;
+    border: 1px solid color-mix(in srgb, var(--primary) 12%, var(--border));
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--surface) 88%, var(--primary-light));
+    padding: 0.35rem 0.7rem;
+}
+
+.article-meta[aria-label="Article metadata"] dt,
+.blog-article-meta[aria-label="Article metadata"] dt {
+    margin: 0;
+    color: var(--primary);
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    line-height: 1;
+    text-transform: uppercase;
+}
+
+.article-meta[aria-label="Article metadata"] dd,
+.blog-article-meta[aria-label="Article metadata"] dd {
+    margin: 0;
+    color: var(--text-secondary);
+    font-weight: 650;
+    line-height: 1.2;
+}
+
+[data-theme="dark"] .article-meta[aria-label="Article metadata"] > div,
+[data-theme="dark"] .blog-article-meta[aria-label="Article metadata"] > div {
+    background: color-mix(in srgb, var(--surface) 82%, var(--primary-light));
+    border-color: color-mix(in srgb, var(--primary) 22%, var(--border));
+}
+
+@media (max-width: 640px) {
+    .article-meta[aria-label="Article metadata"],
+    .blog-article-meta[aria-label="Article metadata"] {
+        display: grid !important;
+        grid-template-columns: 1fr;
+        gap: 0.55rem !important;
+    }
+
+    .article-meta[aria-label="Article metadata"] > div,
+    .blog-article-meta[aria-label="Article metadata"] > div {
+        justify-content: space-between;
+        width: 100%;
+        border-radius: 14px;
+    }
+}
