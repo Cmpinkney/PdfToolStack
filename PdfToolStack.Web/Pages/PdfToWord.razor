@@ -8,16 +8,9 @@
 @inject ToastService Toast
 @inject SessionUsageService SessionUsage
 
-<PageTitle>@(IsEditMode ? "Convert PDF to Editable Word Document Free | PdfToolStack" : "PDF to Word Converter Free Online — Convert PDF to DOCX")</PageTitle>
-
-<HeadContent>
-    <meta name="description"
-          content="@(IsEditMode
-                        ? "Convert text-based PDFs to editable Word documents. Scanned or image-only PDFs may need OCR first. Free, no signup, files deleted in 1 hour."
-                        : "Convert text-based PDFs to Word documents free online. Scanned or image-only PDFs may need OCR first.")" />
-    <meta name="keywords" content="pdf to word, convert pdf to docx, pdf to word converter free" />
-    <link rel="canonical" href="https://pdftoolstack.com/pdf-to-word" />
-</HeadContent>
+<SeoHead Title="@PdfToWordSeoTitle"
+         Description="@PdfToWordSeoDescription"
+         CanonicalPath="/pdf-to-word" />
 
 <div class="tool-page">
 
@@ -929,6 +922,15 @@
     private string? ErrorMessage;
     private bool ShowAdsForCurrentUser = true; // TODO: Hide ads for paid users when subscription state is available here.
     private const string ToolAnalyticsName = "PDF to Word";
+    private string PdfToWordSeoTitle =>
+        IsEditMode
+            ? "Convert PDF to Editable Word Online - PDF to DOCX | PdfToolStack"
+            : "PDF to Word Converter Online - Convert PDF to DOCX | PdfToolStack";
+
+    private string PdfToWordSeoDescription =>
+        IsEditMode
+            ? "Convert text-based PDFs to editable Word documents online. Create DOCX files quickly, keep document structure, and use OCR first for scanned PDFs."
+            : "Convert text-based PDFs to editable Word documents online. Create DOCX files quickly, keep document structure, and use OCR first for scanned PDFs.";
 
     private string GetStepClass(PageState state)
     {

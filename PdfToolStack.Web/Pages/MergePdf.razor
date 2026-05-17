@@ -9,16 +9,9 @@
 @using PdfToolStack.Web.Components
 @using static PdfToolStack.Web.Components.FileUpload
 
-<PageTitle>@(IsSubmissionMode ? "Merge PDFs for Submission — Combine Documents Online | PdfToolStack" : "Merge PDF Files Free Online — Combine PDFs Instantly")</PageTitle>
-
-<HeadContent>
-    <meta name="description"
-          content="@(IsSubmissionMode
-                        ? "Combine multiple PDFs into one file for submission. Perfect for applications, tax returns, and legal filings. Free, no signup."
-                        : "Merge multiple PDF files into one document free online. No signup required. Combine PDFs instantly.")" />
-    <meta name="keywords" content="merge pdf, combine pdf, join pdf files, merge pdf online free" />
-    <link rel="canonical" href="https://pdftoolstack.com/merge-pdf" />
-</HeadContent>
+<SeoHead Title="@MergeSeoTitle"
+         Description="@MergeSeoDescription"
+         CanonicalPath="/merge-pdf" />
 
 <div class="tool-page">
 
@@ -1067,6 +1060,16 @@
 
 @code {
     private bool ShowAdsForCurrentUser = true; // TODO: Hide ads for paid users when subscription state is available here.
+    private string MergeSeoTitle =>
+        IsSubmissionMode
+            ? "Merge PDFs for Submission - Combine Documents Online | PdfToolStack"
+            : "Merge PDF Files Online Free - Combine PDFs | PdfToolStack";
+
+    private string MergeSeoDescription =>
+        IsSubmissionMode
+            ? "Combine multiple PDFs into one file for applications, tax returns, legal filings, and other submissions. Reorder files and download instantly."
+            : "Merge PDF files into one clean document online. Reorder files, combine submissions, and download instantly with secure processing and no signup.";
+
     private enum PageState
     {
         Upload, Processing, Complete, Error, LargeFile
