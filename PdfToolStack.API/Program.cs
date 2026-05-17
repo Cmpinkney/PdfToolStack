@@ -467,6 +467,9 @@ try
                 "https://cdn.jsdelivr.net " +
                 "https://cdnjs.cloudflare.com " +
                 "https://www.googletagmanager.com " +
+                "https://pagead2.googlesyndication.com " +
+                "https://googleads.g.doubleclick.net " +
+                "https://tpc.googlesyndication.com " +
                 "https://www.clarity.ms; " +
             "style-src 'self' 'unsafe-inline' " +
                 "https://fonts.googleapis.com; " +
@@ -474,10 +477,15 @@ try
                 "https://fonts.gstatic.com; " +
             "img-src 'self' data: blob: " +
                 "https://*.stripe.com " +
-                "https://www.google-analytics.com; " +
+                "https://www.google-analytics.com " +
+                "https://pagead2.googlesyndication.com " +
+                "https://googleads.g.doubleclick.net " +
+                "https://tpc.googlesyndication.com; " +
             "frame-src 'self' " +
                 "https://js.stripe.com " +
-                "https://hooks.stripe.com; " +
+                "https://hooks.stripe.com " +
+                "https://googleads.g.doubleclick.net " +
+                "https://tpc.googlesyndication.com; " +
             "connect-src 'self' " +
                 connectSrcLocalhost +
                 "https://pdftoolstack-api-grcxhqergtgcd0g7.westus2-01.azurewebsites.net " +
@@ -485,6 +493,9 @@ try
                 "https://api.anthropic.com " +
                 "https://www.google-analytics.com " +
                 "https://region1.google-analytics.com " +
+                "https://pagead2.googlesyndication.com " +
+                "https://googleads.g.doubleclick.net " +
+                "https://tpc.googlesyndication.com " +
                 "https://*.clarity.ms; " +
             "object-src 'none'; " +
             "base-uri 'self';"
