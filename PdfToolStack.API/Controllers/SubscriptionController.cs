@@ -63,6 +63,15 @@ namespace PdfToolStack.API.Controllers
             if (string.IsNullOrEmpty(dto.UserId))
                 return Unauthorized();
 
+            if (!IsSafeUrl(dto.SuccessUrl) || !IsSafeUrl(dto.CancelUrl))
+                return BadRequest(new { error = "Invalid redirect URL." });
+
+            if (string.IsNullOrWhiteSpace(_stripeOptions.SecretKey))
+            {
+                _logger.LogError("Stripe__SecretKey is not configured.");
+                return StatusCode(503, new { error = "Subscription checkout is not configured." });
+            }
+
             // Validate the price ID is one of the configured subscription prices
             if (!IsValidSubscriptionPriceId(dto.PriceId))
             {
@@ -117,6 +126,15 @@ namespace PdfToolStack.API.Controllers
             request.UserId = GetCallerId() ?? string.Empty;
             if (string.IsNullOrEmpty(request.UserId))
                 return Unauthorized();
+
+            if (!IsSafeUrl(request.SuccessUrl) || !IsSafeUrl(request.CancelUrl))
+                return BadRequest(new { error = "Invalid redirect URL." });
+
+            if (string.IsNullOrWhiteSpace(_stripeOptions.SecretKey))
+            {
+                _logger.LogError("Stripe__SecretKey is not configured.");
+                return StatusCode(503, new { error = "Add-on checkout is not configured." });
+            }
 
             var validTypes = new[] { "large_file", "ai_day_pass", "ai_credit_pack", "batch_unlock" };
             if (!validTypes.Contains(request.AddonType))
@@ -183,6 +201,15 @@ namespace PdfToolStack.API.Controllers
                 return Unauthorized();
 
             dto.UserId = userId;
+
+            if (!IsSafeUrl(dto.ReturnUrl))
+                return BadRequest(new { error = "Invalid redirect URL." });
+
+            if (string.IsNullOrWhiteSpace(_stripeOptions.SecretKey))
+            {
+                _logger.LogError("Stripe__SecretKey is not configured.");
+                return StatusCode(503, new { error = "Billing portal is not configured." });
+            }
 
             try
             {
@@ -330,6 +357,15 @@ namespace PdfToolStack.API.Controllers
                 .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
             return adminIds.Contains(callerId);
+        }
+
+        private static bool IsSafeUrl(string url)
+        {
+            if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
+                return false;
+
+            var allowedHosts = new[] { "localhost", "pdftoolstack.com", "www.pdftoolstack.com" };
+            return allowedHosts.Any(h => uri.Host.Equals(h, StringComparison.OrdinalIgnoreCase));
         }
 
         private bool IsValidSubscriptionPriceId(string priceId)

@@ -26,13 +26,16 @@ namespace PdfToolStack.Infrastructure.Services
 
             var sub = await _db.UserSubscriptions
                 .AsNoTracking()
-                .FirstOrDefaultAsync(x => x.UserId == userId);
+                .Where(x => x.UserId == userId)
+                .OrderByDescending(x => x.CreatedAt)
+                .FirstOrDefaultAsync();
 
             if (sub == null)
                 return false;
 
-            return string.Equals(sub.Status, "active", StringComparison.OrdinalIgnoreCase) ||
-                   string.Equals(sub.Status, "trialing", StringComparison.OrdinalIgnoreCase);
+            return sub.CurrentPeriodEnd > DateTime.UtcNow &&
+                   (string.Equals(sub.Status, "active", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(sub.Status, "trialing", StringComparison.OrdinalIgnoreCase));
         }
 
         public async Task<bool> HasLargeFileUnlockAsync(string userId)

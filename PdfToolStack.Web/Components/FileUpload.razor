@@ -67,7 +67,7 @@
 
         @if (_cloudLoading)
         {
-            <p class="cloud-status">Importing from cloud...</p>
+            <p class="cloud-status">@_cloudStatus</p>
         }
 
         @if (!string.IsNullOrEmpty(_cloudError))
@@ -324,6 +324,7 @@
     private bool _cloudLoading;
     //private bool _handledOneDriveCallback;
     private string _cloudError = string.Empty;
+    private string _cloudStatus = "Opening cloud picker...";
     private readonly string _dropZoneId =
     $"dropzone-{Guid.NewGuid():N}";
 
@@ -467,13 +468,25 @@
     private async Task RunCloudPicker(string providerName, Func<Task> action)
     {
         _cloudError = string.Empty;
+        _cloudStatus = $"Opening {providerName}...";
+        _cloudLoading = true;
+        StateHasChanged();
+
         try
         {
             await action();
         }
+        catch (InvalidOperationException ex)
+        {
+            _cloudError = ex.Message;
+        }
         catch (Exception ex)
         {
             _cloudError = $"{providerName} error: {ex.Message}";
+        }
+        finally
+        {
+            _cloudLoading = false;
             StateHasChanged();
         }
     }
@@ -481,28 +494,20 @@
     private async Task DownloadAndSetFile(
         string name, string url, string? accessToken)
     {
-        _cloudLoading = true;
+        _cloudStatus = "Importing from cloud...";
         StateHasChanged();
 
-        try
-        {
-            var bytes = await CloudPicker.DownloadFileAsync(url, accessToken);
+        var bytes = await CloudPicker.DownloadFileAsync(url, accessToken);
 
-            if (bytes is null || bytes.Length == 0)
-            {
-                _cloudError = "Could not download the file. Please try again.";
-                return;
-            }
-
-            var file = new CloudBrowserFile(name, bytes);
-            SelectedFile = file;
-            await OnFileSelected.InvokeAsync(file);
-        }
-        finally
+        if (bytes is null || bytes.Length == 0)
         {
-            _cloudLoading = false;
-            StateHasChanged();
+            _cloudError = "Could not download the file. Please try again.";
+            return;
         }
+
+        var file = new CloudBrowserFile(name, bytes);
+        SelectedFile = file;
+        await OnFileSelected.InvokeAsync(file);
     }
 
     private static string FormatFileSize(long bytes)

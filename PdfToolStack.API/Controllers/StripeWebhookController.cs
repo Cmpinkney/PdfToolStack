@@ -95,8 +95,16 @@ namespace PdfToolStack.API.Controllers
                         await HandleSubscriptionUpdatedAsync(stripeEvent);
                         break;
 
+                    case "customer.subscription.created":
+                        await HandleSubscriptionUpdatedAsync(stripeEvent);
+                        break;
+
                     case "customer.subscription.deleted":
                         await HandleSubscriptionDeletedAsync(stripeEvent);
+                        break;
+
+                    case "invoice.payment_succeeded":
+                        await HandleInvoicePaymentSucceededAsync(stripeEvent);
                         break;
 
                     case "invoice.payment_failed":
@@ -189,12 +197,18 @@ namespace PdfToolStack.API.Controllers
             var subscriptionService = new Stripe.SubscriptionService();
             var stripeSubscription = await subscriptionService.GetAsync(session.SubscriptionId);
 
-            var priceId = stripeSubscription.Items.Data[0].Price.Id;
-            var interval = stripeSubscription.Items.Data[0].Price.Recurring?.Interval;
-            var planType = priceId == _stripeOptions.TeamsMonthlyPriceId ||
-                           priceId == _stripeOptions.TeamsYearlyPriceId
-                ? "teams"
-                : interval == "month" ? "monthly" : "yearly";
+            var subscriptionItem = stripeSubscription.Items.Data.FirstOrDefault();
+            if (subscriptionItem?.Price == null)
+            {
+                _logger.LogWarning(
+                    "Stripe subscription {SubscriptionId} has no price item. SessionId: {SessionId}",
+                    stripeSubscription.Id, session.Id);
+                return;
+            }
+
+            var priceId = subscriptionItem.Price.Id;
+            var interval = subscriptionItem.Price.Recurring?.Interval;
+            var planType = GetPlanTypeForPriceId(priceId, interval);
 
             var existing = await _db.UserSubscriptions.FirstOrDefaultAsync(x => x.UserId == userId);
 
@@ -204,8 +218,8 @@ namespace PdfToolStack.API.Controllers
                 existing.StripeCustomerId = stripeSubscription.CustomerId;
                 existing.PlanType = planType;
                 existing.Status = stripeSubscription.Status;
-                existing.CurrentPeriodStart = stripeSubscription.Items.Data[0].CurrentPeriodStart;
-                existing.CurrentPeriodEnd = stripeSubscription.Items.Data[0].CurrentPeriodEnd;
+                existing.CurrentPeriodStart = subscriptionItem.CurrentPeriodStart;
+                existing.CurrentPeriodEnd = subscriptionItem.CurrentPeriodEnd;
                 existing.CancelAtPeriodEnd = stripeSubscription.CancelAtPeriodEnd;
                 existing.UpdatedAt = DateTime.UtcNow;
             }
@@ -219,8 +233,8 @@ namespace PdfToolStack.API.Controllers
                     StripeSubscriptionId = stripeSubscription.Id,
                     PlanType = planType,
                     Status = stripeSubscription.Status,
-                    CurrentPeriodStart = stripeSubscription.Items.Data[0].CurrentPeriodStart,
-                    CurrentPeriodEnd = stripeSubscription.Items.Data[0].CurrentPeriodEnd,
+                    CurrentPeriodStart = subscriptionItem.CurrentPeriodStart,
+                    CurrentPeriodEnd = subscriptionItem.CurrentPeriodEnd,
                     CancelAtPeriodEnd = stripeSubscription.CancelAtPeriodEnd,
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
@@ -291,6 +305,31 @@ namespace PdfToolStack.API.Controllers
 
                 _logger.LogInformation(
                     "AI credit purchase completed. UserId: {UserId}, SessionId: {SessionId}",
+                    userId, session.Id);
+                return;
+            }
+
+            if (priceId == _stripeOptions.AiCredits200PriceId)
+            {
+                var existingCredit = await _db.AiCreditPurchases
+                    .FirstOrDefaultAsync(x => x.StripeSessionId == session.Id);
+
+                if (existingCredit == null)
+                {
+                    _db.AiCreditPurchases.Add(new AiCreditPurchase
+                    {
+                        UserId = userId,
+                        StripeSessionId = session.Id,
+                        CreditsAdded = 200,
+                        CreditsUsed = 0,
+                        PurchasedAt = DateTime.UtcNow,
+                        ExpiresAt = DateTime.MaxValue
+                    });
+                    await _db.SaveChangesAsync();
+                }
+
+                _logger.LogInformation(
+                    "AI 200-credit purchase completed. UserId: {UserId}, SessionId: {SessionId}",
                     userId, session.Id);
                 return;
             }
@@ -384,9 +423,17 @@ namespace PdfToolStack.API.Controllers
                 .FirstOrDefaultAsync(x => x.StripeSubscriptionId == stripeSubscription.Id);
             if (sub == null) return;
 
+            var subscriptionItem = stripeSubscription.Items.Data.FirstOrDefault();
+            if (subscriptionItem?.Price != null)
+            {
+                sub.PlanType = GetPlanTypeForPriceId(
+                    subscriptionItem.Price.Id,
+                    subscriptionItem.Price.Recurring?.Interval);
+                sub.CurrentPeriodStart = subscriptionItem.CurrentPeriodStart;
+                sub.CurrentPeriodEnd = subscriptionItem.CurrentPeriodEnd;
+            }
+            sub.StripeCustomerId = stripeSubscription.CustomerId;
             sub.Status = stripeSubscription.Status;
-            sub.CurrentPeriodStart = stripeSubscription.Items.Data[0].CurrentPeriodStart;
-            sub.CurrentPeriodEnd = stripeSubscription.Items.Data[0].CurrentPeriodEnd;
             sub.CancelAtPeriodEnd = stripeSubscription.CancelAtPeriodEnd;
             sub.UpdatedAt = DateTime.UtcNow;
 
@@ -395,6 +442,31 @@ namespace PdfToolStack.API.Controllers
             _logger.LogInformation(
                 "Subscription updated. UserId: {UserId}, Status: {Status}, CancelAtPeriodEnd: {Cancel}",
                 sub.UserId, sub.Status, sub.CancelAtPeriodEnd);
+        }
+
+        // ── invoice.payment_succeeded ─────────────────────────────────────────
+
+        private async Task HandleInvoicePaymentSucceededAsync(Event stripeEvent)
+        {
+            var invoice = stripeEvent.Data.Object as Invoice;
+            if (invoice == null || string.IsNullOrWhiteSpace(invoice.CustomerId)) return;
+
+            var sub = await _db.UserSubscriptions
+                .OrderByDescending(s => s.UpdatedAt)
+                .FirstOrDefaultAsync(s => s.StripeCustomerId == invoice.CustomerId);
+            if (sub == null) return;
+
+            if (string.Equals(sub.Status, "canceled", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(sub.Status, "disputed", StringComparison.OrdinalIgnoreCase))
+                return;
+
+            sub.Status = "active";
+            sub.UpdatedAt = DateTime.UtcNow;
+            await _db.SaveChangesAsync();
+
+            _logger.LogInformation(
+                "Invoice payment succeeded. Subscription access active. UserId: {UserId}, CustomerId: {CustomerId}, InvoiceId: {InvoiceId}",
+                sub.UserId, invoice.CustomerId, invoice.Id);
         }
 
         // ── customer.subscription.deleted ────────────────────────────────────────
@@ -493,6 +565,23 @@ namespace PdfToolStack.API.Controllers
             _logger.LogWarning(
                 "Subscription suspended for user {UserId} after dispute {DisputeId}",
                 sub.UserId, dispute.Id);
+        }
+
+        private string GetPlanTypeForPriceId(string? priceId, string? recurringInterval)
+        {
+            if (string.Equals(priceId, _stripeOptions.TeamsMonthlyPriceId, StringComparison.Ordinal) ||
+                string.Equals(priceId, _stripeOptions.TeamsYearlyPriceId, StringComparison.Ordinal))
+                return "teams";
+
+            if (string.Equals(priceId, _stripeOptions.ProMonthlyPriceIdV2, StringComparison.Ordinal) ||
+                string.Equals(priceId, _stripeOptions.ProYearlyPriceIdV2, StringComparison.Ordinal) ||
+                string.Equals(priceId, _stripeOptions.ProMonthlyPriceId, StringComparison.Ordinal) ||
+                string.Equals(priceId, _stripeOptions.ProYearlyPriceId, StringComparison.Ordinal))
+                return "pro";
+
+            return string.Equals(recurringInterval, "year", StringComparison.OrdinalIgnoreCase)
+                ? "yearly"
+                : "monthly";
         }
     }
 }

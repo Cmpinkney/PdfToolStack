@@ -7,9 +7,14 @@
         public string Status { get; set; } = "none";
         public DateTime? CurrentPeriodEnd { get; set; }
         public bool CancelAtPeriodEnd { get; set; }
-        public bool HasTeams => IsActive && PlanType == "teams";
+        public bool HasTeams => IsActive &&
+            string.Equals(PlanType, "teams", StringComparison.OrdinalIgnoreCase);
+
         public bool HasPro => IsActive &&
-            (PlanType == "monthly" || PlanType == "yearly" || HasTeams);
+            (string.Equals(PlanType, "pro", StringComparison.OrdinalIgnoreCase) ||
+             string.Equals(PlanType, "monthly", StringComparison.OrdinalIgnoreCase) ||
+             string.Equals(PlanType, "yearly", StringComparison.OrdinalIgnoreCase) ||
+             HasTeams);
     }
 
     public class CreateCheckoutDto

@@ -68,6 +68,13 @@ namespace PdfToolStack.Infrastructure.Services
 
         public async Task<string> CreateCheckoutSessionAsync(CreateCheckoutDto dto)
         {
+            var existingCustomerId = await _db.UserSubscriptions
+                .AsNoTracking()
+                .Where(s => s.UserId == dto.UserId && s.StripeCustomerId != string.Empty)
+                .OrderByDescending(s => s.CreatedAt)
+                .Select(s => s.StripeCustomerId)
+                .FirstOrDefaultAsync();
+
             var options = new SessionCreateOptions
             {
                 PaymentMethodTypes = new List<string> { "card" },
@@ -79,7 +86,6 @@ namespace PdfToolStack.Infrastructure.Services
                 SuccessUrl = dto.SuccessUrl + (dto.SuccessUrl.Contains('?') ? "&" : "?")
                              + "session_id={CHECKOUT_SESSION_ID}",
                 CancelUrl = dto.CancelUrl,
-                CustomerEmail = dto.Email,
                 Metadata = new Dictionary<string, string>
                 {
                     { "userId", dto.UserId },
@@ -90,6 +96,11 @@ namespace PdfToolStack.Infrastructure.Services
                     { "entitlement_type", string.IsNullOrWhiteSpace(dto.EntitlementType) ? "subscription" : dto.EntitlementType }
                 }
             };
+
+            if (!string.IsNullOrWhiteSpace(existingCustomerId))
+                options.Customer = existingCustomerId;
+            else
+                options.CustomerEmail = dto.Email;
 
             var service = new SessionService();
             var session = await service.CreateAsync(options);

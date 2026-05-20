@@ -17,10 +17,11 @@ namespace PdfToolStack.Infrastructure.Services
         public async Task<(bool Allowed, int Used, int Limit)>
             CheckAndLogAsync(string userId, string feature, string model, string planType)
         {
-            var limit = planType switch
+            var normalizedPlanType = planType.ToLowerInvariant();
+            var limit = normalizedPlanType switch
             {
                 "teams" => TeamsMonthlyLimit,
-                "monthly" or "yearly" => ProMonthlyLimit,
+                "pro" or "monthly" or "yearly" => ProMonthlyLimit,
                 _ => FreeMonthlyLimit   
             };
             var monthStart = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1);
@@ -78,10 +79,11 @@ namespace PdfToolStack.Infrastructure.Services
 
         public async Task<(int Used, int Limit)> GetUsageAsync(string userId, string planType)
         {
-            var limit = planType switch
+            var normalizedPlanType = planType.ToLowerInvariant();
+            var limit = normalizedPlanType switch
             {
                 "teams" => TeamsMonthlyLimit,
-                "monthly" or "yearly" => ProMonthlyLimit,
+                "pro" or "monthly" or "yearly" => ProMonthlyLimit,
                 _ => FreeMonthlyLimit
             };
 

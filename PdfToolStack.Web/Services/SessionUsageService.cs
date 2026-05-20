@@ -43,7 +43,7 @@ namespace PdfToolStack.Web.Services
         public void RecordToolCompletion(string toolName, string? planType = null)
         {
             var effectivePlan = planType ?? CurrentPlanType;
-            if (effectivePlan?.ToLower() is "monthly" or "yearly" or "teams")
+            if (effectivePlan?.ToLowerInvariant() is "pro" or "monthly" or "yearly" or "teams")
                 return;
 
             _toolsCompletedThisSession++;

@@ -1272,57 +1272,86 @@
             _googleClientId: '342984371109-kcpka8n5ildp8fg9u97tu3qlqed82eke.apps.googleusercontent.com',
             _googleDeveloperKey: 'AIzaSyDIIP3v7arpE2gWa-aWJ4Rqh9XS5wS693A',
 
+            isGoogleDriveAvailable: function () {
+                return Boolean(
+                    window.gapi &&
+                    window.google?.accounts?.oauth2 &&
+                    window.cloudPickers?._googleClientId &&
+                    window.cloudPickers?._googleDeveloperKey
+                );
+            },
+
             openGoogleDrive: function () {
-                return new Promise((resolve) => {
-                    if (!window.gapi || !window.google?.accounts?.oauth2 || !window.google?.picker) {
+                return new Promise((resolve, reject) => {
+                    if (!window.cloudPickers.isGoogleDriveAvailable()) {
                         console.warn('Google Drive picker scripts are unavailable.');
                         resolve(null);
                         return;
                     }
 
-                    gapi.load('picker', () => {
-                        const tokenClient = google.accounts.oauth2.initTokenClient({
-                            client_id: window.cloudPickers._googleClientId,
-                            scope: 'https://www.googleapis.com/auth/drive.readonly',
-                            callback: (tokenResponse) => {
-                                if (tokenResponse.error) { resolve(null); return; }
-                                const picker = new google.picker.PickerBuilder()
-                                    .addView(new google.picker.DocsView()
-                                        .setMimeTypes('application/pdf')
-                                        .setMode(google.picker.DocsViewMode.LIST))
-                                    .setOAuthToken(tokenResponse.access_token)
-                                    .setDeveloperKey(window.cloudPickers._googleDeveloperKey)
-                                    .setCallback((data) => {
-                                        if (data.action === google.picker.Action.PICKED) {
-                                            const doc = data.docs[0];
-                                            resolve({
-                                                name: doc.name,
-                                                url: `https://www.googleapis.com/drive/v3/files/${doc.id}?alt=media`,
-                                                accessToken: tokenResponse.access_token
-                                            });
-                                        } else if (data.action === google.picker.Action.CANCEL) {
-                                            resolve(null);
-                                        }
-                                    })
-                                    .build();
-                                picker.setVisible(true);
+                    gapi.load('picker', {
+                        callback: () => {
+                            if (!window.google?.picker) {
+                                reject(new Error('Google Picker failed to load.'));
+                                return;
                             }
-                        });
-                        tokenClient.requestAccessToken({ prompt: '' });
+
+                            const tokenClient = google.accounts.oauth2.initTokenClient({
+                                client_id: window.cloudPickers._googleClientId,
+                                scope: 'https://www.googleapis.com/auth/drive.readonly',
+                                callback: (tokenResponse) => {
+                                    if (tokenResponse.error) { resolve(null); return; }
+                                    const picker = new google.picker.PickerBuilder()
+                                        .addView(new google.picker.DocsView()
+                                            .setMimeTypes('application/pdf')
+                                            .setMode(google.picker.DocsViewMode.LIST))
+                                        .setOAuthToken(tokenResponse.access_token)
+                                        .setDeveloperKey(window.cloudPickers._googleDeveloperKey)
+                                        .setCallback((data) => {
+                                            if (data.action === google.picker.Action.PICKED) {
+                                                const doc = data.docs[0];
+                                                resolve({
+                                                    name: doc.name,
+                                                    url: `https://www.googleapis.com/drive/v3/files/${doc.id}?alt=media`,
+                                                    accessToken: tokenResponse.access_token,
+                                                    size: doc.sizeBytes ?? 0
+                                                });
+                                            } else if (data.action === google.picker.Action.CANCEL) {
+                                                resolve(null);
+                                            }
+                                        })
+                                        .build();
+                                    picker.setVisible(true);
+                                }
+                            });
+                            tokenClient.requestAccessToken({ prompt: '' });
+                        },
+                        onerror: () => reject(new Error('Google Picker failed to load.')),
+                        timeout: 10000,
+                        ontimeout: () => reject(new Error('Google Picker timed out.'))
                     });
                 });
             },
 
+            isDropboxAvailable: function () {
+                return Boolean(window.Dropbox?.choose);
+            },
+
             openDropbox: function () {
                 return new Promise((resolve) => {
-                    if (!window.Dropbox?.choose) {
+                    if (!window.cloudPickers.isDropboxAvailable()) {
                         console.warn('Dropbox picker script is unavailable.');
                         resolve(null);
                         return;
                     }
 
                     Dropbox.choose({
-                        success: (files) => resolve({ name: files[0].name, url: files[0].link, accessToken: null }),
+                        success: (files) => resolve({
+                            name: files[0].name,
+                            url: files[0].link,
+                            accessToken: null,
+                            size: files[0].bytes ?? 0
+                        }),
                         cancel: () => resolve(null),
                         linkType: 'direct',
                         multiselect: false,

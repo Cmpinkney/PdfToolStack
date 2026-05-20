@@ -147,12 +147,33 @@ public sealed class CloudPickerService
     {
         try
         {
+            var isAvailable = await _js.InvokeAsync<bool>(
+                "cloudPickers.isGoogleDriveAvailable");
+
+            if (!isAvailable)
+            {
+                throw new InvalidOperationException(
+                    "Google Drive import is unavailable right now. Please use Browse File for now.");
+            }
+
             return await _js.InvokeAsync<CloudFileInfo?>(
                 "cloudPickers.openGoogleDrive");
         }
-        catch
+        catch (JSException ex)
         {
-            return null;
+            throw new InvalidOperationException(
+                "Google Drive import could not start. Please use Browse File for now.",
+                ex);
+        }
+        catch (JSDisconnectedException ex)
+        {
+            throw new InvalidOperationException(
+                "Google Drive import could not start. Please use Browse File for now.",
+                ex);
+        }
+        catch (InvalidOperationException)
+        {
+            throw;
         }
     }
 
@@ -166,12 +187,33 @@ public sealed class CloudPickerService
     {
         try
         {
+            var isAvailable = await _js.InvokeAsync<bool>(
+                "cloudPickers.isDropboxAvailable");
+
+            if (!isAvailable)
+            {
+                throw new InvalidOperationException(
+                    "Dropbox import is unavailable right now. Please use Browse File for now.");
+            }
+
             return await _js.InvokeAsync<CloudFileInfo?>(
                 "cloudPickers.openDropbox");
         }
-        catch
+        catch (JSException ex)
         {
-            return null;
+            throw new InvalidOperationException(
+                "Dropbox import could not start. Please use Browse File for now.",
+                ex);
+        }
+        catch (JSDisconnectedException ex)
+        {
+            throw new InvalidOperationException(
+                "Dropbox import could not start. Please use Browse File for now.",
+                ex);
+        }
+        catch (InvalidOperationException)
+        {
+            throw;
         }
     }
 
