@@ -1,0 +1,1103 @@
+<section class="ai-intel-hero-visual" aria-label="AI document intelligence workflow visualization">
+    <div class="ai-intel-shell">
+        <div class="ai-intel-glow" aria-hidden="true"></div>
+        <div class="ai-ambient-particles" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+
+        <div class="ai-intel-steps" aria-label="Workflow steps">
+            <span class="ai-step">Upload PDF</span>
+            <span aria-hidden="true">&rarr;</span>
+            <span class="ai-step ai-step--active">AI Analyze</span>
+            <span aria-hidden="true">&rarr;</span>
+            <span class="ai-step">Extract Data</span>
+            <span aria-hidden="true">&rarr;</span>
+            <span class="ai-step">Generate Insights</span>
+        </div>
+
+        <div class="ai-intel-stage">
+            <svg class="ai-intel-paths" viewBox="0 0 720 470" aria-hidden="true" focusable="false">
+                <defs>
+                    <filter id="aiLineGlow" x="-20%" y="-80%" width="140%" height="260%" color-interpolation-filters="sRGB">
+                        <feGaussianBlur stdDeviation="4.5" result="blur" />
+                        <feMerge>
+                            <feMergeNode in="blur" />
+                            <feMergeNode in="SourceGraphic" />
+                        </feMerge>
+                    </filter>
+                    <filter id="aiParticleGlow" x="-180%" y="-180%" width="460%" height="460%" color-interpolation-filters="sRGB">
+                        <feGaussianBlur stdDeviation="3.5" result="blur" />
+                        <feMerge>
+                            <feMergeNode in="blur" />
+                            <feMergeNode in="SourceGraphic" />
+                        </feMerge>
+                    </filter>
+                </defs>
+
+                <path class="ai-flow-rail" d="M292 130 C340 82 386 72 438 88 C462 96 486 98 516 94" />
+                <path class="ai-flow-rail" d="M300 186 C356 154 406 152 456 174 C476 183 494 184 516 180" />
+                <path class="ai-flow-rail" d="M300 250 C356 256 408 268 456 290 C476 299 494 300 516 294" />
+                <path class="ai-flow-rail" d="M292 306 C340 362 390 388 450 368 C474 360 494 362 516 354" />
+
+                <path id="aiPathSummary" class="ai-flow-path ai-flow-path--summary" d="M292 130 C340 82 386 72 438 88 C462 96 486 98 516 94" />
+                <path id="aiPathData" class="ai-flow-path ai-flow-path--data" d="M300 186 C356 154 406 152 456 174 C476 183 494 184 516 180" />
+                <path id="aiPathChart" class="ai-flow-path ai-flow-path--chart" d="M300 250 C356 256 408 268 456 290 C476 299 494 300 516 294" />
+                <path id="aiPathInsight" class="ai-flow-path ai-flow-path--insight" d="M292 306 C340 362 390 388 450 368 C474 360 494 362 516 354" />
+
+                <g class="ai-flow-particles">
+                    <circle r="4.8" fill="#8b5cf6" filter="url(#aiParticleGlow)">
+                        <animateMotion dur="4.9s" repeatCount="indefinite" begin="0s">
+                            <mpath href="#aiPathSummary" />
+                        </animateMotion>
+                    </circle>
+                    <circle r="3.2" fill="#ffffff">
+                        <animateMotion dur="4.9s" repeatCount="indefinite" begin=".45s">
+                            <mpath href="#aiPathSummary" />
+                        </animateMotion>
+                    </circle>
+                    <circle r="4.6" fill="#2563eb" filter="url(#aiParticleGlow)">
+                        <animateMotion dur="5.2s" repeatCount="indefinite" begin=".55s">
+                            <mpath href="#aiPathData" />
+                        </animateMotion>
+                    </circle>
+                    <circle r="3" fill="#ffffff">
+                        <animateMotion dur="5.2s" repeatCount="indefinite" begin="1s">
+                            <mpath href="#aiPathData" />
+                        </animateMotion>
+                    </circle>
+                    <circle r="4.6" fill="#14b8a6" filter="url(#aiParticleGlow)">
+                        <animateMotion dur="5.5s" repeatCount="indefinite" begin="1.1s">
+                            <mpath href="#aiPathChart" />
+                        </animateMotion>
+                    </circle>
+                    <circle r="3" fill="#ffffff">
+                        <animateMotion dur="5.5s" repeatCount="indefinite" begin="1.55s">
+                            <mpath href="#aiPathChart" />
+                        </animateMotion>
+                    </circle>
+                    <circle r="4.8" fill="#f97316" filter="url(#aiParticleGlow)">
+                        <animateMotion dur="5.7s" repeatCount="indefinite" begin="1.65s">
+                            <mpath href="#aiPathInsight" />
+                        </animateMotion>
+                    </circle>
+                    <circle r="3.2" fill="#ffffff">
+                        <animateMotion dur="5.7s" repeatCount="indefinite" begin="2.1s">
+                            <mpath href="#aiPathInsight" />
+                        </animateMotion>
+                    </circle>
+                </g>
+            </svg>
+
+            <article class="ai-doc-card" aria-label="Uploaded PDF document">
+                <div class="ai-doc-aura" aria-hidden="true"></div>
+                <div class="ai-doc-header">
+                    <div class="ai-doc-pdf-icon" aria-hidden="true">
+                        <span>PDF</span>
+                    </div>
+                    <span class="ai-doc-status">AI reading</span>
+                </div>
+                <div class="ai-doc-page">
+                    <div class="ai-doc-fold"></div>
+                    <div class="ai-doc-scan" aria-hidden="true"></div>
+                    <span class="ai-doc-line ai-doc-line-lg"></span>
+                    <span class="ai-doc-line"></span>
+                    <span class="ai-doc-line ai-doc-line-sm"></span>
+                    <div class="ai-doc-chart-preview" aria-hidden="true">
+                        <svg viewBox="0 0 180 72">
+                            <path class="ai-doc-chart-grid" d="M8 58H172M8 42H172M8 26H172M8 10H172" />
+                            <path class="ai-doc-chart-fill" d="M10 58 C28 50 34 39 52 42 C70 45 76 26 94 28 C114 30 120 16 136 18 C152 20 158 12 170 10 V64 H10Z" />
+                            <path class="ai-doc-chart-line" d="M10 58 C28 50 34 39 52 42 C70 45 76 26 94 28 C114 30 120 16 136 18 C152 20 158 12 170 10" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="ai-doc-meta">
+                    <strong>Annual_Report_Q2.pdf</strong>
+                    <span>2.4 MB</span>
+                </div>
+                <p>42 pages scanned for summaries, tables, charts, and risk signals.</p>
+                <div class="ai-doc-progress" aria-hidden="true">
+                    <span></span>
+                </div>
+            </article>
+
+            <div class="ai-insight-stack">
+                <article class="ai-insight-card ai-insight-card--summary">
+                    <div class="ai-insight-icon">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M5 6h14M5 12h11M5 18h7" />
+                        </svg>
+                    </div>
+                    <div class="ai-insight-copy">
+                        <span>AI Summary</span>
+                        <strong>Revenue up 18%, margin stable</strong>
+                        <div class="ai-card-loader" aria-hidden="true"><i></i></div>
+                    </div>
+                    <div class="ai-card-progress" aria-hidden="true"><span></span></div>
+                </article>
+
+                <article class="ai-insight-card ai-insight-card--data">
+                    <div class="ai-insight-icon">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <rect x="4" y="4" width="16" height="16" rx="3" />
+                            <path d="M4 10h16M10 4v16" />
+                        </svg>
+                    </div>
+                    <div class="ai-insight-copy">
+                        <span>Extracted Data</span>
+                        <strong>128 rows exported to XLSX</strong>
+                        <div class="ai-card-loader" aria-hidden="true"><i></i></div>
+                    </div>
+                    <div class="ai-card-progress" aria-hidden="true"><span></span></div>
+                </article>
+
+                <article class="ai-insight-card ai-insight-card--chart">
+                    <div class="ai-mini-chart" aria-hidden="true">
+                        <svg viewBox="0 0 120 52">
+                            <path class="ai-chart-grid" d="M4 42H116M4 26H116M4 10H116" />
+                            <path class="ai-chart-fill" d="M8 38 C24 34 30 24 44 28 C58 32 64 16 78 18 C94 20 100 8 114 10 V48 H8Z" />
+                            <path class="ai-chart-line" d="M8 38 C24 34 30 24 44 28 C58 32 64 16 78 18 C94 20 100 8 114 10" />
+                        </svg>
+                    </div>
+                    <div class="ai-insight-copy">
+                        <span>Key Charts</span>
+                        <strong>3 trends detected</strong>
+                        <div class="ai-card-loader" aria-hidden="true"><i></i></div>
+                    </div>
+                    <div class="ai-card-progress" aria-hidden="true"><span></span></div>
+                </article>
+
+                <article class="ai-insight-card ai-insight-card--insights">
+                    <div class="ai-insight-icon">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M12 3c.5 1.8 1.7 3 3.5 3.5C13.7 7 12.5 8.2 12 10c-.5-1.8-1.7-3-3.5-3.5C10.3 6 11.5 4.8 12 3Z" />
+                            <path d="M18 13c.35 1.2 1.1 2 2.3 2.3C19.1 15.6 18.35 16.4 18 17.6c-.35-1.2-1.1-2-2.3-2.3C16.9 15 17.65 14.2 18 13Z" />
+                            <path d="M7 12c.3 1 .95 1.65 1.95 1.95C7.95 14.25 7.3 14.9 7 15.9c-.3-1-.95-1.65-1.95-1.95C6.05 13.65 6.7 13 7 12Z" />
+                        </svg>
+                    </div>
+                    <div class="ai-insight-copy">
+                        <span>Important Insights</span>
+                        <strong>5 review flags prioritized</strong>
+                        <div class="ai-card-loader" aria-hidden="true"><i></i></div>
+                    </div>
+                    <div class="ai-card-progress" aria-hidden="true"><span></span></div>
+                </article>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+<style>
+    .ai-intel-hero-visual {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .ai-intel-shell {
+        position: relative;
+        width: min(720px, 100%);
+        min-height: 558px;
+        margin-inline: auto;
+        overflow: visible;
+        border: 1px solid rgba(148, 163, 184, 0.18);
+        border-radius: 34px;
+        background:
+            radial-gradient(circle at 35% 46%, rgba(109, 93, 252, 0.23), transparent 25%),
+            radial-gradient(circle at 42% 50%, rgba(6, 182, 212, 0.16), transparent 32%),
+            linear-gradient(135deg, rgba(255, 255, 255, 0.94), rgba(248, 250, 252, 0.78)),
+            radial-gradient(circle at 22% 18%, rgba(109, 93, 252, 0.14), transparent 34%),
+            radial-gradient(circle at 76% 76%, rgba(20, 184, 166, 0.12), transparent 32%);
+        box-shadow: 0 30px 90px rgba(15, 23, 42, 0.13);
+        isolation: isolate;
+    }
+
+    .ai-intel-shell::before {
+        content: "";
+        position: absolute;
+        inset: 24px;
+        border-radius: 26px;
+        border: 1px solid rgba(255, 255, 255, 0.68);
+        background-image:
+            radial-gradient(circle, rgba(79, 70, 229, 0.24) 1px, transparent 1.35px);
+        background-size: 22px 22px;
+        mask-image: radial-gradient(circle at 34% 46%, #000 0 28%, transparent 68%);
+        z-index: -1;
+    }
+
+    .ai-intel-shell::after {
+        content: "";
+        position: absolute;
+        width: 340px;
+        height: 340px;
+        left: 70px;
+        top: 96px;
+        border-radius: 999px;
+        background: radial-gradient(circle, rgba(109, 93, 252, 0.22), rgba(37, 99, 235, 0.08) 42%, transparent 70%);
+        filter: blur(6px);
+        opacity: 0.85;
+        z-index: -1;
+    }
+
+    .ai-intel-glow {
+        position: absolute;
+        inset: 0;
+        background:
+            linear-gradient(115deg, transparent 12%, rgba(109, 93, 252, 0.08), transparent 42%),
+            linear-gradient(235deg, transparent 30%, rgba(6, 182, 212, 0.08), transparent 70%);
+        animation: aiAmbientShift 12s ease-in-out infinite alternate;
+        pointer-events: none;
+    }
+
+    .ai-ambient-particles {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+    }
+
+    .ai-ambient-particles span {
+        position: absolute;
+        width: 5px;
+        height: 5px;
+        border-radius: 999px;
+        background: rgba(37, 99, 235, 0.26);
+        box-shadow: 0 0 18px rgba(37, 99, 235, 0.24);
+        animation: aiAmbientParticle 9s ease-in-out infinite;
+    }
+
+    .ai-ambient-particles span:nth-child(1) { left: 18%; top: 26%; animation-delay: -1s; }
+    .ai-ambient-particles span:nth-child(2) { left: 44%; top: 18%; background: rgba(139, 92, 246, 0.26); animation-delay: -3s; }
+    .ai-ambient-particles span:nth-child(3) { left: 82%; top: 28%; background: rgba(20, 184, 166, 0.26); animation-delay: -5s; }
+    .ai-ambient-particles span:nth-child(4) { left: 72%; top: 72%; background: rgba(249, 115, 22, 0.24); animation-delay: -2s; }
+    .ai-ambient-particles span:nth-child(5) { left: 12%; top: 76%; animation-delay: -6s; }
+    .ai-ambient-particles span:nth-child(6) { left: 54%; top: 84%; background: rgba(20, 184, 166, 0.24); animation-delay: -4s; }
+
+    .ai-intel-steps {
+        position: relative;
+        z-index: 4;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 22px auto 0;
+        width: calc(100% - 44px);
+        color: #475569;
+        font-size: 0.78rem;
+        font-weight: 850;
+    }
+
+    .ai-intel-steps {
+        min-height: 42px;
+        overflow: hidden;
+        border: 1px solid rgba(148, 163, 184, 0.18);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.78);
+        box-shadow: 0 12px 34px rgba(15, 23, 42, 0.06);
+        padding: 0.28rem 0.75rem;
+    }
+
+    .ai-intel-steps::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        width: 34%;
+        background: linear-gradient(90deg, transparent, rgba(37, 99, 235, 0.16), transparent);
+        transform: translateX(-120%);
+        animation: aiStepSweep 4.8s ease-in-out infinite;
+    }
+
+    .ai-intel-steps span {
+        position: relative;
+        z-index: 1;
+    }
+
+    .ai-intel-steps .ai-step {
+        color: #334155;
+    }
+
+    .ai-step--active {
+        border-radius: 999px;
+        background: rgba(238, 242, 255, 0.9);
+        box-shadow: 0 0 0 1px rgba(109, 93, 252, 0.14), 0 0 22px rgba(109, 93, 252, 0.22);
+        color: #4338ca !important;
+        padding: 0.28rem 0.58rem;
+        animation: aiActiveStepPulse 2.4s ease-in-out infinite;
+    }
+
+    .ai-intel-stage {
+        position: relative;
+        z-index: 2;
+        min-height: 472px;
+        margin-top: 6px;
+    }
+
+    .ai-intel-paths {
+        position: absolute;
+        inset: 0;
+        width: 100% !important;
+        height: 100% !important;
+        overflow: visible;
+        filter: none !important;
+        z-index: 1;
+    }
+
+    .ai-flow-rail,
+    .ai-flow-path {
+        fill: none;
+        stroke-linecap: round;
+    }
+
+    .ai-flow-rail {
+        stroke: rgba(148, 163, 184, 0.16);
+        stroke-width: 8;
+    }
+
+    .ai-flow-path {
+        stroke-width: 3.8;
+        stroke-dasharray: 14 18;
+        animation: aiPathFlow 5.4s linear infinite;
+        opacity: 0.94;
+        filter: url(#aiLineGlow);
+    }
+
+    .ai-flow-path--summary { stroke: #8b5cf6; }
+    .ai-flow-path--data { stroke: #2563eb; animation-delay: -0.8s; }
+    .ai-flow-path--chart { stroke: #14b8a6; animation-delay: -1.4s; }
+    .ai-flow-path--insight { stroke: #f97316; animation-delay: -2s; }
+
+    .ai-flow-particles circle {
+        opacity: 0.9;
+    }
+
+    .ai-doc-card,
+    .ai-insight-card {
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+    }
+
+    .ai-doc-card {
+        position: absolute;
+        left: 38px;
+        top: 64px;
+        z-index: 3;
+        width: 258px;
+        border: 1px solid rgba(199, 210, 254, 0.78);
+        border-radius: 30px;
+        background:
+            linear-gradient(150deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.8)),
+            linear-gradient(135deg, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.22));
+        box-shadow:
+            0 34px 86px rgba(79, 70, 229, 0.23),
+            0 16px 42px rgba(15, 23, 42, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.95);
+        padding: 20px;
+        animation: aiDocFloat 5.8s ease-in-out infinite;
+    }
+
+    .ai-doc-card::before {
+        content: "";
+        position: absolute;
+        inset: 1px;
+        border-radius: 28px;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.55), transparent 42%);
+        pointer-events: none;
+    }
+
+    .ai-doc-card::after {
+        content: "";
+        position: absolute;
+        inset: -16px;
+        border-radius: 38px;
+        background:
+            radial-gradient(circle at 42% 38%, rgba(109, 93, 252, 0.32), transparent 60%),
+            radial-gradient(circle at 62% 68%, rgba(6, 182, 212, 0.18), transparent 64%);
+        opacity: 0.82;
+        z-index: -1;
+        filter: blur(18px);
+        animation: aiDocGlowPulse 4.6s ease-in-out infinite;
+    }
+
+    .ai-doc-aura {
+        position: absolute;
+        inset: 18px;
+        border-radius: 28px;
+        background: linear-gradient(135deg, rgba(109, 93, 252, 0.1), transparent 46%, rgba(20, 184, 166, 0.08));
+        pointer-events: none;
+    }
+
+    .ai-doc-header {
+        position: relative;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 14px;
+        margin-bottom: 12px;
+    }
+
+    .ai-doc-status {
+        display: inline-flex;
+        align-items: center;
+        min-height: 28px;
+        border-radius: 999px;
+        font-size: 0.72rem;
+        font-weight: 900;
+        padding: 0.22rem 0.55rem;
+    }
+
+    .ai-doc-pdf-icon {
+        position: relative;
+        display: grid;
+        place-items: center;
+        width: 72px;
+        height: 82px;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.42);
+        border-radius: 18px;
+        background:
+            linear-gradient(150deg, rgba(255, 255, 255, 0.22), transparent 35%),
+            linear-gradient(135deg, #ef4444 0%, #dc2626 52%, #991b1b 100%);
+        color: #ffffff;
+        box-shadow:
+            0 18px 34px rgba(220, 38, 38, 0.34),
+            0 0 28px rgba(239, 68, 68, 0.22),
+            inset 0 1px 0 rgba(255, 255, 255, 0.34);
+    }
+
+    .ai-doc-pdf-icon::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 24px;
+        height: 24px;
+        border-bottom-left-radius: 8px;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.72), rgba(254, 202, 202, 0.32));
+        clip-path: polygon(0 0, 100% 0, 100% 100%);
+    }
+
+    .ai-doc-pdf-icon::after {
+        content: "";
+        position: absolute;
+        inset: auto 13px 14px;
+        height: 4px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.36);
+    }
+
+    .ai-doc-pdf-icon span {
+        position: relative;
+        z-index: 1;
+        margin-top: 8px;
+        color: #ffffff;
+        font-size: 1rem;
+        font-weight: 950;
+        letter-spacing: 0.04em;
+    }
+
+    .ai-doc-status {
+        background: #ecfdf5;
+        color: #047857;
+    }
+
+    .ai-doc-page {
+        position: relative;
+        min-height: 166px;
+        overflow: hidden;
+        border: 1px solid rgba(148, 163, 184, 0.24);
+        border-radius: 20px;
+        background:
+            linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.86)),
+            #ffffff;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+        padding: 20px 18px;
+    }
+
+    .ai-doc-fold {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 40px;
+        height: 40px;
+        border-bottom-left-radius: 14px;
+        background: linear-gradient(135deg, #dbeafe, #eef2ff);
+        clip-path: polygon(0 0, 100% 0, 100% 100%);
+        box-shadow: -6px 8px 18px rgba(37, 99, 235, 0.08);
+    }
+
+    .ai-doc-line {
+        display: block;
+        width: 72%;
+        height: 8px;
+        border-radius: 999px;
+        background: #e2e8f0;
+        margin-bottom: 10px;
+    }
+
+    .ai-doc-line-lg { width: 86%; background: #c7d2fe; }
+    .ai-doc-line-sm { width: 54%; }
+
+    .ai-doc-scan {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: -26%;
+        height: 56px;
+        background:
+            linear-gradient(180deg, transparent, rgba(6, 182, 212, 0.18), transparent),
+            linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
+        border-top: 1px solid rgba(6, 182, 212, 0.38);
+        border-bottom: 1px solid rgba(37, 99, 235, 0.2);
+        box-shadow: 0 0 30px rgba(6, 182, 212, 0.18);
+        animation: aiScanSheet 3.8s ease-in-out infinite;
+    }
+
+    .ai-doc-chart-preview {
+        position: absolute;
+        left: 18px;
+        right: 18px;
+        bottom: 16px;
+        height: 72px;
+        border-radius: 16px;
+        background: linear-gradient(135deg, rgba(239, 246, 255, 0.9), rgba(240, 253, 250, 0.82));
+        padding: 10px;
+    }
+
+    .ai-doc-chart-preview svg {
+        width: 100% !important;
+        height: 100% !important;
+        overflow: visible;
+        filter: none !important;
+    }
+
+    .ai-doc-chart-grid,
+    .ai-doc-chart-line,
+    .ai-doc-chart-fill,
+    .ai-chart-grid,
+    .ai-chart-line,
+    .ai-chart-fill {
+        fill: none;
+        stroke-linecap: round;
+    }
+
+    .ai-doc-chart-grid,
+    .ai-chart-grid {
+        stroke: rgba(148, 163, 184, 0.32);
+        stroke-width: 1;
+    }
+
+    .ai-doc-chart-fill,
+    .ai-chart-fill {
+        fill: rgba(37, 99, 235, 0.1);
+        stroke: none;
+    }
+
+    .ai-doc-chart-line {
+        stroke: #2563eb;
+        stroke-width: 4;
+        stroke-dasharray: 245;
+        stroke-dashoffset: 245;
+        animation: aiChartDraw 3.1s ease-out 0.4s forwards;
+    }
+
+    .ai-doc-meta {
+        position: relative;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: baseline;
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+    .ai-doc-card strong {
+        display: block;
+        color: #111827;
+        font-size: 1rem;
+        line-height: 1.25;
+        word-break: break-word;
+    }
+
+    .ai-doc-meta span {
+        color: #64748b;
+        font-size: 0.78rem;
+        font-weight: 850;
+        white-space: nowrap;
+    }
+
+    .ai-doc-card p {
+        position: relative;
+        margin: 6px 0 0;
+        color: #64748b;
+        font-size: 0.78rem;
+        line-height: 1.55;
+    }
+
+    .ai-doc-progress {
+        position: relative;
+        height: 6px;
+        overflow: hidden;
+        margin-top: 14px;
+        border-radius: 999px;
+        background: rgba(226, 232, 240, 0.9);
+    }
+
+    .ai-doc-progress span {
+        display: block;
+        width: 68%;
+        height: 100%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, #8b5cf6, #2563eb, #14b8a6);
+        box-shadow: 0 0 18px rgba(37, 99, 235, 0.28);
+        animation: aiProgressPulse 2.9s ease-in-out infinite;
+    }
+
+    .ai-insight-stack {
+        position: absolute;
+        top: 44px;
+        right: 24px;
+        z-index: 2;
+        display: grid;
+        gap: 12px;
+        width: min(314px, 44%);
+    }
+
+    .ai-insight-card {
+        position: relative;
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 11px;
+        min-height: 74px;
+        overflow: hidden;
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        border-radius: 22px;
+        background: rgba(255, 255, 255, 0.88);
+        box-shadow:
+            0 22px 54px rgba(15, 23, 42, 0.13),
+            inset 0 1px 0 rgba(255, 255, 255, 0.9);
+        padding: 12px 14px;
+        opacity: 0;
+        transform: translateX(18px) scale(0.975);
+        animation: aiCardEnter 0.82s cubic-bezier(.2,.8,.2,1) forwards;
+    }
+
+    .ai-insight-card::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-left: 3px solid rgba(139, 92, 246, 0.8);
+        opacity: 0.9;
+        pointer-events: none;
+    }
+
+    .ai-insight-card--summary { animation-delay: 0.14s; }
+    .ai-insight-card--data { animation-delay: 0.28s; }
+    .ai-insight-card--chart { animation-delay: 0.42s; }
+    .ai-insight-card--insights { animation-delay: 0.56s; }
+
+    .ai-insight-card--data::before { border-left-color: #2563eb; }
+    .ai-insight-card--chart::before { border-left-color: #14b8a6; }
+    .ai-insight-card--insights::before { border-left-color: #f97316; }
+
+    .ai-insight-copy {
+        min-width: 0;
+    }
+
+    .ai-insight-card span {
+        display: block;
+        color: #475569;
+        font-size: 0.7rem;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    .ai-insight-card strong {
+        display: block;
+        margin-top: 4px;
+        color: #111827;
+        font-size: 0.9rem;
+        line-height: 1.25;
+    }
+
+    .ai-insight-icon {
+        display: grid;
+        place-items: center;
+        width: 40px;
+        height: 40px;
+        border-radius: 15px;
+        background: #f5f3ff;
+        color: #7c3aed;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    }
+
+    .ai-insight-icon svg {
+        width: 20px !important;
+        height: 20px !important;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        filter: none !important;
+    }
+
+    .ai-insight-card--data .ai-insight-icon {
+        background: #eff6ff;
+        color: #2563eb;
+    }
+
+    .ai-insight-card--insights .ai-insight-icon {
+        background: #fff7ed;
+        color: #ea580c;
+    }
+
+    .ai-card-loader {
+        height: 4px;
+        overflow: hidden;
+        margin-top: 8px;
+        border-radius: 999px;
+        background: rgba(226, 232, 240, 0.9);
+    }
+
+    .ai-card-loader i {
+        display: block;
+        width: 42%;
+        height: 100%;
+        border-radius: inherit;
+        background: currentColor;
+        opacity: 0.44;
+        animation: aiCardLoading 2.6s ease-in-out infinite;
+    }
+
+    .ai-mini-chart {
+        width: 42px;
+        height: 40px;
+        border-radius: 15px;
+        background: linear-gradient(135deg, #ecfeff, #f8fafc);
+        padding: 7px;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    }
+
+    .ai-mini-chart svg {
+        width: 100% !important;
+        height: 100% !important;
+        overflow: visible;
+        filter: none !important;
+    }
+
+    .ai-chart-line {
+        stroke: #14b8a6;
+        stroke-width: 5;
+        stroke-dasharray: 170;
+        stroke-dashoffset: 170;
+        animation: aiChartDraw 2.8s ease-out 0.85s forwards;
+    }
+
+    .ai-card-progress {
+        --progress-color: #8b5cf6;
+        position: relative;
+        display: grid;
+        place-items: center;
+        width: 30px;
+        height: 30px;
+        border-radius: 999px;
+        background:
+            conic-gradient(var(--progress-color) 0 78%, rgba(226, 232, 240, 0.95) 78% 100%);
+        box-shadow: 0 7px 18px rgba(15, 23, 42, 0.08);
+    }
+
+    .ai-card-progress::after {
+        content: "";
+        position: absolute;
+        inset: 5px;
+        border-radius: inherit;
+        background: rgba(255, 255, 255, 0.96);
+    }
+
+    .ai-card-progress span {
+        position: relative;
+        z-index: 1;
+        width: 6px;
+        height: 6px;
+        border-radius: 999px;
+        background: var(--progress-color);
+        color: var(--progress-color);
+        box-shadow: 0 0 12px currentColor;
+        animation: aiProgressDot 2.4s ease-in-out infinite;
+    }
+
+    .ai-insight-card--data .ai-card-progress { --progress-color: #2563eb; }
+    .ai-insight-card--chart .ai-card-progress { --progress-color: #14b8a6; }
+    .ai-insight-card--insights .ai-card-progress { --progress-color: #f97316; }
+
+    @@keyframes aiDocFloat {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-8px); }
+    }
+
+    @@keyframes aiDocGlowPulse {
+        0%, 100% { opacity: 0.68; transform: scale(0.98); }
+        50% { opacity: 0.95; transform: scale(1.02); }
+    }
+
+    @@keyframes aiPathFlow {
+        to { stroke-dashoffset: -72; }
+    }
+
+    @@keyframes aiCardEnter {
+        0% {
+            opacity: 0;
+            transform: translateX(18px) scale(0.975);
+        }
+        70% {
+            opacity: 1;
+            transform: translateX(-2px) scale(1.01);
+        }
+        100% {
+            opacity: 1;
+            transform: translateX(0) scale(1);
+        }
+    }
+
+    @@keyframes aiChartDraw {
+        to { stroke-dashoffset: 0; }
+    }
+
+    @@keyframes aiScanSheet {
+        0% { transform: translateY(-16px); opacity: 0; }
+        18% { opacity: 1; }
+        74% { opacity: 1; }
+        100% { transform: translateY(250px); opacity: 0; }
+    }
+
+    @@keyframes aiProgressPulse {
+        0%, 100% { transform: scaleX(0.68); transform-origin: left center; opacity: 0.72; }
+        50% { transform: scaleX(1); transform-origin: left center; opacity: 1; }
+    }
+
+    @@keyframes aiCardLoading {
+        0% { transform: translateX(-110%); }
+        55%, 100% { transform: translateX(245%); }
+    }
+
+    @@keyframes aiProgressDot {
+        0%, 100% { transform: scale(0.86); opacity: 0.62; }
+        50% { transform: scale(1.18); opacity: 1; }
+    }
+
+    @@keyframes aiAmbientShift {
+        0% { opacity: 0.7; transform: translate3d(-1%, -1%, 0); }
+        100% { opacity: 1; transform: translate3d(1%, 1%, 0); }
+    }
+
+    @@keyframes aiAmbientParticle {
+        0%, 100% { opacity: 0.2; transform: translate3d(0, 0, 0); }
+        50% { opacity: 0.75; transform: translate3d(8px, -10px, 0); }
+    }
+
+    @@keyframes aiActiveStepPulse {
+        0%, 100% { box-shadow: 0 0 0 1px rgba(109, 93, 252, 0.14), 0 0 16px rgba(109, 93, 252, 0.16); }
+        50% { box-shadow: 0 0 0 1px rgba(109, 93, 252, 0.25), 0 0 26px rgba(109, 93, 252, 0.28); }
+    }
+
+    @@keyframes aiStepSweep {
+        0%, 12% { transform: translateX(-120%); opacity: 0; }
+        30%, 70% { opacity: 1; }
+        88%, 100% { transform: translateX(330%); opacity: 0; }
+    }
+
+    [data-theme="dark"] .ai-intel-shell {
+        border-color: rgba(148, 163, 184, 0.16);
+        background:
+            radial-gradient(circle at 35% 46%, rgba(109, 93, 252, 0.24), transparent 25%),
+            radial-gradient(circle at 42% 50%, rgba(6, 182, 212, 0.16), transparent 32%),
+            linear-gradient(135deg, rgba(15, 23, 42, 0.92), rgba(30, 41, 59, 0.78)),
+            radial-gradient(circle at 22% 18%, rgba(109, 93, 252, 0.18), transparent 34%),
+            radial-gradient(circle at 76% 76%, rgba(20, 184, 166, 0.14), transparent 32%);
+        box-shadow: 0 30px 90px rgba(2, 6, 23, 0.38);
+    }
+
+    [data-theme="dark"] .ai-intel-steps,
+    [data-theme="dark"] .ai-doc-card,
+    [data-theme="dark"] .ai-insight-card {
+        border-color: rgba(148, 163, 184, 0.18);
+        background: rgba(15, 23, 42, 0.76);
+    }
+
+    [data-theme="dark"] .ai-intel-steps .ai-step,
+    [data-theme="dark"] .ai-insight-card strong,
+    [data-theme="dark"] .ai-doc-card strong {
+        color: #e5e7eb;
+    }
+
+    [data-theme="dark"] .ai-doc-page,
+    [data-theme="dark"] .ai-doc-chart-preview,
+    [data-theme="dark"] .ai-mini-chart {
+        background: rgba(30, 41, 59, 0.78);
+        border-color: rgba(148, 163, 184, 0.16);
+    }
+
+    [data-theme="dark"] .ai-card-progress::after {
+        background: rgba(15, 23, 42, 0.92);
+    }
+
+    [data-theme="dark"] .ai-doc-card p,
+    [data-theme="dark"] .ai-doc-meta span,
+    [data-theme="dark"] .ai-insight-card span,
+    [data-theme="dark"] .ai-intel-steps {
+        color: #cbd5e1;
+    }
+
+    @@media (max-width: 1060px) {
+        .ai-intel-shell {
+            min-height: 544px;
+        }
+
+        .ai-doc-card {
+            left: 26px;
+            width: 238px;
+        }
+
+        .ai-insight-stack {
+            right: 20px;
+            width: 45%;
+        }
+
+        .ai-flow-rail,
+        .ai-flow-path {
+            transform: translateX(-26px);
+        }
+    }
+
+    @@media (max-width: 820px) {
+        .ai-intel-shell {
+            min-height: auto;
+            border-radius: 28px;
+            overflow: hidden;
+        }
+
+        .ai-intel-stage {
+            min-height: auto;
+            display: grid;
+            gap: 18px;
+            padding: 24px 22px 18px;
+        }
+
+        .ai-intel-paths {
+            display: none;
+        }
+
+        .ai-doc-card,
+        .ai-insight-stack {
+            position: relative;
+            inset: auto;
+            width: auto;
+        }
+
+        .ai-doc-card {
+            max-width: 360px;
+            justify-self: center;
+        }
+
+        .ai-insight-stack {
+            gap: 10px;
+            max-width: 480px;
+            justify-self: stretch;
+        }
+
+        .ai-insight-card {
+            min-height: 70px;
+        }
+
+    }
+
+    @@media (max-width: 560px) {
+        .ai-intel-shell {
+            border-radius: 24px;
+        }
+
+        .ai-intel-steps {
+            align-items: flex-start;
+            justify-content: flex-start;
+            border-radius: 20px;
+            padding: 0.65rem 0.75rem;
+        }
+
+        .ai-intel-steps span:nth-child(even) {
+            display: none;
+        }
+
+        .ai-intel-steps .ai-step {
+            border-radius: 999px;
+            background: rgba(239, 246, 255, 0.82);
+            padding: 0.32rem 0.55rem;
+        }
+
+        .ai-intel-stage {
+            padding: 20px 16px 16px;
+        }
+
+        .ai-doc-card {
+            padding: 16px;
+            border-radius: 24px;
+        }
+
+        .ai-doc-page {
+            min-height: 158px;
+        }
+
+        .ai-insight-card {
+            grid-template-columns: auto minmax(0, 1fr) auto;
+            padding: 12px;
+        }
+
+        .ai-mini-chart {
+            width: 40px;
+        }
+
+    }
+
+    @@media (prefers-reduced-motion: reduce) {
+        .ai-intel-glow,
+        .ai-ambient-particles span,
+        .ai-intel-steps::after,
+        .ai-step--active,
+        .ai-flow-path,
+        .ai-doc-card,
+        .ai-doc-card::after,
+        .ai-doc-scan,
+        .ai-doc-progress span,
+        .ai-insight-card,
+        .ai-card-loader i,
+        .ai-card-progress span,
+        .ai-chart-line,
+        .ai-doc-chart-line {
+            animation: none !important;
+        }
+
+        .ai-flow-particles,
+        .ai-ambient-particles {
+            display: none;
+        }
+
+        .ai-insight-card {
+            opacity: 1;
+            transform: none;
+        }
+
+        .ai-chart-line,
+        .ai-doc-chart-line {
+            stroke-dashoffset: 0;
+        }
+
+        .ai-doc-scan {
+            opacity: 0.18;
+            transform: translateY(120px);
+        }
+    }
+</style>

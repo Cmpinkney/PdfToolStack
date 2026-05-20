@@ -14,6 +14,169 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap" rel="stylesheet">
     <link href="_content/Syncfusion.Blazor.Themes/bootstrap5.css" rel="stylesheet" />
     <link rel="preload" href="_content/Syncfusion.Blazor.SfPdfViewer/scripts/syncfusion-blazor-sfpdfviewer.min.js" as="script" />
+    <style>
+        html, body {
+            min-height: 100%;
+        }
+
+        body {
+            margin: 0;
+            background: #f8fafc;
+        }
+
+        #app {
+            min-height: 100vh;
+        }
+
+        .startup-screen {
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            padding: 32px 18px;
+            box-sizing: border-box;
+            color: #172033;
+            font-family: Inter, "Segoe UI", Arial, sans-serif;
+            background:
+                radial-gradient(circle at 18% 18%, rgba(109, 93, 252, 0.14), transparent 30%),
+                radial-gradient(circle at 82% 10%, rgba(6, 182, 212, 0.14), transparent 28%),
+                linear-gradient(135deg, #f8f7ff 0%, #eef5ff 48%, #f8fafc 100%);
+        }
+
+        .startup-card {
+            width: min(760px, 100%);
+            border: 1px solid rgba(148, 163, 184, 0.18);
+            border-radius: 28px;
+            background: rgba(255, 255, 255, 0.88);
+            box-shadow: 0 28px 80px rgba(15, 23, 42, 0.12);
+            padding: clamp(28px, 6vw, 48px);
+            text-align: center;
+        }
+
+        .startup-logo {
+            width: min(280px, 72vw);
+            height: auto;
+            display: block;
+            margin: 0 auto 22px;
+        }
+
+        .startup-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            min-height: 34px;
+            border: 1px solid rgba(37, 99, 235, 0.16);
+            border-radius: 999px;
+            background: #eff6ff;
+            color: #1d4ed8;
+            font-size: 0.86rem;
+            font-weight: 800;
+            padding: 0.38rem 0.76rem;
+        }
+
+        .startup-spinner {
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(37, 99, 235, 0.22);
+            border-top-color: #2563eb;
+            border-radius: 999px;
+            animation: startup-spin 0.8s linear infinite;
+        }
+
+        .startup-card h1 {
+            margin: 22px 0 10px;
+            color: #111827;
+            font-family: "Plus Jakarta Sans", Inter, "Segoe UI", Arial, sans-serif;
+            font-size: clamp(2rem, 5vw, 3.3rem);
+            line-height: 1.05;
+            letter-spacing: -0.02em;
+        }
+
+        .startup-card p {
+            max-width: 600px;
+            margin: 0 auto 26px;
+            color: #526173;
+            font-size: 1rem;
+            line-height: 1.7;
+        }
+
+        .startup-skeleton {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+            margin: 0 auto 24px;
+        }
+
+        .startup-skeleton span {
+            height: 74px;
+            border: 1px solid rgba(148, 163, 184, 0.18);
+            border-radius: 18px;
+            background:
+                linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0)),
+                linear-gradient(135deg, #eef2ff, #ecfeff);
+            background-size: 220% 100%, 100% 100%;
+            animation: startup-shimmer 1.35s ease-in-out infinite;
+        }
+
+        .startup-links {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .startup-links a {
+            display: inline-flex;
+            align-items: center;
+            min-height: 36px;
+            border: 1px solid rgba(37, 99, 235, 0.16);
+            border-radius: 999px;
+            background: #ffffff;
+            color: #2563eb;
+            font-size: 0.9rem;
+            font-weight: 800;
+            padding: 0.42rem 0.72rem;
+            text-decoration: none;
+        }
+
+        .startup-noscript {
+            margin-top: 22px;
+            border-radius: 16px;
+            background: #fff7ed;
+            color: #9a3412;
+            padding: 14px 16px;
+            font-size: 0.92rem;
+            line-height: 1.55;
+        }
+
+        @keyframes startup-spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes startup-shimmer {
+            0% {
+                background-position: 180% 0, 0 0;
+            }
+            100% {
+                background-position: -80% 0, 0 0;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .startup-card {
+                border-radius: 22px;
+            }
+
+            .startup-skeleton {
+                grid-template-columns: 1fr;
+            }
+
+            .startup-skeleton span {
+                height: 54px;
+            }
+        }
+    </style>
     <script src="_content/Microsoft.AspNetCore.Components.WebAssembly.Authentication/AuthenticationService.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <!-- Google Analytics GA4 -->
@@ -173,22 +336,42 @@
     </script>
 
     <div id="app">
-        <div class="crawl-fallback" style="max-width:960px;margin:0 auto;padding:4rem 1.5rem;font-family:Inter,Arial,sans-serif;line-height:1.55;color:#172033;">
-            <h1 style="font-size:2.5rem;margin:0 0 1rem;">Free online PDF tools</h1>
-            <p style="font-size:1.125rem;margin:0 0 1.5rem;">
-                PdfToolStack helps you compress, merge, split, convert, sign, redact, OCR, and summarize PDFs online.
-            </p>
-            <nav aria-label="Popular PDF tools" style="display:flex;flex-wrap:wrap;gap:.75rem;">
-                <a href="/compress-pdf">Compress PDF</a>
-                <a href="/merge-pdf">Merge PDF</a>
-                <a href="/split-pdf">Split PDF</a>
-                <a href="/pdf-to-word">PDF to Word</a>
-                <a href="/word-to-pdf">Word to PDF</a>
-                <a href="/chat-with-pdf">Chat with PDF</a>
-                <a href="/ai-summarizer">AI PDF Summarizer</a>
-                <a href="/pdf-ocr">PDF OCR</a>
-                <a href="/pricing">Pricing</a>
-            </nav>
+        <div class="startup-screen" role="status" aria-live="polite">
+            <div class="startup-card">
+                <img class="startup-logo"
+                     src="/images/pdftoolstack-logo-full.png"
+                     alt="PdfToolStack" />
+                <div class="startup-status">
+                    <span class="startup-spinner" aria-hidden="true"></span>
+                    <span>Loading PdfToolStack...</span>
+                </div>
+                <h1>PDF workflows are getting ready.</h1>
+                <p>
+                    PdfToolStack helps you compress, merge, split, convert, sign, redact,
+                    OCR, and summarize PDFs online with practical document tools.
+                </p>
+                <div class="startup-skeleton" aria-hidden="true">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+                <nav class="startup-links" aria-label="Popular PDF tools">
+                    <a href="/compress-pdf">Compress PDF</a>
+                    <a href="/merge-pdf">Merge PDF</a>
+                    <a href="/split-pdf">Split PDF</a>
+                    <a href="/pdf-to-word">PDF to Word</a>
+                    <a href="/word-to-pdf">Word to PDF</a>
+                    <a href="/chat-with-pdf">Chat with PDF</a>
+                    <a href="/ai-summarizer">AI PDF Summarizer</a>
+                    <a href="/pdf-ocr">PDF OCR</a>
+                </nav>
+                <noscript>
+                    <div class="startup-noscript">
+                        JavaScript is required to run the interactive PDF tools.
+                        You can still use the links above to browse available workflows.
+                    </div>
+                </noscript>
+            </div>
         </div>
     </div>
 
