@@ -1,0 +1,580 @@
+@using Microsoft.AspNetCore.Components.Routing
+@implements IDisposable
+@inject NavigationManager Navigation
+
+@if (_content is not null)
+{
+    <section class="tool-education-band" aria-labelledby="tool-education-title">
+        <div class="tool-education-container">
+            <div class="tool-education-header">
+                <span class="tool-education-eyebrow">@_content.Eyebrow</span>
+                <h2 id="tool-education-title">@_content.Title</h2>
+                <p>@_content.Intro</p>
+            </div>
+
+            <div class="tool-education-grid">
+                <article class="tool-education-card">
+                    <h3>Common use cases</h3>
+                    <ul>
+                        @foreach (var item in _content.UseCases)
+                        {
+                            <li>@item</li>
+                        }
+                    </ul>
+                </article>
+
+                <article class="tool-education-card">
+                    <h3>How to use this tool</h3>
+                    <ol>
+                        @foreach (var step in _content.Steps)
+                        {
+                            <li>@step</li>
+                        }
+                    </ol>
+                </article>
+
+                <article class="tool-education-card">
+                    <h3>Example scenarios</h3>
+                    <ul>
+                        @foreach (var scenario in _content.Scenarios)
+                        {
+                            <li>@scenario</li>
+                        }
+                    </ul>
+                </article>
+
+                <article class="tool-education-card tool-education-card--security">
+                    <h3>Security and privacy</h3>
+                    <p>@_content.SecurityNote</p>
+                    <p>
+                        Review the <a href="/privacy-policy">Privacy Policy</a>,
+                        <a href="/security">Security page</a>, and
+                        <a href="/cookie-policy">Cookie Policy</a> for more details.
+                    </p>
+                </article>
+            </div>
+
+            <div class="tool-education-related" aria-label="Related PdfToolStack pages">
+                <span>Related tools and guides</span>
+                <div>
+                    @foreach (var link in _content.RelatedLinks)
+                    {
+                        <a href="@link.Url">@link.Label</a>
+                    }
+                </div>
+            </div>
+
+            <div class="tool-education-faqs">
+                <h3>@_content.FaqTitle</h3>
+                <div class="tool-education-faq-grid">
+                    @foreach (var faq in _content.Faqs)
+                    {
+                        <details class="tool-education-faq">
+                            <summary>@faq.Question</summary>
+                            <p>@faq.Answer</p>
+                        </details>
+                    }
+                </div>
+            </div>
+        </div>
+    </section>
+}
+
+@code {
+    private ToolContent? _content;
+
+    protected override void OnInitialized()
+    {
+        SetContentForCurrentRoute();
+        Navigation.LocationChanged += OnLocationChanged;
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        SetContentForCurrentRoute();
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private void SetContentForCurrentRoute()
+    {
+        var relativePath = Navigation.ToBaseRelativePath(Navigation.Uri);
+        var route = "/" + relativePath.Split('?', '#')[0].Trim('/');
+
+        if (route == "/")
+        {
+            _content = null;
+            return;
+        }
+
+        if (RouteAliases.TryGetValue(route, out var canonicalRoute))
+        {
+            route = canonicalRoute;
+        }
+
+        _content = ToolContentByRoute.TryGetValue(route, out var content)
+            ? content
+            : null;
+    }
+
+    public void Dispose()
+    {
+        Navigation.LocationChanged -= OnLocationChanged;
+    }
+
+    private static ToolContent Tool(
+        string eyebrow,
+        string title,
+        string intro,
+        string[] useCases,
+        string[] steps,
+        string[] scenarios,
+        string securityNote,
+        Link[] relatedLinks,
+        Faq[] faqs,
+        string faqTitle = "Frequently asked questions") =>
+        new(eyebrow, title, intro, useCases, steps, scenarios, securityNote, relatedLinks, faqs, faqTitle);
+
+    private static Link L(string label, string url) => new(label, url);
+
+    private static readonly IReadOnlyDictionary<string, string> RouteAliases =
+        new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["/fix-pdf-too-large-for-email"] = "/compress-pdf",
+            ["/compress-for-email"] = "/compress-pdf",
+            ["/compress-pdf/app"] = "/compress-pdf",
+            ["/sign-pdf-document"] = "/sign-pdf",
+            ["/sign-contract/app"] = "/sign-pdf",
+            ["/chat-pdf"] = "/chat-with-pdf",
+            ["/ai-contract-reviewer/app"] = "/review-contract",
+            ["/sign-contract"] = "/sign-pdf",
+            ["/convert-pdf-to-editable-word"] = "/pdf-to-word",
+            ["/compare-contracts"] = "/compare-pdf",
+            ["/compare-pdf-documents"] = "/compare-pdf",
+            ["/protect-pdf"] = "/lock-pdf",
+            ["/extract-pdf-pages"] = "/split-pdf",
+            ["/delete-pdf-pages"] = "/organize-pdf",
+            ["/crop-pdf"] = "/edit-pdf",
+            ["/pdf-annotator"] = "/edit-pdf",
+            ["/pdf-scanner"] = "/pdf-ocr",
+        };
+
+    private static readonly IReadOnlyDictionary<string, ToolContent> ToolContentByRoute =
+        new Dictionary<string, ToolContent>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["/compress-pdf"] = Tool(
+                "PDF compression guide",
+                "Reduce PDF size without losing the point of the document",
+                "PDF compression is useful when a file is too large for email, upload portals, intake forms, or client sharing. PdfToolStack focuses on practical size reduction while keeping text readable and layouts usable, so the result is easier to send without turning the document into a blurry scan.",
+                new[] { "Make large PDFs fit common email attachment limits.", "Prepare client packets for secure portals with strict upload caps.", "Reduce storage size for reports, manuals, and image-heavy PDFs.", "Create smaller versions of files before merging or sharing." },
+                new[] { "Upload the PDF you want to reduce.", "Choose the email, balanced, or high-quality compression profile.", "Review the estimated output size when available.", "Process the file and download the compressed PDF.", "Open the result before sending it to confirm images and small text still look right." },
+                new[] { "A consultant compresses a 28 MB proposal before sending it to a client.", "An HR team reduces onboarding packets so they can be uploaded to a benefits portal.", "A student compresses a scanned assignment without rebuilding the file from scratch." },
+                "Uploaded files are processed for the requested compression workflow and are designed to be deleted automatically after processing, typically within 1 hour. Avoid uploading files you are not authorized to process.",
+                new[] { L("Merge PDF", "/merge-pdf"), L("PDF to Word", "/pdf-to-word"), L("Best PDF compressor guide", "/blog/best-pdf-compressor-online"), L("Compress PDF for email", "/blog/how-to-compress-pdf-for-email") },
+                new[] {
+                    new Faq("Will compression change the text in my PDF?", "Compression should not rewrite your text. It usually reduces images, metadata, and internal file overhead, but you should still review the downloaded PDF before sharing."),
+                    new Faq("Which compression profile should I choose?", "Use email when the smallest file matters, balanced for routine sharing, and high quality when the PDF includes images or visuals that need to stay sharp."),
+                    new Faq("Can I compress scanned PDFs?", "Yes, but scanned PDFs are often image-heavy. Compression can reduce size, while OCR may be a better next step if you also need searchable text."),
+                    new Faq("What should I do if the file is still too large?", "Try a stronger compression profile, remove unnecessary pages with Split PDF, or convert image-heavy scans to a lower-resolution source before creating the PDF.")
+                }),
+
+            ["/merge-pdf"] = Tool(
+                "PDF merge guide",
+                "Combine PDFs into one organized file",
+                "Merging PDFs is helpful when a complete packet is easier to review than a folder of separate files. PdfToolStack lets you collect multiple PDFs into a single document for submissions, client delivery, record keeping, and internal review.",
+                new[] { "Combine invoices, receipts, and statements into one monthly packet.", "Attach cover pages, forms, and supporting files for a submission.", "Create a single client-ready deliverable from separate PDFs.", "Bundle signed pages with the rest of a contract package." },
+                new[] { "Upload two or more PDF files.", "Check the queue order before processing.", "Remove files that do not belong in the packet.", "Merge the files into one PDF.", "Download and skim the final document to confirm the order." },
+                new[] { "A bookkeeper combines vendor invoices for a monthly review.", "A small business owner merges a proposal, terms sheet, and signed form.", "A student combines separate chapters into one study packet." },
+                "Only upload files you have permission to combine. Files are processed for the merge task and are designed to be removed automatically after processing, typically within 1 hour.",
+                new[] { L("Split PDF", "/split-pdf"), L("Organize PDF", "/organize-pdf"), L("Compress PDF", "/compress-pdf"), L("How to merge PDFs", "/blog/how-to-merge-pdf-files") },
+                new[] {
+                    new Faq("Does merging PDFs change the original files?", "No. The original uploaded files are used to create a new merged PDF. Your local source files are not changed."),
+                    new Faq("Can I merge scanned and text PDFs together?", "Yes. A merged packet can contain both scanned pages and text-based PDFs, though searchability depends on whether each source file has text or OCR."),
+                    new Faq("How should I order files before merging?", "Put cover sheets, forms, or table-of-contents pages first, then supporting documents in the order the recipient expects to read them."),
+                    new Faq("Should I compress before or after merging?", "If each file is very large, compress before merging. If the final packet is the only file that is too large, compress after merging.")
+                }),
+
+            ["/split-pdf"] = Tool(
+                "PDF split guide",
+                "Extract only the pages you actually need",
+                "Splitting a PDF lets you create a smaller, more focused document from a larger file. It is useful when you need one chapter, one signed page, one invoice, or one section without sending the entire source document.",
+                new[] { "Pull a signature page out of a longer agreement.", "Extract one invoice from a combined vendor statement.", "Create a short packet from selected report pages.", "Remove unnecessary sections before sending a file externally." },
+                new[] { "Upload the source PDF.", "Enter the page range you want to extract.", "Confirm the selected first and last page.", "Process the PDF.", "Download the new file and verify that the range is correct." },
+                new[] { "A finance assistant extracts pages 4-6 from a combined receipt packet.", "A recruiter sends only the signed acceptance page instead of a full file.", "A teacher creates a handout from selected textbook pages." },
+                "Splitting should be used only on documents you have the right to process. The source and output files are handled temporarily and are designed for automatic deletion after processing.",
+                new[] { L("Merge PDF", "/merge-pdf"), L("Extract PDF Pages", "/extract-pdf-pages"), L("Delete PDF Pages", "/delete-pdf-pages"), L("Organize PDF", "/organize-pdf") },
+                new[] {
+                    new Faq("Can I extract a single page?", "Yes. Set the first and last page to the same page number to create a one-page PDF."),
+                    new Faq("Will the extracted PDF keep the same quality?", "The tool creates a new PDF from the selected pages, so text and page appearance should remain close to the original."),
+                    new Faq("What if I choose the wrong range?", "Download the result, check it, and run the tool again with the corrected range."),
+                    new Faq("Can splitting remove sensitive pages?", "It can create a copy without pages you exclude, but use Redact PDF if sensitive text appears on pages you still need to share.")
+                }),
+
+            ["/pdf-to-word"] = Tool(
+                "PDF to Word guide",
+                "Turn PDFs into editable Word documents when the layout allows it",
+                "PDF to Word conversion is best for text-based documents where you need to revise wording, reuse sections, or update formatting. Complex PDFs may require cleanup after conversion, especially if they include scans, unusual fonts, columns, or dense graphics.",
+                new[] { "Edit a proposal that was only saved as PDF.", "Reuse contract language in a new draft.", "Convert reports into DOCX for comments and tracked changes.", "Recover editable text from a document when the source file is missing." },
+                new[] { "Upload a text-based PDF.", "Convert the file to Word format.", "Download the DOCX output.", "Open it in Word or a compatible editor.", "Review page breaks, fonts, tables, and spacing before using the file." },
+                new[] { "A freelancer updates an old PDF proposal without rebuilding it.", "An office manager turns a policy PDF into an editable Word draft.", "A legal assistant converts a letter template for redlining." },
+                "Conversion uses your uploaded file only for the requested workflow. Review the output carefully, because PDF conversion can be imperfect and may not preserve every layout detail.",
+                new[] { L("Word to PDF", "/word-to-pdf"), L("PDF OCR", "/pdf-ocr"), L("PDF to Word accuracy guide", "/blog/pdf-to-word-accuracy-guide"), L("Edit PDF", "/edit-pdf") },
+                new[] {
+                    new Faq("Why does formatting sometimes change?", "PDFs are designed for fixed presentation, not editing. Fonts, columns, tables, and positioned elements may not translate perfectly into Word."),
+                    new Faq("Does PDF to Word work on scanned documents?", "Scanned PDFs usually need OCR first because they are images of text rather than text-based documents."),
+                    new Faq("Can I convert a password-protected PDF?", "You may need to unlock the PDF with the correct password before conversion. Only process files you are authorized to access."),
+                    new Faq("What should I check after conversion?", "Review headings, tables, footers, bullets, page breaks, and any sections with small text or images.")
+                }),
+
+            ["/word-to-pdf"] = Tool(
+                "Word to PDF guide",
+                "Create shareable PDFs from Word documents",
+                "Converting Word to PDF is useful when the document is ready to send, print, archive, or upload. A PDF helps preserve the final layout better than sending an editable document that may shift across devices.",
+                new[] { "Turn proposals, letters, and resumes into polished PDFs.", "Prepare DOCX files for upload portals that require PDF.", "Share final versions while keeping the editable source private.", "Archive team documents in a consistent format." },
+                new[] { "Upload a Word document.", "Start the conversion workflow.", "Download the generated PDF.", "Open the PDF and check page breaks and images.", "Share or archive the final file." },
+                new[] { "A job seeker converts a resume before applying.", "A sales team turns a quote into a client-ready PDF.", "An operations team archives completed policy documents." },
+                "Only upload documents you are authorized to process. The generated PDF should be reviewed before sending, especially when the source document uses custom fonts or complex tables.",
+                new[] { L("PDF to Word", "/pdf-to-word"), L("Compress PDF", "/compress-pdf"), L("Sign PDF", "/sign-pdf"), L("Converter hub", "/converter") },
+                new[] {
+                    new Faq("Will my Word formatting stay the same?", "Most simple layouts convert cleanly, but custom fonts, margins, and complex tables should be reviewed in the downloaded PDF."),
+                    new Faq("Can I convert DOCX files?", "Yes. Word document support is intended for common Word formats such as DOCX."),
+                    new Faq("Should I send Word or PDF?", "Send Word when collaboration is needed. Send PDF when the layout is final or the recipient should not edit the source."),
+                    new Faq("Can I sign the PDF after converting?", "Yes. After conversion, use Sign PDF to place an electronic signature on the generated file.")
+                }),
+
+            ["/pdf-to-jpg"] = Tool(
+                "PDF to JPG guide",
+                "Export PDF pages as image files",
+                "PDF to JPG conversion is helpful when a page needs to be used in a presentation, image workflow, preview, web upload, or system that does not accept PDF files. Each page becomes an image that is easier to place in visual tools.",
+                new[] { "Create image previews of forms, certificates, or one-page PDFs.", "Use PDF pages in slides, emails, or design tools.", "Upload a page to a system that accepts images but not PDFs.", "Create thumbnails for document catalogs." },
+                new[] { "Upload the PDF.", "Choose the conversion workflow.", "Process the document.", "Download the JPG output.", "Check that small text remains readable for your use case." },
+                new[] { "A marketer exports a brochure page for a campaign preview.", "A teacher converts a worksheet page to an image for a lesson slide.", "A support team creates a screenshot-style image from a PDF receipt." },
+                "Images can expose the same information as the source PDF. Treat exported JPG files with the same care as the original document.",
+                new[] { L("JPG to PDF", "/jpg-to-pdf"), L("Compress PDF", "/compress-pdf"), L("PDF Reader", "/pdf-reader"), L("Converter hub", "/converter") },
+                new[] {
+                    new Faq("Does each page become a separate image?", "PDF to image workflows commonly export pages as image files. Check the downloaded result to confirm the structure."),
+                    new Faq("Will text remain selectable?", "No. JPG is an image format, so text is no longer selectable after conversion."),
+                    new Faq("When is JPG better than PDF?", "Use JPG when you need an image preview or upload. Use PDF when you need a document format with pages, selectable text, or printing structure."),
+                    new Faq("Can I turn the images back into PDF?", "Yes. Use JPG to PDF to combine images into a new PDF document.")
+                }),
+
+            ["/jpg-to-pdf"] = Tool(
+                "JPG to PDF guide",
+                "Combine images into a shareable PDF",
+                "JPG to PDF is useful when photos, screenshots, scans, or image exports need to become one clean document. A PDF is often easier to email, print, archive, or submit than a group of separate image files.",
+                new[] { "Turn scanned receipts into one expense PDF.", "Combine phone photos of paper forms.", "Create a portfolio or image packet for review.", "Convert screenshots into a document for support or records." },
+                new[] { "Upload the JPG images.", "Confirm the image order.", "Convert the images into a PDF.", "Download the finished file.", "Open the PDF to confirm every image is included." },
+                new[] { "A contractor combines job-site photos into one report.", "A student converts photographed worksheet pages into a PDF.", "A bookkeeper turns receipt images into an expense packet." },
+                "Images may contain personal or sensitive information. Confirm you have permission to process them and review the PDF before sharing it.",
+                new[] { L("PDF to JPG", "/pdf-to-jpg"), L("Compress PDF", "/compress-pdf"), L("Merge PDF", "/merge-pdf"), L("PDF OCR", "/pdf-ocr") },
+                new[] {
+                    new Faq("Can I combine multiple JPGs?", "Yes. JPG to PDF is designed to place one or more images into a PDF document."),
+                    new Faq("Will image quality change?", "The resulting PDF should preserve a usable view of each image, but very large images may increase file size."),
+                    new Faq("Can I make scanned images searchable?", "Use OCR after creating the PDF if you need searchable text from photographed or scanned pages."),
+                    new Faq("Should receipts be JPG or PDF?", "PDF is usually easier for expense systems and archives because multiple receipt images can be submitted as one document.")
+                }),
+
+            ["/pdf-to-excel"] = Tool(
+                "PDF to Excel guide",
+                "Move table data from PDFs into spreadsheet workflows",
+                "PDF to Excel helps when a PDF contains rows, tables, invoices, statements, or reports that need to be sorted, filtered, reconciled, or analyzed. Clean source tables convert better than scans or heavily designed reports.",
+                new[] { "Extract invoice tables into spreadsheet review.", "Move bank or sales report rows into Excel.", "Prepare tabular data for cleanup and reconciliation.", "Create a starting spreadsheet from a PDF report." },
+                new[] { "Upload a PDF with table-like data.", "Run the conversion.", "Download the spreadsheet output.", "Review merged cells, headers, totals, and missing rows.", "Clean the spreadsheet before making business decisions from it." },
+                new[] { "An accountant extracts line items from a vendor report.", "An analyst converts a pricing table into a spreadsheet.", "An operations team pulls rows from a PDF inventory list." },
+                "Spreadsheet output can contain recognition or layout errors. Review totals and formulas before relying on converted data.",
+                new[] { L("Excel to PDF", "/excel-to-pdf"), L("Extract Invoice Data", "/extract-invoice-data"), L("PDF workflow tips for accountants", "/blog/best-pdf-tools-for-accountants"), L("Business tools", "/business-pdf-tools") },
+                new[] {
+                    new Faq("What PDFs convert best to Excel?", "Simple text-based PDFs with clear rows and columns usually convert better than scans, photos, or heavily designed reports."),
+                    new Faq("Will formulas be recreated?", "PDFs usually do not contain spreadsheet formulas, so converted output should be treated as extracted data rather than the original workbook logic."),
+                    new Faq("Should I use invoice extraction instead?", "Use Extract Invoice Data when the document is an invoice and you need vendor, date, total, and line-item fields rather than a generic table conversion."),
+                    new Faq("Why do some cells merge incorrectly?", "PDF layout is visual. Table borders, wrapped text, and spacing can make row and column detection imperfect.")
+                }),
+
+            ["/excel-to-pdf"] = Tool(
+                "Excel to PDF guide",
+                "Turn spreadsheets into fixed-layout PDFs",
+                "Excel to PDF conversion creates a shareable version of a spreadsheet for review, printing, or archiving. It is useful when recipients should see the final layout without editing formulas or changing workbook data.",
+                new[] { "Send financial summaries as a fixed PDF.", "Archive exported reports from spreadsheets.", "Share price lists or schedules without exposing formulas.", "Prepare worksheets for printing or approval." },
+                new[] { "Upload the spreadsheet.", "Convert it to PDF.", "Download the output.", "Check page breaks, columns, and print area.", "Share the PDF version while keeping the spreadsheet source private." },
+                new[] { "A finance team sends a month-end summary as PDF.", "A planner exports a schedule for a client packet.", "A manager archives a completed spreadsheet report." },
+                "Review the output before sharing, because spreadsheet print settings, hidden columns, and wide tables can affect the final PDF layout.",
+                new[] { L("PDF to Excel", "/pdf-to-excel"), L("Compress PDF", "/compress-pdf"), L("Merge PDF", "/merge-pdf"), L("Converter hub", "/converter") },
+                new[] {
+                    new Faq("Will hidden sheets or columns appear?", "That depends on the file and conversion behavior. Always review the PDF before sending it externally."),
+                    new Faq("Why are wide spreadsheets hard to convert?", "Wide tables may need landscape layout, scaling, or manual cleanup in the source file before conversion."),
+                    new Faq("Can I combine the PDF with other documents?", "Yes. Use Merge PDF after conversion to add the spreadsheet PDF to a larger packet."),
+                    new Faq("Is PDF better for final spreadsheets?", "PDF is better for fixed presentation. Keep Excel for formulas, editing, and analysis.")
+                }),
+
+            ["/edit-pdf"] = Tool(
+                "PDF editing guide",
+                "Make practical edits and markups to a PDF",
+                "PDF editing is useful for adding visible notes, text, shapes, or small corrections when rebuilding the source document would take too long. For heavy rewriting, converting to Word may be a better workflow.",
+                new[] { "Add a short note or label to a PDF.", "Mark a section for review before sending it back.", "Place shapes or highlights around important information.", "Make lightweight changes to a form, flyer, or handout." },
+                new[] { "Upload the PDF.", "Choose the edit or markup action you need.", "Place text, shapes, or annotations carefully.", "Apply the changes.", "Download and review the edited PDF." },
+                new[] { "A team lead marks corrections on a policy document.", "A freelancer labels a submitted proof.", "A coordinator adds a visible note to an event form." },
+                "Editing adds visible changes to the document. It may not remove underlying sensitive information, so use Redact PDF for information that must not be recoverable.",
+                new[] { L("PDF Annotator", "/pdf-annotator"), L("PDF to Word", "/pdf-to-word"), L("Redact PDF", "/redact-pdf"), L("Sign PDF", "/sign-pdf") },
+                new[] {
+                    new Faq("Can I rewrite all text in a PDF?", "PDFs are not always easy to rewrite directly. For larger text changes, convert to Word or return to the original source file."),
+                    new Faq("Are annotations permanent?", "Some edits may be visible layers. Flatten PDF can help lock annotations into the page appearance before sharing."),
+                    new Faq("Can editing remove private information?", "Do not rely on drawing over text for privacy. Use Redact PDF when sensitive content must be removed."),
+                    new Faq("What should I check after editing?", "Review page alignment, overlapping text, annotations, signatures, and any areas near page edges.")
+                }),
+
+            ["/sign-pdf"] = Tool(
+                "PDF signing guide",
+                "Add an electronic signature to PDF documents",
+                "Signing a PDF online is a fast way to complete forms, approvals, acknowledgements, and routine agreements without printing and scanning. The signer should still understand the document before adding a signature.",
+                new[] { "Sign forms, acknowledgements, and simple agreements.", "Add a signature to a PDF received by email.", "Complete internal approvals without printing.", "Send signed paperwork back quickly." },
+                new[] { "Upload the PDF you need to sign.", "Create or add your signature.", "Place it in the correct location.", "Apply the signature to the document.", "Download and review the signed PDF before sending." },
+                new[] { "A client signs a service acknowledgement.", "A contractor signs a work authorization.", "An employee signs a completed onboarding form." },
+                "Electronic signature requirements vary by situation and jurisdiction. PdfToolStack helps place a signature, but it does not provide legal advice about whether a signature is sufficient for a particular transaction.",
+                new[] { L("Fill PDF Form", "/fill-pdf-form"), L("Flatten PDF", "/flatten-pdf"), L("Merge PDF", "/merge-pdf"), L("AI Contract Reviewer", "/review-contract") },
+                new[] {
+                    new Faq("Is an electronic signature always legally valid?", "Rules vary by document type and jurisdiction. For important transactions, confirm requirements with the recipient or a qualified professional."),
+                    new Faq("Can I type or draw a signature?", "Signature options depend on the tool workflow, but the goal is to place a visible signature on the PDF."),
+                    new Faq("Should I flatten a signed PDF?", "Flattening can help lock visible form fields or annotations into the page appearance before sharing."),
+                    new Faq("Can I sign someone else's document?", "Only sign documents you are authorized to sign, and do not add another person's signature without permission.")
+                }),
+
+            ["/redact-pdf"] = Tool(
+                "PDF redaction guide",
+                "Remove sensitive information before sharing PDFs",
+                "Redaction is for documents that contain private, regulated, or unnecessary information that should not be shared. It is different from highlighting or covering text, because the goal is to prevent sensitive content from being visible in the output.",
+                new[] { "Remove account numbers, emails, phone numbers, or addresses.", "Prepare legal, HR, finance, or support documents for external sharing.", "Hide signatures or identifiers that are not relevant to the recipient.", "Share examples or templates without exposing real personal data." },
+                new[] { "Upload the PDF.", "Mark the areas that should be redacted.", "Review every marked area carefully.", "Apply redactions and create the final PDF.", "Download and inspect the result before sending." },
+                new[] { "A support team redacts customer data from a troubleshooting file.", "A legal assistant removes personal identifiers from exhibits.", "A finance team hides bank details before sharing a statement extract." },
+                "Redaction is a sensitive workflow. Always inspect the final PDF and avoid relying on screenshots, opaque boxes, or cosmetic edits when information must be removed.",
+                new[] { L("Lock PDF", "/lock-pdf"), L("Flatten PDF", "/flatten-pdf"), L("Security tools", "/pdf-security-tools"), L("Secure AI PDF tools", "/blog/secure-ai-pdf-tools") },
+                new[] {
+                    new Faq("Is redaction the same as drawing a black box?", "No. Drawing a box may only hide content visually. A redaction workflow should create a final file intended to remove or obscure sensitive areas."),
+                    new Faq("What should I redact?", "Common examples include personal identifiers, account numbers, addresses, signatures, confidential pricing, and irrelevant private details."),
+                    new Faq("Should I keep a copy of the original?", "If you need records, store the original securely and share only the reviewed redacted version."),
+                    new Faq("Can AI identify everything sensitive?", "Do not rely entirely on automation. Human review is important before sharing sensitive documents.")
+                }),
+
+            ["/lock-pdf"] = Tool(
+                "PDF protection guide",
+                "Password protect PDFs before sharing",
+                "Locking a PDF can add a password barrier before someone opens a document. It is useful for routine sensitive sharing, but password protection should be combined with careful recipient selection and secure delivery.",
+                new[] { "Protect HR forms, financial documents, or client records.", "Add a password before emailing a PDF.", "Share documents with a limited audience.", "Reduce accidental access to sensitive files." },
+                new[] { "Upload the PDF.", "Choose a strong password.", "Confirm the password carefully.", "Create the protected PDF.", "Send the password through a separate channel when possible." },
+                new[] { "An accountant protects tax documents before sending them to a client.", "An HR coordinator locks an employee form.", "A consultant protects a confidential draft." },
+                "Use a strong, unique password and share it carefully. PdfToolStack cannot help recover a password you forget after downloading the protected file.",
+                new[] { L("Unlock PDF", "/unlock-pdf"), L("Redact PDF", "/redact-pdf"), L("Security tools", "/pdf-security-tools"), L("Privacy Policy", "/privacy-policy") },
+                new[] {
+                    new Faq("Is password protection enough for every sensitive file?", "Not always. Highly sensitive documents may require secure portals, access controls, redaction, or professional compliance review."),
+                    new Faq("What makes a good PDF password?", "Use a long password that is not reused elsewhere. Avoid names, birthdays, company names, or simple words."),
+                    new Faq("How should I send the password?", "Use a different channel than the PDF itself, such as a phone call or separate secure message."),
+                    new Faq("Can I remove the password later?", "Yes, if you know the password. Use Unlock PDF for files you are authorized to access.")
+                }),
+
+            ["/unlock-pdf"] = Tool(
+                "PDF unlock guide",
+                "Remove a known PDF password responsibly",
+                "Unlock PDF is for files you are authorized to access when you already know the password. Removing protection can make a document easier to edit, convert, merge, print, or archive.",
+                new[] { "Remove a password from your own archived file.", "Prepare a protected PDF for conversion or merging.", "Make a document easier to access in an internal workflow.", "Create an unlocked working copy after receiving permission." },
+                new[] { "Upload the locked PDF.", "Enter the current password.", "Run the unlock workflow.", "Download the unlocked copy.", "Store or share the unlocked file carefully." },
+                new[] { "An office manager unlocks an old policy PDF for conversion.", "A user removes a password from a document they created.", "A team prepares a protected PDF for merging into a larger packet." },
+                "Only unlock PDFs you own or are authorized to process. Removing a password can make the file easier to share accidentally, so protect the downloaded copy appropriately.",
+                new[] { L("Lock PDF", "/lock-pdf"), L("PDF to Word", "/pdf-to-word"), L("Merge PDF", "/merge-pdf"), L("Security tools", "/pdf-security-tools") },
+                new[] {
+                    new Faq("Can this bypass a password I do not know?", "No. This workflow is for removing known passwords from files you are authorized to access."),
+                    new Faq("Is it legal to unlock a PDF?", "It depends on your rights to the document. Only process files you own or have permission to modify."),
+                    new Faq("Will unlocking change the document content?", "The goal is to create an accessible copy, not rewrite the PDF content."),
+                    new Faq("Should I relock the file after editing?", "If the document remains sensitive, consider locking it again before sharing.")
+                }),
+
+            ["/watermark-pdf"] = Tool(
+                "PDF watermark guide",
+                "Mark PDFs as draft, confidential, or reviewed",
+                "Watermarks make a document's status clear at a glance. They are useful for drafts, internal files, samples, confidential material, and review copies where the recipient should understand how the document should be treated.",
+                new[] { "Add DRAFT, CONFIDENTIAL, SAMPLE, or INTERNAL labels.", "Mark review copies before sending them to stakeholders.", "Discourage accidental reuse of preliminary files.", "Label documents before approval or archive." },
+                new[] { "Upload the PDF.", "Enter the watermark text.", "Adjust placement, opacity, or style when available.", "Apply the watermark.", "Download and review the marked PDF." },
+                new[] { "A designer marks a proposal as draft.", "A finance team labels a forecast as confidential.", "A trainer adds sample labels to handout materials." },
+                "A watermark is a visible label, not a security control. Use Redact PDF or Lock PDF when you need to remove or restrict access to sensitive information.",
+                new[] { L("Redact PDF", "/redact-pdf"), L("Lock PDF", "/lock-pdf"), L("Flatten PDF", "/flatten-pdf"), L("Security tools", "/pdf-security-tools") },
+                new[] {
+                    new Faq("Can a watermark protect confidential data?", "No. A watermark communicates status but does not remove information or control access."),
+                    new Faq("What text should I use?", "Use short, clear labels such as DRAFT, CONFIDENTIAL, INTERNAL, SAMPLE, or REVIEW COPY."),
+                    new Faq("Will the watermark appear on every page?", "That depends on the selected settings. Review the output to confirm placement across the document."),
+                    new Faq("Can I remove a watermark later?", "If you need an unwatermarked version, keep a secure copy of the original document.")
+                }),
+
+            ["/rotate-pdf"] = Tool(
+                "PDF rotation guide",
+                "Fix sideways or upside-down PDF pages",
+                "Rotate PDF helps clean up scans, phone-captured documents, or mixed-orientation files. Correct page orientation makes documents easier to read, print, sign, and archive.",
+                new[] { "Fix sideways scanned pages.", "Rotate landscape pages for easier review.", "Prepare files before signing or merging.", "Clean up documents captured with a phone scanner." },
+                new[] { "Upload the PDF.", "Choose the pages or orientation to rotate.", "Apply the rotation.", "Download the corrected PDF.", "Skim the file to confirm every page faces the right direction." },
+                new[] { "A student fixes sideways lecture notes.", "An office team rotates scanned receipts before archiving.", "A contractor corrects a signed form before sending it." },
+                "Rotation changes page orientation but does not validate document content. Review the final file before sharing or archiving.",
+                new[] { L("Organize PDF", "/organize-pdf"), L("Merge PDF", "/merge-pdf"), L("PDF Scanner", "/pdf-scanner"), L("Split PDF", "/split-pdf") },
+                new[] {
+                    new Faq("Can I rotate only some pages?", "Use page-specific settings when available so mixed-orientation documents can be corrected without changing every page."),
+                    new Faq("Does rotating affect quality?", "Rotation should not reduce text or image quality, but always check the output."),
+                    new Faq("Should I rotate before merging?", "Yes, correcting orientation before merging usually creates a cleaner final packet."),
+                    new Faq("Can rotation fix skewed scans?", "Rotation fixes orientation, not tilted scan angles. A badly skewed scan may need rescanning or image cleanup.")
+                }),
+
+            ["/organize-pdf"] = Tool(
+                "PDF organization guide",
+                "Reorder and clean up PDF page structure",
+                "Organizing a PDF helps turn a rough document into a readable packet. It is useful when pages are out of order, duplicates slipped in, or separate sections need to be arranged before sharing.",
+                new[] { "Reorder scanned pages after a feeder mistake.", "Prepare client packets in the right sequence.", "Move cover pages, exhibits, or appendices into place.", "Clean up files before merging, signing, or archiving." },
+                new[] { "Upload the PDF.", "Review page thumbnails or page controls.", "Reorder, rotate, remove, or extract pages as needed.", "Apply the changes.", "Download and review the organized PDF." },
+                new[] { "A paralegal reorders exhibits before a filing.", "A teacher organizes handout pages before posting them.", "An operations team cleans up a policy packet." },
+                "Review the final order before sharing. Page organization can change the meaning of contracts, forms, and instructions if pages are moved incorrectly.",
+                new[] { L("Merge PDF", "/merge-pdf"), L("Split PDF", "/split-pdf"), L("Delete PDF Pages", "/delete-pdf-pages"), L("PDF organizer tools", "/pdf-organizer-tools") },
+                new[] {
+                    new Faq("What is the difference between organize and merge?", "Organize changes pages within one PDF. Merge combines multiple PDFs into one file."),
+                    new Faq("Can I remove pages while organizing?", "Use Delete PDF Pages or the available organizer controls to remove unwanted pages."),
+                    new Faq("Should I organize before signing?", "Yes. Put pages in final order before signing so the signed document matches the intended packet."),
+                    new Faq("Can I reorder scanned PDFs?", "Yes, page order can be changed even if the pages are scanned images.")
+                }),
+
+            ["/flatten-pdf"] = Tool(
+                "PDF flattening guide",
+                "Lock visible form fields and annotations into the page",
+                "Flattening a PDF can make annotations, form entries, and markups part of the visible page appearance. It is useful before sharing a completed form, signed document, or reviewed file where viewers should see the same final version.",
+                new[] { "Flatten completed forms before sending.", "Lock visible annotations into a review copy.", "Prepare signed or marked files for consistent viewing.", "Reduce editability before archiving a final PDF." },
+                new[] { "Upload the PDF.", "Confirm it contains the visible fields or annotations you want to keep.", "Run the flatten workflow.", "Download the flattened PDF.", "Open the result and confirm all visible elements appear correctly." },
+                new[] { "An HR coordinator flattens an employee form.", "A reviewer locks comment markings before sharing.", "A contractor flattens a signed work order." },
+                "Flattening is not the same as redaction or encryption. It can reduce editability, but sensitive information should still be redacted or protected when needed.",
+                new[] { L("Fill PDF Form", "/fill-pdf-form"), L("Sign PDF", "/sign-pdf"), L("Redact PDF", "/redact-pdf"), L("Lock PDF", "/lock-pdf") },
+                new[] {
+                    new Faq("Why flatten a PDF?", "Flattening helps make visible form entries and annotations appear consistently to recipients."),
+                    new Faq("Can flattened content still be copied?", "Possibly. Flattening is not a privacy guarantee, so redact sensitive information before sharing."),
+                    new Faq("Should I keep the original?", "Yes, keep the editable original securely if you may need to revise form fields later."),
+                    new Faq("Does flattening replace signing?", "No. Flattening can preserve the visible appearance of a signed document, but it is not a separate signature process.")
+                }),
+
+            ["/fill-pdf-form"] = Tool(
+                "PDF form guide",
+                "Complete PDF forms without printing",
+                "Filling a PDF form online helps when you need to complete applications, intake forms, checklists, and administrative documents quickly. The finished PDF can be downloaded and reviewed before it is sent.",
+                new[] { "Fill intake forms, applications, and checklists.", "Complete paperwork received by email.", "Prepare forms before adding a signature.", "Avoid printing, writing, scanning, and renaming files." },
+                new[] { "Upload the form PDF.", "Click or select available fields.", "Enter the required information.", "Review every completed field.", "Download the finished form and sign it if needed." },
+                new[] { "A patient completes a form before an appointment.", "A small business fills a vendor onboarding PDF.", "An applicant fills a PDF application packet." },
+                "Forms can contain sensitive personal information. Download and store completed forms carefully, and avoid emailing sensitive information unless the recipient's process is appropriate.",
+                new[] { L("Sign PDF", "/sign-pdf"), L("Flatten PDF", "/flatten-pdf"), L("Lock PDF", "/lock-pdf"), L("Privacy Policy", "/privacy-policy") },
+                new[] {
+                    new Faq("Can I fill any PDF form?", "Interactive forms work best. Flat scanned forms may require text boxes or another editing workflow."),
+                    new Faq("Should I flatten after filling?", "Flattening can help preserve completed field appearance before sharing."),
+                    new Faq("Can I sign after filling?", "Yes. Fill the form first, then use Sign PDF for signature fields or approval areas."),
+                    new Faq("What should I review before sending?", "Check names, dates, addresses, selected boxes, signatures, and any fields near page edges.")
+                }),
+
+            ["/number-pages"] = Tool(
+                "Page numbering guide",
+                "Add page numbers to PDF packets",
+                "Page numbers make long PDFs easier to reference, review, and discuss. They are especially useful for packets assembled from multiple sources, drafts sent for approval, and documents that will be printed or cited.",
+                new[] { "Add numbers before client review.", "Prepare training packets or handouts.", "Make meeting packets easier to reference.", "Number merged documents after combining files." },
+                new[] { "Upload the PDF.", "Choose number placement and starting value.", "Preview settings when available.", "Apply page numbers.", "Download and verify numbering across the document." },
+                new[] { "A board packet is numbered before distribution.", "A teacher adds page numbers to a workbook.", "A legal team numbers a combined exhibit packet." },
+                "Page numbers can affect document appearance. Review headers, footers, margins, and any existing numbers before sharing the result.",
+                new[] { L("Merge PDF", "/merge-pdf"), L("Organize PDF", "/organize-pdf"), L("Watermark PDF", "/watermark-pdf"), L("PDF organizer tools", "/pdf-organizer-tools") },
+                new[] {
+                    new Faq("Should I number before or after merging?", "Number after merging if you want continuous numbering across the final packet."),
+                    new Faq("Can page numbers overlap existing footers?", "They can if the document already has footer content. Choose placement carefully and review the output."),
+                    new Faq("Can I start at a number other than 1?", "Use starting-number settings when available for appendices, exhibits, or packets that continue from another file."),
+                    new Faq("Do page numbers change the original file?", "The workflow creates a new numbered PDF. Your local source file is not changed.")
+                }),
+
+            ["/pdf-ocr"] = Tool(
+                "PDF OCR guide",
+                "Make scanned PDFs searchable when text recognition is needed",
+                "OCR is useful when a PDF is really a picture of text. It can help make scanned pages searchable, copyable, or ready for AI workflows, though recognition quality depends on scan clarity, language, layout, and image quality.",
+                new[] { "Make scanned contracts easier to search.", "Prepare image-only PDFs for summarization or questions.", "Extract text from scanned receipts, forms, or records.", "Improve document archives that were created from paper scans." },
+                new[] { "Upload a scanned or image-only PDF.", "Run OCR processing.", "Download the recognized output.", "Search or copy text to test recognition.", "Review important names, numbers, and dates manually." },
+                new[] { "An office digitizes old paper records.", "A student makes scanned notes searchable.", "A team prepares scanned PDFs for AI summarization." },
+                "OCR can misread characters, handwriting, low-resolution scans, stamps, or columns. Do not rely on OCR output without review for legal, financial, medical, or compliance decisions.",
+                new[] { L("AI Summarizer", "/ai-summarizer"), L("Chat with PDF", "/chat-with-pdf"), L("OCR guide", "/blog/ocr-for-scanned-pdfs"), L("PDF to Word", "/pdf-to-word") },
+                new[] {
+                    new Faq("When do I need OCR?", "Use OCR when you cannot select or search text in the PDF because the page is a scan or image."),
+                    new Faq("Does OCR guarantee perfect text?", "No. Recognition can be affected by blur, handwriting, skew, tables, stamps, and low contrast."),
+                    new Faq("Should I OCR before using AI tools?", "Usually yes for scanned PDFs, because AI workflows need text to analyze."),
+                    new Faq("Can OCR preserve the original look?", "OCR workflows may keep the page image while adding recognized text, but you should review the output.")
+                }),
+
+            ["/compare-pdf"] = Tool(
+                "PDF comparison guide",
+                "Review differences between two PDF versions",
+                "Comparing PDFs helps find edits between drafts, contracts, reports, or policies. It is most useful when you have an old version and a new version and need a faster way to spot what changed.",
+                new[] { "Compare contract drafts before approval.", "Review policy changes between versions.", "Check vendor documents for unexpected edits.", "Validate revisions before sending a final copy." },
+                new[] { "Upload the original PDF.", "Upload the revised PDF.", "Run the comparison.", "Review highlighted or summarized differences.", "Confirm important changes manually before relying on the result." },
+                new[] { "A manager checks a supplier agreement for changed terms.", "A team reviews policy edits before publishing.", "A freelancer compares client feedback revisions." },
+                "Comparison output is a review aid, not a guarantee. Always inspect important clauses, numbers, dates, names, and obligations yourself.",
+                new[] { L("AI Contract Reviewer", "/review-contract"), L("Chat with PDF", "/chat-with-pdf"), L("Redact PDF", "/redact-pdf"), L("Business tools", "/business-pdf-tools") },
+                new[] {
+                    new Faq("What types of PDFs compare best?", "Text-based PDFs with similar layouts are easier to compare than scans, photos, or heavily redesigned files."),
+                    new Faq("Can comparison miss changes?", "Yes. Complex layouts, OCR errors, and formatting changes can affect results, so manual review is still important."),
+                    new Faq("Is this legal advice for contracts?", "No. It can help identify differences, but legal interpretation should come from a qualified professional."),
+                    new Faq("Should I redact before comparing?", "If the files contain information you do not need to process, redact or remove it before uploading.")
+                }),
+
+            ["/ai-summarizer"] = Tool(
+                "AI PDF summary guide",
+                "Summarize long PDFs into reviewable notes",
+                "AI summaries are useful when a document is long and you need a faster first pass. They can highlight topics, obligations, sections, and themes, but they should not replace reading important source material.",
+                new[] { "Summarize reports, manuals, policies, or meeting packets.", "Create a first-pass overview before deeper review.", "Prepare notes from long PDFs for team discussion.", "Identify sections that deserve closer reading." },
+                new[] { "Upload a text-based PDF or OCR a scan first.", "Choose the summarization workflow.", "Read the generated summary.", "Compare important claims against the source document.", "Use related tools if you need questions, translation, or contract review." },
+                new[] { "A manager summarizes a 40-page operations report.", "A student creates study notes from a reading packet.", "A consultant reviews a client policy before a meeting." },
+                "AI output can be incomplete or incorrect. Do not rely on summaries as legal, financial, tax, medical, or professional advice.",
+                new[] { L("Chat with PDF", "/chat-with-pdf"), L("PDF OCR", "/pdf-ocr"), L("AI PDF tools", "/ai-pdf-tools"), L("Secure AI PDF tools", "/blog/secure-ai-pdf-tools") },
+                new[] {
+                    new Faq("What PDFs summarize best?", "Text-based PDFs with clear sections summarize better than scans, image-only files, or documents with messy OCR."),
+                    new Faq("Can I use the summary as the final answer?", "Use it as a starting point. Verify important facts, numbers, dates, and obligations in the source document."),
+                    new Faq("Should I upload confidential documents?", "Only upload documents you are authorized to process and comfortable using with the service."),
+                    new Faq("What if the PDF is scanned?", "Run OCR first so the AI workflow has text to analyze.")
+                }),
+
+            ["/chat-with-pdf"] = Tool(
+                "Chat with PDF guide",
+                "Ask targeted questions about a PDF",
+                "Chat with PDF is useful when you know what you are looking for but do not want to scan every page manually. It can help locate topics, summarize sections, and explain document content in plain language.",
+                new[] { "Ask about contract terms, dates, or obligations.", "Find sections in manuals, policies, or reports.", "Turn a long PDF into a question-and-answer workflow.", "Create review notes before a meeting or class." },
+                new[] { "Upload a text-based PDF or OCR a scan first.", "Ask a specific question.", "Read the answer and source context when available.", "Ask follow-up questions to narrow the topic.", "Verify important details in the original document." },
+                new[] { "A support lead asks a manual where a setting is described.", "A founder asks a contract about renewal terms.", "A student asks a reading packet for key definitions." },
+                "AI answers can be wrong or incomplete. Treat them as assistance for review, not as a substitute for professional judgment or reading critical documents.",
+                new[] { L("AI Summarizer", "/ai-summarizer"), L("AI Contract Reviewer", "/review-contract"), L("PDF OCR", "/pdf-ocr"), L("AI PDF tools", "/ai-pdf-tools") },
+                new[] {
+                    new Faq("What should I ask?", "Ask specific questions such as 'What are the renewal terms?' or 'Which section discusses cancellation?' rather than broad prompts."),
+                    new Faq("Does it work with scanned PDFs?", "Scanned PDFs usually need OCR first so the document text is available."),
+                    new Faq("Can it replace reading a contract?", "No. It can help find and explain sections, but you should review important terms yourself or with a qualified professional."),
+                    new Faq("Can I ask follow-up questions?", "Yes. Follow-ups are often the best way to narrow a topic or clarify a section.")
+                }),
+
+            ["/translate-pdf"] = Tool(
+                "PDF translation guide",
+                "Translate text-based PDFs for faster understanding",
+                "PDF translation can help you understand a document in another language, prepare a working draft, or review foreign-language content. Translation quality depends on source text, formatting, language pair, and terminology.",
+                new[] { "Translate policies, manuals, forms, or reports for review.", "Create a working translation before professional review.", "Understand client or vendor documents in another language.", "Support multilingual document workflows." },
+                new[] { "Upload a text-based PDF or OCR a scan first.", "Choose the target language.", "Run the translation.", "Download or review the result.", "Verify important legal, medical, financial, or technical wording with a qualified translator." },
+                new[] { "A small business translates a vendor guide.", "A student translates a research handout for study.", "An operations team creates a working draft of a policy translation." },
+                "Machine translation may be inaccurate, especially for specialized terms, legal language, handwriting, or scanned documents. Use professional review for high-stakes documents.",
+                new[] { L("PDF OCR", "/pdf-ocr"), L("AI Summarizer", "/ai-summarizer"), L("Chat with PDF", "/chat-with-pdf"), L("AI PDF tools", "/ai-pdf-tools") },
+                new[] {
+                    new Faq("Does translation preserve layout?", "The workflow aims for readable output where possible, but translated text can expand, contract, or shift layout."),
+                    new Faq("Can I translate scanned PDFs?", "Run OCR first if the document is image-only. Translation needs recognized text."),
+                    new Faq("Is machine translation enough for legal documents?", "Use it as a draft or review aid. Important legal or official documents should be checked by a qualified translator or professional."),
+                    new Faq("What affects translation quality?", "Clear source text, accurate OCR, simple layout, and well-supported languages generally produce better results.")
+                }),
+        };
+
+    private sealed record ToolContent(
+        string Eyebrow,
+        string Title,
+        string Intro,
+        string[] UseCases,
+        string[] Steps,
+        string[] Scenarios,
+        string SecurityNote,
+        Link[] RelatedLinks,
+        Faq[] Faqs,
+        string FaqTitle);
+
+    private sealed record Link(string Label, string Url);
+
+    private sealed record Faq(string Question, string Answer);
+}

@@ -25727,3 +25727,178 @@ body {
         border-radius: 14px;
     }
 }
+/* Tool education content */
+.tool-education-band {
+    width: 100%;
+    padding: 56px 0 64px;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    border-top: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.tool-education-container {
+    width: min(1180px, calc(100% - 32px));
+    margin: 0 auto;
+}
+
+.tool-education-header {
+    max-width: 780px;
+    margin-bottom: 28px;
+}
+
+.tool-education-eyebrow {
+    display: inline-flex;
+    margin-bottom: 10px;
+    color: #4f46e5;
+    font-size: 0.76rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.tool-education-header h2 {
+    margin: 0 0 12px;
+    color: #111827;
+    font-size: clamp(1.8rem, 2.5vw, 2.7rem);
+    line-height: 1.08;
+}
+
+.tool-education-header p,
+.tool-education-card p,
+.tool-education-card li,
+.tool-education-faq p {
+    color: #526173;
+    line-height: 1.7;
+}
+
+.tool-education-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.tool-education-card,
+.tool-education-related,
+.tool-education-faq {
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.94);
+    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.06);
+}
+
+.tool-education-card {
+    padding: 22px;
+}
+
+.tool-education-card--security {
+    background: linear-gradient(135deg, #f8fafc, #eef2ff);
+}
+
+.tool-education-card h3,
+.tool-education-faqs h3 {
+    margin: 0 0 12px;
+    color: #111827;
+    font-size: 1.12rem;
+    line-height: 1.25;
+}
+
+.tool-education-card ul,
+.tool-education-card ol {
+    margin: 0;
+    padding-left: 1.2rem;
+}
+
+.tool-education-card li + li {
+    margin-top: 8px;
+}
+
+.tool-education-card a,
+.tool-education-related a {
+    color: #2563eb;
+    font-weight: 800;
+    text-decoration: none;
+}
+
+.tool-education-card a:hover,
+.tool-education-related a:hover {
+    text-decoration: underline;
+}
+
+.tool-education-related {
+    display: flex;
+    gap: 16px;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+    padding: 18px 20px;
+}
+
+.tool-education-related span {
+    color: #111827;
+    font-weight: 900;
+}
+
+.tool-education-related div {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.tool-education-related a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 36px;
+    border: 1px solid rgba(37, 99, 235, 0.16);
+    border-radius: 999px;
+    background: #eff6ff;
+    padding: 0.42rem 0.72rem;
+    font-size: 0.9rem;
+}
+
+.tool-education-faqs {
+    margin-top: 28px;
+}
+
+.tool-education-faq-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.tool-education-faq {
+    padding: 0;
+    overflow: hidden;
+}
+
+.tool-education-faq summary {
+    cursor: pointer;
+    color: #111827;
+    font-weight: 900;
+    list-style-position: inside;
+    padding: 16px 18px;
+}
+
+.tool-education-faq p {
+    margin: 0;
+    padding: 0 18px 18px;
+}
+
+@media (max-width: 860px) {
+    .tool-education-band {
+        padding: 40px 0 48px;
+    }
+
+    .tool-education-grid,
+    .tool-education-faq-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .tool-education-related {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .tool-education-related div {
+        justify-content: flex-start;
+    }
+}
