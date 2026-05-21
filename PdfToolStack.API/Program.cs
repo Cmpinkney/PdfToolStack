@@ -332,26 +332,39 @@ try
     builder.Services.AddScoped<IPdfService, PdfService>();
 
     // ── CORS — allow Blazor frontend ──────────────────────────────────────
+    var defaultCorsOrigins = builder.Environment.IsDevelopment()
+        ? new[]
+        {
+            "https://localhost:7025",
+            "http://localhost:5049"
+        }
+        : new[]
+        {
+            "https://pdftoolstack.com",
+            "https://www.pdftoolstack.com"
+        };
+
+    var allowedCorsOrigins = builder.Configuration
+        .GetSection("Cors:AllowedOrigins")
+        .Get<string[]>();
+
+    allowedCorsOrigins = allowedCorsOrigins?
+        .Where(origin => !string.IsNullOrWhiteSpace(origin))
+        .Select(origin => origin.Trim().TrimEnd('/'))
+        .Distinct(StringComparer.OrdinalIgnoreCase)
+        .ToArray();
+
+    if (allowedCorsOrigins is null || allowedCorsOrigins.Length == 0)
+        allowedCorsOrigins = defaultCorsOrigins;
+
     builder.Services.AddCors(options =>
     {
         options.AddPolicy("BlazorPolicy", policy =>
         {
-            if (builder.Environment.IsDevelopment())
-            {
-                policy.WithOrigins(
-                        "https://localhost:7025",
-                        "http://localhost:5049")
-                      .AllowAnyMethod()
-                      .AllowAnyHeader();
-            }
-            else
-            {
-                policy.WithOrigins(
-                        "https://pdftoolstack.com",
-                        "https://www.pdftoolstack.com")
-                      .AllowAnyMethod()
-                      .AllowAnyHeader();
-            }
+            policy.WithOrigins(allowedCorsOrigins)
+                  .WithMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                  .AllowAnyHeader()
+                  .SetPreflightMaxAge(TimeSpan.FromHours(1));
         });
     });
 
@@ -428,10 +441,6 @@ try
     var app = builder.Build();
 
     // ── Middleware Pipeline ───────────────────────────────────────────────
-    app.UseMiddleware<ErrorHandlingMiddleware>();
-    app.UseMiddleware<AuditLoggingMiddleware>();
-    app.UseMiddleware<RateLimitingMiddleware>();
-
     if (app.Environment.IsDevelopment())
     {
         app.UseSwagger();
@@ -513,10 +522,14 @@ try
     });
 
     app.UseHttpsRedirection();
+    app.UseRouting();
     app.UseCors("BlazorPolicy");
+    app.UseMiddleware<ErrorHandlingMiddleware>();
+    app.UseMiddleware<AuditLoggingMiddleware>();
+    app.UseMiddleware<RateLimitingMiddleware>();
     app.UseAuthentication();
     app.UseAuthorization();
-    app.MapControllers();
+    app.MapControllers().RequireCors("BlazorPolicy");
 
     // ── /healthz — suitable for Azure App Service Health Check probe ──────
     app.MapHealthChecks("/healthz");
