@@ -1,27 +1,29 @@
-using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
+using Microsoft.JSInterop;
 
 namespace PdfToolStack.Web.Services
 {
     public sealed class OptionalAuthorizationMessageHandler : DelegatingHandler
     {
         private readonly IAccessTokenProvider _tokenProvider;
-        private readonly AuthenticationStateProvider _authStateProvider;
+        private readonly IJSRuntime _js;
+        private readonly IConfiguration _configuration;
 
         public OptionalAuthorizationMessageHandler(
             IAccessTokenProvider tokenProvider,
-            AuthenticationStateProvider authStateProvider)
+            IJSRuntime js,
+            IConfiguration configuration)
         {
             _tokenProvider = tokenProvider;
-            _authStateProvider = authStateProvider;
+            _js = js;
+            _configuration = configuration;
         }
 
         protected override async Task<HttpResponseMessage> SendAsync(
             HttpRequestMessage request,
             CancellationToken cancellationToken)
         {
-            var authState = await _authStateProvider.GetAuthenticationStateAsync();
-            if (authState.User.Identity?.IsAuthenticated == true)
+            if (await HasCachedUserAsync(cancellationToken))
             {
                 var tokenResult = await _tokenProvider.RequestAccessToken();
                 if (tokenResult.TryGetToken(out var token))
@@ -34,6 +36,22 @@ namespace PdfToolStack.Web.Services
             }
 
             return await base.SendAsync(request, cancellationToken);
+        }
+
+        private async Task<bool> HasCachedUserAsync(CancellationToken cancellationToken)
+        {
+            try
+            {
+                return await _js.InvokeAsync<bool>(
+                    "pdfToolStackAuth.hasCachedUser",
+                    cancellationToken,
+                    _configuration["Auth0:Authority"],
+                    _configuration["Auth0:ClientId"]);
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }

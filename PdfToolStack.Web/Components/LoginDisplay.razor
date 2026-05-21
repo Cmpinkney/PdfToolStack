@@ -1,227 +1,230 @@
-﻿@using Microsoft.AspNetCore.Components.Authorization
-@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
 @inject IConfiguration Configuration
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
+@inject AuthenticationStateProvider AuthProvider
 
-<AuthorizeView>
-    <Authorized>
-        <div class="profile-menu-wrap">
-            <button class="nav-user-chip"
-                    @onclick="ToggleMenu"
-                    aria-expanded="@_menuOpen"
-                    aria-haspopup="true">
-                @if (!string.IsNullOrEmpty(GetPicture(context.User)))
+@if (_user?.Identity?.IsAuthenticated == true)
+{
+    <div class="profile-menu-wrap">
+        <button class="nav-user-chip"
+                @onclick="ToggleMenu"
+                aria-expanded="@_menuOpen"
+                aria-haspopup="true">
+            @if (!string.IsNullOrEmpty(GetPicture(_user)))
+            {
+                <img src="@GetPicture(_user)"
+                     alt="@GetFirstName(_user.Identity?.Name)"
+                     width="26" height="26"
+                     style="width:26px;height:26px;min-width:26px;border-radius:50%;object-fit:cover;flex-shrink:0;"
+                     class="nav-user-avatar-img" />
+            }
+            else
+            {
+                <span class="nav-user-avatar">
+                    @GetInitials(_user.Identity?.Name)
+                </span>
+            }
+            <span class="nav-user-name">
+                @GetFirstName(_user.Identity?.Name)
+            </span>
+            <svg class="nav-user-chevron-svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                @if (_menuOpen)
                 {
-                    <img src="@GetPicture(context.User)"
-                         alt="@GetFirstName(context.User.Identity?.Name)"
-                         width="26" height="26"
-                         style="width:26px;height:26px;min-width:26px;border-radius:50%;object-fit:cover;flex-shrink:0;"
-                         class="nav-user-avatar-img" />
+                    <polyline points="18,15 12,9 6,15" />
                 }
                 else
                 {
-                    <span class="nav-user-avatar">
-                        @GetInitials(context.User.Identity?.Name)
-                    </span>
+                    <polyline points="6,9 12,15 18,9" />
                 }
-                <span class="nav-user-name">
-                    @GetFirstName(context.User.Identity?.Name)
-                </span>
-                <svg class="nav-user-chevron-svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    @if (_menuOpen)
+            </svg>
+        </button>
+
+        @if (_menuOpen)
+        {
+            <div class="profile-dropdown" @onclick:stopPropagation="true">
+                <div class="profile-dropdown-header">
+                    @if (!string.IsNullOrEmpty(GetPicture(_user)))
                     {
-                        <polyline points="18,15 12,9 6,15" />
+                        <img src="@GetPicture(_user)"
+                             alt="Profile"
+                             class="profile-dropdown-avatar" />
                     }
                     else
                     {
-                        <polyline points="6,9 12,15 18,9" />
-                    }
-                </svg>
-            </button>
-
-            @if (_menuOpen)
-            {
-                <div class="profile-dropdown" @onclick:stopPropagation="true">
-
-                    <div class="profile-dropdown-header">
-                        @if (!string.IsNullOrEmpty(GetPicture(context.User)))
-                        {
-                            <img src="@GetPicture(context.User)"
-                                 alt="Profile"
-                                 class="profile-dropdown-avatar" />
-                        }
-                        else
-                        {
-                            <div class="profile-dropdown-initials">
-                                @GetInitials(context.User.Identity?.Name)
-                            </div>
-                        }
-                        <div class="profile-dropdown-info">
-                            <span class="profile-dropdown-name">
-                                @context.User.Identity?.Name
-                            </span>
-                            <span class="profile-dropdown-email">
-                                @context.User.FindFirst("email")?.Value
-                            </span>
+                        <div class="profile-dropdown-initials">
+                            @GetInitials(_user.Identity?.Name)
                         </div>
+                    }
+                    <div class="profile-dropdown-info">
+                        <span class="profile-dropdown-name">
+                            @_user.Identity?.Name
+                        </span>
+                        <span class="profile-dropdown-email">
+                            @_user.FindFirst("email")?.Value
+                        </span>
                     </div>
-
-                    <div class="profile-dropdown-divider"></div>
-
-                    <button class="profile-menu-item" @onclick='() => NavigateTo("/account")'>
-                        <span class="profile-menu-icon">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                                <circle cx="12" cy="7" r="4" />
-                            </svg>
-                        </span>
-                        My Account
-                    </button>
-
-                    <button class="profile-menu-item" @onclick='() => NavigateTo("/account#documents")'>
-                        <span class="profile-menu-icon">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                                <polyline points="14,2 14,8 20,8" />
-                                <line x1="16" y1="13" x2="8" y2="13" />
-                                <line x1="16" y1="17" x2="8" y2="17" />
-                            </svg>
-                        </span>
-                        My Documents
-                    </button>
-
-                    <button class="profile-menu-item" @onclick='() => NavigateTo("/pricing")'>
-                        <span class="profile-menu-icon">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
-                                <line x1="1" y1="10" x2="23" y2="10" />
-                            </svg>
-                        </span>
-                        Subscription
-                    </button>
-
-                    <button class="profile-menu-item" @onclick='() => NavigateTo("/contact")'>
-                        <span class="profile-menu-icon">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="10" />
-                                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-                                <line x1="12" y1="17" x2="12.01" y2="17" />
-                            </svg>
-                        </span>
-                        Help &amp; Support
-                    </button>
-
-                    <div class="profile-dropdown-divider"></div>
-
-                    <div class="profile-menu-section-label">Appearance</div>
-                    <div class="profile-theme-options">
-                        <button class="profile-theme-btn @(_theme == "system" ? "active" : "")"
-                                @onclick='() => SetTheme("system")'>
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="2" y="3" width="20" height="14" rx="2" />
-                                <line x1="8" y1="21" x2="16" y2="21" />
-                                <line x1="12" y1="17" x2="12" y2="21" />
-                            </svg>
-                            System
-                        </button>
-                        <button class="profile-theme-btn @(_theme == "light" ? "active" : "")"
-                                @onclick='() => SetTheme("light")'>
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="5" />
-                                <line x1="12" y1="1" x2="12" y2="3" />
-                                <line x1="12" y1="21" x2="12" y2="23" />
-                                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-                                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-                                <line x1="1" y1="12" x2="3" y2="12" />
-                                <line x1="21" y1="12" x2="23" y2="12" />
-                                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-                                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-                            </svg>
-                            Light
-                        </button>
-                        <button class="profile-theme-btn @(_theme == "dark" ? "active" : "")"
-                                @onclick='() => SetTheme("dark")'>
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-                            </svg>
-                            Dark
-                        </button>
-                    </div>
-
-                    <div class="profile-dropdown-divider"></div>
-
-                    <button class="profile-menu-item profile-menu-signout"
-                            @onclick="BeginLogout">
-                        <span class="profile-menu-icon">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                                <polyline points="16,17 21,12 16,7" />
-                                <line x1="21" y1="12" x2="9" y2="12" />
-                            </svg>
-                        </span>
-                        Sign Out
-                    </button>
-
                 </div>
 
-                <div class="profile-menu-backdrop" @onclick="CloseMenu"></div>
-            }
-        </div>
-    </Authorized>
+                <div class="profile-dropdown-divider"></div>
 
-    <NotAuthorized>
-        <div class="auth-buttons">
-            <button class="theme-toggle-switch @(_isDark ? "active" : "")"
-                    @onclick="ToggleThemeSimple"
-                    aria-label="Toggle dark mode"
-                    role="switch"
-                    aria-checked="@_isDark">
-                <span class="theme-toggle-track">
-                    <span class="theme-toggle-thumb">
-                        @if (_isDark)
-                        {
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-                            </svg>
-                        }
-                        else
-                        {
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="5" />
-                                <line x1="12" y1="1" x2="12" y2="3" />
-                                <line x1="12" y1="21" x2="12" y2="23" />
-                                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-                                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-                                <line x1="1" y1="12" x2="3" y2="12" />
-                                <line x1="21" y1="12" x2="23" y2="12" />
-                                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-                                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-                            </svg>
-                        }
+                <button class="profile-menu-item" @onclick='() => NavigateTo("/account")'>
+                    <span class="profile-menu-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                            <circle cx="12" cy="7" r="4" />
+                        </svg>
                     </span>
+                    My Account
+                </button>
+
+                <button class="profile-menu-item" @onclick='() => NavigateTo("/account#documents")'>
+                    <span class="profile-menu-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                            <polyline points="14,2 14,8 20,8" />
+                            <line x1="16" y1="13" x2="8" y2="13" />
+                            <line x1="16" y1="17" x2="8" y2="17" />
+                        </svg>
+                    </span>
+                    My Documents
+                </button>
+
+                <button class="profile-menu-item" @onclick='() => NavigateTo("/pricing")'>
+                    <span class="profile-menu-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+                            <line x1="1" y1="10" x2="23" y2="10" />
+                        </svg>
+                    </span>
+                    Subscription
+                </button>
+
+                <button class="profile-menu-item" @onclick='() => NavigateTo("/contact")'>
+                    <span class="profile-menu-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10" />
+                            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                            <line x1="12" y1="17" x2="12.01" y2="17" />
+                        </svg>
+                    </span>
+                    Help &amp; Support
+                </button>
+
+                <div class="profile-dropdown-divider"></div>
+
+                <div class="profile-menu-section-label">Appearance</div>
+                <div class="profile-theme-options">
+                    <button class="profile-theme-btn @(_theme == "system" ? "active" : "")"
+                            @onclick='() => SetTheme("system")'>
+                        System
+                    </button>
+                    <button class="profile-theme-btn @(_theme == "light" ? "active" : "")"
+                            @onclick='() => SetTheme("light")'>
+                        Light
+                    </button>
+                    <button class="profile-theme-btn @(_theme == "dark" ? "active" : "")"
+                            @onclick='() => SetTheme("dark")'>
+                        Dark
+                    </button>
+                </div>
+
+                <div class="profile-dropdown-divider"></div>
+
+                <button class="profile-menu-item profile-menu-signout"
+                        @onclick="BeginLogout">
+                    <span class="profile-menu-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                            <polyline points="16,17 21,12 16,7" />
+                            <line x1="21" y1="12" x2="9" y2="12" />
+                        </svg>
+                    </span>
+                    Sign Out
+                </button>
+            </div>
+
+            <div class="profile-menu-backdrop" @onclick="CloseMenu"></div>
+        }
+    </div>
+}
+else
+{
+    <div class="auth-buttons">
+        <button class="theme-toggle-switch @(_isDark ? "active" : "")"
+                @onclick="ToggleThemeSimple"
+                aria-label="Toggle dark mode"
+                role="switch"
+                aria-checked="@_isDark">
+            <span class="theme-toggle-track">
+                <span class="theme-toggle-thumb">
+                    @if (_isDark)
+                    {
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                        </svg>
+                    }
+                    else
+                    {
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="5" />
+                            <line x1="12" y1="1" x2="12" y2="3" />
+                            <line x1="12" y1="21" x2="12" y2="23" />
+                            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                            <line x1="1" y1="12" x2="3" y2="12" />
+                            <line x1="21" y1="12" x2="23" y2="12" />
+                            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                        </svg>
+                    }
                 </span>
-            </button>
-            <a href="authentication/login" class="login-btn">Sign In</a>
-            <a href="authentication/login?screen_hint=signup" class="signup-btn">
-                <span class="cta-full">Get started free</span><span class="cta-short">Start free</span>
-            </a>
-        </div>
-    </NotAuthorized>
-</AuthorizeView>
+            </span>
+        </button>
+        <a href="authentication/login" class="login-btn">Sign In</a>
+        <a href="authentication/login?screen_hint=signup" class="signup-btn">
+            <span class="cta-full">Get started free</span><span class="cta-short">Start free</span>
+        </a>
+    </div>
+}
 
 @code {
     private bool _menuOpen = false;
     private string _theme = "light";
     private bool _isDark = false;
+    private ClaimsPrincipal? _user;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
+        if (!firstRender)
+            return;
+
+        _theme = await JS.InvokeAsync<string>("getTheme") ?? "light";
+        _isDark = _theme == "dark";
+
+        if (await HasCachedUserAsync())
         {
-            _theme = await JS.InvokeAsync<string>("getTheme") ?? "light";
-            _isDark = _theme == "dark";
-            StateHasChanged();
+            var authState = await AuthProvider.GetAuthenticationStateAsync();
+            if (authState.User.Identity?.IsAuthenticated == true)
+                _user = authState.User;
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task<bool> HasCachedUserAsync()
+    {
+        try
+        {
+            return await JS.InvokeAsync<bool>(
+                "pdfToolStackAuth.hasCachedUser",
+                Configuration["Auth0:Authority"],
+                Configuration["Auth0:ClientId"]);
+        }
+        catch
+        {
+            return false;
         }
     }
 
@@ -259,11 +262,9 @@
     {
         CloseMenu();
 
-        // First clear local Blazor auth state
         await JS.InvokeVoidAsync("sessionStorage.clear");
         await JS.InvokeVoidAsync("localStorage.clear");
 
-        // Then redirect to Auth0 logout
         var authority = Configuration["Auth0:Authority"];
         var clientId = Configuration["Auth0:ClientId"];
         var returnTo = Navigation.BaseUri.TrimEnd('/');
@@ -275,7 +276,7 @@
         Navigation.NavigateTo(logoutUrl, forceLoad: true);
     }
 
-    private static string? GetPicture(System.Security.Claims.ClaimsPrincipal user) =>
+    private static string? GetPicture(ClaimsPrincipal user) =>
         user.FindFirst("picture")?.Value;
 
     private static string GetInitials(string? name)

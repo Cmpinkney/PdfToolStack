@@ -1,7 +1,5 @@
 ﻿@inherits LayoutComponentBase
 @inject SessionUsageService SessionUsage
-@inject SubscriptionService SubscriptionService
-@inject AuthenticationStateProvider AuthProvider
 
 <NavMenu />
 <main>
@@ -19,16 +17,6 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var authState = await AuthProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
-        var userId = user.FindFirst("sub")?.Value;
-
-        if (!string.IsNullOrEmpty(userId))
-        {
-            var status = await SubscriptionService.GetStatusAsync(userId);
-            SessionUsage.CurrentPlanType = status.PlanType;
-        }
-
         await SessionUsage.InitializeAsync();
     }
 }

@@ -327,6 +327,52 @@
         window.getSystemTheme = () =>
             window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 
+        window.pdfToolStackAuth = {
+            hasCachedUser: function (authority, clientId) {
+                const normalizedAuthority = (authority || '').replace(/\/+$/, '');
+                if (!normalizedAuthority || !clientId) return false;
+
+                const possibleKeys = [
+                    `oidc.user:${normalizedAuthority}:${clientId}`,
+                    `oidc.user:${normalizedAuthority}/:${clientId}`
+                ];
+
+                const getStoredUser = (storage) => {
+                    for (const key of possibleKeys) {
+                        const value = storage.getItem(key);
+                        if (value) return value;
+                    }
+
+                    for (let i = 0; i < storage.length; i++) {
+                        const key = storage.key(i);
+                        if (key && key.startsWith('oidc.user:') && key.endsWith(`:${clientId}`)) {
+                            const value = storage.getItem(key);
+                            if (value) return value;
+                        }
+                    }
+
+                    return null;
+                };
+
+                const rawUser = getStoredUser(sessionStorage) || getStoredUser(localStorage);
+                if (!rawUser) return false;
+
+                try {
+                    const user = JSON.parse(rawUser);
+                    if (!user || !user.profile) return false;
+
+                    const expiresAt = Number(user.expires_at || 0);
+                    if (expiresAt && expiresAt * 1000 <= Date.now() + 60000) {
+                        return false;
+                    }
+
+                    return true;
+                } catch {
+                    return false;
+                }
+            }
+        };
+
         window.addEventListener('scroll', () => {
             const navbar = document.getElementById('mainNavbar');
             if (navbar) {
