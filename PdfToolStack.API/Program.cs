@@ -344,18 +344,52 @@ try
             "https://www.pdftoolstack.com"
         };
 
-    var allowedCorsOrigins = builder.Configuration
+    string? NormalizeCorsOrigin(string? origin)
+    {
+        origin = origin?.Trim().Trim('"', '\'').TrimEnd('/');
+        if (string.IsNullOrWhiteSpace(origin))
+            return null;
+
+        if (!origin.StartsWith("http://", StringComparison.OrdinalIgnoreCase) &&
+            !origin.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+        {
+            origin = $"https://{origin}";
+        }
+
+        if (!Uri.TryCreate(origin, UriKind.Absolute, out var uri))
+            return null;
+
+        if (uri.Scheme is not ("http" or "https") || string.IsNullOrWhiteSpace(uri.Host))
+            return null;
+
+        return uri.GetLeftPart(UriPartial.Authority);
+    }
+
+    var configuredCorsOrigins = builder.Configuration
         .GetSection("Cors:AllowedOrigins")
         .Get<string[]>();
 
-    allowedCorsOrigins = allowedCorsOrigins?
+    var allowedCorsOrigins = configuredCorsOrigins?
+        .Select(NormalizeCorsOrigin)
         .Where(origin => !string.IsNullOrWhiteSpace(origin))
-        .Select(origin => origin.Trim().TrimEnd('/'))
+        .Select(origin => origin!)
         .Distinct(StringComparer.OrdinalIgnoreCase)
         .ToArray();
 
     if (allowedCorsOrigins is null || allowedCorsOrigins.Length == 0)
         allowedCorsOrigins = defaultCorsOrigins;
+
+    var allowedCorsOriginHosts = allowedCorsOrigins
+        .Select(origin => Uri.TryCreate(origin, UriKind.Absolute, out var uri)
+            ? uri.Host
+            : "invalid-origin")
+        .Distinct(StringComparer.OrdinalIgnoreCase)
+        .ToArray();
+
+    Log.Information(
+        "CORS allowed origins configured. Count={CorsOriginCount}; Hosts={CorsOriginHosts}",
+        allowedCorsOrigins.Length,
+        string.Join(", ", allowedCorsOriginHosts));
 
     builder.Services.AddCors(options =>
     {
