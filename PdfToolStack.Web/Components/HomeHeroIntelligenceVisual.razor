@@ -26,30 +26,30 @@
                             <feMergeNode in="SourceGraphic" />
                         </feMerge>
                     </filter>
-                    <marker id="workflowArrowSummary" viewBox="0 0 10 10" refX="8.6" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse" overflow="visible">
-                        <path d="M1 1 L9 5 L1 9 Z" fill="#8b5cf6" />
+                    <marker id="workflowArrowSummary" viewBox="0 0 8 8" refX="7.1" refY="4" markerWidth="8" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto" overflow="visible">
+                        <path class="workflow-arrowhead workflow-arrowhead--summary" d="M1.2 1.25 L7 4 L1.2 6.75 Z" />
                     </marker>
-                    <marker id="workflowArrowData" viewBox="0 0 10 10" refX="8.6" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse" overflow="visible">
-                        <path d="M1 1 L9 5 L1 9 Z" fill="#2563eb" />
+                    <marker id="workflowArrowData" viewBox="0 0 8 8" refX="7.1" refY="4" markerWidth="8" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto" overflow="visible">
+                        <path class="workflow-arrowhead workflow-arrowhead--data" d="M1.2 1.25 L7 4 L1.2 6.75 Z" />
                     </marker>
-                    <marker id="workflowArrowCharts" viewBox="0 0 10 10" refX="8.6" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse" overflow="visible">
-                        <path d="M1 1 L9 5 L1 9 Z" fill="#14b8a6" />
+                    <marker id="workflowArrowCharts" viewBox="0 0 8 8" refX="7.1" refY="4" markerWidth="8" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto" overflow="visible">
+                        <path class="workflow-arrowhead workflow-arrowhead--charts" d="M1.2 1.25 L7 4 L1.2 6.75 Z" />
                     </marker>
-                    <marker id="workflowArrowInsights" viewBox="0 0 10 10" refX="8.6" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse" overflow="visible">
-                        <path d="M1 1 L9 5 L1 9 Z" fill="#f97316" />
+                    <marker id="workflowArrowInsights" viewBox="0 0 8 8" refX="7.1" refY="4" markerWidth="8" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto" overflow="visible">
+                        <path class="workflow-arrowhead workflow-arrowhead--insights" d="M1.2 1.25 L7 4 L1.2 6.75 Z" />
                     </marker>
                 </defs>
 
-                <path class="workflow-line workflow-line--summary" id="workflowPathSummary" d="M242 193 H279 C318 193 270 147 352 147" marker-end="url(#workflowArrowSummary)" />
-                <path class="workflow-line workflow-line--data" id="workflowPathData" d="M242 259 H288 C320 259 298 256 352 256" marker-end="url(#workflowArrowData)" />
-                <path class="workflow-line workflow-line--charts" id="workflowPathCharts" d="M242 325 H288 C320 325 298 365 352 365" marker-end="url(#workflowArrowCharts)" />
-                <path class="workflow-line workflow-line--insights" id="workflowPathInsights" d="M242 395 H279 C318 395 270 474 352 474" marker-end="url(#workflowArrowInsights)" />
+                <path class="workflow-line workflow-line--summary" id="workflowPathSummary" d="M242 188 C283 188 306 148 356 147" marker-end="url(#workflowArrowSummary)" />
+                <path class="workflow-line workflow-line--data" id="workflowPathData" d="M242 258 C282 258 309 256 356 256" marker-end="url(#workflowArrowData)" />
+                <path class="workflow-line workflow-line--charts" id="workflowPathCharts" d="M242 326 C284 326 306 363 356 364" marker-end="url(#workflowArrowCharts)" />
+                <path class="workflow-line workflow-line--insights" id="workflowPathInsights" d="M242 392 C282 392 304 470 356 472" marker-end="url(#workflowArrowInsights)" />
 
                 <g class="workflow-source-dots" filter="url(#workflowDotGlow)">
-                    <circle class="workflow-source-dot workflow-source-dot--summary" cx="242" cy="193" r="3" />
-                    <circle class="workflow-source-dot workflow-source-dot--data" cx="242" cy="259" r="3" />
-                    <circle class="workflow-source-dot workflow-source-dot--charts" cx="242" cy="325" r="3" />
-                    <circle class="workflow-source-dot workflow-source-dot--insights" cx="242" cy="395" r="3" />
+                    <circle class="workflow-source-dot workflow-source-dot--summary" cx="242" cy="188" r="3" />
+                    <circle class="workflow-source-dot workflow-source-dot--data" cx="242" cy="258" r="3" />
+                    <circle class="workflow-source-dot workflow-source-dot--charts" cx="242" cy="326" r="3" />
+                    <circle class="workflow-source-dot workflow-source-dot--insights" cx="242" cy="392" r="3" />
                 </g>
 
                 <g class="workflow-particles">
@@ -310,23 +310,38 @@
         overflow: visible;
         filter: none !important;
         pointer-events: none;
-        z-index: 2;
+        z-index: 4;
     }
 
     .workflow-line {
         fill: none;
         stroke-linecap: round;
         stroke-linejoin: round;
-        stroke-width: 1.8;
-        stroke-dasharray: 5 5.5;
-        opacity: 0.86;
+        stroke-width: 2;
+        stroke-dasharray: 3.5 8;
+        stroke-dashoffset: 0;
+        opacity: 0.84;
         filter: url(#workflowLineGlow);
+        animation: workflowLineTravel 4.8s linear infinite;
     }
 
+    .workflow-arrowhead--summary,
     .workflow-line--summary { stroke: var(--summary); }
-    .workflow-line--data { stroke: var(--data); animation-delay: -0.9s; }
-    .workflow-line--charts { stroke: var(--charts); animation-delay: -1.6s; }
-    .workflow-line--insights { stroke: var(--insights); animation-delay: -2.3s; }
+    .workflow-arrowhead--data,
+    .workflow-line--data { stroke: var(--data); animation-delay: -0.6s; }
+    .workflow-arrowhead--charts,
+    .workflow-line--charts { stroke: var(--charts); animation-delay: -1.2s; }
+    .workflow-arrowhead--insights,
+    .workflow-line--insights { stroke: var(--insights); animation-delay: -1.8s; }
+
+    .workflow-arrowhead {
+        stroke: none;
+    }
+
+    .workflow-arrowhead--summary { fill: var(--summary); }
+    .workflow-arrowhead--data { fill: var(--data); }
+    .workflow-arrowhead--charts { fill: var(--charts); }
+    .workflow-arrowhead--insights { fill: var(--insights); }
 
     .workflow-particle--summary { fill: var(--summary); }
     .workflow-particle--data { fill: var(--data); }
@@ -369,6 +384,8 @@
         background: rgba(255, 255, 255, 0.9);
         box-shadow: 0 22px 52px rgba(15, 23, 42, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.96);
         padding: 26px 18px 24px;
+        animation: workflowFloat 7.2s ease-in-out infinite;
+        will-change: transform;
     }
 
     .workflow-document-card::before {
@@ -443,6 +460,8 @@
         font-weight: 850;
         padding: 0.22rem 0.5rem;
         white-space: nowrap;
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.14);
+        animation: workflowStatusPulse 3.6s ease-in-out infinite;
     }
 
     .workflow-document-body {
@@ -536,6 +555,7 @@
         stroke-width: 3.2;
         stroke-dasharray: 245;
         stroke-dashoffset: 0;
+        animation: workflowChartPulse 4.6s ease-in-out infinite;
     }
 
     .workflow-file-meta {
@@ -587,6 +607,7 @@
         background: linear-gradient(90deg, var(--summary), var(--data), var(--charts));
         box-shadow: 0 0 10px rgba(37, 99, 235, 0.14);
         transform-origin: left center;
+        animation: workflowProgress 4.4s ease-in-out infinite;
     }
 
     .workflow-output-stack {
@@ -620,6 +641,12 @@
         padding: 16px 14px;
         transform: none;
         opacity: 1;
+        transition: transform 360ms ease, box-shadow 360ms ease, border-color 360ms ease;
+    }
+
+    .workflow-output-card:hover {
+        border-color: color-mix(in srgb, var(--accent) 24%, rgba(226, 232, 240, 0.72));
+        box-shadow: 0 20px 44px rgba(15, 23, 42, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.96);
     }
 
     .workflow-output-card--data {
@@ -710,6 +737,7 @@
         border-radius: inherit;
         background: var(--accent);
         opacity: 0.34;
+        animation: workflowLoader 3.4s ease-in-out infinite;
     }
 
     .workflow-output-meter {
@@ -756,12 +784,12 @@
     }
 
     @@keyframes workflowLineTravel {
-        to { stroke-dashoffset: -72; }
+        to { stroke-dashoffset: -46; }
     }
 
     @@keyframes workflowFloat {
         0%, 100% { transform: translateY(0); }
-        50% { transform: translateY(-7px); }
+        50% { transform: translateY(-5px); }
     }
 
     @@keyframes workflowCardEnter {
@@ -777,6 +805,26 @@
 
     @@keyframes workflowChartDraw {
         to { stroke-dashoffset: 0; }
+    }
+
+    @@keyframes workflowChartPulse {
+        0%, 100% {
+            opacity: 0.72;
+            filter: drop-shadow(0 0 0 rgba(37, 99, 235, 0));
+        }
+        50% {
+            opacity: 1;
+            filter: drop-shadow(0 0 6px rgba(37, 99, 235, 0.18));
+        }
+    }
+
+    @@keyframes workflowStatusPulse {
+        0%, 100% {
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.12), 0 0 0 rgba(16, 185, 129, 0);
+        }
+        50% {
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.08), 0 0 14px rgba(16, 185, 129, 0.16);
+        }
     }
 
     @@keyframes workflowProgress {
@@ -935,6 +983,7 @@
         .ai-workflow-steps .is-active,
         .workflow-line,
         .workflow-document-card,
+        .workflow-status,
         .workflow-scan,
         .workflow-chart-line,
         .workflow-mini-line,
@@ -952,6 +1001,10 @@
 
         .workflow-output-card {
             opacity: 1;
+            transform: none;
+        }
+
+        .workflow-output-card:hover {
             transform: none;
         }
 
