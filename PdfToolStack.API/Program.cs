@@ -332,17 +332,19 @@ try
     builder.Services.AddScoped<IPdfService, PdfService>();
 
     // ── CORS — allow Blazor frontend ──────────────────────────────────────
-    var defaultCorsOrigins = builder.Environment.IsDevelopment()
-        ? new[]
-        {
-            "https://localhost:7025",
-            "http://localhost:5049"
-        }
-        : new[]
-        {
-            "https://pdftoolstack.com",
-            "https://www.pdftoolstack.com"
-        };
+    const string CorsPolicyName = "BlazorPolicy";
+
+    var productionCorsOrigins = new[]
+    {
+        "https://pdftoolstack.com",
+        "https://www.pdftoolstack.com"
+    };
+
+    var developmentCorsOrigins = new[]
+    {
+        "https://localhost:7025",
+        "http://localhost:5049"
+    };
 
     string? NormalizeCorsOrigin(string? origin)
     {
@@ -365,37 +367,60 @@ try
         return uri.GetLeftPart(UriPartial.Authority);
     }
 
-    var configuredCorsOrigins = builder.Configuration
-        .GetSection("Cors:AllowedOrigins")
-        .Get<string[]>();
+    IEnumerable<string?> ReadConfiguredCorsOrigins()
+    {
+        var section = builder.Configuration.GetSection("Cors:AllowedOrigins");
 
-    var allowedCorsOrigins = configuredCorsOrigins?
+        var boundOrigins = section.Get<string[]>();
+        if (boundOrigins is not null)
+        {
+            foreach (var origin in boundOrigins)
+                yield return origin;
+        }
+
+        if (!string.IsNullOrWhiteSpace(section.Value))
+        {
+            foreach (var origin in section.Value.Split(
+                new[] { ',', ';' },
+                StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
+            {
+                yield return origin;
+            }
+        }
+    }
+
+    var configuredCorsOrigins = ReadConfiguredCorsOrigins()
+        .ToArray();
+
+    var baseCorsOrigins = builder.Environment.IsDevelopment()
+        ? productionCorsOrigins.Concat(developmentCorsOrigins)
+        : productionCorsOrigins;
+
+    var allowedCorsOrigins = baseCorsOrigins
+        .Concat(configuredCorsOrigins)
         .Select(NormalizeCorsOrigin)
         .Where(origin => !string.IsNullOrWhiteSpace(origin))
         .Select(origin => origin!)
         .Distinct(StringComparer.OrdinalIgnoreCase)
         .ToArray();
 
-    if (allowedCorsOrigins is null || allowedCorsOrigins.Length == 0)
-        allowedCorsOrigins = defaultCorsOrigins;
-
-    var allowedCorsOriginHosts = allowedCorsOrigins
-        .Select(origin => Uri.TryCreate(origin, UriKind.Absolute, out var uri)
-            ? uri.Host
-            : "invalid-origin")
-        .Distinct(StringComparer.OrdinalIgnoreCase)
-        .ToArray();
+    var allowedCorsOriginSet = allowedCorsOrigins.ToHashSet(
+        StringComparer.OrdinalIgnoreCase);
 
     Log.Information(
-        "CORS allowed origins configured. Count={CorsOriginCount}; Hosts={CorsOriginHosts}",
+        "CORS policy {CorsPolicyName} configured. Environment={EnvironmentName}; ConfiguredOriginCount={ConfiguredCorsOriginCount}; AllowedOriginCount={CorsOriginCount}; AllowedOrigins={CorsAllowedOrigins}",
+        CorsPolicyName,
+        builder.Environment.EnvironmentName,
+        configuredCorsOrigins.Length,
         allowedCorsOrigins.Length,
-        string.Join(", ", allowedCorsOriginHosts));
+        string.Join(", ", allowedCorsOrigins));
 
     builder.Services.AddCors(options =>
     {
-        options.AddPolicy("BlazorPolicy", policy =>
+        options.AddPolicy(CorsPolicyName, policy =>
         {
-            policy.WithOrigins(allowedCorsOrigins)
+            policy.SetIsOriginAllowed(origin =>
+                allowedCorsOriginSet.Contains(NormalizeCorsOrigin(origin) ?? string.Empty))
                   .WithMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                   .AllowAnyHeader()
                   .SetPreflightMaxAge(TimeSpan.FromHours(1));
@@ -557,13 +582,13 @@ try
 
     app.UseHttpsRedirection();
     app.UseRouting();
-    app.UseCors("BlazorPolicy");
+    app.UseCors(CorsPolicyName);
     app.UseMiddleware<ErrorHandlingMiddleware>();
     app.UseMiddleware<AuditLoggingMiddleware>();
     app.UseMiddleware<RateLimitingMiddleware>();
     app.UseAuthentication();
     app.UseAuthorization();
-    app.MapControllers().RequireCors("BlazorPolicy");
+    app.MapControllers().RequireCors(CorsPolicyName);
 
     // ── /healthz — suitable for Azure App Service Health Check probe ──────
     app.MapHealthChecks("/healthz");
