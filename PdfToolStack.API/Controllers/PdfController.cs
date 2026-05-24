@@ -22,6 +22,8 @@ namespace PdfToolStack.API.Controllers
     [Route("api/[controller]")]
     public class PdfController : ControllerBase
     {
+        private const int FreeBatchFileLimit = 3;
+
         private const string MissingDocxMessage =
             "The DOCX file could not be generated. Please try again.";
 
@@ -190,6 +192,15 @@ namespace PdfToolStack.API.Controllers
             if (!Enum.TryParse<ToolType>(toolType, ignoreCase: true, out var parsedToolType))
                 return BadRequest(new { error = $"Invalid tool type: {toolType}" });
 
+            var batchAccess = await GetBatchAccessAsync(files.Count);
+            if (!batchAccess.IsAllowed)
+            {
+                return StatusCode(StatusCodes.Status402PaymentRequired, new
+                {
+                    error = $"Free batch jobs support up to {FreeBatchFileLimit} files. Upgrade or unlock batch processing for larger jobs."
+                });
+            }
+
             var results = new List<(string FileName, byte[] Bytes, string? Error)>();
 
             foreach (var file in files)
@@ -274,9 +285,48 @@ namespace PdfToolStack.API.Controllers
 
             zipStream.Position = 0;
             var toolLabel = parsedToolType.ToString().ToLower();
+
+            if (batchAccess.ShouldConsumeBatchUnlock &&
+                !string.IsNullOrWhiteSpace(batchAccess.UserId))
+            {
+                await _featureAccessService.ConsumeBatchUnlockAsync(batchAccess.UserId);
+            }
+
             return File(zipStream.ToArray(), "application/zip",
                 $"pdftoolstack_batch_{toolLabel}.zip");
         }
+
+        private async Task<BatchAccessResult> GetBatchAccessAsync(int fileCount)
+        {
+            if (fileCount <= FreeBatchFileLimit)
+                return new BatchAccessResult(true, false, string.Empty);
+
+            var userId = GetUserId();
+            if (string.IsNullOrWhiteSpace(userId))
+                return new BatchAccessResult(false, false, string.Empty);
+
+            if (_subscriptionService != null)
+            {
+                var status = await _subscriptionService.GetStatusAsync(userId);
+                if (status.HasPro || status.HasTeams)
+                    return new BatchAccessResult(true, false, userId);
+            }
+
+            if (await _featureAccessService.HasBatchUnlockAsync(userId))
+                return new BatchAccessResult(true, true, userId);
+
+            return new BatchAccessResult(false, false, userId);
+        }
+
+        private string GetUserId() =>
+            User.FindFirst(ClaimTypes.NameIdentifier)?.Value ??
+            User.FindFirst("sub")?.Value ??
+            string.Empty;
+
+        private sealed record BatchAccessResult(
+            bool IsAllowed,
+            bool ShouldConsumeBatchUnlock,
+            string UserId);
 
         // POST api/pdf/merge
         [HttpPost("merge")]

@@ -20,6 +20,7 @@ namespace PdfToolStack.Web.Services
         }
 
         public string LastPendingBatchCreateError { get; private set; } = string.Empty;
+        public string LastBatchProcessError { get; private set; } = string.Empty;
 
         public async Task<T?> GetAsync<T>(string endpoint)
         {
@@ -762,6 +763,8 @@ namespace PdfToolStack.Web.Services
             ToolType toolType,
             CancellationToken cancellationToken = default)
         {
+            LastBatchProcessError = string.Empty;
+
             try
             {
                 using var content = new MultipartFormDataContent();
@@ -786,6 +789,8 @@ namespace PdfToolStack.Web.Services
 
                 var error = await response.Content
                     .ReadAsStringAsync(cancellationToken);
+                LastBatchProcessError =
+                    $"HTTP {(int)response.StatusCode} ({response.StatusCode}): {error}";
                 _logger.LogWarning(
                     "Batch API error {StatusCode}: {Body}",
                     response.StatusCode, error);
@@ -793,6 +798,7 @@ namespace PdfToolStack.Web.Services
             }
             catch (Exception ex)
             {
+                LastBatchProcessError = ex.Message;
                 _logger.LogError(ex, "Error calling batch API");
                 return null;
             }

@@ -96,8 +96,8 @@ namespace PdfToolStack.Infrastructure.Services
 
         public async Task<bool> HasBatchUnlockAsync(string userId)
         {
-            if (await HasProAccessAsync(userId))
-                return true;
+            if (string.IsNullOrWhiteSpace(userId))
+                return false;
 
             return await _db.OneTimePurchases.AnyAsync(x =>
                 x.UserId == userId &&

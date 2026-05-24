@@ -148,16 +148,21 @@
                                @ondragleave="() => _batchDragging = false"
                                @ondrop="() => _batchDragging = false" @ondrop:preventDefault="true">
                             <div class="bp-dz-cloud">
-                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#4338CA" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                                    <polyline points="16 16 12 12 8 16" />
-                                    <line x1="12" y1="12" x2="12" y2="21" />
-                                    <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" />
+                                <svg class="upload-icon-svg" width="40" height="40" viewBox="0 0 24 24"
+                                     fill="none" stroke="currentColor" stroke-width="1.5"
+                                     stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                    <polyline points="14,2 14,8 20,8" />
+                                    <line x1="12" y1="13" x2="12" y2="19" />
+                                    <polyline points="9,16 12,19 15,16" />
                                 </svg>
                             </div>
                             <p class="bp-dz-title">Drag &amp; drop up to 20 PDF files here</p>
                             <p class="bp-dz-sub">or click to browse your device</p>
+                            <span class="bp-upload-button upload-button">Browse Files</span>
                             <p class="bp-dz-hint">PDF only · Max 500 MB each</p>
                             <InputFile OnChange="OnFilesSelected" multiple accept=".pdf"
+                                       disabled="@_processing"
                                        style="position:absolute;inset:0;opacity:0;cursor:pointer;" />
                         </label>
 
@@ -221,7 +226,13 @@
                                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" /></svg>
                                             Remove and re-add to adjust order
                                         </span>
-                                        <button type="button" class="bp-add-more-btn">+ Add more files</button>
+                                        <label class="bp-add-more-btn">
+                                            <span>+ Add more files</span>
+                                            <InputFile OnChange="OnFilesSelected" multiple accept=".pdf"
+                                                       disabled="@_processing"
+                                                       class="bp-inline-file-input"
+                                                       aria-label="Add more PDF files" />
+                                        </label>
                                     </div>
                                 </div>
 
@@ -292,7 +303,20 @@
                                             }
                                         </div>
 
-                                        <button class="bp-remove-btn" @onclick="() => RemoveFile(idx)" disabled="@_processing">×</button>
+                                        <button type="button"
+                                                class="bp-remove-btn"
+                                                @onclick="() => RemoveFile(idx)"
+                                                disabled="@_processing"
+                                                aria-label="@($"Remove {f.Name}")"
+                                                title="@($"Remove {f.Name}")">
+                                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                                                 stroke="currentColor" stroke-width="2.4"
+                                                 stroke-linecap="round" stroke-linejoin="round"
+                                                 aria-hidden="true">
+                                                <path d="M18 6 6 18" />
+                                                <path d="m6 6 12 12" />
+                                            </svg>
+                                        </button>
                                     </div>
                                 }
 
@@ -621,7 +645,7 @@
                                 <div class="bp-step-num">4</div>
                                 <span>Process</span>
                             </div>
-                            @if (!_isProUser && !_batchUnlocked && _files.Count >= 3 && !_processing && _zipBytes == null)
+                            @if (!_isProUser && !_batchUnlocked && _files.Count >= FreeBatchFileLimit && !_processing && _zipBytes == null)
                             {
                                 <div class="bp-soft-upsell">
                                     <div class="bp-soft-upsell-bar"></div>
@@ -641,13 +665,21 @@
                                     </button>
                                 </div>
                             }
-                            @if (!_isProUser && !_batchUnlocked && _fileCount > 3)
+                            @if (IsBatchOverFreeLimit)
                             {
                                 <div class="bp-upgrade-warning">
-                                    Free plan includes 3 files. Upgrade to process all @_fileCount files.
+                                    <span>Free batch jobs support up to 3 files. Upgrade or unlock batch processing for larger jobs.</span>
+                                    <div class="bp-upgrade-inline-actions">
+                                        <button type="button" class="bp-upgrade-inline-btn" @onclick="StartBatchUnlockCheckout" disabled="@_checkoutLoading">
+                                            Unlock batch
+                                        </button>
+                                        <button type="button" class="bp-upgrade-inline-btn bp-upgrade-inline-btn--ghost" @onclick="StartProCheckout" disabled="@_checkoutLoading">
+                                            Upgrade
+                                        </button>
+                                    </div>
                                 </div>
                             }
-                            <button class="bp-proc-btn" @onclick="RunBatch" disabled="@(_processing || !_files.Any())">
+                            <button class="bp-proc-btn" @onclick="RunBatch" disabled="@(_processing || !_files.Any() || IsBatchOverFreeLimit)">
                                 @if (_processing)
                                 {
                                     <div class="bp-spin-btn"></div>
@@ -1504,6 +1536,10 @@
     }
 
     .bp-add-more-btn {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
         border: 1px solid #c7d2fe;
         background: #eef2ff;
         color: var(--bp-primary);
@@ -1512,12 +1548,32 @@
         font-size: .72rem;
         font-weight: 850;
         cursor: pointer;
+        overflow: hidden;
+        line-height: 1.1;
+        transition: background .16s ease, border-color .16s ease, color .16s ease, transform .16s ease;
+    }
+
+    .bp-add-more-btn:hover {
+        background: #e0e7ff;
+        border-color: #a5b4fc;
+        transform: translateY(-1px);
+    }
+
+    .bp-inline-file-input {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        cursor: pointer;
+    }
+
+    .bp-inline-file-input:disabled {
+        cursor: not-allowed;
     }
 
     .bp-file-row {
         position: relative;
         display: grid;
-        grid-template-columns: 20px 18px 26px 48px minmax(120px, 1fr) 76px minmax(210px, auto) 28px;
+        grid-template-columns: 20px 18px 26px 48px minmax(120px, 1fr) 76px minmax(210px, auto) 32px;
         align-items: center;
         gap: .65rem;
         min-height: 54px;
@@ -1770,23 +1826,31 @@
     }
 
     .bp-remove-btn {
-        width: 26px;
-        height: 26px;
-        border-radius: 50%;
-        border: 1px solid var(--border,#e5e7eb);
-        background: transparent;
-        color: #94a3b8;
-        font-size: 1rem;
+        width: 30px;
+        height: 30px;
+        border-radius: 10px;
+        border: 1px solid rgba(148, 163, 184, .34);
+        background: rgba(248, 250, 252, .74);
+        color: #64748b;
         cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
+        padding: 0;
+        transition: background .16s ease, border-color .16s ease, color .16s ease, box-shadow .16s ease, transform .16s ease;
     }
 
         .bp-remove-btn:hover {
-            background: #fee2e2;
-            border-color: #fecaca;
-            color: #dc2626;
+            background: #fff1f2;
+            border-color: #fda4af;
+            color: #e11d48;
+            box-shadow: 0 8px 18px rgba(225, 29, 72, .12);
+            transform: translateY(-1px);
+        }
+
+        .bp-remove-btn:focus-visible {
+            outline: 3px solid rgba(59, 130, 246, .32);
+            outline-offset: 2px;
         }
 
         .bp-remove-btn:disabled {
@@ -3983,6 +4047,8 @@
     }
 
     .bp-upgrade-warning {
+        display: grid;
+        gap: .75rem;
         margin-bottom: .85rem;
         padding: .85rem .95rem;
         border-radius: 14px;
@@ -3992,6 +4058,48 @@
         font-size: .86rem;
         font-weight: 800;
         line-height: 1.45;
+    }
+
+    .bp-upgrade-inline-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .5rem;
+    }
+
+    .bp-upgrade-inline-btn {
+        border: 0;
+        border-radius: 11px;
+        background: linear-gradient(135deg, #2250f4, #7c3aed);
+        color: #fff;
+        font-size: .78rem;
+        font-weight: 900;
+        padding: .55rem .78rem;
+        cursor: pointer;
+        box-shadow: 0 10px 22px rgba(79, 70, 229, .18);
+        transition: transform .16s ease, box-shadow .16s ease, opacity .16s ease;
+    }
+
+    .bp-upgrade-inline-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 14px 28px rgba(79, 70, 229, .24);
+    }
+
+    .bp-upgrade-inline-btn:focus-visible {
+        outline: 3px solid rgba(59, 130, 246, .32);
+        outline-offset: 2px;
+    }
+
+    .bp-upgrade-inline-btn:disabled {
+        opacity: .58;
+        cursor: wait;
+        transform: none;
+    }
+
+    .bp-upgrade-inline-btn--ghost {
+        border: 1px solid rgba(109, 93, 252, .24);
+        background: rgba(255, 255, 255, .78);
+        color: #4f46e5;
+        box-shadow: none;
     }
 
     .bp-soft-upsell {
@@ -4266,6 +4374,9 @@
 </style>
 
 @code {
+    private const int FreeBatchFileLimit = 3;
+    private const int MaxBatchFileLimit = 20;
+
     private ToolType _selectedTool = ToolType.CompressPdf;
     private List<IBrowserFile> _files = new();
     private bool _isPro = false;
@@ -4686,19 +4797,73 @@
 
     private void OnFilesSelected(InputFileChangeEventArgs e)
     {
-        _files = e.GetMultipleFiles(20).ToList();
+        IReadOnlyList<IBrowserFile> selectedFiles;
+
+        try
+        {
+            selectedFiles = e.GetMultipleFiles(MaxBatchFileLimit);
+        }
+        catch (InvalidOperationException)
+        {
+            _error = $"A batch can include up to {MaxBatchFileLimit} PDF files.";
+            AddActivity($"Skipped selection because it exceeded the {MaxBatchFileLimit}-file limit.");
+            return;
+        }
+
+        var added = AppendFiles(selectedFiles, out var duplicateCount, out var skippedCount);
         SyncFileCount();
-        _showUpgradeModal = false;
-        _batchUnlocked = false;
-        _pendingBatchId = null;
-        _pendingBatchToken = string.Empty;
-        _pendingFileNames.Clear();
-        _fileStatuses.Clear(); _fileProgress.Clear(); _fileOutputSizes.Clear(); _fileErrors.Clear();
-        _zipBytes = null; _error = string.Empty; _successCount = 0; _failCount = 0;
-        _overallPct = 0; _totalOutputBytes = 0; _showErrors = false;
-        _activityFeed.Clear();
-        AddActivity($"Added {_files.Count} file{(_files.Count == 1 ? "" : "s")} to the batch.");
+
+        if (added > 0)
+        {
+            ClearBatchArtifactsAfterQueueChange();
+            AddActivity($"Added {added} file{(added == 1 ? "" : "s")} to the batch.");
+        }
+
+        if (duplicateCount > 0)
+        {
+            AddActivity($"Skipped {duplicateCount} duplicate file{(duplicateCount == 1 ? "" : "s")}.");
+        }
+
+        if (skippedCount > 0)
+        {
+            _error = $"Skipped {skippedCount} file{(skippedCount == 1 ? "" : "s")} because the queue only supports PDF files and up to {MaxBatchFileLimit} total files.";
+        }
     }
+
+    private int AppendFiles(
+        IReadOnlyList<IBrowserFile> incomingFiles,
+        out int duplicateCount,
+        out int skippedCount)
+    {
+        var added = 0;
+        duplicateCount = 0;
+        skippedCount = 0;
+
+        foreach (var file in incomingFiles)
+        {
+            if (!IsPdfFileName(file.Name) || _files.Count >= MaxBatchFileLimit)
+            {
+                skippedCount++;
+                continue;
+            }
+
+            if (_files.Any(existing => IsSameSelectedFile(existing, file)))
+            {
+                duplicateCount++;
+                continue;
+            }
+
+            _files.Add(file);
+            added++;
+        }
+
+        return added;
+    }
+
+    private static bool IsSameSelectedFile(IBrowserFile existing, IBrowserFile incoming) =>
+        string.Equals(existing.Name, incoming.Name, StringComparison.OrdinalIgnoreCase) &&
+        existing.Size == incoming.Size &&
+        existing.LastModified == incoming.LastModified;
 
     private async Task PickGoogleDrive()
     {
@@ -4716,7 +4881,7 @@
     {
         _cloudError = string.Empty;
 
-        if (_files.Count >= 20)
+        if (_files.Count >= MaxBatchFileLimit)
         {
             _cloudError = "The batch queue is full. Remove a file before importing another PDF.";
             return;
@@ -4774,6 +4939,7 @@
         _fileErrors.Clear();
         _zipBytes = null;
         _error = string.Empty;
+        _processedCount = 0;
         _successCount = 0;
         _failCount = 0;
         _overallPct = 0;
@@ -4817,9 +4983,7 @@
         var name = _files[idx].Name;
         _files.RemoveAt(idx);
         SyncFileCount();
-        if (_fileCount <= 3) _showUpgradeModal = false;
-        _fileStatuses.Remove(name); _fileProgress.Remove(name);
-        _fileOutputSizes.Remove(name); _fileErrors.Remove(name);
+        ClearBatchArtifactsAfterQueueChange();
         AddActivity($"Removed {name} from the batch.");
     }
 
@@ -4851,7 +5015,7 @@
     {
         if (!_files.Any()) return;
         SyncFileCount();
-        if (!_isProUser && !_batchUnlocked && _fileCount > 3)
+        if (IsBatchOverFreeLimit)
         {
             _showUpgradeModal = true;
             return;
@@ -4922,7 +5086,9 @@
             }
             else
             {
-                _error = "Batch processing failed. Please try again.";
+                _error = string.IsNullOrWhiteSpace(ApiService.LastBatchProcessError)
+                    ? "Batch processing failed. Please try again."
+                    : "Batch processing failed. " + ApiService.LastBatchProcessError;
                 AddActivity("Batch failed. Review errors and retry.");
                 foreach (var f in _files) { _fileStatuses[f.Name] = "error"; _fileErrors[f.Name] = "Processing failed"; }
                 _failCount = _files.Count;
@@ -4958,13 +5124,10 @@
 
     private void ContinueWithFreeLimit()
     {
-        if (_files.Count > 3)
+        if (_files.Count > FreeBatchFileLimit)
         {
-            _files = _files.Take(3).ToList();
-            _fileStatuses.Clear(); _fileProgress.Clear();
-            _fileOutputSizes.Clear(); _fileErrors.Clear();
-            _zipBytes = null; _error = string.Empty; _successCount = 0; _failCount = 0;
-            _overallPct = 0; _totalOutputBytes = 0; _showErrors = false;
+            _files = _files.Take(FreeBatchFileLimit).ToList();
+            ClearBatchArtifactsAfterQueueChange();
             AddActivity("Trimmed batch to the free 3-file limit.");
         }
 
@@ -4981,6 +5144,11 @@
     {
         _fileCount = _files.Count;
     }
+
+    private bool IsBatchOverFreeLimit =>
+        !_isProUser &&
+        !_batchUnlocked &&
+        _fileCount > FreeBatchFileLimit;
 
     private int GetDisplayFileCount() =>
         _files.Any() ? _files.Count : _fileCount;

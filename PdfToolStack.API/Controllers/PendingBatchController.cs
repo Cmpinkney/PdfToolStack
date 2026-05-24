@@ -17,7 +17,7 @@ namespace PdfToolStack.API.Controllers
     [Route("api/pending-batch")]
     public class PendingBatchController : ControllerBase
     {
-        private const int MaxBatchFileCount = 10;
+        private const int MaxBatchFileCount = 20;
         private const long MaxBatchTotalBytes = 100L * 1024 * 1024;
 
         private readonly AppDbContext _db;
@@ -228,6 +228,10 @@ namespace PdfToolStack.API.Controllers
                 return BadRequest(new { error = $"Maximum {MaxBatchFileCount} files per batch." });
             }
 
+            var wasPaidUnlock =
+                pending.Status == PendingBatchStatus.Paid &&
+                !string.IsNullOrWhiteSpace(pending.PaymentSessionId);
+
             if (!await TryMarkProcessingAsync(pending, cancellationToken))
             {
                 await _db.Entry(pending).ReloadAsync(cancellationToken);
@@ -276,6 +280,12 @@ namespace PdfToolStack.API.Controllers
                 pending.Status = PendingBatchStatus.Completed;
                 pending.IsUsed = true;
                 pending.CompletedAtUtc = DateTime.UtcNow;
+
+                if (wasPaidUnlock)
+                {
+                    await ConsumeMatchingBatchUnlockAsync(pending, cancellationToken);
+                }
+
                 await _db.SaveChangesAsync(cancellationToken);
 
                 await CleanupInputBlobsAsync(pending.PendingBatchId, blobReferences);
@@ -457,6 +467,32 @@ namespace PdfToolStack.API.Controllers
                 (s.PlanType == "monthly" || s.PlanType == "yearly" || s.PlanType == "teams") &&
                 (s.Status == "active" || s.Status == "trialing"),
                 cancellationToken);
+        }
+
+        private async Task ConsumeMatchingBatchUnlockAsync(
+            PendingBatchJob pending,
+            CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrWhiteSpace(pending.UserId) ||
+                string.IsNullOrWhiteSpace(pending.PaymentSessionId))
+                return;
+
+            var unlock = await _db.OneTimePurchases
+                .Where(x =>
+                    x.UserId == pending.UserId &&
+                    x.PurchaseType == "BatchUnlock" &&
+                    x.StripeSessionId == pending.PaymentSessionId &&
+                    !x.IsConsumed &&
+                    x.UsesRemaining > 0)
+                .OrderBy(x => x.CreatedAt)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (unlock == null)
+                return;
+
+            unlock.UsesRemaining--;
+            if (unlock.UsesRemaining <= 0)
+                unlock.IsConsumed = true;
         }
 
         private async Task<PendingBatchStatusResponse> ToStatusResponseAsync(
