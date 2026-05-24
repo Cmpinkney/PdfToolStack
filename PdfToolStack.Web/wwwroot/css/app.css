@@ -36,11 +36,17 @@
     --bg: #F7F7FC;
     --surface: #FFFFFF;
     --surface-2: #F1EFF8;
+    --surface-muted: #F8FAFC;
+    --surface-elevated: #FFFFFF;
+    --card-bg: #FFFFFF;
+    --input-bg: #FFFFFF;
     /* Borders */
     --border: #D0CDE8;
+    --border-subtle: rgba(148, 163, 184, 0.22);
     --border-focus: #C0C8FA;
     /* Text */
     --text: #1E1B4B;
+    --text-primary: #1E1B4B;
     --text-secondary: #5B5880;
     --text-muted: #9795B5;
     /* Semantic */
@@ -91,11 +97,17 @@
     --bg: #13111F;
     --surface: #1C1929;
     --surface-2: #252235;
+    --surface-muted: rgba(30, 41, 65, 0.62);
+    --surface-elevated: rgba(20, 31, 58, 0.94);
+    --card-bg: rgba(20, 31, 58, 0.94);
+    --input-bg: rgba(15, 23, 42, 0.62);
     /* Borders */
     --border: #2D2A45;
+    --border-subtle: rgba(148, 163, 184, 0.18);
     --border-focus: #4F6EF7;
     /* Text */
     --text: #F5F3FF;
+    --text-primary: #F8FAFC;
     --text-secondary: #A09DC0;
     --text-muted: #5C5880;
     /* Semantic */
@@ -25900,5 +25912,1709 @@ body {
 
     .tool-education-related div {
         justify-content: flex-start;
+    }
+}
+
+/* Dark theme coverage layer
+   Keeps page-local light styles from leaking into dark mode across public pages. */
+[data-theme="dark"] {
+    --dark-page-bg:
+        radial-gradient(circle at 12% 0%, rgba(99, 102, 241, 0.14), transparent 34%),
+        radial-gradient(circle at 88% 12%, rgba(20, 184, 166, 0.10), transparent 30%),
+        linear-gradient(180deg, #0f172a 0%, #111827 48%, #0b1220 100%);
+    --dark-panel-bg:
+        radial-gradient(circle at 12% 0%, rgba(139, 92, 246, 0.13), transparent 32%),
+        linear-gradient(135deg, rgba(20, 31, 58, 0.94), rgba(30, 41, 73, 0.82));
+    --dark-panel-bg-flat: rgba(30, 41, 65, 0.78);
+    --dark-panel-bg-soft: rgba(30, 41, 65, 0.58);
+    --dark-input-bg: rgba(15, 23, 42, 0.62);
+    --dark-border: rgba(148, 163, 184, 0.16);
+    --dark-border-strong: rgba(148, 163, 184, 0.24);
+    --dark-heading: #f8fafc;
+    --dark-body: #dbe7f5;
+    --dark-muted: #aec0d4;
+    --dark-subtle: #8ea1b8;
+    --dark-shadow: 0 22px 58px rgba(2, 8, 23, 0.26);
+    --dark-shadow-soft: 0 14px 36px rgba(2, 8, 23, 0.18);
+}
+
+[data-theme="dark"] body,
+[data-theme="dark"] .page,
+[data-theme="dark"] .home-page,
+[data-theme="dark"] .tool-page,
+[data-theme="dark"] .pricing-page,
+[data-theme="dark"] .blog-page,
+[data-theme="dark"] .blog-article-page,
+[data-theme="dark"] .about-page,
+[data-theme="dark"] .contact-page,
+[data-theme="dark"] .legal-page,
+[data-theme="dark"] .account-page,
+[data-theme="dark"] .aihub-page,
+[data-theme="dark"] .bizhub-page,
+[data-theme="dark"] .sechub-page,
+[data-theme="dark"] .orghub-page,
+[data-theme="dark"] .crl-page,
+[data-theme="dark"] .iel-page,
+[data-theme="dark"] .lp-page,
+[data-theme="dark"] .reader-page {
+    background: var(--dark-page-bg) !important;
+    color: var(--dark-body) !important;
+}
+
+[data-theme="dark"] .tool-container,
+[data-theme="dark"] .pricing-container,
+[data-theme="dark"] .blog-container,
+[data-theme="dark"] .blog-article-container,
+[data-theme="dark"] .legal-container,
+[data-theme="dark"] .trust-container,
+[data-theme="dark"] .account-container,
+[data-theme="dark"] .reader-container {
+    color: var(--dark-body) !important;
+}
+
+[data-theme="dark"] :is(
+    .workspace-card,
+    .settings-card,
+    .tool-card,
+    .pricing-card,
+    .pricing-addons,
+    .addon-card,
+    .audience-card,
+    .compare-table-wrap,
+    .one-time-card,
+    .credit-card,
+    .pricing-compare,
+    .pricing-audience,
+    .faq-item,
+    .faq-section,
+    .faq-grid article,
+    .blog-card,
+    .blog-cta-box,
+    .blog-related,
+    .blog-related-link,
+    .contact-card,
+    .contact-form,
+    .legal-section,
+    .upload-container,
+    .upload-ready-card,
+    .file-ready-card,
+    .empty-state,
+    .result-container,
+    .error-container,
+    .processing-container,
+    .post-success-upsell,
+    .post-success-benefits span,
+    .stepper,
+    .trust-row span,
+    .trust-card,
+    .hub-card,
+    .aihub-card,
+    .bizhub-card,
+    .sechub-card,
+    .orghub-card,
+    .aihub-workflow,
+    .bizhub-workflow,
+    .sechub-workflow,
+    .orghub-workflow,
+    .reader-hero-panel,
+    .reader-toolbar,
+    .reader-file-info,
+    .reader-canvas-wrapper,
+    .tool-education-card,
+    .tool-education-related,
+    .tool-education-faq,
+    .popular-workflow-card,
+    .popular-fixes-grid .tool-card,
+    .home-workflow-card,
+    .acc-workflow-card,
+    .acc-plan-card,
+    .acc-usage-card,
+    .acc-doc-card,
+    .team-card,
+    .api-key-card,
+    .topup-modal,
+    .topup-package,
+    .upgrade-card,
+    .upgrade-option,
+    .upsell-modal,
+    .modal-content,
+    .card,
+    .panel
+) {
+    border-color: var(--dark-border) !important;
+    background: var(--dark-panel-bg) !important;
+    box-shadow: var(--dark-shadow-soft) !important;
+    color: var(--dark-body) !important;
+}
+
+[data-theme="dark"] :is(
+    [class*="-card"],
+    [class*="-panel"],
+    [class*="-modal"],
+    [class*="-box"],
+    [class*="-tile"],
+    [class*="-item"]
+) {
+    border-color: var(--dark-border) !important;
+}
+
+[data-theme="dark"] :is(
+    .field-card,
+    .estimate-card,
+    .value-list,
+    .ready-metrics span,
+    .file-list,
+    .file-list-item,
+    .merge-file-item,
+    .split-range,
+    .page-preview-card,
+    .thumb-card,
+    .settings-section,
+    .tool-option,
+    .option-card,
+    .pricing-vs-bar,
+    .pricing-vs-inner,
+    .pricing-vs-item,
+    .pricing-yearly-nudge,
+    .pricing-toggle-wrap,
+    .credit-pack-card,
+    .blog-article-meta > div,
+    .article-meta > div,
+    .tool-education-related a,
+    .aihub-workflow-links a,
+    .bizhub-workflow-links a,
+    .sechub-workflow-links a,
+    .orghub-workflow-links a,
+    .home-command-hints span,
+    .hero-no-trials-badge,
+    .hero-stats-row,
+    .trust-bar,
+    .founder-statement,
+    .recent-files-card,
+    .recent-file-item
+) {
+    border-color: var(--dark-border) !important;
+    background: var(--dark-panel-bg-soft) !important;
+    box-shadow: none !important;
+    color: var(--dark-body) !important;
+}
+
+[data-theme="dark"] :is(
+    .tool-hero h1,
+    .panel-header h2,
+    .workspace-card h2,
+    .settings-card h2,
+    .tool-card h3,
+    .pricing-hero h1,
+    .pricing-addons h2,
+    .addon-card h3,
+    .addon-price,
+    .audience-card h3,
+    .pricing-card h3,
+    .pricing-plan-name,
+    .pricing-price,
+    .pricing-price-main,
+    .pricing-compare h2,
+    .pricing-audience h2,
+    .faq-section h2,
+    .faq-item h3,
+    .blog-header h1,
+    .blog-card h2,
+    .blog-article-header h1,
+    .blog-article-body h2,
+    .blog-cta-box h3,
+    .blog-related h3,
+    .legal-header h1,
+    .legal-section h2,
+    .contact-card h3,
+    .home-section-heading h2,
+    .tools-category-title,
+    .tool-education-header h2,
+    .tool-education-card h3,
+    .tool-education-faqs h3,
+    .tool-education-faq summary,
+    .tool-education-related span,
+    .file-name,
+    .empty-state strong,
+    .file-ready-card strong,
+    .value-list strong,
+    .result-container h2,
+    .error-container h2,
+    .processing-container h2,
+    .post-success-copy strong,
+    .acc-workflow-card strong,
+    .reader-hero h1,
+    .reader-hero-panel strong,
+    .aihub-section-header h2,
+    .aihub-workflow h2,
+    .bizhub-section-header h2,
+    .bizhub-workflow h2,
+    .sechub-section-header h2,
+    .sechub-workflow h2,
+    .orghub-section-header h2,
+    .orghub-workflow h2,
+    .hub-card h3,
+    .aihub-card h3,
+    .bizhub-card h3,
+    .sechub-card h3,
+    .orghub-card h3
+) {
+    color: var(--dark-heading) !important;
+}
+
+[data-theme="dark"] :is(
+    .tool-hero p,
+    .tool-subtitle,
+    .panel-header p,
+    .tool-card p,
+    .pricing-hero p,
+    .pricing-desc,
+    .pricing-addons-subtitle,
+    .addon-description,
+    .addon-features li,
+    .pricing-addons-note,
+    .audience-card p,
+    .pricing-billed-note,
+    .pricing-features li,
+    .pricing-yearly-nudge,
+    .faq-item p,
+    .blog-subtitle,
+    .blog-card p,
+    .blog-card-meta,
+    .blog-article-meta,
+    .blog-lead,
+    .blog-article-body p,
+    .blog-article-body li,
+    .blog-cta-box p,
+    .legal-date,
+    .legal-section p,
+    .legal-section li,
+    .contact-card p,
+    .contact-card a,
+    .home-section-heading p,
+    .tool-education-header p,
+    .tool-education-card p,
+    .tool-education-card li,
+    .tool-education-faq p,
+    .upload-hint,
+    .empty-state span,
+    .file-meta,
+    .ready-metrics span,
+    .value-list span,
+    .post-success-benefits span,
+    .reader-hero p,
+    .reader-hero-panel small,
+    .aihub-hero p,
+    .aihub-section-header p,
+    .aihub-workflow p,
+    .aihub-faq-grid p,
+    .bizhub-hero p,
+    .bizhub-section-header p,
+    .bizhub-workflow p,
+    .bizhub-faq-grid p,
+    .sechub-hero p,
+    .sechub-section-header p,
+    .sechub-workflow p,
+    .sechub-faq-grid p,
+    .orghub-hero p,
+    .orghub-section-header p,
+    .orghub-workflow p,
+    .orghub-faq-grid p
+) {
+    color: var(--dark-muted) !important;
+}
+
+[data-theme="dark"] :is(
+    input,
+    textarea,
+    select,
+    .field-input,
+    .contact-input,
+    .contact-textarea,
+    .tools-search-wrap input,
+    .home-command-search input,
+    .profile-dropdown input
+) {
+    border-color: var(--dark-border-strong) !important;
+    background: var(--dark-input-bg) !important;
+    color: var(--dark-heading) !important;
+    box-shadow: none !important;
+}
+
+[data-theme="dark"] :is(input, textarea, select, .field-input, .contact-input, .contact-textarea)::placeholder {
+    color: var(--dark-subtle) !important;
+}
+
+[data-theme="dark"] :is(input, textarea, select, button, a, .field-input, .contact-input, .contact-textarea):focus-visible {
+    outline: 2px solid rgba(96, 165, 250, 0.82) !important;
+    outline-offset: 3px !important;
+}
+
+[data-theme="dark"] :is(
+    .cloud-btn,
+    .reset-button,
+    .pricing-btn-free,
+    .pricing-btn-addon,
+    .pricing-link-btn,
+    .profile-menu-item,
+    .cookie-banner,
+    .ad-placeholder,
+    .sidebar-ad-placeholder,
+    .result-ad-placeholder
+) {
+    border-color: var(--dark-border) !important;
+    background: rgba(30, 41, 65, 0.72) !important;
+    color: var(--dark-body) !important;
+    box-shadow: none !important;
+}
+
+[data-theme="dark"] :is(
+    .cloud-btn:hover,
+    .reset-button:hover,
+    .pricing-btn-free:hover,
+    .pricing-btn-addon:hover:not(:disabled),
+    .pricing-link-btn:hover,
+    .tool-card:hover,
+    .workspace-card:hover,
+    .settings-card:hover,
+    .blog-card:hover,
+    .contact-card:hover
+) {
+    border-color: rgba(96, 165, 250, 0.42) !important;
+    box-shadow: 0 18px 46px rgba(2, 8, 23, 0.28) !important;
+}
+
+[data-theme="dark"] :is(.step, .step.active, .stepper .active) {
+    color: var(--dark-body) !important;
+}
+
+[data-theme="dark"] .step.active {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.22), rgba(37, 99, 235, 0.18)) !important;
+    color: var(--dark-heading) !important;
+}
+
+[data-theme="dark"] .step.complete {
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .upload-container:hover,
+[data-theme="dark"] .upload-container.dragging {
+    border-color: rgba(96, 165, 250, 0.46) !important;
+    background:
+        radial-gradient(circle at 20% 0%, rgba(96, 165, 250, 0.18), transparent 30%),
+        rgba(30, 41, 65, 0.76) !important;
+}
+
+[data-theme="dark"] .tool-education-band {
+    border-top-color: var(--dark-border) !important;
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(17, 24, 39, 0.98)) !important;
+}
+
+[data-theme="dark"] .tool-education-card--security,
+[data-theme="dark"] .pricing-card-featured,
+[data-theme="dark"] .topup-package-selected,
+[data-theme="dark"] .upgrade-option-pro {
+    background:
+        radial-gradient(circle at 100% 0%, rgba(96, 165, 250, 0.17), transparent 34%),
+        linear-gradient(135deg, rgba(30, 41, 73, 0.92), rgba(49, 46, 129, 0.56)) !important;
+    border-color: rgba(129, 140, 248, 0.32) !important;
+}
+
+[data-theme="dark"] :is(.warning, .alert-warning, .info-box, .note-box, .disclaimer, .security-note) {
+    border-color: rgba(251, 191, 36, 0.28) !important;
+    background: rgba(120, 53, 15, 0.24) !important;
+    color: #fde68a !important;
+}
+
+[data-theme="dark"] :is(table, th, td) {
+    border-color: var(--dark-border) !important;
+}
+
+[data-theme="dark"] th {
+    background: rgba(30, 41, 65, 0.86) !important;
+    color: var(--dark-heading) !important;
+}
+
+[data-theme="dark"] td {
+    background: rgba(15, 23, 42, 0.34) !important;
+    color: var(--dark-body) !important;
+}
+
+[data-theme="dark"] :is(.blog-article-body strong, .legal-section strong, .tool-education-card strong) {
+    color: var(--dark-heading) !important;
+}
+
+/* Page-prefix dark coverage for newer standalone tool experiences and hubs. */
+[data-theme="dark"] :is(
+    .ch-page,
+    .bp-wrap,
+    .rp-page,
+    .tp-page,
+    .cp-page,
+    .np-page,
+    .reader-page,
+    .scanner-coming-page,
+    .ocr-upgrade-page
+) {
+    background: var(--dark-page-bg) !important;
+    color: var(--dark-body) !important;
+}
+
+[data-theme="dark"] :is(
+    .ch-card,
+    .ch-faq-item,
+    .ch-trust-row span,
+    .bp-stat-card,
+    .bp-card,
+    .bp-workflow-pipeline,
+    .bp-batch-summary,
+    .bp-dropzone,
+    .bp-empty-card,
+    .bp-pipeline,
+    .bp-progress-section,
+    .bp-insight-card,
+    .bp-result,
+    .bp-gate,
+    .bp-faq,
+    .bp-stepper,
+    .bp-trust-chips span,
+    .rp-stepper,
+    .rp-trust-badge,
+    .rp-chip,
+    .rp-upload-header,
+    .rp-upload-zone,
+    .rp-how-it-works,
+    .rp-upload-inspector,
+    .rp-editor-topbar,
+    .rp-thumbnails,
+    .rp-canvas-area,
+    .rp-panel,
+    .rp-action-bar,
+    .rp-processing-card,
+    .rp-complete-card,
+    .tp-shell,
+    .tp-stepper,
+    .tp-workspace,
+    .tp-upload-panel,
+    .tp-settings-panel,
+    .tp-preview-section,
+    .tp-processing-card,
+    .tp-result,
+    .tp-error,
+    .tp-faq-item,
+    .tp-file-ready,
+    .tp-empty-state,
+    .tp-upload-privacy,
+    .tp-ai-note,
+    .tp-option-card,
+    .tp-sample-card,
+    .tp-preview-doc,
+    .tp-preview-sample,
+    .tp-preview-output,
+    .tp-result-cta,
+    .tp-trust-item,
+    .tp-cta-banner,
+    .cp-upload-hero,
+    .cp-workspace,
+    .cp-panel,
+    .cp-card,
+    .cp-settings-card,
+    .cp-preview-card,
+    .cp-empty-state,
+    .cp-result,
+    .np-upload-hero,
+    .np-workspace,
+    .np-panel,
+    .np-card,
+    .np-settings-card,
+    .np-preview-card,
+    .np-empty-state,
+    .np-result
+) {
+    border-color: var(--dark-border) !important;
+    background: var(--dark-panel-bg) !important;
+    box-shadow: var(--dark-shadow-soft) !important;
+    color: var(--dark-body) !important;
+}
+
+[data-theme="dark"] :is(
+    .bp-flow-step,
+    .rp-step,
+    .tp-step,
+    .tp-lang-pill,
+    .tp-lang-btn,
+    .tp-view-all,
+    .tp-sample-btn,
+    .tp-secondary-btn,
+    .tp-proc-step,
+    .tp-result-badge,
+    .ch-format-badge,
+    .ch-free-badge
+) {
+    border-color: var(--dark-border) !important;
+    background: var(--dark-panel-bg-soft) !important;
+    color: var(--dark-body) !important;
+    box-shadow: none !important;
+}
+
+[data-theme="dark"] :is(
+    .ch-hero h1,
+    .ch-section-header h2,
+    .ch-card h3,
+    .ch-faq-item h3,
+    .bp-hero-title,
+    .bp-stat-num,
+    .bp-card h2,
+    .bp-card h3,
+    .bp-result h2,
+    .bp-faq h2,
+    .rp-title,
+    .rp-upload-title,
+    .rp-panel h2,
+    .rp-panel h3,
+    .rp-processing-card h2,
+    .rp-complete-card h2,
+    .tp-title,
+    .tp-auth-gate h3,
+    .tp-step-text strong,
+    .tp-sample-card strong,
+    .tp-preview-header span,
+    .tp-preview-doc-title,
+    .tp-cta-banner strong,
+    .tp-trust-item strong,
+    .tp-processing-card h2,
+    .tp-result-title h2,
+    .tp-result-cta-text strong,
+    .tp-faq h2,
+    .tp-faq-item summary,
+    .cp-title,
+    .np-title
+) {
+    color: var(--dark-heading) !important;
+}
+
+[data-theme="dark"] :is(
+    .ch-hero p,
+    .ch-section-header p,
+    .ch-card p,
+    .ch-faq-item p,
+    .bp-header-left > p,
+    .bp-stat-label,
+    .bp-card p,
+    .bp-result p,
+    .bp-faq p,
+    .rp-subtitle,
+    .rp-upload-sub,
+    .rp-panel p,
+    .rp-processing-card p,
+    .rp-complete-card p,
+    .tp-subtitle,
+    .tp-auth-gate p,
+    .tp-step-text span,
+    .tp-upload-copy,
+    .tp-settings-copy,
+    .tp-sample-card span,
+    .tp-preview-sample span,
+    .tp-cta-banner p,
+    .tp-trust-item span,
+    .tp-processing-card p,
+    .tp-result-title p,
+    .tp-result-cta-text p,
+    .tp-faq-item p
+) {
+    color: var(--dark-muted) !important;
+}
+
+[data-theme="dark"] :is(
+    .bp-pro-pill,
+    .rp-eyebrow,
+    .rp-chip--red,
+    .tp-ai-badge,
+    .tp-eyebrow,
+    .tp-trust-badge,
+    .tp-chip,
+    .cp-ai-badge,
+    .np-ai-badge
+) {
+    border-color: rgba(129, 140, 248, 0.28) !important;
+    background: rgba(99, 102, 241, 0.18) !important;
+    color: #ddd6fe !important;
+    box-shadow: none !important;
+}
+
+[data-theme="dark"] :is(
+    .tp-search,
+    .tp-select,
+    .tp-custom-lang
+) {
+    border-color: var(--dark-border-strong) !important;
+    background: var(--dark-input-bg) !important;
+    color: var(--dark-heading) !important;
+}
+
+[data-theme="dark"] :is(
+    .bp-flow-step.active,
+    .rp-step--active,
+    .tp-step--active,
+    .tp-lang-pill--active,
+    .tp-lang-btn--active,
+    .tp-proc-step--active
+) {
+    border-color: rgba(96, 165, 250, 0.38) !important;
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.34), rgba(124, 58, 237, 0.28)) !important;
+    color: #ffffff !important;
+}
+
+/* Final dark-theme audit layer
+   Normalizes repeated page-local light cards, upload panels, cloud import controls,
+   side panels, icon wrappers, and article/pricing blocks without changing light mode. */
+:is([data-theme="dark"], body.dark-theme, .dark) {
+    --surface: #101827;
+    --surface-2: #172033;
+    --surface-muted: rgba(30, 41, 65, 0.64);
+    --surface-elevated: rgba(20, 31, 58, 0.94);
+    --card-bg: rgba(20, 31, 58, 0.94);
+    --input-bg: rgba(15, 23, 42, 0.68);
+    --text-primary: #f8fafc;
+    --text-secondary: #cbd5e1;
+    --text-muted: #94a3b8;
+    --border-subtle: rgba(148, 163, 184, 0.18);
+    --shadow-soft: 0 18px 46px rgba(2, 8, 23, 0.28);
+    --dark-panel-bg:
+        radial-gradient(circle at 12% 0%, rgba(99, 102, 241, 0.13), transparent 32%),
+        linear-gradient(135deg, rgba(20, 31, 58, 0.96), rgba(30, 41, 73, 0.86));
+    --dark-panel-bg-soft: rgba(30, 41, 65, 0.62);
+    --dark-input-bg: var(--input-bg);
+    --dark-border: var(--border-subtle);
+    --dark-border-strong: rgba(148, 163, 184, 0.28);
+    --dark-heading: var(--text-primary);
+    --dark-body: var(--text-secondary);
+    --dark-muted: var(--text-muted);
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(
+    .tool-page,
+    .home-page,
+    .pricing-page,
+    .pricing-premium-page,
+    .blog-page,
+    .blog-article-page,
+    .about-page,
+    .contact-page,
+    .reader-page,
+    .aihub-page,
+    .bizhub-page,
+    .sechub-page,
+    .orghub-page,
+    .converter-hub,
+    .ch-page,
+    .bp-wrap,
+    .rp-page,
+    .tp-page,
+    .cp-page,
+    .np-page
+) {
+    color: var(--text-secondary) !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(
+    .workspace-card,
+    .settings-card,
+    .fill-workspace-card,
+    .fill-settings-card,
+    .upload-container,
+    .upload-ready-card,
+    .file-ready-card,
+    .cloud-row,
+    .empty-state,
+    .file-summary,
+    .file-list,
+    .file-list-item,
+    .merge-file-item,
+    .merge-file-type,
+    .merge-file-ready,
+    .page-tile,
+    .page-preview-card,
+    .thumb-card,
+    .split-range,
+    .field-card,
+    .settings-section,
+    .tool-option,
+    .option-card,
+    .option-list span,
+    .form-group,
+    .value-list,
+    .value-list > *,
+    .ready-metrics span,
+    .preset,
+    .stat,
+    .processing-container,
+    .result-container,
+    .error-container,
+    .post-success-upsell,
+    .post-success-benefits span,
+    .faq-item,
+    .faq-grid article,
+    .article-container,
+    .article-toc,
+    .article-related,
+    .article-card,
+    .article-level-card,
+    .article-tip,
+    .article-faq-item,
+    .article-step,
+    .blog-card,
+    .blog-cta-box,
+    .blog-related,
+    .blog-related-link,
+    .contact-card,
+    .contact-form,
+    .pricing-card,
+    .pricing-addons,
+    .addon-card,
+    .one-time-card,
+    .credit-card,
+    .credit-pack-card,
+    .pricing-compare,
+    .pricing-audience,
+    .pricing-faq,
+    .audience-card,
+    .topup-modal,
+    .topup-package,
+    .upgrade-card,
+    .upgrade-option,
+    .modal-content,
+    .recent-files-card,
+    .recent-file-item,
+    .tool-card,
+    .tool-education-card,
+    .tool-education-related,
+    .tool-education-faq,
+    .hub-card,
+    .aihub-card,
+    .bizhub-card,
+    .sechub-card,
+    .orghub-card,
+    .aihub-workflow,
+    .bizhub-workflow,
+    .sechub-workflow,
+    .orghub-workflow,
+    .reader-hero-panel,
+    .reader-toolbar,
+    .reader-file-info,
+    .reader-canvas-wrapper,
+    .bp-stat-card,
+    .bp-card,
+    .bp-dropzone,
+    .bp-empty-card,
+    .bp-pipeline,
+    .bp-progress-section,
+    .bp-insight-card,
+    .bp-result,
+    .bp-gate,
+    .bp-faq,
+    .bp-stepper,
+    .bp-batch-summary,
+    .bp-file-row,
+    .bp-output-option,
+    .bp-copt,
+    .bp-mini-card,
+    .rp-stepper,
+    .rp-upload-header,
+    .rp-upload-zone,
+    .rp-how-it-works,
+    .rp-upload-inspector,
+    .rp-editor-topbar,
+    .rp-thumbnails,
+    .rp-canvas-area,
+    .rp-panel,
+    .rp-action-bar,
+    .rp-processing-card,
+    .rp-complete-card,
+    .tp-shell,
+    .tp-stepper,
+    .tp-workspace,
+    .tp-upload-panel,
+    .tp-settings-panel,
+    .tp-preview-section,
+    .tp-processing-card,
+    .tp-result,
+    .tp-error,
+    .tp-faq-item,
+    .tp-file-ready,
+    .tp-empty-state,
+    .tp-upload-privacy,
+    .tp-ai-note,
+    .tp-option-card,
+    .tp-sample-card,
+    .tp-preview-doc,
+    .tp-preview-sample,
+    .tp-preview-output,
+    .tp-result-cta,
+    .tp-trust-item,
+    .tp-cta-banner,
+    .tp-lang-pill,
+    .tp-lang-btn,
+    .cp-upload-hero,
+    .cp-workspace,
+    .cp-panel,
+    .cp-card,
+    .cp-settings-card,
+    .cp-preview-card,
+    .cp-empty-state,
+    .cp-result,
+    .np-upload-hero,
+    .np-workspace,
+    .np-panel,
+    .np-card,
+    .np-settings-card,
+    .np-preview-card,
+    .np-empty-state,
+    .np-result,
+    .ch-card,
+    .ch-faq-item,
+    .aihub-doc,
+    .aihub-orbit,
+    .aihub-visual,
+    .bizhub-dashboard,
+    .bizhub-badge,
+    .bizhub-visual,
+    .sechub-lock,
+    .sechub-visual,
+    .orghub-visual,
+    .orghub-stack
+) {
+    background: var(--dark-panel-bg) !important;
+    border-color: var(--border-subtle) !important;
+    box-shadow: var(--shadow-soft) !important;
+    color: var(--text-secondary) !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(
+    .tool-page,
+    .pricing-page,
+    .pricing-premium-page,
+    .blog-page,
+    .blog-article-page,
+    .about-page,
+    .contact-page,
+    .home-page,
+    .converter-hub,
+    .aihub-page,
+    .bizhub-page,
+    .sechub-page,
+    .orghub-page
+) :is(
+    [class$="-card"],
+    [class*="-card "],
+    [class$="-panel"],
+    [class*="-panel "],
+    [class$="-box"],
+    [class*="-box "],
+    [class$="-tile"],
+    [class*="-tile "],
+    [class$="-item"],
+    [class*="-item "],
+    [class$="-option"],
+    [class*="-option "],
+    [class$="-pill"],
+    [class*="-pill "]
+) {
+    background: var(--surface-elevated) !important;
+    border-color: var(--border-subtle) !important;
+    color: var(--text-secondary) !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(
+    .cloud-btn,
+    .reset-button,
+    .pricing-btn-free,
+    .pricing-btn-addon,
+    .pricing-link-btn,
+    .profile-menu-item,
+    .tp-secondary-btn,
+    .tp-sample-btn,
+    .tp-view-all,
+    .bp-tool-btn,
+    .icon-btn
+) {
+    background: rgba(30, 41, 65, 0.82) !important;
+    border-color: rgba(148, 163, 184, 0.24) !important;
+    color: var(--text-secondary) !important;
+    box-shadow: none !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(
+    .cloud-btn:hover,
+    .reset-button:hover,
+    .pricing-btn-free:hover,
+    .pricing-btn-addon:hover:not(:disabled),
+    .pricing-link-btn:hover,
+    .tp-secondary-btn:hover,
+    .tp-sample-btn:hover,
+    .tp-view-all:hover,
+    .bp-tool-btn:hover,
+    .icon-btn:hover
+) {
+    background: rgba(37, 99, 235, 0.18) !important;
+    border-color: rgba(96, 165, 250, 0.46) !important;
+    color: var(--text-primary) !important;
+    box-shadow: 0 14px 34px rgba(2, 8, 23, 0.24) !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(
+    input,
+    textarea,
+    select,
+    .field-input,
+    .contact-input,
+    .contact-textarea,
+    .tp-search,
+    .tp-select,
+    .tp-custom-lang,
+    .bp-input,
+    .bp-select
+) {
+    background: var(--input-bg) !important;
+    border-color: rgba(148, 163, 184, 0.28) !important;
+    color: var(--text-primary) !important;
+    box-shadow: none !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(
+    .workspace-card,
+    .settings-card,
+    .fill-workspace-card,
+    .fill-settings-card,
+    .tool-card,
+    .pricing-card,
+    .addon-card,
+    .one-time-card,
+    .credit-card,
+    .article-card,
+    .blog-card,
+    .contact-card,
+    .hub-card,
+    .modal-content,
+    .topup-modal,
+    .rp-panel,
+    .tp-settings-panel,
+    .cp-panel,
+    .np-panel,
+    .bp-card
+) :is(h1, h2, h3, h4, strong, label, summary, .file-name, .stat-value, .preset span, .value-list strong) {
+    color: var(--text-primary) !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(
+    .workspace-card,
+    .settings-card,
+    .fill-workspace-card,
+    .fill-settings-card,
+    .tool-card,
+    .pricing-card,
+    .addon-card,
+    .one-time-card,
+    .credit-card,
+    .article-card,
+    .blog-card,
+    .contact-card,
+    .hub-card,
+    .modal-content,
+    .topup-modal,
+    .rp-panel,
+    .tp-settings-panel,
+    .cp-panel,
+    .np-panel,
+    .bp-card
+) :is(p, li, small, .file-size, .file-meta, .cloud-label, .cloud-status, .value-list small, .preset small, .stat-label) {
+    color: var(--text-muted) !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(
+    .upload-icon,
+    .file-ready-icon,
+    .upload-ready-icon,
+    .tool-icon-tile,
+    .hub-card-icon,
+    .ch-icon-box,
+    .bp-stat-icon,
+    .bp-gate-icon,
+    .bp-tool-icon,
+    .acc-history-icon,
+    .crl-who-icon,
+    .iel-who-icon,
+    .workflow-output-icon
+) {
+    background: rgba(96, 165, 250, 0.16) !important;
+    border-color: rgba(96, 165, 250, 0.22) !important;
+    color: #93c5fd !important;
+    box-shadow: inset 0 0 0 1px rgba(147, 197, 253, 0.12) !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(
+    [class*="icon"][style*="background:#E"],
+    [class*="icon"][style*="background:#F"],
+    [class*="icon"][style*="background:#D"],
+    [class*="icon"][style*="background: #E"],
+    [class*="icon"][style*="background: #F"],
+    [class*="icon"][style*="background: #D"]
+) {
+    background: rgba(96, 165, 250, 0.16) !important;
+    color: #93c5fd !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(.result-icon, .upload-ready-state) {
+    background: rgba(16, 185, 129, 0.18) !important;
+    color: #86efac !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(.error-icon, .cloud-error) {
+    background: rgba(239, 68, 68, 0.16) !important;
+    color: #fca5a5 !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(.stepper, .fill-stepper) {
+    background: rgba(15, 23, 42, 0.72) !important;
+    border: 1px solid var(--border-subtle) !important;
+    box-shadow: var(--shadow-soft) !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(.step, .stepper-step, .fill-stepper .step) {
+    color: var(--text-muted) !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(.step span, .stepper-step span, .fill-stepper .step span) {
+    background: rgba(96, 165, 250, 0.16) !important;
+    color: #bfdbfe !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(
+    .step.active,
+    .stepper-step.active,
+    .fill-stepper .step.active,
+    .preset.active,
+    .topup-package-selected,
+    .pricing-card-featured,
+    .upgrade-option-pro
+) {
+    background:
+        radial-gradient(circle at 100% 0%, rgba(96, 165, 250, 0.18), transparent 34%),
+        linear-gradient(135deg, rgba(37, 99, 235, 0.34), rgba(124, 58, 237, 0.28)) !important;
+    border-color: rgba(129, 140, 248, 0.36) !important;
+    color: #ffffff !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(.step.complete, .stepper-step.complete) {
+    background: linear-gradient(135deg, #4f46e5 0%, #2563eb 55%, #0891b2 100%) !important;
+    color: #ffffff !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(.upload-container:hover, .upload-container.dragging, .bp-dropzone:hover) {
+    background:
+        radial-gradient(circle at 20% 0%, rgba(96, 165, 250, 0.2), transparent 30%),
+        rgba(30, 41, 65, 0.82) !important;
+    border-color: rgba(96, 165, 250, 0.5) !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(button, a, input, textarea, select, .cloud-btn, .icon-btn):focus-visible {
+    outline: 2px solid rgba(96, 165, 250, 0.88) !important;
+    outline-offset: 3px !important;
+}
+
+/* Dark coverage for older static pages and custom tool workflow shells. */
+:is([data-theme="dark"], body.dark-theme, .dark) :is(
+    .trust-page,
+    .edit-tool-page,
+    .annotate-tool-page,
+    .sign-tool-page
+) {
+    background:
+        radial-gradient(circle at 12% 0%, rgba(99, 102, 241, 0.14), transparent 34%),
+        radial-gradient(circle at 88% 12%, rgba(20, 184, 166, 0.10), transparent 30%),
+        linear-gradient(180deg, #0f172a 0%, #111827 48%, #0b1220 100%) !important;
+    color: var(--text-secondary) !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(
+    .trust-summary-card,
+    .trust-card,
+    .edit-hero,
+    .annotate-hero,
+    .sign-hero,
+    .edit-workspace-card,
+    .edit-side-card,
+    .edit-side-panel,
+    .edit-viewer-stage.is-active,
+    .edit-viewer-helper,
+    .annotate-workspace-card,
+    .annotate-side-card,
+    .annotate-side-panel,
+    .annotate-viewer-stage.is-active,
+    .annotate-viewer-helper,
+    .sign-workspace-card,
+    .sign-side-card,
+    .sign-side-panel,
+    .sign-viewer-stage.is-active,
+    .sign-viewer-helper,
+    .tool-page .workspace-card,
+    .tool-page .settings-card,
+    .tool-page .fill-workspace-card,
+    .tool-page .fill-settings-card,
+    .tool-page:has(.organize-container) .organize-container,
+    .tool-page:has(.reader-canvas-wrapper) .reader-toolbar,
+    .tool-page:has(.reader-canvas-wrapper) .reader-canvas-wrapper,
+    .tool-page:has(.reader-canvas-wrapper) .reader-file-info
+) {
+    background:
+        radial-gradient(circle at 12% 0%, rgba(99, 102, 241, 0.11), transparent 32%),
+        linear-gradient(135deg, rgba(20, 31, 58, 0.94), rgba(30, 41, 73, 0.82)) !important;
+    border-color: rgba(148, 163, 184, 0.18) !important;
+    box-shadow: 0 18px 46px rgba(2, 8, 23, 0.28) !important;
+    color: var(--text-secondary) !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(
+    .trust-hero h1,
+    .trust-summary-card strong,
+    .trust-card h2,
+    .edit-hero h1,
+    .edit-side-card h2,
+    .edit-side-panel h2,
+    .annotate-hero h1,
+    .annotate-side-card h2,
+    .annotate-side-panel h2,
+    .sign-hero h1,
+    .sign-side-card h2,
+    .sign-side-panel h2,
+    .tool-page .panel-header h2,
+    .tool-page .file-name,
+    .tool-page .empty-state strong,
+    .tool-page .file-ready-card strong,
+    .tool-page .value-list strong,
+    .tool-page .field-card label,
+    .tool-page .estimate-card strong
+) {
+    color: var(--text-primary) !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(
+    .trust-hero p,
+    .trust-summary-card span,
+    .trust-summary-card small,
+    .trust-card p,
+    .trust-card li,
+    .edit-hero p,
+    .edit-side-card p,
+    .edit-value-list span,
+    .edit-viewer-helper,
+    .annotate-hero p,
+    .annotate-side-card p,
+    .annotate-value-list span,
+    .annotate-viewer-helper,
+    .sign-hero p,
+    .sign-side-card p,
+    .sign-value-list span,
+    .sign-viewer-helper,
+    .tool-page .panel-header p,
+    .tool-page .file-size,
+    .tool-page .empty-state span,
+    .tool-page .file-ready-card small,
+    .tool-page .value-list span,
+    .tool-page .value-list small,
+    .tool-page .estimate-card span,
+    .tool-page .estimate-card small
+) {
+    color: var(--text-muted) !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(
+    .edit-trust-row span,
+    .annotate-trust-row span,
+    .sign-trust-row span,
+    .trust-placeholder,
+    .selected-file-info,
+    .tool-page .file-summary,
+    .tool-page .empty-state,
+    .tool-page .field-card,
+    .tool-page .value-list,
+    .tool-page .value-list div,
+    .tool-page .value-list span,
+    .tool-page .file-ready-card,
+    .tool-page .ready-metrics span,
+    .tool-page .preset,
+    .tool-page .option-list span,
+    .tool-page .post-success-upsell,
+    .tool-page .post-success-benefits span,
+    .tool-page .page-tile,
+    .tool-page .merge-file-item,
+    .tool-page .split-range
+) {
+    background: rgba(30, 41, 65, 0.66) !important;
+    border-color: rgba(148, 163, 184, 0.18) !important;
+    color: var(--text-secondary) !important;
+    box-shadow: none !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(
+    .edit-stepper,
+    .annotate-stepper,
+    .sign-stepper,
+    .tool-page .stepper,
+    .tool-page .fill-stepper,
+    .tp-stepper,
+    .ai-tool-stepper,
+    .extract-invoice-stepper,
+    .ocr-tool-stepper,
+    .compare-tool-stepper
+) {
+    background: rgba(15, 23, 42, 0.72) !important;
+    border-color: rgba(148, 163, 184, 0.18) !important;
+    box-shadow: 0 18px 46px rgba(2, 8, 23, 0.24) !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(
+    .edit-step,
+    .annotate-step,
+    .sign-step,
+    .tool-page .step,
+    .tool-page .fill-stepper .step
+) {
+    color: var(--text-muted) !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(
+    .edit-step span,
+    .annotate-step span,
+    .sign-step span,
+    .tool-page .step span,
+    .tool-page .fill-stepper .step span
+) {
+    background: rgba(96, 165, 250, 0.16) !important;
+    color: #bfdbfe !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(
+    .edit-step.active,
+    .annotate-step.active,
+    .sign-step.active,
+    .tool-page .step.active,
+    .tool-page .fill-stepper .step.active
+) {
+    background:
+        radial-gradient(circle at 100% 0%, rgba(96, 165, 250, 0.18), transparent 34%),
+        linear-gradient(135deg, rgba(37, 99, 235, 0.38), rgba(124, 58, 237, 0.30)) !important;
+    color: #ffffff !important;
+    box-shadow: inset 0 0 0 1px rgba(129, 140, 248, 0.32), 0 14px 30px rgba(2, 8, 23, 0.2) !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(
+    .edit-step.active span,
+    .annotate-step.active span,
+    .sign-step.active span,
+    .tool-page .step.active span,
+    .tool-page .fill-stepper .step.active span
+) {
+    background: rgba(255, 255, 255, 0.18) !important;
+    color: #ffffff !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(
+    .edit-workspace-card .upload-container,
+    .annotate-workspace-card .upload-container,
+    .sign-workspace-card .upload-container,
+    .tool-page .upload-container,
+    .tool-page .file-upload-container,
+    .cloud-row,
+    .cloud-picker-row
+) {
+    background:
+        radial-gradient(circle at 20% 0%, rgba(96, 165, 250, 0.12), transparent 30%),
+        rgba(15, 23, 42, 0.48) !important;
+    border-color: rgba(96, 165, 250, 0.22) !important;
+    color: var(--text-secondary) !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(
+    .cloud-btn,
+    .cloud-picker-btn,
+    .cloud-import-btn
+) {
+    background: rgba(30, 41, 65, 0.84) !important;
+    border-color: rgba(148, 163, 184, 0.24) !important;
+    color: var(--text-secondary) !important;
+}
+
+/* Dark FAQ refinement
+   Keeps FAQ areas soft and integrated instead of reading as boxed admin grids. */
+:is([data-theme="dark"], body.dark-theme, .dark) :is(
+    .faq-section,
+    .pricing-faq,
+    .article-faq,
+    .tool-education-faqs,
+    .cp-faq,
+    .rp-faq,
+    .tp-faq,
+    .np-faq,
+    .bp-faq,
+    .reader-faq,
+    .unlock-pdf-faq-section,
+    .aihub-faq,
+    .bizhub-faq,
+    .sechub-faq,
+    .orghub-faq,
+    .ch-faq,
+    .crl-faq,
+    .iel-faq,
+    .redact-lp-faq
+) {
+    background:
+        radial-gradient(circle at 18% 0%, rgba(96, 165, 250, 0.08), transparent 34%),
+        radial-gradient(circle at 82% 18%, rgba(124, 58, 237, 0.06), transparent 30%),
+        linear-gradient(180deg, rgba(15, 23, 42, 0.18), rgba(15, 23, 42, 0.03)) !important;
+    border: 0 !important;
+    border-radius: 32px !important;
+    box-shadow: none !important;
+    padding: clamp(1rem, 2.2vw, 1.75rem) !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(
+    .faq-grid,
+    .home-faq-grid,
+    .tool-education-faq-grid,
+    .aihub-faq-grid,
+    .bizhub-faq-grid,
+    .sechub-faq-grid,
+    .orghub-faq-grid,
+    .ch-faq-grid,
+    .reader-faq-grid,
+    .unlock-pdf-faq-grid,
+    .crl-faq-grid,
+    .iel-faq-grid,
+    .redact-lp-faq-grid
+) {
+    gap: clamp(1rem, 1.8vw, 1.35rem) !important;
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(
+    .faq-section .faq-item,
+    .faq-grid .faq-item,
+    .home-faq-item,
+    .article-faq-item,
+    .tool-education-faq,
+    .cp-faq-item,
+    .rp-faq-item,
+    .tp-faq-item,
+    .np-faq-item,
+    .bp-faq-item,
+    .reader-faq-item,
+    .unlock-pdf-faq-grid article,
+    .aihub-faq-grid article,
+    .bizhub-faq-grid article,
+    .sechub-faq-grid article,
+    .orghub-faq-grid article,
+    .ch-faq-item,
+    .crl-faq-item,
+    .iel-faq-item,
+    .redact-lp-faq-item
+) {
+    background:
+        linear-gradient(180deg, rgba(30, 41, 65, 0.72), rgba(15, 23, 42, 0.56)) !important;
+    border: 1px solid rgba(148, 163, 184, 0.13) !important;
+    border-radius: 24px !important;
+    box-shadow:
+        0 18px 46px rgba(2, 8, 23, 0.18),
+        inset 0 1px 0 rgba(255, 255, 255, 0.045) !important;
+    margin-bottom: 1.05rem !important;
+    padding: clamp(1.15rem, 2vw, 1.45rem) !important;
+    transition:
+        background 180ms ease,
+        border-color 180ms ease,
+        box-shadow 180ms ease,
+        transform 180ms ease !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(
+    .faq-section .faq-item:last-child,
+    .article-faq-item:last-child,
+    .cp-faq-item:last-child,
+    .rp-faq-item:last-child,
+    .tp-faq-item:last-child,
+    .np-faq-item:last-child,
+    .bp-faq-item:last-child,
+    .reader-faq-item:last-child
+) {
+    margin-bottom: 0 !important;
+    border-bottom-color: rgba(148, 163, 184, 0.13) !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(
+    .faq-section .faq-item:hover,
+    .faq-grid .faq-item:hover,
+    .home-faq-item:hover,
+    .article-faq-item:hover,
+    .tool-education-faq:hover,
+    .cp-faq-item:hover,
+    .rp-faq-item:hover,
+    .tp-faq-item:hover,
+    .np-faq-item:hover,
+    .bp-faq-item:hover,
+    .reader-faq-item:hover,
+    .unlock-pdf-faq-grid article:hover,
+    .aihub-faq-grid article:hover,
+    .bizhub-faq-grid article:hover,
+    .sechub-faq-grid article:hover,
+    .orghub-faq-grid article:hover,
+    .ch-faq-item:hover,
+    .crl-faq-item:hover,
+    .iel-faq-item:hover,
+    .redact-lp-faq-item:hover
+) {
+    background:
+        radial-gradient(circle at 100% 0%, rgba(96, 165, 250, 0.12), transparent 34%),
+        linear-gradient(180deg, rgba(37, 49, 78, 0.78), rgba(15, 23, 42, 0.62)) !important;
+    border-color: rgba(147, 197, 253, 0.24) !important;
+    box-shadow:
+        0 22px 54px rgba(2, 8, 23, 0.24),
+        0 0 0 1px rgba(96, 165, 250, 0.05),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+    transform: translateY(-1px);
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(
+    .article-faq-item[open],
+    .tool-education-faq[open],
+    .cp-faq-item[open],
+    .rp-faq-item[open],
+    .tp-faq-item[open],
+    .np-faq-item[open],
+    .bp-faq-item[open],
+    .reader-faq-item[open]
+) {
+    background:
+        radial-gradient(circle at 100% 0%, rgba(129, 140, 248, 0.13), transparent 36%),
+        linear-gradient(180deg, rgba(37, 49, 78, 0.82), rgba(15, 23, 42, 0.66)) !important;
+    border-color: rgba(129, 140, 248, 0.28) !important;
+    box-shadow:
+        0 24px 58px rgba(2, 8, 23, 0.26),
+        inset 0 1px 0 rgba(255, 255, 255, 0.065) !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(
+    .article-faq-item summary,
+    .tool-education-faq summary,
+    .cp-faq-item summary,
+    .rp-faq-item summary,
+    .tp-faq-item summary,
+    .np-faq-item summary,
+    .bp-faq-item summary,
+    .reader-faq-item summary
+) {
+    border-radius: 16px;
+    outline-offset: 5px;
+}
+
+@media (max-width: 768px) {
+    :is([data-theme="dark"], body.dark-theme, .dark) :is(
+        .faq-section,
+        .pricing-faq,
+        .article-faq,
+        .tool-education-faqs,
+        .cp-faq,
+        .rp-faq,
+        .tp-faq,
+        .np-faq,
+        .bp-faq,
+        .reader-faq,
+        .unlock-pdf-faq-section,
+        .aihub-faq,
+        .bizhub-faq,
+        .sechub-faq,
+        .orghub-faq,
+        .ch-faq,
+        .crl-faq,
+        .iel-faq,
+        .redact-lp-faq
+    ) {
+        border-radius: 24px !important;
+        padding: 0.75rem !important;
+    }
+
+    :is([data-theme="dark"], body.dark-theme, .dark) :is(
+        .faq-section .faq-item,
+        .faq-grid .faq-item,
+        .home-faq-item,
+        .article-faq-item,
+        .tool-education-faq,
+        .cp-faq-item,
+        .rp-faq-item,
+        .tp-faq-item,
+        .np-faq-item,
+        .bp-faq-item,
+        .reader-faq-item,
+        .unlock-pdf-faq-grid article,
+        .aihub-faq-grid article,
+        .bizhub-faq-grid article,
+        .sechub-faq-grid article,
+        .orghub-faq-grid article,
+        .ch-faq-item,
+        .crl-faq-item,
+        .iel-faq-item,
+        .redact-lp-faq-item
+    ) {
+        border-radius: 20px !important;
+        margin-bottom: 0.85rem !important;
+        padding: 1rem !important;
+    }
+}
+
+/* Dark blog image and banner refinements */
+:is([data-theme="dark"], body.dark-theme, .dark) .blog-card {
+    background:
+        linear-gradient(180deg, rgba(30, 41, 65, 0.82), rgba(15, 23, 42, 0.72)) !important;
+    border: 1px solid rgba(148, 163, 184, 0.15) !important;
+    box-shadow:
+        0 20px 48px rgba(2, 8, 23, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.045) !important;
+    color: #cbd5e1 !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) .blog-card:hover {
+    background:
+        radial-gradient(circle at 100% 0%, rgba(96, 165, 250, 0.12), transparent 34%),
+        linear-gradient(180deg, rgba(37, 49, 78, 0.88), rgba(15, 23, 42, 0.76)) !important;
+    border-color: rgba(147, 197, 253, 0.28) !important;
+    box-shadow:
+        0 24px 58px rgba(2, 8, 23, 0.28),
+        0 0 0 1px rgba(96, 165, 250, 0.05),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) .blog-card-image {
+    position: relative;
+    isolation: isolate;
+    background:
+        radial-gradient(circle at 20% 0%, rgba(45, 212, 191, 0.1), transparent 34%),
+        radial-gradient(circle at 82% 12%, rgba(129, 140, 248, 0.12), transparent 30%),
+        linear-gradient(135deg, rgba(15, 23, 42, 0.96), rgba(30, 41, 65, 0.86)) !important;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.13) !important;
+    box-shadow: inset 0 -28px 58px rgba(2, 8, 23, 0.16) !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) .blog-card-image::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background:
+        linear-gradient(180deg, rgba(15, 23, 42, 0.04), rgba(15, 23, 42, 0.18)),
+        radial-gradient(circle at 50% 100%, rgba(96, 165, 250, 0.08), transparent 42%);
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) .blog-card-image img {
+    position: relative;
+    z-index: 0;
+    background: transparent !important;
+    filter: brightness(0.88) saturate(0.92) contrast(1.04);
+    opacity: 0.92;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) .blog-card:hover .blog-card-image img {
+    filter: brightness(0.96) saturate(1) contrast(1.05);
+    opacity: 0.98;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) .blog-grid .blog-card:first-child .blog-card-image {
+    border-bottom: 0 !important;
+    border-right: 1px solid rgba(148, 163, 184, 0.13) !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) .blog-card-content {
+    color: #cbd5e1 !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) .blog-card-tag {
+    background: rgba(96, 165, 250, 0.14) !important;
+    border: 1px solid rgba(147, 197, 253, 0.22) !important;
+    color: #bfdbfe !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) .blog-card h2 {
+    color: #f8fafc !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) .blog-card p,
+:is([data-theme="dark"], body.dark-theme, .dark) .blog-card-meta {
+    color: #cbd5e1 !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) .blog-card-read-more {
+    color: #93c5fd !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(.blog-hero-image, .article-hero-image) {
+    background:
+        radial-gradient(circle at 15% 0%, rgba(45, 212, 191, 0.1), transparent 32%),
+        linear-gradient(135deg, rgba(15, 23, 42, 0.96), rgba(30, 41, 65, 0.84)) !important;
+    border-color: rgba(148, 163, 184, 0.16) !important;
+    box-shadow:
+        0 22px 54px rgba(2, 8, 23, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.045) !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(.blog-hero-image, .article-hero-image) img {
+    filter: brightness(0.92) saturate(0.94) contrast(1.04);
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(.article-cta-banner, .article-footer-cta) {
+    background:
+        radial-gradient(circle at 12% 0%, rgba(45, 212, 191, 0.16), transparent 32%),
+        radial-gradient(circle at 90% 8%, rgba(96, 165, 250, 0.15), transparent 34%),
+        linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(20, 31, 58, 0.94)) !important;
+    border: 1px solid rgba(94, 234, 212, 0.18) !important;
+    box-shadow:
+        0 24px 60px rgba(2, 8, 23, 0.3),
+        0 0 0 1px rgba(96, 165, 250, 0.035),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+    color: #f8fafc !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(.article-cta-banner strong, .article-footer-cta h3) {
+    color: #f8fafc !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(.article-cta-banner span, .article-footer-cta p) {
+    color: #cbd5e1 !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) .article-cta-btn {
+    background: rgba(15, 23, 42, 0.74) !important;
+    border: 1px solid rgba(147, 197, 253, 0.26) !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.055),
+        0 12px 28px rgba(2, 8, 23, 0.18) !important;
+    color: #bfdbfe !important;
+    opacity: 1 !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) .article-cta-btn:hover {
+    background: rgba(37, 99, 235, 0.22) !important;
+    border-color: rgba(147, 197, 253, 0.44) !important;
+    color: #f8fafc !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) .article-cta-btn:focus-visible {
+    outline: 3px solid rgba(96, 165, 250, 0.55) !important;
+    outline-offset: 3px !important;
+}
+
+@media (max-width: 640px) {
+    :is([data-theme="dark"], body.dark-theme, .dark) .blog-grid .blog-card:first-child .blog-card-image {
+        border-right: 0 !important;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.13) !important;
     }
 }
