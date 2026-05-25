@@ -1,21 +1,22 @@
+@using PdfToolStack.Domain.Configuration
 @inject NavigationManager Navigation
+@inject IProductContext Product
 
 @if (_metadata is not null)
 {
     <HeadContent>
-        <meta property="og:type" content="website" />
-        <meta property="og:site_name" content="PdfToolStack" />
+        <meta property="og:type" content="@Product.DefaultSeoType" />
+        <meta property="og:site_name" content="@Product.SiteName" />
         <meta property="og:title" content="@_metadata.Title" />
         <meta property="og:description" content="@_metadata.Description" />
-        <meta property="og:url" content="@_metadata.Url" />
-        <meta name="twitter:card" content="summary" />
+        <meta property="og:url" content="@ResolvedMetadataUrl" />
+        <meta name="twitter:card" content="@Product.DefaultTwitterCard" />
         <meta name="twitter:title" content="@_metadata.Title" />
         <meta name="twitter:description" content="@_metadata.Description" />
     </HeadContent>
 }
 
 @code {
-    private const string SiteUrl = "https://pdftoolstack.com";
     private SeoMetadata? _metadata;
 
     [Parameter]
@@ -37,8 +38,13 @@
             : null;
     }
 
+    private string ResolvedMetadataUrl =>
+        _metadata is null
+            ? Product.ResolveUrl("/")
+            : Product.ResolveUrl(_metadata.Path);
+
     private static SeoMetadata Metadata(string path, string title, string description) =>
-        new(title, description, $"{SiteUrl}{path}");
+        new(path, title, description);
 
     private static readonly IReadOnlyDictionary<string, SeoMetadata> MetadataByRoute =
         new Dictionary<string, SeoMetadata>(StringComparer.OrdinalIgnoreCase)
@@ -85,5 +91,5 @@
             ["/business-pdf-tools"] = Metadata("/business-pdf-tools", "Business PDF Tools - Contracts, Invoices, Batch Workflows", "Use business PDF tools for contracts, invoices, batch processing, data extraction, signatures, and secure sharing."),
         };
 
-    private sealed record SeoMetadata(string Title, string Description, string Url);
+    private sealed record SeoMetadata(string Path, string Title, string Description);
 }

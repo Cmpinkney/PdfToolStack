@@ -1,0 +1,19 @@
+@page "/blog"
+@inject ProductBranding Branding
+
+<PageTitle>Blog - @Branding.SiteName</PageTitle>
+<HeadContent>
+    <meta name="description" content="ExcelToolStack guides will cover AI spreadsheet workflows, reporting systems, templates, and workbook operations." />
+    <link rel="canonical" href="@($"{Branding.SiteUrl}/blog")" />
+</HeadContent>
+
+<section class="shell-page">
+    <p class="eyebrow">Guides</p>
+    <h1>Spreadsheet workflow guides are coming soon.</h1>
+    <p class="lead">Expect focused writing on cleaning data, building repeatable reports, reviewing formulas, and applying AI to workbook-heavy work.</p>
+    <div class="content-list">
+        <article><span>Guide</span><h2>AI spreadsheet cleanup patterns</h2></article>
+        <article><span>Playbook</span><h2>Monthly reporting workflows</h2></article>
+        <article><span>Template notes</span><h2>Model review checklists</h2></article>
+    </div>
+</section>

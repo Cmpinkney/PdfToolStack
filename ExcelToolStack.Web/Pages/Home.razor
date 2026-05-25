@@ -1,0 +1,58 @@
+@page "/"
+@inject ProductBranding Branding
+
+<PageTitle>@Branding.SiteName - AI Spreadsheet Workflows</PageTitle>
+<HeadContent>
+    <meta name="description" content="ExcelToolStack is a premium workspace for AI spreadsheet workflows, templates, tools, and practical guides." />
+    <link rel="canonical" href="@Branding.SiteUrl" />
+</HeadContent>
+
+<section class="hero">
+    <div class="hero-copy">
+        <p class="eyebrow">AI spreadsheet workflow platform</p>
+        <h1>@Branding.SiteName</h1>
+        <p class="lead">
+            A focused workspace for turning messy workbooks into clear models,
+            repeatable reports, and guided spreadsheet operations.
+        </p>
+        <div class="hero-actions">
+            <a class="button button--primary" href="/tools">Explore Tools</a>
+            <a class="button button--secondary" href="/templates">View Templates</a>
+        </div>
+    </div>
+    <div class="sheet-visual" aria-label="Spreadsheet workflow preview">
+        <div class="sheet-toolbar">
+            <span></span><span></span><span></span>
+        </div>
+        <div class="sheet-grid">
+            @for (var i = 0; i < 36; i++)
+            {
+                <span class="cell @(i % 7 == 0 ? "cell--accent" : "") @(i is 9 or 10 or 11 or 25 ? "cell--active" : "")"></span>
+            }
+        </div>
+        <div class="ai-panel">
+            <strong>AI workflow</strong>
+            <span>Clean columns</span>
+            <span>Summarize variance</span>
+            <span>Draft dashboard notes</span>
+        </div>
+    </div>
+</section>
+
+<section class="feature-band">
+    <article>
+        <span>01</span>
+        <h2>Spreadsheet Tools</h2>
+        <p>Planned utilities for cleanup, conversion, validation, and repeatable workbook operations.</p>
+    </article>
+    <article>
+        <span>02</span>
+        <h2>AI Workflows</h2>
+        <p>Guided analysis patterns for finance, operations, reporting, and model review.</p>
+    </article>
+    <article>
+        <span>03</span>
+        <h2>Templates & Guides</h2>
+        <p>Practical starting points and writing that help teams move faster inside spreadsheets.</p>
+    </article>
+</section>

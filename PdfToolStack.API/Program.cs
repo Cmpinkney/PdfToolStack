@@ -8,6 +8,7 @@ using PdfToolStack.Application.Factories;
 using PdfToolStack.Application.Interfaces;
 using PdfToolStack.Application.Services;
 using PdfToolStack.Application.Strategies;
+using PdfToolStack.Domain.Configuration;
 using PdfToolStack.Domain.Interfaces;
 using PdfToolStack.Infrastructure.Auth;
 using PdfToolStack.Infrastructure.Configuration;
@@ -39,6 +40,19 @@ try
             .WriteTo.Console());
 
     // ── Configuration Options ─────────────────────────────────────────────
+    builder.Services.Configure<ProductOptions>(
+        builder.Configuration.GetSection(ProductOptions.SectionName));
+
+    builder.Services.Configure<BillingCatalogOptions>(
+        builder.Configuration.GetSection(BillingCatalogOptions.SectionName));
+
+    var productOptions = builder.Configuration
+        .GetSection(ProductOptions.SectionName)
+        .Get<ProductOptions>() ?? new ProductOptions();
+    var productContext = new ProductContext(productOptions);
+    builder.Services.AddSingleton(productOptions);
+    builder.Services.AddSingleton<IProductContext>(productContext);
+
     builder.Services.Configure<AzureStorageOptions>(
         builder.Configuration.GetSection(AzureStorageOptions.SectionName));
 

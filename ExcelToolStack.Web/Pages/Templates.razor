@@ -1,0 +1,19 @@
+@page "/templates"
+@inject ProductBranding Branding
+
+<PageTitle>Templates - @Branding.SiteName</PageTitle>
+<HeadContent>
+    <meta name="description" content="ExcelToolStack templates will help teams start faster with reporting, forecasting, audits, and spreadsheet operations." />
+    <link rel="canonical" href="@($"{Branding.SiteUrl}/templates")" />
+</HeadContent>
+
+<section class="shell-page">
+    <p class="eyebrow">Templates</p>
+    <h1>Templates for serious spreadsheet work.</h1>
+    <p class="lead">This placeholder will become a curated library for reporting, forecasting, operations, and workbook quality control.</p>
+    <div class="placeholder-grid">
+        <article><h2>Reporting</h2><p>Monthly packs, KPI summaries, and variance notes.</p></article>
+        <article><h2>Operations</h2><p>Trackers, reconciliations, and checklist-driven workflows.</p></article>
+        <article><h2>Analysis</h2><p>Model review, assumptions, and scenario planning.</p></article>
+    </div>
+</section>
