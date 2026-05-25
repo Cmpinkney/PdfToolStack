@@ -1163,6 +1163,111 @@
             white-space: normal;
         }
     }
+
+    [data-theme="dark"] .lock-pdf-page {
+        background:
+            radial-gradient(circle at 18% 0%, rgba(45, 212, 191, .11), transparent 34%),
+            radial-gradient(circle at 88% 8%, rgba(96, 165, 250, .12), transparent 30%),
+            linear-gradient(180deg, var(--bg, #07111f) 0%, #0f172a 100%);
+        color: var(--text-primary, #f8fafc);
+    }
+
+    [data-theme="dark"] .lock-pdf-hero h1,
+    [data-theme="dark"] .lock-pdf-panel-header h2,
+    [data-theme="dark"] .lock-pdf-section-header h2,
+    [data-theme="dark"] .lock-pdf-file-name,
+    [data-theme="dark"] .lock-pdf-empty-state strong,
+    [data-theme="dark"] .lock-pdf-field-card label,
+    [data-theme="dark"] .lock-pdf-checkbox-card strong,
+    [data-theme="dark"] .lock-pdf-security-notes strong,
+    [data-theme="dark"] .lock-pdf-processing-container h2,
+    [data-theme="dark"] .lock-pdf-result-container h2,
+    [data-theme="dark"] .lock-pdf-error-container h2,
+    [data-theme="dark"] .lock-pdf-upsell-card strong,
+    [data-theme="dark"] .lock-pdf-faq-grid h3 {
+        color: var(--text-primary, #f8fafc);
+    }
+
+    [data-theme="dark"] .lock-pdf-hero p,
+    [data-theme="dark"] .lock-pdf-panel-header p,
+    [data-theme="dark"] .lock-pdf-file-size,
+    [data-theme="dark"] .lock-pdf-empty-state span,
+    [data-theme="dark"] .lock-pdf-field-card p,
+    [data-theme="dark"] .lock-pdf-checkbox-card small,
+    [data-theme="dark"] .lock-pdf-security-notes span,
+    [data-theme="dark"] .lock-pdf-processing-container p,
+    [data-theme="dark"] .lock-pdf-result-container p,
+    [data-theme="dark"] .lock-pdf-error-container p,
+    [data-theme="dark"] .lock-pdf-upsell-card span,
+    [data-theme="dark"] .lock-pdf-faq-grid p {
+        color: var(--text-secondary, #cbd5e1);
+    }
+
+    [data-theme="dark"] .lock-pdf-trust-row span,
+    [data-theme="dark"] .lock-pdf-stepper,
+    [data-theme="dark"] .lock-pdf-workspace-card,
+    [data-theme="dark"] .lock-pdf-settings-card,
+    [data-theme="dark"] .lock-pdf-visual-frame,
+    [data-theme="dark"] .lock-pdf-document-card,
+    [data-theme="dark"] .lock-pdf-file-summary,
+    [data-theme="dark"] .lock-pdf-empty-state,
+    [data-theme="dark"] .lock-pdf-field-card,
+    [data-theme="dark"] .lock-pdf-checkbox-card,
+    [data-theme="dark"] .lock-pdf-security-notes div,
+    [data-theme="dark"] .lock-pdf-processing-container,
+    [data-theme="dark"] .lock-pdf-result-container,
+    [data-theme="dark"] .lock-pdf-error-container,
+    [data-theme="dark"] .lock-pdf-upsell-card,
+    [data-theme="dark"] .lock-pdf-faq-grid article {
+        background: var(--surface-elevated, rgba(20, 31, 58, .94));
+        border-color: var(--border-subtle, rgba(148, 163, 184, .22));
+        box-shadow: 0 20px 50px rgba(0, 0, 0, .24);
+    }
+
+    [data-theme="dark"] .lock-pdf-field-input {
+        background: var(--input-bg, rgba(15, 23, 42, .78));
+        border-color: var(--input-border, rgba(148, 163, 184, .32));
+        color: var(--text-primary, #f8fafc);
+    }
+
+    [data-theme="dark"] .lock-pdf-field-input::placeholder {
+        color: var(--input-placeholder, #94a3b8);
+    }
+
+    [data-theme="dark"] .lock-pdf-field-input:focus {
+        border-color: rgba(96, 165, 250, .72);
+        box-shadow: 0 0 0 4px rgba(96, 165, 250, .16);
+    }
+
+    [data-theme="dark"] .lock-pdf-legal-note {
+        background: rgba(245, 158, 11, .12);
+        border-color: rgba(245, 158, 11, .32);
+        color: #fbbf24;
+    }
+
+    [data-theme="dark"] .lock-pdf-status-pill,
+    [data-theme="dark"] .lock-pdf-result-icon {
+        background: rgba(16, 185, 129, .16);
+        color: #6ee7b7;
+    }
+
+    [data-theme="dark"] .lock-pdf-error-icon,
+    [data-theme="dark"] .lock-pdf-error-message {
+        background: rgba(248, 113, 113, .14);
+        color: #fca5a5 !important;
+    }
+
+    [data-theme="dark"] .lock-pdf-reset-button {
+        background: var(--surface-muted, rgba(30, 41, 65, .78));
+        color: var(--text-primary, #f8fafc);
+        border: 1px solid var(--border-subtle, rgba(148, 163, 184, .22));
+    }
+
+    [data-theme="dark"] .lock-pdf-process-button.disabled {
+        opacity: .72;
+        filter: saturate(.55);
+        color: rgba(248, 250, 252, .82);
+    }
 </style>
 
 @code {

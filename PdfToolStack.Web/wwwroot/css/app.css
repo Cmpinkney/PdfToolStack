@@ -40,6 +40,8 @@
     --surface-elevated: #FFFFFF;
     --card-bg: #FFFFFF;
     --input-bg: #FFFFFF;
+    --input-border: #D0CDE8;
+    --input-placeholder: #9795B5;
     /* Borders */
     --border: #D0CDE8;
     --border-subtle: rgba(148, 163, 184, 0.22);
@@ -101,6 +103,8 @@
     --surface-elevated: rgba(20, 31, 58, 0.94);
     --card-bg: rgba(20, 31, 58, 0.94);
     --input-bg: rgba(15, 23, 42, 0.62);
+    --input-border: rgba(148, 163, 184, 0.28);
+    --input-placeholder: #94A3B8;
     /* Borders */
     --border: #2D2A45;
     --border-subtle: rgba(148, 163, 184, 0.18);
@@ -28418,4 +28422,530 @@ body {
     .bp-col-right.settings-card .bp-tool-grid {
         grid-template-columns: 1fr !important;
     }
+}
+
+/* Dark theme polish for legacy/custom PDF workspaces.
+   These pages carry local light CSS blocks, so this final layer keeps dark mode
+   consistent without altering the light theme. */
+:is([data-theme="dark"], body.dark-theme, .dark) {
+    --surface: #101827;
+    --surface-muted: rgba(30, 41, 65, 0.66);
+    --surface-elevated: rgba(20, 31, 58, 0.96);
+    --card-bg: rgba(20, 31, 58, 0.96);
+    --input-bg: rgba(15, 23, 42, 0.72);
+    --input-border: rgba(148, 163, 184, 0.30);
+    --input-placeholder: #94a3b8;
+    --text-primary: #f8fafc;
+    --text-secondary: #cbd5e1;
+    --border-subtle: rgba(148, 163, 184, 0.18);
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(
+    input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+    textarea,
+    select,
+    .field-input,
+    .contact-input,
+    .contact-textarea,
+    .reader-jump-row input,
+    .rp-search-input,
+    .cp-margin-input,
+    .cp-pages-input,
+    .crop-input,
+    .crop-pages-input,
+    .tp-search,
+    .tp-select,
+    .bp-input,
+    .bp-select
+) {
+    background: var(--input-bg) !important;
+    border-color: var(--input-border) !important;
+    color: var(--text-primary) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02) !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(
+    input,
+    textarea,
+    .field-input,
+    .contact-input,
+    .contact-textarea,
+    .reader-jump-row input,
+    .rp-search-input,
+    .cp-margin-input,
+    .cp-pages-input,
+    .crop-input,
+    .crop-pages-input
+)::placeholder {
+    color: var(--input-placeholder) !important;
+    opacity: 1 !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(
+    input:disabled,
+    textarea:disabled,
+    select:disabled,
+    button:disabled,
+    .cp-add-pages-btn--disabled
+) {
+    opacity: 0.55 !important;
+    cursor: not-allowed !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(
+    input:not([type="checkbox"]):not([type="radio"]):focus,
+    textarea:focus,
+    select:focus,
+    .field-input:focus,
+    .reader-jump-row input:focus,
+    .rp-search-input:focus,
+    .cp-margin-input:focus,
+    .cp-pages-input:focus,
+    .crop-input:focus,
+    .crop-pages-input:focus
+) {
+    border-color: rgba(96, 165, 250, 0.72) !important;
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.18) !important;
+    outline: none !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(.reader-page, .rp-page, .cp-page) {
+    background:
+        radial-gradient(circle at 12% 0%, rgba(99, 102, 241, 0.14), transparent 34%),
+        radial-gradient(circle at 88% 12%, rgba(20, 184, 166, 0.10), transparent 30%),
+        linear-gradient(180deg, #0f172a 0%, #111827 48%, #0b1220 100%) !important;
+    color: var(--text-secondary) !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(
+    .reader-hero-panel,
+    .reader-flow,
+    .reader-main,
+    .reader-side-card,
+    .reader-upload-card,
+    .reader-toolbar,
+    .reader-info-list div,
+    .reader-settings,
+    .reader-canvas-shell,
+    .reader-faq-item,
+    .rp-upload-hero,
+    .rp-upload-header,
+    .rp-upload-zone,
+    .rp-how-it-works,
+    .rp-how-it-works .rp-step,
+    .rp-upload-inspector,
+    .rp-feature-list div,
+    .rp-editor-topbar,
+    .rp-thumbnails,
+    .rp-panel,
+    .rp-action-bar,
+    .rp-before-after,
+    .rp-search-card,
+    .rp-processing-card,
+    .rp-complete-card,
+    .rp-complete-badges,
+    .rp-faq-item,
+    .cp-upload-hero,
+    .cp-upload-header,
+    .cp-upload-area,
+    .cp-upload-inspector,
+    .cp-feature-list div,
+    .cp-mini-preview,
+    .cp-topbar,
+    .cp-editor,
+    .cp-thumbs,
+    .cp-canvas-toolbar,
+    .cp-settings,
+    .cp-margin-input-row,
+    .cp-tip,
+    .cp-state-card,
+    .cp-complete-badges,
+    .cp-faq-item,
+    .crop-config-panel,
+    .crop-settings-panel,
+    .crop-margin-group,
+    .crop-radio-label,
+    .crop-pages-input-row
+) {
+    background:
+        radial-gradient(circle at 12% 0%, rgba(99, 102, 241, 0.11), transparent 32%),
+        linear-gradient(135deg, rgba(20, 31, 58, 0.96), rgba(30, 41, 73, 0.86)) !important;
+    border-color: var(--border-subtle) !important;
+    box-shadow: 0 18px 46px rgba(2, 8, 23, 0.28) !important;
+    color: var(--text-secondary) !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(
+    .reader-trust-row span,
+    .reader-page-count,
+    .reader-jump-row,
+    .reader-zoom-row,
+    .cloud-row,
+    .cloud-status,
+    .rp-tool-badge,
+    .rp-chip,
+    .rp-trust-badge,
+    .rp-regions-badge,
+    .rp-thumb,
+    .rp-thumb-inner,
+    .rp-panel-tip,
+    .rp-confidence-grid div,
+    .rp-permanent-warning,
+    .rp-kbd,
+    .rp-processing-note,
+    .rp-complete-badge,
+    .cp-chip,
+    .cp-trust-badge,
+    .cp-page-chip,
+    .cp-thumb,
+    .cp-thumb-page,
+    .cp-add-pages-btn,
+    .cp-preset-btn,
+    .cp-preset-btn--auto,
+    .cp-radio,
+    .cp-complete-badge,
+    .cp-inline-error,
+    .crop-file-chip,
+    .crop-unit-toggle,
+    .crop-scope-options,
+    .crop-pages-hint
+) {
+    background: var(--surface-muted) !important;
+    border-color: var(--border-subtle) !important;
+    color: var(--text-secondary) !important;
+    box-shadow: none !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(
+    .reader-hero h1,
+    .reader-hero-panel strong,
+    .reader-section-heading h2,
+    .reader-info-list strong,
+    .reader-page-count strong,
+    .reader-zoom,
+    .reader-zoom-row span,
+    .reader-faq h2,
+    .reader-faq-item summary,
+    .rp-title,
+    .rp-upload-title,
+    .rp-panel-title,
+    .rp-step strong,
+    .rp-page-label strong,
+    .rp-filename,
+    .rp-search-header strong,
+    .rp-processing-card h2,
+    .rp-complete-card h2,
+    .rp-faq h2,
+    .rp-faq-item summary,
+    .cp-title,
+    .cp-upload-title,
+    .cp-settings-title,
+    .cp-setting-label,
+    .cp-filename,
+    .cp-page-label strong,
+    .cp-state-card h2,
+    .cp-faq h2,
+    .cp-faq-item summary,
+    .crop-file-name,
+    .crop-unit-label,
+    .crop-scope-label,
+    .crop-margin-group label
+) {
+    color: var(--text-primary) !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(
+    .reader-hero p,
+    .reader-hero-panel small,
+    .reader-section-heading p,
+    .reader-info-list span,
+    .reader-page-count span,
+    .cloud-label,
+    .cloud-status,
+    .reader-faq-item p,
+    .rp-subtitle,
+    .rp-upload-sub,
+    .rp-chip,
+    .rp-feature-list span,
+    .rp-step p,
+    .rp-page-label,
+    .rp-thumbnails-label,
+    .rp-thumb-num,
+    .rp-panel-title,
+    .rp-color-label,
+    .rp-confidence-grid span,
+    .rp-confidence-note,
+    .rp-search-desc,
+    .rp-processing-card p,
+    .rp-complete-card p,
+    .rp-faq-item p,
+    .cp-subtitle,
+    .cp-upload-copy,
+    .cp-feature-list span,
+    .cp-thumbs-label,
+    .cp-thumb-num,
+    .cp-page-label,
+    .cp-topbar-hint,
+    .cp-margin-label,
+    .cp-margin-unit,
+    .cp-no-cc,
+    .cp-state-card p,
+    .cp-faq-item p,
+    .crop-pages-hint
+) {
+    color: var(--text-muted) !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(
+    .reader-icon-btn,
+    .reader-secondary-btn,
+    .reader-jump-row button,
+    .reader-zoom-row button,
+    .cloud-btn,
+    .rp-back-btn,
+    .rp-nav-btn,
+    .rp-panel-btn,
+    .rp-action-btn,
+    .rp-ba-btn,
+    .rp-search-close,
+    .rp-restart-btn,
+    .cp-back-btn,
+    .cp-nav-btn,
+    .cp-tool-btn,
+    .cp-preset-btn,
+    .cp-reset-link,
+    .cp-restart-btn,
+    .crop-unit-btn,
+    .crop-file-remove
+) {
+    background: rgba(30, 41, 65, 0.82) !important;
+    border-color: rgba(148, 163, 184, 0.24) !important;
+    color: var(--text-secondary) !important;
+    box-shadow: none !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(
+    .reader-icon-btn:hover:not(:disabled),
+    .reader-secondary-btn:hover,
+    .reader-jump-row button:hover:not(:disabled),
+    .reader-zoom-row button:hover:not(:disabled),
+    .cloud-btn:hover:not(:disabled),
+    .rp-back-btn:hover,
+    .rp-nav-btn:hover:not(:disabled),
+    .rp-panel-btn:hover:not(:disabled),
+    .rp-action-btn:hover:not(:disabled),
+    .rp-ba-btn:hover,
+    .rp-search-close:hover,
+    .cp-back-btn:hover,
+    .cp-nav-btn:hover:not(:disabled),
+    .cp-tool-btn:hover,
+    .cp-preset-btn:hover,
+    .crop-unit-btn:hover,
+    .crop-file-remove:hover
+) {
+    background: rgba(37, 99, 235, 0.18) !important;
+    border-color: rgba(96, 165, 250, 0.46) !important;
+    color: var(--text-primary) !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(
+    .reader-step,
+    .cp-step,
+    .rp-stepper > .rp-step
+) {
+    background: rgba(30, 41, 65, 0.68) !important;
+    color: var(--text-muted) !important;
+    border-color: rgba(148, 163, 184, 0.18) !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(
+    .reader-step span,
+    .cp-step span,
+    .rp-stepper > .rp-step span
+) {
+    background: rgba(96, 165, 250, 0.16) !important;
+    color: #bfdbfe !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(
+    .reader-step--active,
+    .reader-step--done,
+    .reader-step--ready,
+    .cp-step--active,
+    .cp-step--done,
+    .rp-step--active,
+    .rp-step--done,
+    .cp-tool-btn--active,
+    .cp-preset-btn--auto,
+    .rp-ba-btn--active
+) {
+    background:
+        radial-gradient(circle at 100% 0%, rgba(96, 165, 250, 0.18), transparent 34%),
+        linear-gradient(135deg, rgba(37, 99, 235, 0.38), rgba(124, 58, 237, 0.30)) !important;
+    border-color: rgba(129, 140, 248, 0.38) !important;
+    color: #ffffff !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(
+    .reader-step--active span,
+    .reader-step--done span,
+    .reader-step--ready span,
+    .cp-step--active span,
+    .cp-step--done span,
+    .rp-step--active span,
+    .rp-step--done span
+) {
+    background: rgba(255, 255, 255, 0.18) !important;
+    color: #ffffff !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(
+    .reader-canvas-shell,
+    .rp-canvas-area,
+    .cp-canvas-area,
+    .cp-canvas-wrap,
+    .rp-canvas-wrap
+) {
+    background:
+        radial-gradient(circle at 50% 0%, rgba(96, 165, 250, 0.08), transparent 34%),
+        #1f2937 !important;
+    border-color: rgba(148, 163, 184, 0.20) !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(
+    .reader-file-upload .upload-container,
+    .rp-upload-zone .upload-container,
+    .cp-upload-area .upload-container,
+    .reader-file-upload .file-upload-container,
+    .rp-upload-zone .file-upload-container,
+    .cp-upload-area .file-upload-container
+) {
+    background:
+        radial-gradient(circle at 20% 0%, rgba(96, 165, 250, 0.12), transparent 30%),
+        rgba(15, 23, 42, 0.50) !important;
+    border-color: rgba(96, 165, 250, 0.24) !important;
+    color: var(--text-secondary) !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(
+    .cloud-error,
+    .reader-error,
+    .rp-permanent-warning,
+    .rp-chip--red,
+    .rp-action-btn--remove,
+    .cp-inline-error
+) {
+    background: rgba(239, 68, 68, 0.14) !important;
+    border-color: rgba(248, 113, 113, 0.24) !important;
+    color: #fca5a5 !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(
+    .rp-complete-icon,
+    .cp-complete-icon,
+    .rp-complete-badge,
+    .cp-complete-badge
+) {
+    background: rgba(16, 185, 129, 0.16) !important;
+    border-color: rgba(52, 211, 153, 0.24) !important;
+    color: #86efac !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(
+    .rp-complete-icon[style],
+    .cp-complete-icon[style]
+) {
+    background: rgba(239, 68, 68, 0.16) !important;
+    color: #fca5a5 !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(
+    .rp-divider,
+    .cp-divider,
+    .cp-tool-divider
+) {
+    background: rgba(148, 163, 184, 0.18) !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) .cp-preview-doc {
+    background: #ffffff !important;
+    color: #111827 !important;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(.rp-color-swatch, .cp-handle) {
+    box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.9), 0 8px 18px rgba(2, 8, 23, 0.24) !important;
+}
+
+/* Shared tool surface primitives for editor/workflow pages. */
+.tool-side-card,
+.tool-option-card,
+.tool-settings-panel,
+.tool-info-card,
+.tool-warning-card {
+    background: var(--card-bg, var(--surface, #ffffff));
+    border: 1px solid var(--border-subtle, var(--border, #e5e7eb));
+    color: var(--text-primary, var(--text, #111827));
+}
+
+.tool-side-card,
+.tool-settings-panel {
+    border-radius: 20px;
+    box-shadow: 0 18px 44px rgba(15, 23, 42, 0.08);
+}
+
+.tool-option-card,
+.tool-info-card,
+.tool-warning-card {
+    border-radius: 14px;
+}
+
+.tool-input {
+    background: var(--input-bg, var(--surface, #ffffff));
+    border: 1px solid var(--input-border, var(--border, #d1d5db));
+    color: var(--text-primary, var(--text, #111827));
+}
+
+.tool-input::placeholder {
+    color: var(--input-placeholder, var(--text-muted, #9ca3af));
+}
+
+.tool-input:focus {
+    border-color: rgba(37, 99, 235, 0.65);
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.14);
+    outline: none;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) :is(
+    .tool-side-card,
+    .tool-option-card,
+    .tool-settings-panel,
+    .tool-info-card,
+    .tool-warning-card
+) {
+    background: var(--surface-elevated, rgba(20, 31, 58, 0.94));
+    border-color: var(--border-subtle, rgba(148, 163, 184, 0.22));
+    color: var(--text-primary, #f8fafc);
+    box-shadow: 0 18px 44px rgba(0, 0, 0, 0.24);
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) .tool-info-card {
+    background: rgba(20, 184, 166, 0.12);
+    border-color: rgba(45, 212, 191, 0.28);
+    color: #99f6e4;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) .tool-warning-card {
+    background: rgba(245, 158, 11, 0.12);
+    border-color: rgba(245, 158, 11, 0.32);
+    color: #fbbf24;
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) .tool-input {
+    background: var(--input-bg, rgba(15, 23, 42, 0.78));
+    border-color: var(--input-border, rgba(148, 163, 184, 0.32));
+    color: var(--text-primary, #f8fafc);
+}
+
+:is([data-theme="dark"], body.dark-theme, .dark) .tool-input::placeholder {
+    color: var(--input-placeholder, #94a3b8);
 }
