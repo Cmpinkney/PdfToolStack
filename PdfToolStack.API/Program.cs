@@ -305,6 +305,9 @@ try
 
     // ── AI Service ────────────────────────────────────────────────────────────
     builder.Services.AddHttpClient();
+    builder.Services.AddScoped<IFormulaGenerationService, FormulaGenerationService>();
+    builder.Services.AddHttpClient<IFormulaAiProvider, AnthropicFormulaAiProvider>();
+
     builder.Services.AddScoped<AiService>(sp =>
     {
         var config = sp.GetRequiredService<IConfiguration>();
@@ -351,13 +354,17 @@ try
     var productionCorsOrigins = new[]
     {
         "https://pdftoolstack.com",
-        "https://www.pdftoolstack.com"
+        "https://www.pdftoolstack.com",
+        "https://exceltoolstack.com",
+        "https://www.exceltoolstack.com"
     };
 
     var developmentCorsOrigins = new[]
     {
         "https://localhost:7025",
-        "http://localhost:5049"
+        "http://localhost:5049",
+        "https://localhost:5001",
+        "http://localhost:5000"
     };
 
     string? NormalizeCorsOrigin(string? origin)
