@@ -7,12 +7,72 @@
     <base href="/" />
     <meta name="description" content="ExcelToolStack is a premium workspace for AI spreadsheet workflows, templates, tools, and practical guides." />
     <link rel="canonical" href="https://exceltoolstack.com/" />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <meta name="theme-color" content="#075c46" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0a1713" media="(prefers-color-scheme: dark)" />
+    <script>
+        (function () {
+            const storageKey = "exceltoolstack.theme";
+            const allowedThemes = new Set(["system", "light", "dark"]);
+            const root = document.documentElement;
+
+            function normalizeTheme(theme) {
+                return allowedThemes.has(theme) ? theme : "system";
+            }
+
+            function applyTheme(theme) {
+                const preference = normalizeTheme(theme);
+                root.dataset.themePreference = preference;
+
+                if (preference === "system") {
+                    root.removeAttribute("data-theme");
+                    root.style.colorScheme = "";
+                    return preference;
+                }
+
+                root.dataset.theme = preference;
+                root.style.colorScheme = preference;
+                return preference;
+            }
+
+            function getStoredTheme() {
+                try {
+                    return normalizeTheme(localStorage.getItem(storageKey));
+                } catch {
+                    return "system";
+                }
+            }
+
+            window.excelToolStackTheme = {
+                getPreference: getStoredTheme,
+                setPreference: function (theme) {
+                    const preference = normalizeTheme(theme);
+
+                    try {
+                        if (preference === "system") {
+                            localStorage.removeItem(storageKey);
+                        } else {
+                            localStorage.setItem(storageKey, preference);
+                        }
+                    } catch {
+                    }
+
+                    return applyTheme(preference);
+                }
+            };
+
+            applyTheme(getStoredTheme());
+        })();
+    </script>
     <link rel="stylesheet" href="css/app.css" />
 </head>
 <body>
     <div id="app">
         <div class="loading-shell">
-            <div class="brand-mark">E</div>
+            <span class="brand-mark" aria-hidden="true">
+                <img class="brand-mark__image brand-mark__image--light" src="images/brand/exceltoolstack-mark.svg" alt="" width="34" height="34" />
+                <img class="brand-mark__image brand-mark__image--dark" src="images/brand/exceltoolstack-mark-dark.svg" alt="" width="34" height="34" />
+            </span>
             <p>Loading ExcelToolStack</p>
         </div>
     </div>

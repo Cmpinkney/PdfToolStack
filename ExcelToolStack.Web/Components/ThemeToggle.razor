@@ -1,0 +1,48 @@
+@inject Microsoft.JSInterop.IJSRuntime JS
+
+<div class="theme-toggle" role="group" aria-label="Theme preference">
+    @foreach (var option in ThemeOptions)
+    {
+        <button type="button"
+                class="@GetButtonClass(option.Value)"
+                aria-pressed="@(CurrentTheme == option.Value)"
+                title="@option.Title"
+                @onclick="() => SetThemeAsync(option.Value)">
+            <span aria-hidden="true">@option.Icon</span>
+            <span>@option.Label</span>
+        </button>
+    }
+</div>
+
+@code {
+    private const string SystemTheme = "system";
+    private string CurrentTheme { get; set; } = SystemTheme;
+
+    private static readonly ThemeOption[] ThemeOptions =
+    [
+        new(SystemTheme, "System", "Auto", "Follow system theme"),
+        new("light", "Light", "Light", "Use light theme"),
+        new("dark", "Dark", "Dark", "Use dark theme")
+    ];
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+        {
+            return;
+        }
+
+        CurrentTheme = await JS.InvokeAsync<string>("excelToolStackTheme.getPreference", []);
+        StateHasChanged();
+    }
+
+    private async Task SetThemeAsync(string theme)
+    {
+        CurrentTheme = await JS.InvokeAsync<string>("excelToolStackTheme.setPreference", [theme]);
+    }
+
+    private string GetButtonClass(string theme)
+        => CurrentTheme == theme ? "theme-toggle__button is-active" : "theme-toggle__button";
+
+    private sealed record ThemeOption(string Value, string Label, string Icon, string Title);
+}
