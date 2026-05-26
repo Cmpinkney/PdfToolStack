@@ -1,19 +1,69 @@
 @page "/templates"
 @inject ProductBranding Branding
 
-<PageTitle>Templates - @Branding.SiteName</PageTitle>
+<PageTitle>Excel Templates for Reporting, Forecasting, and Operations - @Branding.SiteName</PageTitle>
 <HeadContent>
-    <meta name="description" content="ExcelToolStack templates will help teams start faster with reporting, forecasting, audits, and spreadsheet operations." />
+    <meta name="description" content="Preview ExcelToolStack templates for reporting, forecasting, operations, model review, and AI-ready spreadsheet workflows." />
     <link rel="canonical" href="@($"{Branding.SiteUrl}/templates")" />
+    <meta property="og:title" content="@($"Excel templates for serious spreadsheet work - {Branding.SiteName}")" />
+    <meta property="og:description" content="A curated template preview for reporting, forecasting, operations, and workbook quality control." />
 </HeadContent>
 
 <section class="shell-page">
     <p class="eyebrow">Templates</p>
     <h1>Templates for serious spreadsheet work.</h1>
-    <p class="lead">This placeholder will become a curated library for reporting, forecasting, operations, and workbook quality control.</p>
-    <div class="placeholder-grid">
-        <article><h2>Reporting</h2><p>Monthly packs, KPI summaries, and variance notes.</p></article>
-        <article><h2>Operations</h2><p>Trackers, reconciliations, and checklist-driven workflows.</p></article>
-        <article><h2>Analysis</h2><p>Model review, assumptions, and scenario planning.</p></article>
+    <p class="lead">
+        The template library is positioned around repeatable Excel work: reporting packs, trackers, model review,
+        forecasting, and AI-ready prompts that help teams start with structure.
+    </p>
+    <div class="hero-actions">
+        <a class="button button--primary" href="/templates/invoice-template-excel">Preview invoice template</a>
+        <a class="button button--secondary" href="/tools">Explore planned tools</a>
+        <a class="button button--secondary" href="/blog">Read template guides</a>
+    </div>
+
+    <div class="template-grid page-grid">
+        <article>
+            <span>Invoice</span>
+            <h2>Excel invoice template</h2>
+            <p>Public landing page for a clean invoice structure with line items, taxes, totals, notes, and payment terms.</p>
+            <a href="/templates/invoice-template-excel">Preview invoice template</a>
+        </article>
+        <article>
+            <span>Reporting</span>
+            <h2>Monthly KPI reporting pack</h2>
+            <p>Preview category for recurring dashboards, variance notes, and leadership-ready summaries.</p>
+            <a href="/blog">Read reporting guides</a>
+        </article>
+        <article>
+            <span>Forecasting</span>
+            <h2>Forecast assumptions workbook</h2>
+            <p>Planned templates for scenario planning, assumptions tracking, and cleaner model inputs.</p>
+            <a href="/tools">View analysis tools</a>
+        </article>
+        <article>
+            <span>Operations</span>
+            <h2>Operations tracker kit</h2>
+            <p>Structured surfaces for recurring trackers, reconciliations, task ownership, and status views.</p>
+            <a href="/tools">View productivity tools</a>
+        </article>
+        <article>
+            <span>Quality</span>
+            <h2>Workbook review checklist</h2>
+            <p>Reserved for model QA, formula review, handoff notes, and pre-presentation checks.</p>
+            <a href="/blog">Read review guides</a>
+        </article>
+        <article>
+            <span>AI prompts</span>
+            <h2>AI spreadsheet prompt library</h2>
+            <p>Future prompt patterns for explaining changes, summarizing tables, and creating analyst notes.</p>
+            <a href="/">See AI workflow preview</a>
+        </article>
+        <article>
+            <span>Launch</span>
+            <h2>Template release preview</h2>
+            <p>Public positioning only for now. No files are generated, uploaded, transformed, or processed.</p>
+            <a href="/pricing">See pricing preview</a>
+        </article>
     </div>
 </section>
