@@ -1,19 +1,69 @@
 @page "/tools"
 @inject ProductBranding Branding
 
-<PageTitle>Tools - @Branding.SiteName</PageTitle>
+<PageTitle>Excel Tools and AI Spreadsheet Workflows - @Branding.SiteName</PageTitle>
 <HeadContent>
-    <meta name="description" content="ExcelToolStack tools are planned for AI-assisted spreadsheet cleanup, analysis, validation, and workbook workflows." />
+    <meta name="description" content="Explore planned ExcelToolStack tool categories for AI-assisted spreadsheet cleanup, analysis, validation, reporting, and workbook handoff workflows." />
     <link rel="canonical" href="@($"{Branding.SiteUrl}/tools")" />
+    <meta property="og:title" content="@($"Excel tools and AI spreadsheet workflows - {Branding.SiteName}")" />
+    <meta property="og:description" content="A public preview of planned spreadsheet tool categories for cleanup, analysis, validation, and reporting." />
 </HeadContent>
 
 <section class="shell-page">
     <p class="eyebrow">Tools</p>
-    <h1>Excel tools are not wired yet.</h1>
-    <p class="lead">This shell reserves the future tool surface without adding processing code or API behavior.</p>
-    <div class="placeholder-grid">
-        <article><h2>Clean</h2><p>Future workflows for formatting, columns, duplicates, and broken imports.</p></article>
-        <article><h2>Analyze</h2><p>Future AI-assisted summaries, variance explanations, and checks.</p></article>
-        <article><h2>Package</h2><p>Future export, documentation, and team handoff flows.</p></article>
+    <h1>Planned Excel tools for cleaner workbooks and sharper analysis.</h1>
+    <p class="lead">
+        This public shell maps the future product categories without adding Excel processing, API calls, accounts,
+        or checkout behavior.
+    </p>
+    <div class="hero-actions">
+        <a class="button button--primary" href="/ai-excel-formula-generator">Preview Formula Copilot</a>
+        <a class="button button--secondary" href="/templates">Browse templates</a>
+        <a class="button button--secondary" href="/blog">Read workflow guides</a>
+    </div>
+
+    <div class="category-grid page-grid">
+        <article>
+            <span class="category-kicker">Formula Copilot</span>
+            <h2>AI Excel formula generator</h2>
+            <p>Public preview page for plain English to formula, formula explanation, and formula debugging workflows.</p>
+            <a href="/ai-excel-formula-generator">Open Formula Copilot</a>
+        </article>
+        <article>
+            <span class="category-kicker">Clean</span>
+            <h2>Spreadsheet cleanup</h2>
+            <p>Planned helpers for imported data, duplicates, column normalization, table prep, and formatting cleanup.</p>
+            <a href="/templates">Pair with cleanup templates</a>
+        </article>
+        <article>
+            <span class="category-kicker">Analyze</span>
+            <h2>AI workbook review</h2>
+            <p>Future AI workflows for summarizing trends, explaining variance, reviewing assumptions, and drafting notes.</p>
+            <a href="/blog">Read AI workflow guides</a>
+        </article>
+        <article>
+            <span class="category-kicker">Validate</span>
+            <h2>Quality checks</h2>
+            <p>Planned review surfaces for formula drift, stale tabs, missing inputs, and inconsistent ranges.</p>
+            <a href="/pricing">See launch plan preview</a>
+        </article>
+        <article>
+            <span class="category-kicker">Report</span>
+            <h2>Reporting workflows</h2>
+            <p>Future flows for packaging spreadsheet findings into repeatable reports, summaries, and team handoffs.</p>
+            <a href="/templates">Explore reporting templates</a>
+        </article>
+        <article>
+            <span class="category-kicker">Convert</span>
+            <h2>Workbook preparation</h2>
+            <p>Reserved space for practical file and sheet preparation workflows once the product is ready.</p>
+            <a href="/">Return to overview</a>
+        </article>
+        <article>
+            <span class="category-kicker">Document</span>
+            <h2>Spreadsheet documentation</h2>
+            <p>Planned support for assumptions, change notes, model summaries, and review-ready context.</p>
+            <a href="/blog">View documentation guides</a>
+        </article>
     </div>
 </section>
