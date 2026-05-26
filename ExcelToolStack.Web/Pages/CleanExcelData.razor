@@ -1,0 +1,226 @@
+@page "/clean-excel-data"
+@inject ProductBranding Branding
+
+<PageTitle>Clean Excel Data Online - @Branding.SiteName</PageTitle>
+<HeadContent>
+    <meta name="description" content="Preview ExcelToolStack Clean Excel Data: a public landing page for duplicate removal, formatting cleanup, missing values, column normalization, whitespace cleanup, and CSV normalization." />
+    <link rel="canonical" href="@($"{Branding.SiteUrl}/clean-excel-data")" />
+    <meta property="og:title" content="@($"Clean Excel data online - {Branding.SiteName}")" />
+    <meta property="og:description" content="A crawlable preview of a future Excel data cleaning tool for ecommerce imports, CRM exports, finance spreadsheets, and reporting cleanup." />
+</HeadContent>
+
+<section class="tool-hero cleanup-hero">
+    <div class="tool-hero-copy">
+        <p class="eyebrow">Clean Excel Data</p>
+        <h1>Prepare messy spreadsheet data for analysis, reporting, and AI workflows.</h1>
+        <p class="lead">
+            A public preview of the planned @Branding.SiteName cleanup workflow for duplicate rows,
+            inconsistent formatting, missing values, normalized columns, whitespace cleanup, and CSV-ready structure.
+        </p>
+        <div class="hero-actions">
+            <a class="button button--primary" href="/ai-excel-formula-generator">Preview AI workflow tools</a>
+            <a class="button button--secondary" href="/csv-to-excel">Preview CSV to Excel</a>
+        </div>
+        <div class="hero-proof" aria-label="Clean Excel Data highlights">
+            <span>Duplicate removal</span>
+            <span>Formatting cleanup</span>
+            <span>Missing values</span>
+            <span>CSV normalization</span>
+        </div>
+    </div>
+
+    <div class="cleanup-console" aria-label="Static Clean Excel Data workflow preview">
+        <div class="console-header">
+            <span>Data cleanup workspace</span>
+            <strong>Static preview</strong>
+        </div>
+        <div class="cleanup-score">
+            <div>
+                <span>Rows scanned</span>
+                <strong>2,480</strong>
+            </div>
+            <div>
+                <span>Issues found</span>
+                <strong>126</strong>
+            </div>
+            <div>
+                <span>Ready status</span>
+                <strong>Review</strong>
+            </div>
+        </div>
+        <div class="cleanup-checklist">
+            <div>
+                <span></span>
+                <p>42 duplicate customer rows detected</p>
+            </div>
+            <div>
+                <span></span>
+                <p>19 date values need consistent formatting</p>
+            </div>
+            <div>
+                <span></span>
+                <p>34 blank category fields need review</p>
+            </div>
+            <div>
+                <span></span>
+                <p>31 text fields contain extra whitespace</p>
+            </div>
+        </div>
+        <button class="button button--primary" type="button" disabled>Clean data preview</button>
+        <p class="disabled-note">
+            Frontend shell only. No spreadsheet is uploaded, scanned, cleaned, processed, stored, or downloaded.
+        </p>
+    </div>
+</section>
+
+<section class="section-shell section-shell--tight">
+    <div class="section-heading">
+        <p class="eyebrow">Cleanup actions</p>
+        <h2>A static UI shell for the cleanup steps teams expect.</h2>
+        <p>
+            This landing page frames the future cleanup workflow without adding backend processing or AI integration.
+            Each card describes a planned action that can be implemented later in a separate scoped PR.
+        </p>
+    </div>
+    <div class="cleanup-action-grid">
+        <article>
+            <span>Duplicates</span>
+            <h3>Duplicate removal</h3>
+            <p>Identify repeated rows, repeated IDs, duplicate customers, repeated SKUs, and accidental export overlap.</p>
+        </article>
+        <article>
+            <span>Formats</span>
+            <h3>Formatting cleanup</h3>
+            <p>Normalize date formats, currency fields, casing, numeric values, and labels before formulas or reporting.</p>
+        </article>
+        <article>
+            <span>Blanks</span>
+            <h3>Missing values</h3>
+            <p>Flag blank cells, incomplete records, missing categories, empty owner fields, and rows that need review.</p>
+        </article>
+        <article>
+            <span>Columns</span>
+            <h3>Column normalization</h3>
+            <p>Standardize headers, align fields from different exports, and make column names easier to reuse.</p>
+        </article>
+        <article>
+            <span>Whitespace</span>
+            <h3>Whitespace cleanup</h3>
+            <p>Trim extra spaces, detect hidden characters, and reduce lookup failures caused by messy text imports.</p>
+        </article>
+        <article>
+            <span>CSV</span>
+            <h3>CSV normalization</h3>
+            <p>Prepare flat CSV exports for clean Excel workflows, reporting templates, and formula-ready tables.</p>
+        </article>
+    </div>
+</section>
+
+<section class="section-shell section-shell--accent">
+    <div class="section-heading section-heading--split">
+        <div>
+            <p class="eyebrow">Workflow positioning</p>
+            <h2>Built around spreadsheet cleanup that happens before the real work.</h2>
+            <p>Great analysis starts with dependable inputs. These workflows describe where cleanup matters most.</p>
+        </div>
+        <a class="text-link" href="/blog/how-to-generate-excel-formulas-with-ai">Read formula guide</a>
+    </div>
+    <div class="workflow-steps">
+        <article>
+            <span>01</span>
+            <h3>Ecommerce imports</h3>
+            <p>Prepare order exports, SKU lists, customer files, discount reports, and marketplace CSVs for workbook review.</p>
+        </article>
+        <article>
+            <span>02</span>
+            <h3>CRM exports</h3>
+            <p>Clean lead lists, normalize company names, remove duplicate contacts, and prepare account fields for follow-up.</p>
+        </article>
+        <article>
+            <span>03</span>
+            <h3>Finance spreadsheets</h3>
+            <p>Review transaction exports, reconcile missing categories, clean date fields, and prepare tables for formulas.</p>
+        </article>
+        <article>
+            <span>04</span>
+            <h3>Reporting cleanup</h3>
+            <p>Standardize inputs before KPI packs, monthly updates, dashboard imports, and stakeholder handoffs.</p>
+        </article>
+    </div>
+</section>
+
+<section class="section-shell">
+    <div class="section-heading">
+        <p class="eyebrow">AI workflow CTA</p>
+        <h2>Clean data first, then layer on formulas and AI-assisted review.</h2>
+        <p>
+            Cleanup is the first step in a stronger spreadsheet workflow: normalize the table, generate formulas,
+            explain logic, and package the output for reporting.
+        </p>
+    </div>
+    <div class="category-grid">
+        <article>
+            <span class="category-kicker">Import</span>
+            <h3>Start with CSV to Excel</h3>
+            <p>Preview the companion converter shell for turning CSV exports into Excel-ready workbook structure.</p>
+            <a href="/csv-to-excel">Preview CSV to Excel</a>
+        </article>
+        <article>
+            <span class="category-kicker">Formula</span>
+            <h3>Use Formula Copilot next</h3>
+            <p>Explore local prompt examples, mock formula outputs, explanations, and debugging workflows.</p>
+            <a href="/ai-excel-formula-generator">Preview Formula Copilot</a>
+        </article>
+        <article>
+            <span class="category-kicker">Template</span>
+            <h3>Move into a reusable template</h3>
+            <p>Pair clean spreadsheet inputs with reporting, invoice, operations, and planning templates.</p>
+            <a href="/templates">Browse templates</a>
+        </article>
+    </div>
+</section>
+
+<section class="section-shell section-shell--accent">
+    <div class="section-heading">
+        <p class="eyebrow">FAQ</p>
+        <h2>Clean Excel Data questions.</h2>
+    </div>
+    <div class="faq-grid">
+        <article>
+            <h3>Can this page clean Excel files today?</h3>
+            <p>No. This is a public landing page and static UI shell only. No file upload, parsing, cleaning, storage, or download logic has been added.</p>
+        </article>
+        <article>
+            <h3>Will cleanup support duplicate removal?</h3>
+            <p>Duplicate removal is part of the planned positioning, including repeated rows, duplicate customer records, and repeated IDs.</p>
+        </article>
+        <article>
+            <h3>Can it normalize CSV exports?</h3>
+            <p>The page positions CSV normalization as a future workflow for flat exports before they become Excel tables or reporting inputs.</p>
+        </article>
+        <article>
+            <h3>Is this connected to AI?</h3>
+            <p>No AI provider or backend integration is connected. The CTA points to the existing frontend-only AI workflow preview.</p>
+        </article>
+        <article>
+            <h3>Who is this cleanup page for?</h3>
+            <p>It is aimed at teams cleaning ecommerce imports, CRM exports, finance spreadsheets, reporting inputs, and operational trackers.</p>
+        </article>
+        <article>
+            <h3>Is the page crawlable?</h3>
+            <p>Yes. The page is anonymous, public, linked internally, and included in the ExcelToolStack sitemap.</p>
+        </article>
+    </div>
+</section>
+
+<section class="cta-section">
+    <p class="eyebrow">Cleanup workflow preview</p>
+    <h2>Explore the cleanup surface inside the broader ExcelToolStack shell.</h2>
+    <p>
+        This page is ready for indexing and product positioning while keeping all cleanup behavior static and frontend-only.
+    </p>
+    <div class="hero-actions">
+        <a class="button button--primary" href="/ai-excel-formula-generator">Preview AI Workflow Tools</a>
+        <a class="button button--secondary" href="/tools">Back to Tools</a>
+    </div>
+</section>
