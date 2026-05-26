@@ -1,5 +1,6 @@
 using Azure.Storage.Blobs;
 using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using PdfToolStack.API.Configuration;
 using PdfToolStack.API.Middleware;
@@ -20,6 +21,7 @@ using PdfToolStack.Infrastructure.Services.Ocr;
 using PdfToolStack.Infrastructure.Storage;
 using Serilog;
 using Syncfusion.Blazor;
+using System.Threading.RateLimiting;
 
 // ── Serilog Bootstrap Logger ──────────────────────────────────────────────
 Log.Logger = new LoggerConfiguration()
@@ -448,6 +450,44 @@ try
         });
     });
 
+    builder.Services.AddRateLimiter(options =>
+    {
+        options.AddPolicy("FormulaAiPerIp", httpContext =>
+            RateLimitPartition.GetFixedWindowLimiter(
+                GetFormulaRateLimitPartitionKey(httpContext),
+                _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = 10,
+                    Window = TimeSpan.FromMinutes(1),
+                    QueueLimit = 0,
+                    AutoReplenishment = true
+                }));
+
+        options.OnRejected = async (context, cancellationToken) =>
+        {
+            var logger = context.HttpContext.RequestServices
+                .GetRequiredService<ILoggerFactory>()
+                .CreateLogger("FormulaAiRateLimit");
+
+            logger.LogWarning(
+                "Formula generation rate limit exceeded. RemoteIp: {RemoteIp}, Path: {Path}",
+                context.HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                context.HttpContext.Request.Path.Value);
+
+            context.HttpContext.Response.StatusCode =
+                StatusCodes.Status429TooManyRequests;
+            context.HttpContext.Response.Headers.Append("Retry-After", "60");
+
+            await context.HttpContext.Response.WriteAsJsonAsync(
+                new
+                {
+                    error = "Too many formula requests. Please wait a minute and try again.",
+                    statusCode = 429
+                },
+                cancellationToken);
+        };
+    });
+
     // ── Controllers + Swagger ─────────────────────────────────────────────
     builder.Services.AddControllers()
     .AddJsonOptions(options =>
@@ -604,6 +644,7 @@ try
     app.UseHttpsRedirection();
     app.UseRouting();
     app.UseCors(CorsPolicyName);
+    app.UseRateLimiter();
     app.UseMiddleware<ErrorHandlingMiddleware>();
     app.UseMiddleware<AuditLoggingMiddleware>();
     app.UseMiddleware<RateLimitingMiddleware>();
@@ -640,3 +681,6 @@ finally
 {
     Log.CloseAndFlush();
 }
+
+static string GetFormulaRateLimitPartitionKey(HttpContext httpContext) =>
+    httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";

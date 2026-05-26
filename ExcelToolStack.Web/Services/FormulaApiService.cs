@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 
@@ -39,6 +40,16 @@ public sealed class FormulaApiService
         HttpResponseMessage response,
         CancellationToken cancellationToken)
     {
+        if (response.StatusCode == HttpStatusCode.TooManyRequests)
+        {
+            return "Too many formula requests. Please wait a minute and try again.";
+        }
+
+        if (response.StatusCode == HttpStatusCode.ServiceUnavailable)
+        {
+            return "Formula generation is temporarily unavailable. Please try again shortly.";
+        }
+
         try
         {
             var error = await response.Content

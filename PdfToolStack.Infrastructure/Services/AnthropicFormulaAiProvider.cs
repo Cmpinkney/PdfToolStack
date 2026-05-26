@@ -68,9 +68,9 @@ public sealed class AnthropicFormulaAiProvider : IFormulaAiProvider
         if (!response.IsSuccessStatusCode)
         {
             _logger.LogWarning(
-                "Formula AI provider returned {StatusCode}: {Body}",
+                "Formula AI provider returned unsuccessful status. StatusCode: {StatusCode}, ResponseLength: {ResponseLength}",
                 (int)response.StatusCode,
-                responseBody);
+                responseBody.Length);
 
             throw new InvalidOperationException(
                 "AI formula generation is temporarily unavailable.");
