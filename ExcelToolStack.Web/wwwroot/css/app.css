@@ -113,6 +113,12 @@ main {
     padding: clamp(56px, 8vw, 104px) 6vw clamp(46px, 7vw, 84px);
 }
 
+.formula-hero {
+    align-items: start;
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.52) 0%, rgba(248, 250, 247, 0) 100%);
+}
+
 .hero-copy {
     max-width: 850px;
 }
@@ -325,6 +331,20 @@ h3 {
     box-shadow: var(--shadow);
 }
 
+.copilot-console--interactive {
+    position: relative;
+    gap: 16px;
+    overflow: hidden;
+}
+
+.copilot-console--interactive::before {
+    position: absolute;
+    inset: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--green-dark), var(--blue));
+    content: "";
+}
+
 .console-header {
     display: flex;
     align-items: center;
@@ -352,7 +372,7 @@ h3 {
 
 .copilot-console textarea {
     width: 100%;
-    min-height: 112px;
+    min-height: 126px;
     resize: none;
     padding: 14px;
     border: 1px solid var(--line);
@@ -361,6 +381,66 @@ h3 {
     color: var(--ink);
     font: inherit;
     line-height: 1.5;
+}
+
+.copilot-console textarea:focus {
+    border-color: rgba(39, 95, 189, 0.46);
+    box-shadow: 0 0 0 4px rgba(39, 95, 189, 0.1);
+    outline: none;
+}
+
+.platform-selector,
+.prompt-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.platform-selector {
+    padding: 4px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #f8fafc;
+}
+
+.platform-selector button,
+.prompt-actions button,
+.prompt-grid--interactive button {
+    border: 1px solid transparent;
+    border-radius: 7px;
+    background: transparent;
+    color: var(--muted);
+    font: inherit;
+    font-size: 0.9rem;
+    font-weight: 800;
+}
+
+.platform-selector button {
+    flex: 1 1 150px;
+    min-height: 38px;
+    padding: 0 12px;
+}
+
+.platform-selector button.is-selected,
+.prompt-actions button.is-selected,
+.prompt-grid--interactive article.is-selected {
+    border-color: rgba(7, 92, 70, 0.24);
+    background: #fff;
+    color: var(--green-dark);
+    box-shadow: 0 10px 24px rgba(18, 24, 38, 0.08);
+}
+
+.prompt-actions button {
+    min-height: 36px;
+    padding: 0 10px;
+    border-color: var(--line);
+    background: #fff;
+}
+
+.prompt-actions button:hover,
+.platform-selector button:hover,
+.prompt-grid--interactive button:hover {
+    color: var(--green-dark);
 }
 
 .copilot-console textarea[disabled],
@@ -374,6 +454,53 @@ h3 {
     color: var(--muted);
     font-size: 0.92rem;
     line-height: 1.55;
+}
+
+.processing-state {
+    display: grid;
+    grid-template-columns: repeat(3, 8px) minmax(0, 1fr);
+    gap: 8px;
+    align-items: center;
+    padding: 12px;
+    border: 1px solid rgba(39, 95, 189, 0.16);
+    border-radius: 8px;
+    background: #f7fbff;
+}
+
+.processing-state span {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: var(--blue);
+    animation: pulse-dot 1s ease-in-out infinite;
+}
+
+.processing-state span:nth-child(2) {
+    animation-delay: 0.14s;
+}
+
+.processing-state span:nth-child(3) {
+    animation-delay: 0.28s;
+}
+
+.processing-state p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.9rem;
+    font-weight: 750;
+}
+
+@keyframes pulse-dot {
+    0%,
+    100% {
+        opacity: 0.35;
+        transform: translateY(0);
+    }
+
+    50% {
+        opacity: 1;
+        transform: translateY(-2px);
+    }
 }
 
 .section-shell,
@@ -416,6 +543,7 @@ h3 {
 .pricing-grid,
 .prompt-grid,
 .faq-grid,
+.debug-grid,
 .placeholder-grid,
 .content-list,
 .feature-band,
@@ -432,6 +560,7 @@ h3 {
 .pricing-grid article,
 .prompt-grid article,
 .faq-grid article,
+.debug-grid article,
 .placeholder-grid article,
 .content-list article,
 .feature-band article,
@@ -452,6 +581,7 @@ h3 {
 .guide-grid span,
 .pricing-grid span,
 .prompt-grid span,
+.debug-grid span,
 .template-strip span,
 .content-list span,
 .feature-band span {
@@ -468,6 +598,7 @@ h3 {
 .pricing-grid p,
 .prompt-grid p,
 .faq-grid p,
+.debug-grid p,
 .placeholder-grid p,
 .content-list p,
 .feature-band p,
@@ -503,10 +634,140 @@ h3 {
     background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
 }
 
+.prompt-grid--interactive article {
+    display: grid;
+    align-content: start;
+}
+
 .prompt-grid p {
     margin-top: 0;
     color: var(--ink);
     font-weight: 750;
+}
+
+.prompt-grid--interactive button {
+    justify-self: start;
+    min-height: 36px;
+    margin-top: 18px;
+    padding: 0 11px;
+    border-color: var(--line);
+    background: #fff;
+}
+
+.formula-output-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.08fr) minmax(320px, 0.92fr);
+    gap: 18px;
+}
+
+.formula-result-panel {
+    min-height: 320px;
+    padding: 26px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 18px 48px rgba(18, 24, 38, 0.08);
+}
+
+.formula-result-panel--explanation {
+    background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+}
+
+.result-panel-header {
+    display: flex;
+    align-items: start;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.result-panel-header span {
+    padding: 7px 10px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    color: var(--muted);
+    font-size: 0.82rem;
+    font-weight: 850;
+}
+
+.formula-result-panel h2 {
+    font-size: clamp(1.6rem, 3vw, 2.4rem);
+}
+
+.formula-result-panel pre {
+    margin: 24px 0 0;
+    overflow-x: auto;
+    padding: 18px;
+    border: 1px solid #202838;
+    border-radius: 8px;
+    background: #121826;
+    color: #ecfdf5;
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+.formula-result-panel code {
+    font-family: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+}
+
+.formula-result-panel > p {
+    margin: 18px 0 0;
+    color: var(--muted);
+    line-height: 1.65;
+}
+
+.explanation-list {
+    display: grid;
+    gap: 12px;
+    margin: 22px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.explanation-list li {
+    position: relative;
+    padding: 14px 14px 14px 42px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fff;
+    color: var(--muted);
+    line-height: 1.55;
+}
+
+.explanation-list li::before {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    display: grid;
+    place-items: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 999px;
+    background: #e8f4ee;
+    color: var(--green-dark);
+    content: counter(list-item);
+    font-size: 0.74rem;
+    font-weight: 900;
+}
+
+.debug-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.debug-grid article {
+    background: linear-gradient(180deg, #ffffff 0%, #fbfaf7 100%);
+}
+
+.debug-grid code {
+    display: block;
+    margin-top: 18px;
+    overflow-x: auto;
+    padding: 14px;
+    border-radius: 8px;
+    background: #121826;
+    color: #ecfdf5;
+    font-family: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+    font-size: 0.9rem;
+    line-height: 1.55;
 }
 
 .faq-grid {
@@ -656,10 +917,15 @@ h3 {
     .pricing-grid,
     .prompt-grid,
     .faq-grid,
+    .debug-grid,
     .placeholder-grid,
     .content-list,
     .feature-band,
     .template-strip {
+        grid-template-columns: 1fr;
+    }
+
+    .formula-output-layout {
         grid-template-columns: 1fr;
     }
 }
@@ -706,5 +972,23 @@ h3 {
         right: 16px;
         bottom: 16px;
         width: calc(100% - 32px);
+    }
+
+    .copilot-console,
+    .formula-result-panel {
+        padding: 18px;
+    }
+
+    .processing-state {
+        grid-template-columns: repeat(3, 8px);
+    }
+
+    .processing-state p {
+        grid-column: 1 / -1;
+    }
+
+    .result-panel-header {
+        align-items: flex-start;
+        flex-direction: column;
     }
 }
