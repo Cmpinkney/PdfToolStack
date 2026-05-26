@@ -1,19 +1,69 @@
 @page "/blog"
 @inject ProductBranding Branding
 
-<PageTitle>Blog - @Branding.SiteName</PageTitle>
+<PageTitle>Excel How-To Guides and AI Spreadsheet Workflows - @Branding.SiteName</PageTitle>
 <HeadContent>
-    <meta name="description" content="ExcelToolStack guides will cover AI spreadsheet workflows, reporting systems, templates, and workbook operations." />
+    <meta name="description" content="Preview ExcelToolStack how-to guides for AI spreadsheet workflows, Excel productivity, reporting systems, templates, and workbook operations." />
     <link rel="canonical" href="@($"{Branding.SiteUrl}/blog")" />
+    <meta property="og:title" content="@($"Excel how-to guides and AI spreadsheet workflows - {Branding.SiteName}")" />
+    <meta property="og:description" content="Practical guide previews for spreadsheet cleanup, reporting, templates, AI analysis, and workbook review." />
 </HeadContent>
 
 <section class="shell-page">
     <p class="eyebrow">Guides</p>
-    <h1>Spreadsheet workflow guides are coming soon.</h1>
-    <p class="lead">Expect focused writing on cleaning data, building repeatable reports, reviewing formulas, and applying AI to workbook-heavy work.</p>
-    <div class="content-list">
-        <article><span>Guide</span><h2>AI spreadsheet cleanup patterns</h2></article>
-        <article><span>Playbook</span><h2>Monthly reporting workflows</h2></article>
-        <article><span>Template notes</span><h2>Model review checklists</h2></article>
+    <h1>How-to guides for spreadsheet-heavy teams.</h1>
+    <p class="lead">
+        The guide surface is planned for practical Excel work: cleanup, reporting, formulas, templates,
+        AI review, and the quiet systems that make workbooks easier to trust.
+    </p>
+    <div class="hero-actions">
+        <a class="button button--primary" href="/blog/how-to-generate-excel-formulas-with-ai">Read formula guide</a>
+        <a class="button button--secondary" href="/tools">Explore planned tools</a>
+        <a class="button button--secondary" href="/templates">Browse templates</a>
+    </div>
+
+    <div class="guide-grid page-grid">
+        <article>
+            <span>How-to</span>
+            <h2>How to generate Excel formulas with AI</h2>
+            <p>Prompt patterns, examples, common formula use cases, review habits, and mistakes to avoid.</p>
+            <a href="/blog/how-to-generate-excel-formulas-with-ai">Read the guide</a>
+        </article>
+        <article>
+            <span>Guide</span>
+            <h2>AI spreadsheet cleanup patterns</h2>
+            <p>How to prepare messy exports, normalize columns, and decide where AI assistance belongs.</p>
+            <a href="/tools">View cleanup tools</a>
+        </article>
+        <article>
+            <span>Playbook</span>
+            <h2>Monthly reporting workflows</h2>
+            <p>Ways to reduce manual reporting effort while keeping commentary, review, and handoff clear.</p>
+            <a href="/templates">View reporting templates</a>
+        </article>
+        <article>
+            <span>Template notes</span>
+            <h2>Model review checklists</h2>
+            <p>What to check before a workbook becomes a decision artifact for finance, ops, or leadership.</p>
+            <a href="/templates">View review templates</a>
+        </article>
+        <article>
+            <span>How-to</span>
+            <h2>Explain spreadsheet variance with more confidence</h2>
+            <p>Drafting notes that connect the cells, drivers, and business context behind a change.</p>
+            <a href="/tools">View AI analysis tools</a>
+        </article>
+        <article>
+            <span>Workflow</span>
+            <h2>Build spreadsheet systems instead of one-off files</h2>
+            <p>Reusable structure for teams that repeat similar workbook tasks every week or month.</p>
+            <a href="/">See workflow overview</a>
+        </article>
+        <article>
+            <span>Launch</span>
+            <h2>What ExcelToolStack is preparing first</h2>
+            <p>A transparent preview of the public shell, planned categories, templates, and pricing surface.</p>
+            <a href="/pricing">See pricing preview</a>
+        </article>
     </div>
 </section>
