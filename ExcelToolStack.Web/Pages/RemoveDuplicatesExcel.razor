@@ -1,0 +1,224 @@
+@page "/remove-duplicates-excel"
+@inject ProductBranding Branding
+
+<PageTitle>Remove Duplicates in Excel Online - @Branding.SiteName</PageTitle>
+<HeadContent>
+    <meta name="description" content="Preview ExcelToolStack Remove Duplicates in Excel: a public landing page for finding duplicate rows, repeated customers, CRM export overlap, ecommerce SKUs, vendor lists, and email lists." />
+    <link rel="canonical" href="@($"{Branding.SiteUrl}/remove-duplicates-excel")" />
+    <meta property="og:title" content="@($"Remove duplicates in Excel online - {Branding.SiteName}")" />
+    <meta property="og:description" content="A crawlable preview of a future Excel duplicate detection and removal tool for customer lists, CRM exports, ecommerce SKUs, vendors, and email lists." />
+</HeadContent>
+
+<section class="tool-hero duplicate-hero">
+    <div class="tool-hero-copy">
+        <p class="eyebrow">Remove Duplicates in Excel</p>
+        <h1>Find duplicate spreadsheet records before they break your workflow.</h1>
+        <p class="lead">
+            A public preview of the planned @Branding.SiteName duplicate cleanup workflow for repeated rows,
+            customer lists, CRM exports, ecommerce SKUs, vendor files, and email lists.
+        </p>
+        <div class="hero-actions">
+            <a class="button button--primary" href="/clean-excel-data">Explore Clean Excel Data</a>
+            <a class="button button--secondary" href="/csv-to-excel">Preview CSV to Excel</a>
+        </div>
+        <div class="hero-proof" aria-label="Remove duplicates highlights">
+            <span>Duplicate detection</span>
+            <span>Record review</span>
+            <span>Safe cleanup preview</span>
+            <span>No processing yet</span>
+        </div>
+    </div>
+
+    <div class="duplicate-console" aria-label="Static duplicate detection preview">
+        <div class="console-header">
+            <span>Duplicate review workspace</span>
+            <strong>Static preview</strong>
+        </div>
+        <div class="duplicate-match-summary">
+            <div>
+                <span>Rows reviewed</span>
+                <strong>4,820</strong>
+            </div>
+            <div>
+                <span>Duplicate groups</span>
+                <strong>38</strong>
+            </div>
+            <div>
+                <span>Match fields</span>
+                <strong>Email + ID</strong>
+            </div>
+        </div>
+        <div class="duplicate-table">
+            <div class="duplicate-row duplicate-row--head">
+                <span>Status</span>
+                <span>Email</span>
+                <span>Source</span>
+                <span>Action</span>
+            </div>
+            <div class="duplicate-row duplicate-row--flagged">
+                <span>Duplicate</span>
+                <span>maya@example.com</span>
+                <span>CRM export</span>
+                <span>Review</span>
+            </div>
+            <div class="duplicate-row">
+                <span>Keep</span>
+                <span>maya@example.com</span>
+                <span>Billing list</span>
+                <span>Primary</span>
+            </div>
+            <div class="duplicate-row duplicate-row--flagged">
+                <span>Duplicate</span>
+                <span>sku-4821</span>
+                <span>Product import</span>
+                <span>Review</span>
+            </div>
+        </div>
+        <button class="button button--primary" type="button" disabled>Remove duplicates preview</button>
+        <p class="disabled-note">
+            Frontend shell only. No spreadsheet is uploaded, scanned, changed, downloaded, or processed.
+        </p>
+    </div>
+</section>
+
+<section class="section-shell section-shell--tight">
+    <div class="section-heading">
+        <p class="eyebrow">Duplicate workflows</p>
+        <h2>Static UI shell for safer duplicate cleanup.</h2>
+        <p>
+            The planned workflow is positioned around review-first duplicate handling: detect likely matches,
+            compare records, decide what to keep, and avoid deleting useful data too early.
+        </p>
+    </div>
+    <div class="cleanup-action-grid">
+        <article>
+            <span>Detect</span>
+            <h3>Find repeated rows</h3>
+            <p>Preview duplicate groups based on email, ID, SKU, vendor name, invoice number, or full-row matches.</p>
+        </article>
+        <article>
+            <span>Compare</span>
+            <h3>Review matching records</h3>
+            <p>Position duplicate cleanup around side-by-side record review before removing or merging anything.</p>
+        </article>
+        <article>
+            <span>Protect</span>
+            <h3>Keep a primary record</h3>
+            <p>Make it clear which row should remain when repeated records differ by source, timestamp, or completeness.</p>
+        </article>
+    </div>
+</section>
+
+<section class="section-shell section-shell--accent">
+    <div class="section-heading section-heading--split">
+        <div>
+            <p class="eyebrow">Use cases</p>
+            <h2>Duplicate cleanup for the lists teams rely on every week.</h2>
+            <p>Duplicate rows show up most often when exports, imports, and manual edits collide.</p>
+        </div>
+        <a class="text-link" href="/clean-excel-data">See all cleanup workflows</a>
+    </div>
+    <div class="workflow-steps">
+        <article>
+            <span>01</span>
+            <h3>Customer lists</h3>
+            <p>Find repeated customers before outreach, billing, onboarding, or reporting work begins.</p>
+        </article>
+        <article>
+            <span>02</span>
+            <h3>CRM exports</h3>
+            <p>Catch duplicate leads, contacts, accounts, and imported segments before a campaign or handoff.</p>
+        </article>
+        <article>
+            <span>03</span>
+            <h3>Ecommerce SKUs</h3>
+            <p>Review repeated product IDs, item names, variants, inventory rows, and marketplace exports.</p>
+        </article>
+        <article>
+            <span>04</span>
+            <h3>Finance and vendor lists</h3>
+            <p>Spot repeated vendors, invoices, transaction IDs, purchase orders, and reconciliation records.</p>
+        </article>
+        <article>
+            <span>05</span>
+            <h3>Email lists</h3>
+            <p>Remove repeated email addresses before newsletters, sales outreach, customer updates, or imports.</p>
+        </article>
+    </div>
+</section>
+
+<section class="section-shell">
+    <div class="section-heading">
+        <p class="eyebrow">Related tools</p>
+        <h2>Place duplicate removal inside a broader cleanup workflow.</h2>
+        <p>
+            Duplicate removal is usually one step in spreadsheet preparation. Pair it with broader cleanup
+            and CSV normalization before formulas, reporting, and AI-assisted review.
+        </p>
+    </div>
+    <div class="category-grid">
+        <article>
+            <span class="category-kicker">Clean</span>
+            <h3>Clean Excel Data</h3>
+            <p>Preview the broader cleanup page for formatting, missing values, whitespace, columns, and CSV normalization.</p>
+            <a href="/clean-excel-data">Open Clean Excel Data</a>
+        </article>
+        <article>
+            <span class="category-kicker">Convert</span>
+            <h3>CSV to Excel</h3>
+            <p>Preview the static converter shell for turning flat exports into Excel-ready workbook structure.</p>
+            <a href="/csv-to-excel">Open CSV to Excel</a>
+        </article>
+        <article>
+            <span class="category-kicker">AI</span>
+            <h3>Formula Copilot</h3>
+            <p>Explore the frontend-only Formula Copilot preview after your spreadsheet data is cleaner.</p>
+            <a href="/ai-excel-formula-generator">Preview Formula Copilot</a>
+        </article>
+    </div>
+</section>
+
+<section class="section-shell section-shell--accent">
+    <div class="section-heading">
+        <p class="eyebrow">FAQ</p>
+        <h2>Remove duplicates in Excel questions.</h2>
+    </div>
+    <div class="faq-grid">
+        <article>
+            <h3>Can this page remove duplicates today?</h3>
+            <p>No. This is a public landing page and static UI shell only. No file upload, scanning, deletion, download, or backend processing is connected.</p>
+        </article>
+        <article>
+            <h3>What duplicate fields would the tool review?</h3>
+            <p>The planned positioning includes emails, customer IDs, SKUs, vendor names, invoice numbers, transaction IDs, and full-row matches.</p>
+        </article>
+        <article>
+            <h3>Why review duplicates before removing them?</h3>
+            <p>Two rows can look similar but carry different notes, dates, sources, or statuses. A review-first flow reduces accidental data loss.</p>
+        </article>
+        <article>
+            <h3>Does this connect to CSV cleanup?</h3>
+            <p>Yes. The page links to CSV to Excel because duplicate cleanup often starts with imported CSV exports from business systems.</p>
+        </article>
+        <article>
+            <h3>Is this page public and crawlable?</h3>
+            <p>Yes. The route is anonymous, indexable, internally linked, and included in the ExcelToolStack sitemap.</p>
+        </article>
+        <article>
+            <h3>Is any PdfToolStack behavior changed?</h3>
+            <p>No. This page belongs only to ExcelToolStack.Web and does not add backend, billing, auth, or PDF behavior.</p>
+        </article>
+    </div>
+</section>
+
+<section class="cta-section">
+    <p class="eyebrow">Duplicate cleanup preview</p>
+    <h2>Review duplicate removal as part of clean spreadsheet workflows.</h2>
+    <p>
+        This page is ready for SEO and product positioning while all duplicate detection and removal behavior stays static.
+    </p>
+    <div class="hero-actions">
+        <a class="button button--primary" href="/clean-excel-data">Explore Clean Excel Data</a>
+        <a class="button button--secondary" href="/tools">Back to Tools</a>
+    </div>
+</section>
