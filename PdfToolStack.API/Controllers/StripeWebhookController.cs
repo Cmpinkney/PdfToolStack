@@ -573,6 +573,9 @@ namespace PdfToolStack.API.Controllers
                 string.Equals(priceId, _stripeOptions.TeamsYearlyPriceId, StringComparison.Ordinal))
                 return "teams";
 
+            if (string.Equals(priceId, _stripeOptions.BundleMonthlyPriceId, StringComparison.Ordinal))
+                return "bundle";
+
             if (string.Equals(priceId, _stripeOptions.ProMonthlyPriceIdV2, StringComparison.Ordinal) ||
                 string.Equals(priceId, _stripeOptions.ProYearlyPriceIdV2, StringComparison.Ordinal) ||
                 string.Equals(priceId, _stripeOptions.ProMonthlyPriceId, StringComparison.Ordinal) ||

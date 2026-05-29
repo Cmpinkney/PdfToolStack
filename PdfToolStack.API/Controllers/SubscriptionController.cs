@@ -381,6 +381,7 @@ namespace PdfToolStack.API.Controllers
                 nameof(StripeOptions.ProYearlyPriceIdV2) => _stripeOptions.ProYearlyPriceIdV2,
                 nameof(StripeOptions.TeamsMonthlyPriceId) => _stripeOptions.TeamsMonthlyPriceId,
                 nameof(StripeOptions.TeamsYearlyPriceId) => _stripeOptions.TeamsYearlyPriceId,
+                nameof(StripeOptions.BundleMonthlyPriceId) => _stripeOptions.BundleMonthlyPriceId,
                 nameof(StripeOptions.AiCredits50PriceId) => _stripeOptions.AiCredits50PriceId,
                 nameof(StripeOptions.AiCredits200PriceId) => _stripeOptions.AiCredits200PriceId,
                 nameof(StripeOptions.AiDayPassPriceId) => _stripeOptions.AiDayPassPriceId,
@@ -398,6 +399,7 @@ namespace PdfToolStack.API.Controllers
             AddIfSet(allowed, _stripeOptions.ProYearlyPriceIdV2);
             AddIfSet(allowed, _stripeOptions.TeamsMonthlyPriceId);
             AddIfSet(allowed, _stripeOptions.TeamsYearlyPriceId);
+            AddIfSet(allowed, _stripeOptions.BundleMonthlyPriceId);
             // Legacy price IDs kept for existing subscriber flows
             AddIfSet(allowed, _stripeOptions.ProMonthlyPriceId);
             AddIfSet(allowed, _stripeOptions.ProYearlyPriceId);
@@ -421,11 +423,17 @@ namespace PdfToolStack.API.Controllers
             if (string.Equals(priceId, _stripeOptions.TeamsYearlyPriceId, StringComparison.Ordinal))
                 return "teams_annual";
 
+            if (string.Equals(priceId, _stripeOptions.BundleMonthlyPriceId, StringComparison.Ordinal))
+                return "bundle_monthly";
+
             return "subscription";
         }
 
         private string GetSubscriptionPlanType(string priceId)
         {
+            if (string.Equals(priceId, _stripeOptions.BundleMonthlyPriceId, StringComparison.Ordinal))
+                return "bundle";
+
             if (string.Equals(priceId, _stripeOptions.TeamsMonthlyPriceId, StringComparison.Ordinal) ||
                 string.Equals(priceId, _stripeOptions.TeamsYearlyPriceId, StringComparison.Ordinal))
                 return "teams";
