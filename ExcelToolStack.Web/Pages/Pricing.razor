@@ -1,52 +1,274 @@
 @page "/pricing"
 @inject ProductBranding Branding
 
-<PageTitle>Pricing Preview for AI Spreadsheet Workflows - @Branding.SiteName</PageTitle>
+<PageTitle>Pricing for AI Spreadsheet Workflows - @Branding.SiteName</PageTitle>
 <HeadContent>
-    <meta name="description" content="Preview future ExcelToolStack plans for AI spreadsheet workflows, Excel templates, productivity tools, and team-ready workbook operations." />
+    <meta name="description" content="Compare ExcelToolStack plans for AI spreadsheet workflows, formula generation, cleanup automation, workbook QA previews, team reporting operations, and the ToolStack Bundle." />
     <link rel="canonical" href="@($"{Branding.SiteUrl}/pricing")" />
-    <meta property="og:title" content="@($"Pricing preview for AI spreadsheet workflows - {Branding.SiteName}")" />
-    <meta property="og:description" content="A public pricing preview for planned Excel productivity tools, templates, guides, and team workflows." />
+    <meta property="og:title" content="@($"Pricing for AI spreadsheet workflows - {Branding.SiteName}")" />
+    <meta property="og:description" content="Premium SaaS pricing for ExcelToolStack Free, Pro, Teams, and the ToolStack Bundle for AI document and spreadsheet workflows." />
 </HeadContent>
 
-<section class="shell-page">
-    <p class="eyebrow">Pricing</p>
-    <h1>Plans are being prepared for AI-first spreadsheet work.</h1>
-    <p class="lead">
-        The pricing page is intentionally public and non-transactional for this shell. Checkout, subscriptions,
-        account gates, and paid Excel workflows are not connected yet.
-    </p>
-    <div class="hero-actions">
-        <a class="button button--primary" href="/tools">Explore planned tools</a>
-        <a class="button button--secondary" href="/templates">Browse templates</a>
-    </div>
-
-    <div class="pricing-grid page-grid">
-        <article>
-            <span>Preview</span>
-            <h2>Starter</h2>
-            <p>Public guides, category previews, and launch positioning for spreadsheet productivity.</p>
-            <a href="/blog">Read public guides</a>
-        </article>
-        <article class="pricing-plan--featured">
-            <span>Planned</span>
-            <h2>Pro</h2>
-            <p>Future AI workflows, templates, productivity tools, and workbook review experiences.</p>
-            <a href="/tools">Review planned tools</a>
-        </article>
-        <article>
-            <span>Future</span>
-            <h2>Teams</h2>
-            <p>Reserved for shared spreadsheet operations, repeatable reporting, and team workflow support.</p>
-            <a href="/templates">Review template library</a>
-        </article>
-    </div>
-
-    <div class="note-band">
-        <p>
-            Launch state: anonymous public shell only. No authentication, billing, uploads, workbook processing,
-            or API-backed Excel behavior has been added.
+<section class="pricing-hero">
+    <div class="pricing-hero__copy">
+        <p class="eyebrow">Pricing</p>
+        <h1>AI spreadsheet workflows for modern teams.</h1>
+        <p class="lead">
+            Convert, clean, explain, and QA workbook logic with plans built for operations,
+            finance, reporting, and repeatable spreadsheet automation.
         </p>
-        <a class="text-link" href="/">Back to product overview</a>
+        <div class="hero-actions">
+            <a class="button button--primary" href="/tools">Start Free</a>
+            <a class="button button--secondary" href="#comparison">Compare plans</a>
+        </div>
+    </div>
+
+    <div class="pricing-workflow-panel" aria-label="AI spreadsheet workflow positioning">
+        <div class="pricing-workflow-panel__header">
+            <span class="workflow-card__icon workflow-card__icon--green" aria-hidden="true">AI</span>
+            <div>
+                <strong>Workbook workflow loop</strong>
+                <p>From messy exports to reviewed reporting packs.</p>
+            </div>
+        </div>
+        <div class="pricing-workflow-steps" aria-label="Workflow steps">
+            <span>Import</span>
+            <span>Clean</span>
+            <span>Generate</span>
+            <span>Review</span>
+        </div>
+        <div class="pricing-workflow-panel__metric">
+            <span>Built for</span>
+            <strong>Ops, finance, reporting</strong>
+        </div>
+    </div>
+</section>
+
+<section class="pricing-page">
+    <div class="pricing-card-grid" aria-label="ExcelToolStack pricing plans">
+        <article class="pricing-card">
+            <div class="pricing-card__header">
+                <span class="pricing-card__kicker">Free</span>
+                <h2>Free</h2>
+                <p>Start with everyday spreadsheet utilities and public learning resources.</p>
+            </div>
+            <div class="pricing-card__price">
+                <strong>$0</strong>
+                <span>/month</span>
+            </div>
+            <button class="button button--secondary pricing-card__button" type="button">Start Free</button>
+            <ul class="pricing-feature-list">
+                <li>CSV / Excel conversion</li>
+                <li>Remove duplicates</li>
+                <li>Basic cleanup tools</li>
+                <li>Limited AI formula generations</li>
+                <li>Public templates and guides</li>
+            </ul>
+        </article>
+
+        <article class="pricing-card">
+            <div class="pricing-card__header">
+                <span class="pricing-card__kicker">Pro</span>
+                <h2>Pro</h2>
+                <p>For individuals and power users running spreadsheet-heavy work every week.</p>
+            </div>
+            <div class="pricing-card__price">
+                <strong>$19</strong>
+                <span>/month</span>
+            </div>
+            <button class="button button--primary pricing-card__button" type="button">Upgrade to Pro</button>
+            <ul class="pricing-feature-list">
+                <li>Unlimited conversions</li>
+                <li>AI Formula Copilot</li>
+                <li>Explain Formula</li>
+                <li>AI cleanup suggestions</li>
+                <li>Spreadsheet QA previews</li>
+                <li>Premium templates</li>
+                <li>Larger workbook limits</li>
+                <li>Faster AI processing</li>
+            </ul>
+        </article>
+
+        <article class="pricing-card pricing-card--bundle">
+            <div class="pricing-card__badge">Best value</div>
+            <div class="pricing-card__header">
+                <span class="pricing-card__kicker">ToolStack Bundle</span>
+                <h2>Bundle</h2>
+                <p>AI document + spreadsheet workflows for teams that move between PDFs, CSVs, and Excel.</p>
+            </div>
+            <div class="pricing-card__price">
+                <strong>$29</strong>
+                <span>/month</span>
+            </div>
+            <button class="button button--primary pricing-card__button" type="button">Upgrade to Pro</button>
+            <ul class="pricing-feature-list">
+                <li>Includes PdfToolStack Pro</li>
+                <li>Includes ExcelToolStack Pro</li>
+                <li>AI document workflows</li>
+                <li>AI spreadsheet workflows</li>
+                <li>Best value for cross-format work</li>
+            </ul>
+        </article>
+
+        <article class="pricing-card">
+            <div class="pricing-card__header">
+                <span class="pricing-card__kicker">Teams</span>
+                <h2>Teams</h2>
+                <p>For shared workbook operations, review flows, and managed reporting teams.</p>
+            </div>
+            <div class="pricing-card__price">
+                <strong>$59</strong>
+                <span>/month</span>
+            </div>
+            <button class="button button--secondary pricing-card__button" type="button">Contact Sales</button>
+            <ul class="pricing-feature-list">
+                <li>Shared workflows</li>
+                <li>Shared templates</li>
+                <li>Team usage pools</li>
+                <li>Workbook review flows</li>
+                <li>Centralized billing</li>
+                <li>Audit-style workflow visibility</li>
+                <li>Future API access positioning</li>
+            </ul>
+        </article>
+    </div>
+</section>
+
+<section class="section-shell section-shell--accent pricing-highlights">
+    <div class="section-heading section-heading--split">
+        <div>
+            <p class="eyebrow">Workflow positioning</p>
+            <h2>More than file conversion. Built for recurring spreadsheet operations.</h2>
+            <p>
+                ExcelToolStack is positioned around the work behind the workbook: cleaning raw exports,
+                generating formulas, explaining logic, reviewing outputs, and packaging repeatable reports.
+            </p>
+        </div>
+        <a class="text-link" href="/ai-excel-formula-generator">Try AI Formula Copilot</a>
+    </div>
+    <div class="workflow-steps">
+        <article>
+            <span>Ops</span>
+            <h3>Clean imported operational data</h3>
+            <p>Normalize CSV exports, remove duplicates, and prepare lists before they reach dashboards or CRMs.</p>
+        </article>
+        <article>
+            <span>Finance</span>
+            <h3>Move faster through workbook logic</h3>
+            <p>Generate formulas, explain existing logic, and spot formula risk before a forecast or close process ships.</p>
+        </article>
+        <article>
+            <span>Reporting</span>
+            <h3>Turn one-off reports into workflows</h3>
+            <p>Package templates, QA previews, and repeatable steps for weekly and monthly reporting cycles.</p>
+        </article>
+    </div>
+</section>
+
+<section id="comparison" class="pricing-comparison">
+    <div class="section-heading">
+        <p class="eyebrow">Compare plans</p>
+        <h2>Choose the workflow depth your spreadsheet team needs.</h2>
+    </div>
+    <div class="comparison-table" role="table" aria-label="Pricing comparison grid">
+        <div class="comparison-row comparison-row--head" role="row">
+            <div role="columnheader">Capability</div>
+            <div role="columnheader">Free</div>
+            <div role="columnheader">Pro</div>
+            <div role="columnheader">Bundle</div>
+            <div role="columnheader">Teams</div>
+        </div>
+        <div class="comparison-row" role="row">
+            <div role="cell">CSV / Excel conversion</div>
+            <div role="cell">Basic</div>
+            <div role="cell">Unlimited</div>
+            <div role="cell">Unlimited</div>
+            <div role="cell">Team pools</div>
+        </div>
+        <div class="comparison-row" role="row">
+            <div role="cell">AI formula generation</div>
+            <div role="cell">Limited</div>
+            <div role="cell">Unlimited</div>
+            <div role="cell">Unlimited</div>
+            <div role="cell">Shared usage</div>
+        </div>
+        <div class="comparison-row" role="row">
+            <div role="cell">Explain Formula</div>
+            <div role="cell">-</div>
+            <div role="cell">Included</div>
+            <div role="cell">Included</div>
+            <div role="cell">Included</div>
+        </div>
+        <div class="comparison-row" role="row">
+            <div role="cell">AI cleanup suggestions</div>
+            <div role="cell">-</div>
+            <div role="cell">Included</div>
+            <div role="cell">Included</div>
+            <div role="cell">Included</div>
+        </div>
+        <div class="comparison-row" role="row">
+            <div role="cell">Spreadsheet QA previews</div>
+            <div role="cell">-</div>
+            <div role="cell">Included</div>
+            <div role="cell">Included</div>
+            <div role="cell">Review flows</div>
+        </div>
+        <div class="comparison-row" role="row">
+            <div role="cell">Templates</div>
+            <div role="cell">Public</div>
+            <div role="cell">Premium</div>
+            <div role="cell">Premium</div>
+            <div role="cell">Shared</div>
+        </div>
+        <div class="comparison-row" role="row">
+            <div role="cell">PdfToolStack Pro</div>
+            <div role="cell">-</div>
+            <div role="cell">-</div>
+            <div role="cell">Included</div>
+            <div role="cell">Available</div>
+        </div>
+        <div class="comparison-row" role="row">
+            <div role="cell">Centralized billing</div>
+            <div role="cell">-</div>
+            <div role="cell">-</div>
+            <div role="cell">-</div>
+            <div role="cell">Included</div>
+        </div>
+        <div class="comparison-row" role="row">
+            <div role="cell">Future API access positioning</div>
+            <div role="cell">-</div>
+            <div role="cell">-</div>
+            <div role="cell">-</div>
+            <div role="cell">Planned</div>
+        </div>
+    </div>
+</section>
+
+<section class="section-shell pricing-faq">
+    <div class="section-heading">
+        <p class="eyebrow">FAQ</p>
+        <h2>Questions before checkout exists.</h2>
+        <p>
+            This page positions the packaging and plan hierarchy. Billing, subscriptions, authentication,
+            and backend pricing APIs are intentionally not connected yet.
+        </p>
+    </div>
+    <div class="faq-grid">
+        <article>
+            <h3>Can I buy a plan today?</h3>
+            <p>No. The calls to action are placeholders while the product surface and pricing strategy are prepared.</p>
+        </article>
+        <article>
+            <h3>What makes the Bundle different?</h3>
+            <p>It combines PdfToolStack Pro and ExcelToolStack Pro for teams handling both document and spreadsheet workflows.</p>
+        </article>
+        <article>
+            <h3>Who is Pro for?</h3>
+            <p>Pro is for analysts, operators, founders, and finance users who need faster formula, cleanup, and QA workflows.</p>
+        </article>
+        <article>
+            <h3>Who is Teams for?</h3>
+            <p>Teams is positioned for shared templates, usage pools, review visibility, centralized billing, and future API access.</p>
+        </article>
     </div>
 </section>

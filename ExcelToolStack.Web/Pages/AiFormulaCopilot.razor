@@ -1,6 +1,7 @@
 @page "/ai-excel-formula-generator"
 @inject ProductBranding Branding
 @inject FormulaApiService FormulaApi
+@inject FormulaUsageService UsageService
 
 <PageTitle>AI Excel Formula Generator and Formula Copilot - @Branding.SiteName</PageTitle>
 <HeadContent>
@@ -35,6 +36,8 @@
             <span>Formula workspace</span>
             <strong>Live API</strong>
         </div>
+
+        <FormulaUsageMeter />
 
         <div class="platform-selector" aria-label="Spreadsheet platform">
             <button class="@(SelectedPlatform == ExcelPlatform ? "is-selected" : "")" type="button" @onclick="() => SetPlatform(ExcelPlatform)">
@@ -271,6 +274,9 @@
     private const string ExcelPlatform = "Excel";
     private const string GoogleSheetsPlatform = "Google Sheets";
 
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthenticationStateTask { get; set; }
+
     private string SelectedPlatform { get; set; } = ExcelPlatform;
     private string SelectedExample { get; set; } = "commission";
     private string Prompt { get; set; } = "Calculate commission when revenue in B2 is above 50000, using 8%, otherwise 3%.";
@@ -368,6 +374,7 @@
             FormulaPreview = response.GeneratedFormula;
             FormulaContext = "Generated for " + SelectedPlatform + ". Review the references and ranges before using it in a live workbook.";
             ExplanationSteps = [response.Explanation];
+            await UsageService.RecordGenerationAsync(await IsAuthenticatedAsync());
         }
         catch (Exception ex)
         {
@@ -385,6 +392,17 @@
         FormulaPreview = "Your generated formula will appear here.";
         FormulaContext = "Choose a platform, describe the formula you need, and generate a result.";
         ExplanationSteps = ["The explanation will appear after formula generation."];
+    }
+
+    private async Task<bool> IsAuthenticatedAsync()
+    {
+        if (AuthenticationStateTask is null)
+        {
+            return false;
+        }
+
+        var authState = await AuthenticationStateTask;
+        return authState.User.Identity?.IsAuthenticated == true;
     }
 
     private sealed record ExamplePrompt(

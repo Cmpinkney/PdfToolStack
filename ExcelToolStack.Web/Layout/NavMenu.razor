@@ -3,10 +3,13 @@
 <header class="site-header">
     <a class="brand" href="/" aria-label="@($"{Branding.SiteName} home")">
         <span class="brand-mark" aria-hidden="true">
-            <img class="brand-mark__image brand-mark__image--light" src="images/brand/exceltoolstack-mark.svg" alt="" width="34" height="34" />
-            <img class="brand-mark__image brand-mark__image--dark" src="images/brand/exceltoolstack-mark-dark.svg" alt="" width="34" height="34" />
+            <img class="brand-mark__image brand-mark__image--light" src="images/brand/exceltoolstack-mark.svg" alt="" width="54" height="54" />
+            <img class="brand-mark__image brand-mark__image--dark" src="images/brand/exceltoolstack-mark-dark.svg" alt="" width="54" height="54" />
         </span>
-        <span>@Branding.SiteName</span>
+        <span class="brand-lockup">
+            <span class="brand-wordmark"><span class="brand-wordmark__excel">Excel</span><span class="brand-wordmark__toolstack">ToolStack</span></span>
+            <span class="brand-tagline"><span>AI Spreadsheet</span> <span class="brand-tagline__work">Work</span><span class="brand-tagline__flows">flows</span></span>
+        </span>
     </a>
     <div class="nav-cluster">
         <nav class="site-nav" aria-label="Primary navigation">
@@ -15,7 +18,9 @@
             <NavLink href="/templates">Templates</NavLink>
             <NavLink href="/blog">Blog</NavLink>
             <NavLink href="/pricing">Pricing</NavLink>
+            <a href="https://pdftoolstack.com">PdfToolStack</a>
         </nav>
         <ThemeToggle />
+        <LoginDisplay />
     </div>
 </header>

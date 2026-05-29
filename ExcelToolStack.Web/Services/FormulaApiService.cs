@@ -34,6 +34,17 @@ public sealed class FormulaApiService
                 "Formula generation returned an empty response.");
     }
 
+    internal async Task<TResponse?> PostAsync<TRequest, TResponse>(
+        string endpoint,
+        TRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        using var response = await _http.PostAsJsonAsync(endpoint, request, cancellationToken);
+        if (!response.IsSuccessStatusCode)
+            return default;
+        return await response.Content.ReadFromJsonAsync<TResponse>(cancellationToken);
+    }
+
     private sealed record ApiError(string Error);
 
     private static async Task<string> ReadErrorMessageAsync(

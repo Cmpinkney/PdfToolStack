@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - staging
   pull_request:
     types: [opened, synchronize, reopened, closed]
     branches:
@@ -14,6 +15,7 @@ jobs:
     if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
     runs-on: ubuntu-latest
     name: Build and Deploy Job
+
     steps:
       - uses: actions/checkout@v4
         with:
@@ -37,7 +39,12 @@ jobs:
       - name: Publish Blazor app
         env:
           BLAZOR_ENV: ${{ github.ref_name == 'staging' && 'Staging' || 'Production' }}
-        run: dotnet publish PdfToolStack.Web/PdfToolStack.Web.csproj --configuration Release --output publish_output /p:BlazorEnvironment=$BLAZOR_ENV /p:BlazorEnableCompression=true
+        run: |
+          dotnet publish PdfToolStack.Web/PdfToolStack.Web.csproj \
+            --configuration Release \
+            --output publish_output \
+            /p:BlazorEnvironment=$BLAZOR_ENV \
+            /p:BlazorEnableCompression=true
 
       - name: Verify crawl files in publish output
         run: |
@@ -46,6 +53,22 @@ jobs:
 
       - name: Copy staticwebapp config
         run: cp PdfToolStack.Web/wwwroot/staticwebapp.config.json publish_output/wwwroot/staticwebapp.config.json
+
+      - name: Run SEO prerender
+        run: |
+          pwsh PdfToolStack.Web/prerender/prerender.ps1 \
+            -PublishDir publish_output/wwwroot
+
+      - name: Verify prerender output
+        run: |
+          echo "Checking prerendered routes..."
+          for route in compress-pdf merge-pdf split-pdf extract-invoice-data review-contract sign-pdf pdf-to-word pricing batch compare-pdf; do
+            if [ -f "publish_output/wwwroot/$route/index.html" ]; then
+              echo "✓ /$route/index.html"
+            else
+              echo "✗ MISSING: /$route/index.html"
+            fi
+          done
 
       - name: Deploy to Azure Static Web Apps
         uses: Azure/static-web-apps-deploy@v1
@@ -60,6 +83,7 @@ jobs:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
     runs-on: ubuntu-latest
     name: Close Pull Request Job
+
     steps:
       - name: Close Pull Request
         uses: Azure/static-web-apps-deploy@v1

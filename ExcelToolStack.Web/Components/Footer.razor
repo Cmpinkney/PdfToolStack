@@ -2,14 +2,24 @@
 
 <footer class="site-footer">
     <div>
-        <a class="footer-brand" href="/">@Branding.SiteName</a>
-        <p>AI spreadsheet workflows, templates, and guides are being shaped for launch.</p>
+        <a class="footer-brand" href="/" aria-label="@($"{Branding.SiteName} home")">
+            <span class="brand-mark" aria-hidden="true">
+                <img class="brand-mark__image brand-mark__image--light" src="images/brand/exceltoolstack-mark.svg" alt="" width="54" height="54" />
+                <img class="brand-mark__image brand-mark__image--dark" src="images/brand/exceltoolstack-mark-dark.svg" alt="" width="54" height="54" />
+            </span>
+            <span class="brand-lockup">
+                <span class="brand-wordmark"><span class="brand-wordmark__excel">Excel</span><span class="brand-wordmark__toolstack">ToolStack</span></span>
+                <span class="brand-tagline"><span>AI Spreadsheet</span> <span class="brand-tagline__work">Work</span><span class="brand-tagline__flows">flows</span></span>
+            </span>
+        </a>
+        <p>AI spreadsheet workflows, templates, and guides for teams that need workbook logic they can trust.</p>
     </div>
     <div class="footer-links" aria-label="Footer navigation">
         <a href="/tools">Tools</a>
         <a href="/templates">Templates</a>
         <a href="/blog">Blog</a>
         <a href="/pricing">Pricing</a>
+        <a href="https://pdftoolstack.com">PdfToolStack</a>
         <a href="mailto:@Branding.SupportEmail">@Branding.SupportEmail</a>
     </div>
 </footer>

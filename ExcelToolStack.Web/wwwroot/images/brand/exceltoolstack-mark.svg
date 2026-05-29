@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title desc">
+  <title id="title">ExcelToolStack mark</title>
+  <desc id="desc">A layered green Excel-style tile with a white E, teal and gold accent cards, and small spreadsheet pixels.</desc>
+  <defs>
+    <linearGradient id="tile" x1="14" y1="9" x2="47" y2="49" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#22C55E"/>
+      <stop offset=".46" stop-color="#11864D"/>
+      <stop offset="1" stop-color="#0F5B3D"/>
+    </linearGradient>
+    <linearGradient id="tileHighlight" x1="14" y1="8" x2="32" y2="26" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#45D89A" stop-opacity=".68"/>
+      <stop offset="1" stop-color="#45D89A" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="tealLayer" x1="11" y1="20" x2="48" y2="53" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#06B6D4"/>
+      <stop offset="1" stop-color="#0F766E"/>
+    </linearGradient>
+    <linearGradient id="goldLayer" x1="18" y1="17" x2="54" y2="55" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F59E0B"/>
+      <stop offset="1" stop-color="#D97706"/>
+    </linearGradient>
+    <filter id="shadow" x="1" y="1" width="62" height="62" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#0F5B3D" flood-opacity=".24"/>
+      <feDropShadow dx="0" dy="1" stdDeviation="1" flood-color="#052C22" flood-opacity=".20"/>
+    </filter>
+  </defs>
+  <rect x="20" y="15" width="34" height="39" rx="10" fill="url(#goldLayer)" opacity=".96"/>
+  <rect x="15" y="12" width="35" height="39" rx="10" fill="url(#tealLayer)" opacity=".96"/>
+  <rect x="8" y="8" width="39" height="40" rx="10" fill="url(#tile)" filter="url(#shadow)"/>
+  <rect x="8" y="8" width="39" height="40" rx="10" fill="url(#tileHighlight)"/>
+  <path d="M24 18h18v7H31v5h10v7H31v5h12v7H24V18Z" fill="#FFFFFF"/>
+  <path d="M42 12h7v7h-7z" fill="#22C55E"/>
+  <path d="M50 8h5v5h-5z" fill="#06B6D4"/>
+  <path d="M53 16h7v7h-7z" fill="#F59E0B"/>
+  <path d="M46 23h5v5h-5z" fill="#06B6D4"/>
+  <path d="M55 27h4v4h-4z" fill="#22C55E"/>
+  <path d="M40 29h6v6h-6z" fill="#0D8B62" opacity=".7"/>
+  <path d="M33 46c4.7 0 8.3-.7 11-2.1v4.5C41.4 50.1 37.7 51 33 51H18.4c-3.2 0-5.9-.8-8-2.4 2.2 1.1 5 1.7 8.4 1.7H33Z" fill="#022F25" opacity=".35"/>
+</svg>

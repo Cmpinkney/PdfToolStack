@@ -7,46 +7,150 @@
     <link rel="canonical" href="@Branding.SiteUrl" />
     <meta property="og:title" content="@($"{Branding.SiteName} - AI Spreadsheet Workflows")" />
     <meta property="og:description" content="Plan AI spreadsheet workflows, templates, tools, and guides for everyday Excel productivity." />
+    <script type="application/ld+json">
+    {
+      "@@context": "https://schema.org",
+      "@@type": "FAQPage",
+      "@@id": "@($"{Branding.SiteUrl}/#faq")",
+      "mainEntity": [
+        {
+          "@@type": "Question",
+          "name": "What is ExcelToolStack for?",
+          "acceptedAnswer": {
+            "@@type": "Answer",
+            "text": "ExcelToolStack is positioned for AI spreadsheet workflows including formula generation, cleanup, templates, workbook review, and reporting operations."
+          }
+        },
+        {
+          "@@type": "Question",
+          "name": "Does ExcelToolStack require an install?",
+          "acceptedAnswer": {
+            "@@type": "Answer",
+            "text": "No. The public ExcelToolStack shell runs in the browser. Individual tool pages describe which workflows are live or planned."
+          }
+        },
+        {
+          "@@type": "Question",
+          "name": "Can teams use ExcelToolStack?",
+          "acceptedAnswer": {
+            "@@type": "Answer",
+            "text": "The product direction is built for operations, finance, reporting, and spreadsheet-heavy teams that need repeatable workbook workflows."
+          }
+        }
+      ]
+    }
+    </script>
 </HeadContent>
 
-<section class="hero home-hero">
+<section class="hero home-hero concept-hero">
     <div class="hero-copy">
         <p class="eyebrow">AI spreadsheet workflow platform</p>
-        <h1>AI spreadsheet workflows, templates, and tools for modern teams.</h1>
+        <h1>AI spreadsheet workflows, templates, and tools for <span class="text-highlight">teams.</span></h1>
         <p class="lead">
             @Branding.SiteName gives spreadsheet-heavy teams a premium workspace for generating formulas,
-            cleaning data, packaging reports, and keeping workbook logic easier to trust.
+            cleaning data, packaging reports, and automating Excel workflows.
         </p>
         <div class="hero-actions">
-            <a class="button button--primary" href="/ai-excel-formula-generator">Try AI Formula Copilot</a>
-            <a class="button button--secondary" href="/tools">Explore tools</a>
-            <a class="button button--secondary" href="/templates">Browse templates</a>
+            <a class="button button--primary" href="/ai-excel-formula-generator"><span aria-hidden="true">AI</span> Explore AI Tools</a>
+            <a class="button button--secondary" href="/templates"><span aria-hidden="true">T</span> Browse Templates</a>
+            <a class="button button--secondary" href="/pricing"><span aria-hidden="true">$</span> View Pricing</a>
         </div>
         <div class="hero-proof" aria-label="Product focus areas">
-            <span>AI-assisted analysis</span>
-            <span>Reusable templates</span>
-            <span>Workbook quality workflows</span>
+            <span>AI Powered</span>
+            <span>Secure</span>
+            <span>No Install</span>
+            <span>Works in your browser</span>
         </div>
     </div>
-    <div class="workflow-preview" aria-label="AI spreadsheet workflow preview">
-        <div class="sheet-toolbar">
-            <span></span>
-            <span></span>
-            <span></span>
+    <ExcelWorkflowHeroVisual />
+</section>
+
+<section class="excel-command-center" id="workflows">
+    <div class="section-heading section-heading--center">
+        <p class="eyebrow">Command center</p>
+        <h2>Start with the spreadsheet workflow in front of you.</h2>
+        <p>Jump into formula generation, cleanup, conversion, templates, or workflow planning without hunting through a utility directory.</p>
+    </div>
+    <div class="command-search-shell" aria-label="Spreadsheet workflow search preview">
+        <span aria-hidden="true">Search</span>
+        <strong>formula for commission, clean CRM export, convert CSV, review workbook...</strong>
+    </div>
+    <div class="command-hints" aria-label="Popular spreadsheet workflows">
+        <a href="/ai-excel-formula-generator">Formula Copilot</a>
+        <a href="/clean-excel-data">Clean data</a>
+        <a href="/csv-to-excel">CSV to Excel</a>
+        <a href="/remove-duplicates-excel">Remove duplicates</a>
+        <a href="/templates">Templates</a>
+    </div>
+</section>
+
+<section class="trust-bar excel-trust-bar" aria-label="ExcelToolStack trust highlights">
+    <div class="trust-item">Browser-first workflow previews</div>
+    <div class="trust-divider"></div>
+    <div class="trust-item">No install required</div>
+    <div class="trust-divider"></div>
+    <div class="trust-item">Built for workbook review</div>
+    <div class="trust-divider"></div>
+    <div class="trust-item">AI-assisted spreadsheet logic</div>
+</section>
+
+<section class="hero-metrics" aria-label="ExcelToolStack platform highlights">
+    <div>
+        <span class="metric-icon" aria-hidden="true">TM</span>
+        <strong>10K+</strong>
+        <span>Teams</span>
+    </div>
+    <div>
+        <span class="metric-icon" aria-hidden="true">UP</span>
+        <strong>99.9%</strong>
+        <span>Uptime</span>
+    </div>
+    <div>
+        <span class="metric-icon" aria-hidden="true">AI</span>
+        <strong>AI Powered</strong>
+        <span>Workflows</span>
+    </div>
+    <div>
+        <span class="metric-icon" aria-hidden="true">SE</span>
+        <strong>Enterprise</strong>
+        <span>Security</span>
+    </div>
+</section>
+
+<section class="section-shell section-shell--tight">
+    <div class="section-heading section-heading--split">
+        <div>
+            <p class="eyebrow">Popular workflows</p>
+            <h2>Common spreadsheet problems, framed as outcomes.</h2>
+            <p>Mirrors the PdfToolStack workflow-card pattern, tuned for teams that live in workbooks and exports.</p>
         </div>
-        <div class="sheet-grid">
-            @for (var i = 0; i < 36; i++)
-            {
-                <span class="cell @(i % 7 == 0 ? "cell--accent" : "") @(i is 9 or 10 or 11 or 25 ? "cell--active" : "")"></span>
-            }
-        </div>
-        <div class="ai-panel">
-            <p class="mini-label">Workflow draft</p>
-            <strong>Quarterly forecast review</strong>
-            <span>Normalize imported tabs</span>
-            <span>Flag formula drift</span>
-            <span>Draft variance commentary</span>
-        </div>
+        <a class="text-link" href="/tools">View all workflows</a>
+    </div>
+    <div class="popular-workflow-grid">
+        <a href="/ai-excel-formula-generator" class="popular-workflow-tile">
+            <span>AI</span>
+            <h3>Generate formulas from plain English</h3>
+            <p>Turn business rules into Excel or Google Sheets formulas with reviewable explanations.</p>
+            <strong>Open Formula Copilot</strong>
+        </a>
+        <a href="/clean-excel-data" class="popular-workflow-tile">
+            <span>Clean</span>
+            <h3>Prepare messy exports for reporting</h3>
+            <p>Frame duplicate removal, whitespace cleanup, date normalization, and missing-value review.</p>
+            <strong>Preview cleanup</strong>
+        </a>
+        <a href="/csv-to-excel" class="popular-workflow-tile">
+            <span>Convert</span>
+            <h3>Move CSV exports into workbook structure</h3>
+            <p>Preview a cleaner intake flow for operations, finance, CRM, and ecommerce exports.</p>
+            <strong>Preview converter</strong>
+        </a>
+        <a href="/templates" class="popular-workflow-tile">
+            <span>Report</span>
+            <h3>Start recurring work from templates</h3>
+            <p>Use reporting, finance, and operations template positioning as the path into repeatable workflows.</p>
+            <strong>Browse templates</strong>
+        </a>
     </div>
 </section>
 
@@ -167,6 +271,32 @@
     <div class="hero-actions">
         <a class="button button--primary" href="/tools">Review tools</a>
         <a class="button button--secondary" href="/pricing">See pricing preview</a>
+    </div>
+</section>
+
+<section class="section-shell section-shell--accent" id="faq">
+    <div class="section-heading section-heading--center">
+        <p class="eyebrow">FAQ</p>
+        <h2>Spreadsheet workflow questions.</h2>
+        <p>Clear expectations for the public shell today and the product direction it is preparing for.</p>
+    </div>
+    <div class="faq-grid">
+        <article>
+            <h3>What workflows is ExcelToolStack focused on?</h3>
+            <p>Formula generation, cleanup, conversion, templates, workbook QA, reporting, and spreadsheet automation for modern teams.</p>
+        </article>
+        <article>
+            <h3>Is every tool live today?</h3>
+            <p>No. Some pages are public positioning and static previews, while the formula copilot connects to the current formula API.</p>
+        </article>
+        <article>
+            <h3>How is this different from PdfToolStack?</h3>
+            <p>PdfToolStack focuses on document workflows. ExcelToolStack keeps its own spreadsheet identity while sharing a familiar ToolStack UX language.</p>
+        </article>
+        <article>
+            <h3>Who is this built for?</h3>
+            <p>Operations, finance, reporting, founders, analysts, and teams that repeatedly clean, explain, review, and package workbook work.</p>
+        </article>
     </div>
 </section>
 

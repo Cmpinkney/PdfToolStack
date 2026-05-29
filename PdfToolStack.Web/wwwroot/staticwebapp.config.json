@@ -4,6 +4,14 @@
   },
   "routes": [
     {
+      "route": "/*",
+      "redirect": "https://pdftoolstack.com{request.path}",
+      "statusCode": 301,
+      "conditions": {
+        "isClientSecure": false
+      }
+    },
+    {
       "route": "/robots.txt",
       "rewrite": "/robots.txt",
       "headers": {
@@ -19,106 +27,26 @@
         "cache-control": "public, max-age=3600"
       }
     },
-    {
-      "route": "/protect-pdf",
-      "redirect": "/lock-pdf",
-      "statusCode": 301
-    },
-    {
-      "route": "/merge-pdf/app",
-      "redirect": "/merge-pdf",
-      "statusCode": 301
-    },
-    {
-      "route": "/compress-pdf/app",
-      "redirect": "/compress-pdf",
-      "statusCode": 301
-    },
-    {
-      "route": "/pdf-to-excel-converter",
-      "redirect": "/pdf-to-excel",
-      "statusCode": 301
-    },
-    {
-      "route": "/chat-pdf",
-      "redirect": "/chat-with-pdf",
-      "statusCode": 301
-    },
-    {
-      "route": "/ask-pdf",
-      "redirect": "/chat-with-pdf",
-      "statusCode": 301
-    },
-    {
-      "route": "/ai-contract-review",
-      "redirect": "/review-contract",
-      "statusCode": 301
-    },
-    {
-      "route": "/ai-contract-reviewer/app",
-      "redirect": "/review-contract",
-      "statusCode": 301
-    },
-    {
-      "route": "/invoice-data-extraction",
-      "redirect": "/extract-invoice-data",
-      "statusCode": 301
-    },
-    {
-      "route": "/batch-processing",
-      "redirect": "/batch",
-      "statusCode": 301
-    },
-    {
-      "route": "/sign-contract",
-      "redirect": "/sign-pdf",
-      "statusCode": 301
-    },
-    {
-      "route": "/sign-contract/app",
-      "redirect": "/sign-pdf",
-      "statusCode": 301
-    },
-    {
-      "route": "/redact-pdf-online",
-      "redirect": "/redact-pdf",
-      "statusCode": 301
-    },
-    {
-      "route": "/compare-contracts",
-      "redirect": "/compare-pdf",
-      "statusCode": 301
-    },
-    {
-      "route": "/compare-pdf-documents",
-      "redirect": "/compare-pdf",
-      "statusCode": 301
-    },
-    {
-      "route": "/convert-pdf-to-editable-word",
-      "redirect": "/pdf-to-word",
-      "statusCode": 301
-    },
-    {
-      "route": "/pdf-to-excel-extractor",
-      "redirect": "/extract-invoice-data",
-      "statusCode": 301
-    },
-    {
-      "route": "/extract-data-from-pdf",
-      "redirect": "/extract-invoice-data",
-      "statusCode": 301
-    },
-    {
-      "route": "/combine-pdf-files",
-      "redirect": "/merge-pdf",
-      "statusCode": 301
-    },
-    {
-      "route": "/merge-pdfs-for-submission",
-      "redirect": "/merge-pdf",
-      "statusCode": 301
-    }
+    { "route": "/protect-pdf",                 "redirect": "/lock-pdf",             "statusCode": 301 },
+    { "route": "/merge-pdf/app",               "redirect": "/merge-pdf",            "statusCode": 301 },
+    { "route": "/compress-pdf/app",            "redirect": "/compress-pdf",         "statusCode": 301 },
+    { "route": "/pdf-to-excel-converter",      "redirect": "/pdf-to-excel",         "statusCode": 301 },
+    { "route": "/chat-pdf",                    "redirect": "/chat-with-pdf",        "statusCode": 301 },
+    { "route": "/ask-pdf",                     "redirect": "/chat-with-pdf",        "statusCode": 301 },
+    { "route": "/ai-contract-review",          "redirect": "/review-contract",      "statusCode": 301 },
+    { "route": "/ai-contract-reviewer/app",    "redirect": "/review-contract",      "statusCode": 301 },
+    { "route": "/invoice-data-extraction",     "redirect": "/extract-invoice-data", "statusCode": 301 },
+    { "route": "/batch-processing",            "redirect": "/batch",                "statusCode": 301 },
+    { "route": "/sign-contract",               "redirect": "/sign-pdf",             "statusCode": 301 },
+    { "route": "/sign-contract/app",           "redirect": "/sign-pdf",             "statusCode": 301 },
+    { "route": "/redact-pdf-online",           "redirect": "/redact-pdf",           "statusCode": 301 },
+    { "route": "/compare-contracts",           "redirect": "/compare-pdf",          "statusCode": 301 },
+    { "route": "/compare-pdf-documents",       "redirect": "/compare-pdf",          "statusCode": 301 },
+    { "route": "/convert-pdf-to-editable-word","redirect": "/pdf-to-word",          "statusCode": 301 },
+    { "route": "/pdf-to-excel-extractor",      "redirect": "/extract-invoice-data", "statusCode": 301 },
+    { "route": "/extract-data-from-pdf",       "redirect": "/extract-invoice-data", "statusCode": 301 },
+    { "route": "/combine-pdf-files",           "redirect": "/merge-pdf",            "statusCode": 301 },
+    { "route": "/merge-pdfs-for-submission",   "redirect": "/merge-pdf",            "statusCode": 301 }
   ],
   "navigationFallback": {
     "rewrite": "/index.html",
