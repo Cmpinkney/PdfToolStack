@@ -1,175 +1,164 @@
 @page "/csv-to-excel"
+@using ExcelToolStack.Web.Configuration
+@using ExcelToolStack.Web.Services
+@inject FormulaApiService ApiService
+@inject IJSRuntime JS
 @inject ProductBranding Branding
 
-<PageTitle>CSV to Excel Converter Online - @Branding.SiteName</PageTitle>
+<PageTitle>CSV to Excel Converter — Convert CSV Files Online Free | ExcelToolStack</PageTitle>
 <HeadContent>
-    <meta name="description" content="Preview ExcelToolStack CSV to Excel conversion: a public landing page for turning CSV files into structured Excel workbooks with clean columns, review steps, and spreadsheet-ready output." />
-    <link rel="canonical" href="@($"{Branding.SiteUrl}/csv-to-excel")" />
-    <meta property="og:title" content="@($"CSV to Excel converter online - {Branding.SiteName}")" />
-    <meta property="og:description" content="A crawlable preview of a future CSV to Excel tool with static upload UI, conversion workflow, use cases, and FAQ." />
+    <meta name="description" content="Convert CSV files to Excel (.xlsx) online for free. Upload your CSV and download a formatted Excel workbook instantly. No signup required." />
+    <link rel="canonical" href="https://exceltoolstack.com/csv-to-excel" />
 </HeadContent>
 
-<section class="tool-hero converter-hero">
-    <div class="tool-hero-copy">
-        <p class="eyebrow">CSV to Excel</p>
-        <h1>Turn flat CSV data into a cleaner Excel workbook.</h1>
-        <p class="lead">
-            A public preview of the planned @Branding.SiteName CSV to Excel tool for imports, reports,
-            customer lists, exports, and spreadsheet handoffs. This page is static only: no upload,
-            conversion, download, or backend processing is connected yet.
-        </p>
-        <div class="hero-actions">
-            <a class="button button--primary" href="/tools">Explore all tools</a>
-            <a class="button button--secondary" href="/templates">Browse templates</a>
-        </div>
-        <div class="hero-proof" aria-label="CSV to Excel tool highlights">
-            <span>CSV imports</span>
-            <span>Structured workbook preview</span>
-            <span>Column review</span>
-            <span>Excel-ready workflows</span>
-        </div>
-    </div>
+<ExcelUpload Accept=".csv"
+             ProcessButtonLabel="Convert to Excel"
+             ProcessingMessage="Converting your CSV to Excel..."
+             ReadyStateMessage="Drop in a CSV to see your Excel preview."
+             ReadyStateSubMessage="Column headers are auto-detected and the first row is bolded automatically."
+             Steps="@(new[] { "Upload", "Convert", "Process", "Download" })"
+             CurrentStep="@_step"
+             IsProcessing="@_isProcessing"
+             Result="@_result"
+             OutputFileName="@_outputFileName"
+             OnFileReady="HandleFileReady"
+             OnProcessClicked="ConvertAsync"
+             OnReset="Reset">
 
-    <div class="conversion-panel" aria-label="Static CSV to Excel conversion preview">
-        <div class="console-header">
-            <span>Conversion workspace</span>
-            <strong>Static preview</strong>
-        </div>
-        <div class="upload-zone" aria-label="Disabled upload area">
-            <span class="upload-icon">CSV</span>
-            <strong>Drop a CSV file here</strong>
-            <p>Upload is intentionally disabled for this landing page.</p>
-            <button class="button button--secondary" type="button" disabled>Choose CSV file</button>
-        </div>
-        <div class="conversion-flow">
-            <div>
-                <span>1</span>
-                <p>Detect columns</p>
+    <SidebarContent>
+        <p class="tool-panel__kicker">CONVERSION DETAILS</p>
+        <h3 style="margin:0 0 12px;color:var(--text-primary);font-size:1.1rem;font-weight:900;">Smart CSV import</h3>
+        <p style="margin:0 0 20px;color:var(--text-muted);font-size:0.9rem;line-height:1.6;">Your CSV is converted to a fully formatted Excel workbook with styled headers and auto-fitted columns.</p>
+        <div style="display:grid;gap:12px;">
+            <div style="display:flex;align-items:start;gap:10px;">
+                <span style="display:inline-grid;place-items:center;width:22px;height:22px;border-radius:999px;background:var(--brand-primary-soft);color:var(--brand-primary-strong);font-size:0.7rem;font-weight:900;flex-shrink:0;margin-top:1px;">✓</span>
+                <div>
+                    <p style="margin:0;color:var(--text-primary);font-size:0.88rem;font-weight:850;">Auto header detection</p>
+                    <p style="margin:4px 0 0;color:var(--text-muted);font-size:0.82rem;line-height:1.45;">First row automatically styled as bold header</p>
+                </div>
             </div>
-            <div>
-                <span>2</span>
-                <p>Preview rows</p>
+            <div style="display:flex;align-items:start;gap:10px;">
+                <span style="display:inline-grid;place-items:center;width:22px;height:22px;border-radius:999px;background:var(--brand-primary-soft);color:var(--brand-primary-strong);font-size:0.7rem;font-weight:900;flex-shrink:0;margin-top:1px;">✓</span>
+                <div>
+                    <p style="margin:0;color:var(--text-primary);font-size:0.88rem;font-weight:850;">Quoted fields supported</p>
+                    <p style="margin:4px 0 0;color:var(--text-muted);font-size:0.82rem;line-height:1.45;">Commas and line breaks inside quotes handled correctly</p>
+                </div>
             </div>
-            <div>
-                <span>3</span>
-                <p>Prepare workbook</p>
+            <div style="display:flex;align-items:start;gap:10px;">
+                <span style="display:inline-grid;place-items:center;width:22px;height:22px;border-radius:999px;background:var(--brand-primary-soft);color:var(--brand-primary-strong);font-size:0.7rem;font-weight:900;flex-shrink:0;margin-top:1px;">✓</span>
+                <div>
+                    <p style="margin:0;color:var(--text-primary);font-size:0.88rem;font-weight:850;">Auto-fit columns</p>
+                    <p style="margin:4px 0 0;color:var(--text-muted);font-size:0.82rem;line-height:1.45;">Column widths adjusted to fit content automatically</p>
+                </div>
             </div>
-        </div>
-        <div class="mock-workbook">
-            <div class="mock-row mock-row--head">
-                <span>Date</span>
-                <span>Customer</span>
-                <span>Amount</span>
-            </div>
-            <div class="mock-row">
-                <span>2026-05-01</span>
-                <span>Northwind Studio</span>
-                <span>$1,240</span>
-            </div>
-            <div class="mock-row">
-                <span>2026-05-03</span>
-                <span>Contoso Labs</span>
-                <span>$860</span>
+            <div style="display:flex;align-items:start;gap:10px;">
+                <span style="display:inline-grid;place-items:center;width:22px;height:22px;border-radius:999px;background:var(--brand-primary-soft);color:var(--brand-primary-strong);font-size:0.7rem;font-weight:900;flex-shrink:0;margin-top:1px;">✓</span>
+                <div>
+                    <p style="margin:0;color:var(--text-primary);font-size:0.88rem;font-weight:850;">Up to 50MB</p>
+                    <p style="margin:4px 0 0;color:var(--text-muted);font-size:0.82rem;line-height:1.45;">Large CSV files with hundreds of thousands of rows supported</p>
+                </div>
             </div>
         </div>
-        <p class="disabled-note">
-            Frontend shell only. No file is read, uploaded, converted, stored, or downloaded.
-        </p>
-    </div>
-</section>
+    </SidebarContent>
 
-<section class="section-shell section-shell--tight">
-    <div class="section-heading">
-        <p class="eyebrow">Use cases</p>
-        <h2>Designed for the CSV exports teams keep turning into spreadsheets.</h2>
-        <p>
-            The future converter is positioned around practical data handoffs, not heavyweight ETL:
-            take a simple CSV export and prepare it for everyday workbook review.
-        </p>
+</ExcelUpload>
+
+<section class="section-shell section-shell--accent">
+    <div class="section-heading section-heading--center">
+        <p class="eyebrow">Use Cases</p>
+        <h2>When to convert CSV to Excel</h2>
     </div>
     <div class="workflow-steps">
         <article>
-            <span>01</span>
-            <h3>Export cleanup</h3>
-            <p>Turn CRM, ecommerce, finance, analytics, or operations exports into a workbook your team can inspect.</p>
+            <span>📊</span>
+            <h3>Database exports</h3>
+            <p>Turn raw database exports into formatted, sortable workbooks ready for analysis.</p>
         </article>
         <article>
-            <span>02</span>
-            <h3>Column review</h3>
-            <p>Preview headers, spot blank fields, review dates and numbers, and prepare clean worksheet structure.</p>
+            <span>📋</span>
+            <h3>Report formatting</h3>
+            <p>Convert flat CSV reports into Excel workbooks with proper column widths and header styling.</p>
         </article>
         <article>
-            <span>03</span>
-            <h3>Reporting handoff</h3>
-            <p>Move raw CSV data toward spreadsheet reports, templates, formulas, and review workflows.</p>
-        </article>
-    </div>
-</section>
-
-<section class="section-shell section-shell--accent">
-    <div class="section-heading section-heading--split">
-        <div>
-            <p class="eyebrow">Planned workflow</p>
-            <h2>A converter shell for cleaner spreadsheet prep.</h2>
-            <p>These are planned frontend states only. Conversion behavior can be added later in a separate scoped PR.</p>
-        </div>
-        <a class="text-link" href="/blog/how-to-generate-excel-formulas-with-ai">Read formula guide</a>
-    </div>
-    <div class="category-grid">
-        <article>
-            <span class="category-kicker">Import</span>
-            <h3>CSV file intake</h3>
-            <p>Future support for selecting a CSV file, detecting delimiter issues, and preparing a worksheet preview.</p>
-            <a href="/tools">See all tools</a>
-        </article>
-        <article>
-            <span class="category-kicker">Review</span>
-            <h3>Spreadsheet-ready preview</h3>
-            <p>Planned review for headers, sample rows, dates, number formatting, blank columns, and row counts.</p>
-            <a href="/templates">Pair with templates</a>
-        </article>
-        <article>
-            <span class="category-kicker">Excel</span>
-            <h3>Workbook output</h3>
-            <p>Future conversion could prepare an Excel workbook for reporting, analysis, formulas, and team handoff.</p>
-            <a href="/ai-excel-formula-generator">Preview Formula Copilot</a>
+            <span>🔄</span>
+            <h3>System migrations</h3>
+            <p>Move data between systems that export CSV into Excel-based workflows.</p>
         </article>
     </div>
 </section>
 
 <section class="section-shell">
-    <div class="section-heading">
+    <div class="section-heading section-heading--center">
         <p class="eyebrow">FAQ</p>
-        <h2>CSV to Excel questions.</h2>
+        <h2>Common questions</h2>
     </div>
     <div class="faq-grid">
         <article>
-            <h3>Can this page convert CSV files today?</h3>
-            <p>No. This is a static public landing page and UI shell. No file processing, uploads, downloads, or backend conversion logic has been added.</p>
+            <h3>What CSV formats are supported?</h3>
+            <p>Standard comma-delimited CSV files. Quoted fields, commas inside quotes, and multi-line values are all handled correctly.</p>
         </article>
         <article>
-            <h3>Will the future tool create an Excel workbook?</h3>
-            <p>The planned positioning is CSV to Excel workbook conversion, with a review step before any future downloadable output.</p>
+            <h3>Will my column headers be preserved?</h3>
+            <p>Yes. The first row of your CSV becomes the header row in Excel, automatically bolded and highlighted.</p>
         </article>
         <article>
-            <h3>What CSV files is this page for?</h3>
-            <p>It is aimed at common exports from business systems, analytics tools, finance workflows, ecommerce platforms, and internal operations tools.</p>
+            <h3>Is there a file size limit?</h3>
+            <p>Up to 50MB on the free tier. Large CSV files with hundreds of thousands of rows are supported.</p>
         </article>
         <article>
-            <h3>Is the page crawlable and anonymous?</h3>
-            <p>Yes. The route is public, linked from Home and Tools, and listed in the sitemap without auth, billing, or gated behavior.</p>
+            <h3>Are my files stored?</h3>
+            <p>No. Files are processed in memory and never stored on disk. Your data stays private.</p>
         </article>
     </div>
 </section>
 
-<section class="cta-section">
-    <p class="eyebrow">Tool preview</p>
-    <h2>Explore CSV to Excel inside the broader spreadsheet workflow shell.</h2>
-    <p>
-        This page prepares the public surface for a future converter while keeping all behavior static and frontend-only.
-    </p>
-    <div class="hero-actions">
-        <a class="button button--primary" href="/tools">Back to Tools</a>
-        <a class="button button--secondary" href="/">Return Home</a>
-    </div>
-</section>
+@code {
+    private byte[]? _fileBytes;
+    private string? _fileName;
+    private byte[]? _result;
+    private string? _outputFileName;
+    private bool _isProcessing;
+    private int _step = 1;
+
+    private void HandleFileReady((byte[] Bytes, string FileName) args)
+    {
+        _fileBytes = args.Bytes;
+        _fileName = args.FileName;
+        _step = 2;
+    }
+
+    private async Task ConvertAsync()
+    {
+        if (_fileBytes is null || _fileName is null) return;
+
+        _isProcessing = true;
+        _step = 3;
+        StateHasChanged();
+
+        try
+        {
+            var content = new MultipartFormDataContent();
+            content.Add(new ByteArrayContent(_fileBytes), "file", _fileName);
+            var response = await ApiService.PostRawAsync("api/excel/csv-to-excel", content);
+
+            if (response.IsSuccessStatusCode)
+            {
+                _result = await response.Content.ReadAsByteArrayAsync();
+                _outputFileName = Path.GetFileNameWithoutExtension(_fileName) + ".xlsx";
+                _step = 4;
+            }
+        }
+        catch { }
+        finally { _isProcessing = false; }
+    }
+
+    private void Reset()
+    {
+        _fileBytes = null;
+        _fileName = null;
+        _result = null;
+        _outputFileName = null;
+        _isProcessing = false;
+        _step = 1;
+    }
+}

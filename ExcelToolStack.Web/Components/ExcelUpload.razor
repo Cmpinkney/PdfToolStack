@@ -1,0 +1,576 @@
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.JSInterop
+@inject IJSRuntime JS
+
+<div class="excel-tool-chrome">
+
+    @* ── 4-step progress bar ── *@
+    <div class="tool-steps">
+        <div class="tool-step @(CurrentStep >= 1 ? "tool-step--active" : "") @(CurrentStep > 1 ? "tool-step--done" : "")">
+            <span class="tool-step__num">@(CurrentStep > 1 ? "✓" : "1")</span>
+            <span>@Steps[0]</span>
+        </div>
+        <div class="tool-step-divider"></div>
+        <div class="tool-step @(CurrentStep >= 2 ? "tool-step--active" : "") @(CurrentStep > 2 ? "tool-step--done" : "")">
+            <span class="tool-step__num">@(CurrentStep > 2 ? "✓" : "2")</span>
+            <span>@Steps[1]</span>
+        </div>
+        <div class="tool-step-divider"></div>
+        <div class="tool-step @(CurrentStep >= 3 ? "tool-step--active" : "") @(CurrentStep > 3 ? "tool-step--done" : "")">
+            <span class="tool-step__num">@(CurrentStep > 3 ? "✓" : "3")</span>
+            <span>@Steps[2]</span>
+        </div>
+        <div class="tool-step-divider"></div>
+        <div class="tool-step @(CurrentStep >= 4 ? "tool-step--active" : "")">
+            <span class="tool-step__num">4</span>
+            <span>@Steps[3]</span>
+        </div>
+    </div>
+
+    @* ── Main tool body ── *@
+    <div class="tool-body">
+
+        @* Left panel — upload *@
+        <div class="tool-panel tool-panel--main">
+
+            @if (_selectedFile is null && !IsProcessing && Result is null)
+            {
+                <p class="tool-panel__kicker">UPLOAD FILE</p>
+                <h2 class="tool-panel__title">Start with your file</h2>
+
+                <div class="excel-upload-zone @(_isDragging ? "excel-upload-zone--drag" : "")"
+                     @ondragover:preventDefault
+                     @ondragenter="() => _isDragging = true"
+                     @ondragleave="() => _isDragging = false"
+                     @ondrop="HandleDrop"
+                     @ondrop:preventDefault>
+                    <div class="excel-upload-icon">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg>
+                    </div>
+                    <p class="excel-upload-hint">Drag and drop your file here or</p>
+                    <label class="button button--primary excel-upload-btn">
+                        Browse File
+                        <InputFile OnChange="HandleFileSelected" accept="@Accept" style="display:none;" />
+                    </label>
+                    <p class="excel-upload-limit">Maximum file size: 50MB</p>
+
+                    @if (ShowDropbox || ShowGoogleDrive)
+                    {
+                        <div class="excel-cloud-row">
+                            <span class="excel-cloud-label">IMPORT FROM CLOUD</span>
+                            <div class="excel-cloud-btns">
+                                @if (ShowDropbox)
+                                {
+                                    <button class="excel-cloud-btn" @onclick="OpenDropbox" disabled="@_cloudLoading">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="#0061FF"><path d="M6 2L0 6.5l6 4.5 6-4.5L6 2zM18 2l-6 4.5 6 4.5 6-4.5L18 2zM0 15.5L6 20l6-4.5-6-4.5-6 4.5zM18 11l-6 4.5 6 4.5 6-4.5L18 11zM6 21.5L12 17l-6-4.5L0 17l6 4.5z"/></svg>
+                                        Dropbox
+                                    </button>
+                                }
+                                @if (ShowGoogleDrive)
+                                {
+                                    <button class="excel-cloud-btn" @onclick="OpenGoogleDrive" disabled="@_cloudLoading">
+                                        <svg width="16" height="16" viewBox="0 0 24 24"><path d="M4.56 21L1 15l4.5-7.5h5L6 15h12l-2.5 6H4.56z" fill="#0066DA"/><path d="M15.5 21H4.56L9 13.5h10.5L15.5 21z" fill="#00AC47"/><path d="M9.5 7.5H14.5L19.5 15l-5.5 0L9.5 7.5z" fill="#EA4335" opacity=".7"/><path d="M9.5 7.5L5 15l-4-6.5L6 2l3.5 5.5z" fill="#00832D"/><path d="M14.5 7.5L11 2h7l1.5 6-5 0z" fill="#2684FC"/></svg>
+                                        Google Drive
+                                    </button>
+                                }
+                            </div>
+                        </div>
+                    }
+
+                    <div class="excel-trust-badges">
+                        <span>● Files deleted in 1 hour</span>
+                        <span>● Encrypted processing</span>
+                        <span>● No data stored</span>
+                    </div>
+                </div>
+
+                @if (_error is not null)
+                {
+                    <p class="error-note" style="margin-top:14px;">@_error</p>
+                }
+            }
+
+            @if (_selectedFile is not null && !IsProcessing && Result is null)
+            {
+                <p class="tool-panel__kicker">FILE READY</p>
+                <h2 class="tool-panel__title">@_selectedFile.Name</h2>
+                <p style="color:var(--text-muted);font-size:0.9rem;margin:4px 0 20px;">@FormatSize(_selectedFile.Size) · Ready to process</p>
+
+                @if (ConfigContent is not null)
+                {
+                    <div class="excel-config-section">
+                        @ConfigContent
+                    </div>
+                }
+
+                <div style="display:flex;gap:10px;margin-top:20px;">
+                    <button class="button button--primary" style="flex:1;" @onclick="ProcessClicked">
+                        @ProcessButtonLabel
+                    </button>
+                    <button class="button button--secondary" @onclick="Reset">Cancel</button>
+                </div>
+
+                @if (_error is not null)
+                {
+                    <p class="error-note" style="margin-top:14px;">@_error</p>
+                }
+            }
+
+            @if (IsProcessing)
+            {
+                <p class="tool-panel__kicker">PROCESSING</p>
+                <h2 class="tool-panel__title">Working on your file...</h2>
+                <div class="processing-state" style="margin-top:20px;">
+                    <span></span><span></span><span></span>
+                    <p>@ProcessingMessage</p>
+                </div>
+            }
+
+            @if (Result is not null && !IsProcessing)
+            {
+                <p class="tool-panel__kicker">COMPLETE</p>
+                <h2 class="tool-panel__title">Your file is ready</h2>
+
+                <div style="display:flex;align-items:center;gap:12px;padding:16px;border:1px solid rgba(0,184,148,0.3);border-radius:8px;background:rgba(0,184,148,0.06);margin:20px 0;">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00b894" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                    <span style="color:var(--text-primary);font-weight:850;">@OutputFileName</span>
+                </div>
+
+                <div style="display:grid;gap:10px;">
+                    <button class="button button--primary" style="width:100%;" @onclick="DownloadResult">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        Download File
+                    </button>
+                    <button class="button button--secondary" style="width:100%;" @onclick="Reset">Process another file</button>
+                </div>
+            }
+
+            @if (Result is null && _selectedFile is null && !IsProcessing)
+            {
+                <div class="excel-ready-state">
+                    <p class="excel-ready-state__kicker">READY WHEN YOU ARE</p>
+                    <p class="excel-ready-state__title">@ReadyStateMessage</p>
+                    <p class="excel-ready-state__sub">@ReadyStateSubMessage</p>
+                </div>
+            }
+        </div>
+
+        @* Right panel — tool info sidebar *@
+        <div class="tool-panel tool-panel--sidebar">
+            @if (SidebarContent is not null)
+            {
+                @SidebarContent
+            }
+        </div>
+
+    </div>
+</div>
+
+<style>
+    .excel-tool-chrome {
+        width: min(1100px, 92vw);
+        margin: 0 auto;
+        padding: clamp(32px, 5vw, 56px) 0 clamp(48px, 7vw, 80px);
+    }
+
+    .tool-steps {
+        display: flex;
+        align-items: center;
+        padding: 14px 20px;
+        border: 1px solid var(--border-subtle);
+        border-radius: 8px;
+        background: var(--surface);
+        margin-bottom: 24px;
+        gap: 0;
+    }
+
+    .tool-step {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        font-weight: 750;
+        white-space: nowrap;
+    }
+
+    .tool-step--active {
+        color: var(--text-primary);
+        font-weight: 900;
+    }
+
+    .tool-step--done {
+        color: var(--brand-primary);
+    }
+
+    .tool-step__num {
+        display: inline-grid;
+        place-items: center;
+        width: 26px;
+        height: 26px;
+        border-radius: 999px;
+        border: 1.5px solid var(--border-subtle);
+        font-size: 0.78rem;
+        font-weight: 900;
+        flex-shrink: 0;
+    }
+
+    .tool-step--active .tool-step__num {
+        background: var(--brand-primary);
+        border-color: var(--brand-primary);
+        color: #fff;
+    }
+
+    .tool-step--done .tool-step__num {
+        background: var(--brand-primary);
+        border-color: var(--brand-primary);
+        color: #fff;
+        font-size: 0.7rem;
+    }
+
+    .tool-step-divider {
+        flex: 1;
+        height: 1px;
+        background: var(--border-subtle);
+        margin: 0 12px;
+        min-width: 20px;
+    }
+
+    .tool-body {
+        display: grid;
+        grid-template-columns: minmax(0, 1.4fr) minmax(260px, 0.6fr);
+        gap: 20px;
+        align-items: start;
+    }
+
+    .tool-panel {
+        border: 1px solid var(--border-subtle);
+        border-radius: 12px;
+        background: var(--surface);
+        padding: 28px;
+    }
+
+    .tool-panel__kicker {
+        margin: 0 0 6px;
+        color: var(--brand-primary);
+        font-size: 0.72rem;
+        font-weight: 900;
+        letter-spacing: 0.1em;
+    }
+
+    .tool-panel__title {
+        margin: 0 0 20px;
+        color: var(--text-primary);
+        font-size: clamp(1.3rem, 2.5vw, 1.8rem);
+        font-weight: 900;
+        line-height: 1.15;
+    }
+
+    .excel-upload-zone {
+        border: 1.5px dashed var(--border-subtle);
+        border-radius: 10px;
+        padding: 36px 24px;
+        display: grid;
+        place-items: center;
+        gap: 10px;
+        text-align: center;
+        background: var(--surface-muted);
+        transition: border-color 160ms ease, background 160ms ease;
+        position: relative;
+    }
+
+    .excel-upload-zone--drag {
+        border-color: var(--brand-primary);
+        background: var(--brand-primary-soft);
+    }
+
+    .excel-upload-icon {
+        display: inline-grid;
+        place-items: center;
+        width: 56px;
+        height: 56px;
+        border-radius: 10px;
+        background: var(--brand-primary-soft);
+        color: var(--brand-primary-strong);
+    }
+
+    .excel-upload-hint {
+        margin: 0;
+        color: var(--text-muted);
+        font-size: 0.95rem;
+    }
+
+    .excel-upload-btn {
+        min-height: 42px;
+        padding: 0 22px;
+        cursor: pointer;
+    }
+
+    .excel-upload-limit {
+        margin: 0;
+        color: var(--text-muted);
+        font-size: 0.82rem;
+    }
+
+    .excel-cloud-row {
+        width: 100%;
+        padding: 16px;
+        border: 1px solid var(--border-subtle);
+        border-radius: 8px;
+        background: var(--surface);
+        display: grid;
+        gap: 10px;
+    }
+
+    .excel-cloud-label {
+        font-size: 0.72rem;
+        font-weight: 900;
+        letter-spacing: 0.1em;
+        color: var(--text-muted);
+        text-align: center;
+    }
+
+    .excel-cloud-btns {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+    }
+
+    .excel-cloud-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        border: 1px solid var(--border-subtle);
+        border-radius: 7px;
+        background: var(--surface);
+        color: var(--text-primary);
+        font: inherit;
+        font-size: 0.88rem;
+        font-weight: 800;
+        cursor: pointer;
+        transition: border-color 160ms, background 160ms;
+    }
+
+    .excel-cloud-btn:hover:not(:disabled) {
+        border-color: var(--brand-primary);
+        background: var(--brand-primary-soft);
+        color: var(--brand-primary-strong);
+    }
+
+    .excel-cloud-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .excel-trust-badges {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 12px;
+        color: var(--text-muted);
+        font-size: 0.8rem;
+        font-weight: 750;
+    }
+
+    .excel-config-section {
+        padding: 16px;
+        border: 1px solid var(--border-subtle);
+        border-radius: 8px;
+        background: var(--surface-muted);
+    }
+
+    .excel-ready-state {
+        margin-top: 24px;
+        padding: 20px;
+        border: 1px solid var(--border-subtle);
+        border-radius: 8px;
+        background: var(--surface-muted);
+    }
+
+    .excel-ready-state__kicker {
+        margin: 0 0 6px;
+        color: var(--brand-primary);
+        font-size: 0.72rem;
+        font-weight: 900;
+        letter-spacing: 0.1em;
+    }
+
+    .excel-ready-state__title {
+        margin: 0 0 6px;
+        color: var(--text-primary);
+        font-size: 1.05rem;
+        font-weight: 900;
+    }
+
+    .excel-ready-state__sub {
+        margin: 0;
+        color: var(--text-muted);
+        font-size: 0.88rem;
+        line-height: 1.55;
+    }
+
+    @@media (max-width: 860px) {
+        .tool-body {
+            grid-template-columns: 1fr;
+        }
+        .tool-steps {
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .tool-step-divider {
+            display: none;
+        }
+    }
+</style>
+
+@code {
+    [Parameter] public string Accept { get; set; } = ".xlsx,.xls,.csv";
+    [Parameter] public string ProcessButtonLabel { get; set; } = "Process File";
+    [Parameter] public string ProcessingMessage { get; set; } = "Processing your file...";
+    [Parameter] public string ReadyStateMessage { get; set; } = "Drop in a file to get started.";
+    [Parameter] public string ReadyStateSubMessage { get; set; } = "Upload a file above to begin processing.";
+    [Parameter] public string[] Steps { get; set; } = new[] { "Upload", "Configure", "Process", "Download" };
+    [Parameter] public int CurrentStep { get; set; } = 1;
+    [Parameter] public bool ShowDropbox { get; set; } = true;
+    [Parameter] public bool ShowGoogleDrive { get; set; } = true;
+    [Parameter] public RenderFragment? SidebarContent { get; set; }
+    [Parameter] public RenderFragment? ConfigContent { get; set; }
+    [Parameter] public EventCallback<(byte[] Bytes, string FileName)> OnFileReady { get; set; }
+    [Parameter] public EventCallback OnProcessClicked { get; set; }
+    [Parameter] public EventCallback OnReset { get; set; }
+
+    // State passed in from parent
+    [Parameter] public bool IsProcessing { get; set; }
+    [Parameter] public byte[]? Result { get; set; }
+    [Parameter] public string? OutputFileName { get; set; }
+
+    private IBrowserFile? _selectedFile;
+    private bool _isDragging;
+    private bool _cloudLoading;
+    private string? _error;
+
+    private async Task HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        _selectedFile = e.File;
+        _error = null;
+        await ReadAndNotify(_selectedFile);
+    }
+
+    private async Task HandleDrop(DragEventArgs e)
+    {
+        _isDragging = false;
+        await Task.CompletedTask;
+    }
+
+    private async Task OpenDropbox()
+    {
+        _cloudLoading = true;
+        _error = null;
+        StateHasChanged();
+        try
+        {
+            var result = await JS.InvokeAsync<CloudPickerResult?>("excelCloudPickers.openDropbox");
+            if (result is not null)
+                await LoadFromCloud(result);
+        }
+        catch (Exception)
+        {
+            _error = "Dropbox picker failed. Please try uploading directly.";
+        }
+        finally { _cloudLoading = false; }
+    }
+
+    private async Task OpenGoogleDrive()
+    {
+        _cloudLoading = true;
+        _error = null;
+        StateHasChanged();
+        try
+        {
+            var result = await JS.InvokeAsync<CloudPickerResult?>("excelCloudPickers.openGoogleDrive");
+            if (result is not null)
+                await LoadFromCloud(result);
+        }
+        catch (Exception)
+        {
+            _error = "Google Drive picker failed. Please try uploading directly.";
+        }
+        finally { _cloudLoading = false; }
+    }
+
+    private async Task LoadFromCloud(CloudPickerResult cloudFile)
+    {
+        var base64 = await JS.InvokeAsync<string?>("excelCloudPickers.downloadFileAsBase64",
+            cloudFile.Url, cloudFile.AccessToken);
+        if (base64 is null)
+        {
+            _error = "Failed to download file from cloud. Please upload directly.";
+            return;
+        }
+        var bytes = Convert.FromBase64String(base64);
+        // Create a mock file reference for display
+        _selectedFile = new CloudBrowserFile(cloudFile.Name, bytes.Length);
+        await OnFileReady.InvokeAsync((bytes, cloudFile.Name));
+    }
+
+    private async Task ReadAndNotify(IBrowserFile file)
+    {
+        try
+        {
+            using var stream = file.OpenReadStream(maxAllowedSize: 52_428_800);
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            await OnFileReady.InvokeAsync((ms.ToArray(), file.Name));
+        }
+        catch (Exception)
+        {
+            _error = "Failed to read file. Please try again.";
+            _selectedFile = null;
+        }
+    }
+
+    private async Task ProcessClicked() =>
+        await OnProcessClicked.InvokeAsync();
+
+    private async Task DownloadResult()
+    {
+        if (Result is null || OutputFileName is null) return;
+        var base64 = Convert.ToBase64String(Result);
+        await JS.InvokeVoidAsync("downloadFile", OutputFileName, base64);
+    }
+
+    private async Task Reset()
+    {
+        _selectedFile = null;
+        _error = null;
+        _isDragging = false;
+        await OnReset.InvokeAsync();
+    }
+
+    private static string FormatSize(long bytes)
+    {
+        if (bytes < 1024) return $"{bytes} B";
+        if (bytes < 1_048_576) return $"{bytes / 1024.0:F1} KB";
+        return $"{bytes / 1_048_576.0:F1} MB";
+    }
+
+    private sealed class CloudPickerResult
+    {
+        public string Name { get; set; } = "";
+        public string Url { get; set; } = "";
+        public string? AccessToken { get; set; }
+        public long Size { get; set; }
+    }
+
+    private sealed class CloudBrowserFile : IBrowserFile
+    {
+        public CloudBrowserFile(string name, long size) { Name = name; Size = size; }
+        public string Name { get; }
+        public DateTimeOffset LastModified => DateTimeOffset.UtcNow;
+        public long Size { get; }
+        public string ContentType => "application/octet-stream";
+        public Stream OpenReadStream(long maxAllowedSize = 512000, CancellationToken ct = default)
+            => Stream.Null;
+    }
+}

@@ -1,223 +1,178 @@
 @page "/excel-to-csv"
+@using ExcelToolStack.Web.Configuration
+@using ExcelToolStack.Web.Services
+@inject FormulaApiService ApiService
+@inject IJSRuntime JS
 @inject ProductBranding Branding
 
-<PageTitle>Excel to CSV Converter Online - @Branding.SiteName</PageTitle>
+<PageTitle>Excel to CSV Converter — Export Excel to CSV Online Free | ExcelToolStack</PageTitle>
 <HeadContent>
-    <meta name="description" content="Preview ExcelToolStack Excel to CSV conversion: a public landing page for exporting spreadsheet tabs to lightweight CSV files for database imports, CRM imports, ecommerce feeds, and analytics tools." />
-    <link rel="canonical" href="@($"{Branding.SiteUrl}/excel-to-csv")" />
-    <meta property="og:title" content="@($"Excel to CSV converter online - {Branding.SiteName}")" />
-    <meta property="og:description" content="A crawlable preview of a future Excel to CSV tool with a static conversion UI shell, use cases, FAQ, and links to CSV cleanup workflows." />
+    <meta name="description" content="Convert Excel files to CSV online for free. Export any sheet from your .xlsx workbook to a clean CSV file instantly. No signup required." />
+    <link rel="canonical" href="https://exceltoolstack.com/excel-to-csv" />
 </HeadContent>
 
-<section class="tool-hero converter-hero">
-    <div class="tool-hero-copy">
-        <p class="eyebrow">Excel to CSV</p>
-        <h1>Export spreadsheet tabs into clean, lightweight CSV data.</h1>
-        <p class="lead">
-            A public preview of the planned @Branding.SiteName Excel to CSV workflow for database imports,
-            CRM imports, ecommerce feeds, analytics tools, and simple handoffs that need portable tabular data.
-        </p>
-        <div class="hero-actions">
-            <a class="button button--primary" href="/csv-to-excel">Preview CSV to Excel</a>
-            <a class="button button--secondary" href="/clean-excel-data">Preview Clean Excel Data</a>
-        </div>
-        <div class="hero-proof" aria-label="Excel to CSV highlights">
-            <span>Workbook export</span>
-            <span>CSV-ready fields</span>
-            <span>Lightweight handoff</span>
-            <span>No processing yet</span>
-        </div>
-    </div>
+<ExcelUpload Accept=".xlsx,.xls"
+             ProcessButtonLabel="Export to CSV"
+             ProcessingMessage="Exporting your Excel sheet to CSV..."
+             ReadyStateMessage="Drop in an Excel file to export it to CSV."
+             ReadyStateSubMessage="Choose which sheet to export — defaults to the first sheet."
+             Steps="@(new[] { "Upload", "Configure", "Export", "Download" })"
+             CurrentStep="@_step"
+             IsProcessing="@_isProcessing"
+             Result="@_result"
+             OutputFileName="@_outputFileName"
+             OnFileReady="HandleFileReady"
+             OnProcessClicked="ConvertAsync"
+             OnReset="Reset">
 
-    <div class="conversion-panel" aria-label="Static Excel to CSV conversion preview">
-        <div class="console-header">
-            <span>Export workspace</span>
-            <strong>Static preview</strong>
+    <ConfigContent>
+        <div style="display:grid;gap:8px;">
+            <label style="color:var(--text-primary);font-size:0.88rem;font-weight:850;">Sheet name (optional)</label>
+            <input type="text" @bind="_sheetName" placeholder="Leave blank for first sheet"
+                   style="width:100%;padding:10px 12px;border:1px solid var(--border-subtle);border-radius:8px;background:var(--surface);color:var(--text-primary);font:inherit;font-size:0.88rem;" />
+            <p style="margin:0;color:var(--text-muted);font-size:0.8rem;">Leave blank to export the first sheet automatically.</p>
         </div>
-        <div class="upload-zone" aria-label="Disabled Excel upload area">
-            <span class="upload-icon">XLS</span>
-            <strong>Select an Excel workbook</strong>
-            <p>Upload is intentionally disabled for this landing page.</p>
-            <button class="button button--secondary" type="button" disabled>Choose Excel file</button>
-        </div>
-        <div class="conversion-flow">
-            <div>
-                <span>1</span>
-                <p>Select sheet</p>
-            </div>
-            <div>
-                <span>2</span>
-                <p>Review columns</p>
-            </div>
-            <div>
-                <span>3</span>
-                <p>Prepare CSV</p>
-            </div>
-        </div>
-        <div class="mock-workbook">
-            <div class="mock-row mock-row--head">
-                <span>Sheet</span>
-                <span>Export target</span>
-                <span>Status</span>
-            </div>
-            <div class="mock-row">
-                <span>Customers</span>
-                <span>crm_import.csv</span>
-                <span>Ready</span>
-            </div>
-            <div class="mock-row">
-                <span>Products</span>
-                <span>sku_feed.csv</span>
-                <span>Review</span>
-            </div>
-        </div>
-        <p class="disabled-note">
-            Frontend shell only. No workbook is read, uploaded, converted, stored, exported, or downloaded.
-        </p>
-    </div>
-</section>
+    </ConfigContent>
 
-<section class="section-shell section-shell--tight">
-    <div class="section-heading">
-        <p class="eyebrow">Use cases</p>
-        <h2>Built for the systems that still prefer CSV.</h2>
-        <p>
-            CSV remains the practical exchange format for many tools. This static page positions the future converter
-            around clean exports from structured workbooks.
-        </p>
+    <SidebarContent>
+        <p class="tool-panel__kicker">EXPORT DETAILS</p>
+        <h3 style="margin:0 0 12px;color:var(--text-primary);font-size:1.1rem;font-weight:900;">Clean CSV export</h3>
+        <p style="margin:0 0 20px;color:var(--text-muted);font-size:0.9rem;line-height:1.6;">Export any sheet from your Excel workbook to a clean, universally compatible CSV file.</p>
+        <div style="display:grid;gap:12px;">
+            <div style="display:flex;align-items:start;gap:10px;">
+                <span style="display:inline-grid;place-items:center;width:22px;height:22px;border-radius:999px;background:var(--brand-primary-soft);color:var(--brand-primary-strong);font-size:0.7rem;font-weight:900;flex-shrink:0;margin-top:1px;">✓</span>
+                <div>
+                    <p style="margin:0;color:var(--text-primary);font-size:0.88rem;font-weight:850;">Sheet selection</p>
+                    <p style="margin:4px 0 0;color:var(--text-muted);font-size:0.82rem;line-height:1.45;">Export any named sheet or default to the first</p>
+                </div>
+            </div>
+            <div style="display:flex;align-items:start;gap:10px;">
+                <span style="display:inline-grid;place-items:center;width:22px;height:22px;border-radius:999px;background:var(--brand-primary-soft);color:var(--brand-primary-strong);font-size:0.7rem;font-weight:900;flex-shrink:0;margin-top:1px;">✓</span>
+                <div>
+                    <p style="margin:0;color:var(--text-primary);font-size:0.88rem;font-weight:850;">Values preserved</p>
+                    <p style="margin:4px 0 0;color:var(--text-muted);font-size:0.82rem;line-height:1.45;">Formula results exported as values — no broken references</p>
+                </div>
+            </div>
+            <div style="display:flex;align-items:start;gap:10px;">
+                <span style="display:inline-grid;place-items:center;width:22px;height:22px;border-radius:999px;background:var(--brand-primary-soft);color:var(--brand-primary-strong);font-size:0.7rem;font-weight:900;flex-shrink:0;margin-top:1px;">✓</span>
+                <div>
+                    <p style="margin:0;color:var(--text-primary);font-size:0.88rem;font-weight:850;">Proper CSV quoting</p>
+                    <p style="margin:4px 0 0;color:var(--text-muted);font-size:0.82rem;line-height:1.45;">Fields with commas or quotes are escaped correctly</p>
+                </div>
+            </div>
+            <div style="display:flex;align-items:start;gap:10px;">
+                <span style="display:inline-grid;place-items:center;width:22px;height:22px;border-radius:999px;background:var(--brand-primary-soft);color:var(--brand-primary-strong);font-size:0.7rem;font-weight:900;flex-shrink:0;margin-top:1px;">✓</span>
+                <div>
+                    <p style="margin:0;color:var(--text-primary);font-size:0.88rem;font-weight:850;">UTF-8 encoded</p>
+                    <p style="margin:4px 0 0;color:var(--text-muted);font-size:0.82rem;line-height:1.45;">Compatible with all modern tools, databases, and APIs</p>
+                </div>
+            </div>
+        </div>
+    </SidebarContent>
+
+</ExcelUpload>
+
+<section class="section-shell section-shell--accent">
+    <div class="section-heading section-heading--center">
+        <p class="eyebrow">Use Cases</p>
+        <h2>When to export Excel to CSV</h2>
     </div>
     <div class="workflow-steps">
         <article>
-            <span>01</span>
+            <span>🗄️</span>
             <h3>Database imports</h3>
-            <p>Prepare worksheet rows for tables, seed data, admin imports, and lightweight operational databases.</p>
+            <p>Most databases accept CSV for bulk imports. Export your Excel data and import it directly.</p>
         </article>
         <article>
-            <span>02</span>
-            <h3>CRM imports</h3>
-            <p>Export cleaned contacts, leads, accounts, owners, lifecycle stages, and custom fields for CRM uploads.</p>
+            <span>🔌</span>
+            <h3>API data feeds</h3>
+            <p>Many APIs and integrations require CSV format. Convert your workbook for seamless data transfer.</p>
         </article>
         <article>
-            <span>03</span>
-            <h3>Ecommerce feeds</h3>
-            <p>Turn product workbooks into SKU feeds, catalog updates, pricing files, and inventory exports.</p>
-        </article>
-        <article>
-            <span>04</span>
-            <h3>Analytics tools</h3>
-            <p>Prepare simple CSV inputs for dashboards, notebooks, warehouse staging, and reporting systems.</p>
-        </article>
-        <article>
-            <span>05</span>
-            <h3>Lightweight exports</h3>
-            <p>Share flat data with teams, vendors, and tools that do not need workbook formatting or formulas.</p>
-        </article>
-    </div>
-</section>
-
-<section class="section-shell section-shell--accent">
-    <div class="section-heading section-heading--split">
-        <div>
-            <p class="eyebrow">Planned workflow</p>
-            <h2>A static conversion shell for export-first spreadsheet work.</h2>
-            <p>These cards describe future conversion steps only. No backend behavior is included in this PR.</p>
-        </div>
-        <a class="text-link" href="/csv-to-excel">Need CSV to Excel instead?</a>
-    </div>
-    <div class="category-grid">
-        <article>
-            <span class="category-kicker">Select</span>
-            <h3>Choose workbook sheet</h3>
-            <p>Future support could let users choose the tab they want to export before creating CSV output.</p>
-            <a href="/tools">See all tools</a>
-        </article>
-        <article>
-            <span class="category-kicker">Review</span>
-            <h3>Confirm columns and headers</h3>
-            <p>Planned review for header names, blank columns, dates, numbers, formulas, and export-safe values.</p>
-            <a href="/clean-excel-data">Preview cleanup workflow</a>
-        </article>
-        <article>
-            <span class="category-kicker">Export</span>
-            <h3>Prepare lightweight CSV</h3>
-            <p>Positioned for flat data handoffs where formatting, formulas, and workbook styling are not needed.</p>
-            <a href="/csv-to-excel">Preview reverse converter</a>
+            <span>📱</span>
+            <h3>Cross-platform sharing</h3>
+            <p>CSV opens in any tool — Google Sheets, Numbers, or any text editor. No Excel required.</p>
         </article>
     </div>
 </section>
 
 <section class="section-shell">
-    <div class="section-heading">
-        <p class="eyebrow">Related workflows</p>
-        <h2>Clean the workbook before exporting the CSV.</h2>
-        <p>
-            Excel to CSV conversion works best when columns are normalized, duplicates are reviewed, and text values
-            are ready for the destination system.
-        </p>
-    </div>
-    <div class="category-grid">
-        <article>
-            <span class="category-kicker">Clean</span>
-            <h3>Clean Excel Data</h3>
-            <p>Preview the broader cleanup surface for formatting, missing values, whitespace, columns, and CSV normalization.</p>
-            <a href="/clean-excel-data">Open Clean Excel Data</a>
-        </article>
-        <article>
-            <span class="category-kicker">Convert</span>
-            <h3>CSV to Excel</h3>
-            <p>Preview the reverse flow for turning CSV exports back into structured Excel workbook workflows.</p>
-            <a href="/csv-to-excel">Open CSV to Excel</a>
-        </article>
-        <article>
-            <span class="category-kicker">Deduplicate</span>
-            <h3>Remove Duplicates</h3>
-            <p>Review repeated records before exporting contacts, SKUs, vendors, or customer lists to CSV.</p>
-            <a href="/remove-duplicates-excel">Open Remove Duplicates</a>
-        </article>
-    </div>
-</section>
-
-<section class="section-shell section-shell--accent">
-    <div class="section-heading">
+    <div class="section-heading section-heading--center">
         <p class="eyebrow">FAQ</p>
-        <h2>Excel to CSV questions.</h2>
+        <h2>Common questions</h2>
     </div>
     <div class="faq-grid">
         <article>
-            <h3>Can this page convert Excel files today?</h3>
-            <p>No. This is a static public landing page and UI shell. No upload, conversion, export, download, storage, or backend processing is connected.</p>
+            <h3>Which sheet gets exported?</h3>
+            <p>By default the first sheet. Enter a sheet name in the field above to export a specific sheet.</p>
         </article>
         <article>
-            <h3>Why convert Excel to CSV?</h3>
-            <p>CSV is useful for database imports, CRM imports, ecommerce feeds, analytics tools, and lightweight data handoffs.</p>
+            <h3>Are formulas preserved?</h3>
+            <p>CSV stores values only — formula results are preserved but not the formulas themselves.</p>
         </article>
         <article>
-            <h3>Will formatting and formulas be preserved?</h3>
-            <p>CSV is a flat text format, so future conversion positioning should focus on values and headers rather than workbook formatting.</p>
+            <h3>What about formatting?</h3>
+            <p>CSV is plain text — colors, fonts, and cell formatting are not carried over. Data values are always preserved.</p>
         </article>
         <article>
-            <h3>Should I clean data before exporting?</h3>
-            <p>Yes. The page links to Clean Excel Data because exports are safer when duplicates, blanks, whitespace, and columns are reviewed first.</p>
-        </article>
-        <article>
-            <h3>Does this page support CSV to Excel too?</h3>
-            <p>This route is for Excel to CSV positioning. The companion CSV to Excel route is linked for the reverse workflow.</p>
-        </article>
-        <article>
-            <h3>Is this page crawlable?</h3>
-            <p>Yes. The page is anonymous, public, internally linked, and included in the ExcelToolStack sitemap.</p>
+            <h3>Are my files stored?</h3>
+            <p>No. Files are processed in memory and never stored. Your data stays private.</p>
         </article>
     </div>
 </section>
 
-<section class="cta-section">
-    <p class="eyebrow">Conversion preview</p>
-    <h2>Prepare spreadsheet exports for the tools that need CSV.</h2>
-    <p>
-        This page is ready for SEO and product positioning while conversion behavior remains static and frontend-only.
-    </p>
-    <div class="hero-actions">
-        <a class="button button--primary" href="/csv-to-excel">Preview CSV to Excel</a>
-        <a class="button button--secondary" href="/tools">Back to Tools</a>
-    </div>
-</section>
+@code {
+    private byte[]? _fileBytes;
+    private string? _fileName;
+    private byte[]? _result;
+    private string? _outputFileName;
+    private bool _isProcessing;
+    private int _step = 1;
+    private string? _sheetName;
+
+    private void HandleFileReady((byte[] Bytes, string FileName) args)
+    {
+        _fileBytes = args.Bytes;
+        _fileName = args.FileName;
+        _step = 2;
+    }
+
+    private async Task ConvertAsync()
+    {
+        if (_fileBytes is null || _fileName is null) return;
+
+        _isProcessing = true;
+        _step = 3;
+        StateHasChanged();
+
+        try
+        {
+            var content = new MultipartFormDataContent();
+            content.Add(new ByteArrayContent(_fileBytes), "file", _fileName);
+            var url = string.IsNullOrWhiteSpace(_sheetName)
+                ? "api/excel/excel-to-csv"
+                : $"api/excel/excel-to-csv?sheetName={Uri.EscapeDataString(_sheetName)}";
+            var response = await ApiService.PostRawAsync(url, content);
+
+            if (response.IsSuccessStatusCode)
+            {
+                _result = await response.Content.ReadAsByteArrayAsync();
+                _outputFileName = Path.GetFileNameWithoutExtension(_fileName) + ".csv";
+                _step = 4;
+            }
+        }
+        catch { }
+        finally { _isProcessing = false; }
+    }
+
+    private void Reset()
+    {
+        _fileBytes = null;
+        _fileName = null;
+        _result = null;
+        _outputFileName = null;
+        _isProcessing = false;
+        _step = 1;
+        _sheetName = null;
+    }
+}
