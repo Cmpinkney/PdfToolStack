@@ -49,7 +49,7 @@ namespace PdfToolStack.API.Controllers
                 _logger.LogError(ex,
                     "Account deletion failed for {UserId}", userId);
                 return StatusCode(500,
-                    new { error = "Deletion failed. Please contact support@pdftoolstack.com" });
+                    new { error = "Deletion failed. Please contact admin@pdftoolstack.com" });
             }
         }
     }

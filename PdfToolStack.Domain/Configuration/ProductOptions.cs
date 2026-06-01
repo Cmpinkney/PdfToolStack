@@ -8,7 +8,7 @@ public sealed class ProductOptions
 
     public string SiteUrl { get; set; } = "https://pdftoolstack.com";
 
-    public string SupportEmail { get; set; } = "support@pdftoolstack.com";
+    public string SupportEmail { get; set; } = "admin@pdftoolstack.com";
 
     public string AdminEmail { get; set; } = "admin@pdftoolstack.com";
 
@@ -71,7 +71,7 @@ public sealed class ProductContext : IProductContext
 
     public string SupportEmail => ValueOrDefault(
         _options.SupportEmail,
-        "support@pdftoolstack.com");
+        "admin@pdftoolstack.com");
 
     public string AdminEmail => ValueOrDefault(
         _options.AdminEmail,

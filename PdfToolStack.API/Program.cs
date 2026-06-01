@@ -15,6 +15,7 @@ using PdfToolStack.Infrastructure.Auth;
 using PdfToolStack.Infrastructure.Configuration;
 using PdfToolStack.Infrastructure.Data;
 using PdfToolStack.Infrastructure.Processors;
+using PdfToolStack.Infrastructure.Processors.Excel;
 using PdfToolStack.Infrastructure.Repositories;
 using PdfToolStack.Infrastructure.Services;
 using PdfToolStack.Infrastructure.Services.Ocr;
@@ -148,6 +149,11 @@ try
     builder.Services.AddScoped<PdfToJpgProcessor>();
     builder.Services.AddScoped<PdfToExcelProcessor>();
     builder.Services.AddScoped<CropPdfProcessor>();
+    builder.Services.AddScoped<CsvToExcelProcessor>();
+    builder.Services.AddScoped<ExcelToCsvProcessor>();
+    builder.Services.AddScoped<CleanExcelDataProcessor>();
+    builder.Services.AddScoped<RemoveDuplicatesProcessor>();
+
     builder.Services.AddScoped(_ =>
         new PdfOcrProcessor(Path.Combine(AppContext.BaseDirectory, "tessdata")));
     builder.Services.AddScoped<TesseractOcrTextProvider>();
