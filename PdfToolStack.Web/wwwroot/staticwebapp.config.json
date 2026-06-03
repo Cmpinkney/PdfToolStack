@@ -12,6 +12,14 @@
       }
     },
     {
+      "route": "/ads.txt",
+      "rewrite": "/ads.txt",
+      "headers": {
+        "content-type": "text/plain; charset=utf-8",
+        "cache-control": "public, max-age=3600"
+      }
+    },
+    {
       "route": "/sitemap.xml",
       "rewrite": "/sitemap.xml",
       "headers": {
