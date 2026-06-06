@@ -324,6 +324,126 @@ namespace PdfToolStack.Infrastructure.Services
             }
         }
 
+        public async Task<FraudAnalysisResult> AnalyzeFraudAsync(
+            string extractedInvoiceJson,
+            List<FraudAnalysisHistoryItem> vendorHistory,
+            CancellationToken cancellationToken = default)
+        {
+            const string SonnetModel = "claude-sonnet-4-5";
+            const int timeoutSeconds = 45;
+
+            var historyJson = JsonSerializer.Serialize(vendorHistory);
+
+            var systemPrompt = """
+                You are an expert fraud detection analyst specializing in invoice fraud for small businesses.
+                Your job is to analyze an invoice against the vendor's historical invoice patterns and
+                identify any anomalies, inconsistencies, or fraud indicators.
+
+                You must respond with ONLY valid JSON matching this exact schema — no markdown, no explanation:
+                {
+                  "riskScore": <integer 0-100>,
+                  "riskLevel": "<LOW|MEDIUM|HIGH|CRITICAL>",
+                  "recommendation": "<one sentence action for the business owner>",
+                  "flags": [
+                    {
+                      "category": "<BANK_CHANGE|AMOUNT_ANOMALY|DATE_ANOMALY|MATH_ERROR|SEQUENCE_GAP|DUPLICATE|VENDOR_INCONSISTENCY|TAX_ERROR>",
+                      "severity": "<CRITICAL|HIGH|MEDIUM|LOW>",
+                      "description": "<specific description of what was found>",
+                      "recommendation": "<specific action to take>"
+                    }
+                  ]
+                }
+
+                Risk score guide:
+                0-25: LOW — normal invoice, no action needed
+                26-50: MEDIUM — minor anomalies, verify before paying
+                51-75: HIGH — significant red flags, contact vendor directly
+                76-100: CRITICAL — strong fraud indicators, hold payment immediately
+
+                If no flags are found, return an empty flags array and riskScore of 0-10.
+                Always calculate and verify math: subtotal + tax = total. Flag any discrepancy.
+                """;
+
+            var userPrompt = $"""
+                CURRENT INVOICE TO ANALYZE:
+                {extractedInvoiceJson}
+
+                VENDOR HISTORY (previous invoices from this vendor):
+                {(vendorHistory.Count > 0 ? historyJson : "No previous invoices found for this vendor — this appears to be a new vendor.")}
+
+                Analyze this invoice for fraud indicators. Check for:
+                1. Amount anomalies vs vendor history (flag if >50% above average)
+                2. Bank account or payment detail changes vs history
+                3. Math errors (subtotal + tax ≠ total)
+                4. Duplicate invoice numbers
+                5. Unusual invoice dates (weekends, holidays, gaps in sequence)
+                6. New vendor with no history (flag as LOW risk for awareness)
+                7. Tax calculation errors
+                8. Any other suspicious patterns
+
+                Be precise — cite specific numbers when flagging anomalies.
+                """;
+
+            var requestBody = new
+            {
+                model = SonnetModel,
+                max_tokens = 1024,
+                system = systemPrompt,
+                messages = new[]
+                {
+                    new { role = "user", content = userPrompt }
+                }
+            };
+
+            try
+            {
+                var json = JsonSerializer.Serialize(requestBody);
+                using var request = new HttpRequestMessage(
+                    HttpMethod.Post, "https://api.anthropic.com/v1/messages");
+                request.Headers.Add("x-api-key", _apiKey);
+                request.Headers.Add("anthropic-version", "2023-06-01");
+                request.Content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                cts.CancelAfter(TimeSpan.FromSeconds(timeoutSeconds));
+
+                var response = await _http.SendAsync(request, cts.Token);
+                var responseBody = await response.Content.ReadAsStringAsync(cts.Token);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogWarning("Fraud analysis API error {Status}: {Body}",
+                        response.StatusCode, responseBody);
+                    return FraudAnalysisResult.ServiceUnavailable();
+                }
+
+                var anthropicResponse = JsonSerializer.Deserialize<AnthropicResponse>(
+                    responseBody,
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+                var rawText = anthropicResponse?.Content?[0]?.Text ?? string.Empty;
+
+                var cleanJson = rawText.Trim();
+                if (cleanJson.StartsWith("```"))
+                {
+                    cleanJson = System.Text.RegularExpressions.Regex.Replace(
+                        cleanJson, @"^```[a-z]*\n?", "", System.Text.RegularExpressions.RegexOptions.Multiline);
+                    cleanJson = cleanJson.Replace("```", "").Trim();
+                }
+
+                var result = JsonSerializer.Deserialize<FraudAnalysisResult>(
+                    cleanJson,
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+                return result ?? FraudAnalysisResult.ServiceUnavailable();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Fraud analysis failed");
+                return FraudAnalysisResult.ServiceUnavailable();
+            }
+        }
+
         public async Task<string> SummarizeAsync(
             byte[] pdfBytes,
             CancellationToken cancellationToken = default)

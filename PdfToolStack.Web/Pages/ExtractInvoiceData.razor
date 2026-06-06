@@ -228,6 +228,73 @@
                                         </div>
                                     }
 
+                                    @if (_fraudResult is not null)
+                                    {
+                                        <div class="extract-fraud-panel extract-fraud-panel--@_fraudResult.RiskLevel.ToLower()">
+                                            <div class="extract-fraud-header">
+                                                <div class="extract-fraud-icon">@GetRiskIcon(_fraudResult.RiskLevel)</div>
+                                                <div class="extract-fraud-content">
+                                                    <p class="extract-fraud-eyebrow">FRAUD RISK ANALYSIS</p>
+                                                    <h3 class="extract-fraud-title">@GetRiskTitle(_fraudResult.RiskLevel)</h3>
+                                                    <p class="extract-fraud-meta">@_historyCount previous @(_historyCount == 1 ? "invoice" : "invoices") on record for this vendor</p>
+                                                </div>
+                                                <div class="extract-fraud-score extract-fraud-score--@_fraudResult.RiskLevel.ToLower()">
+                                                    <span class="extract-fraud-score__num">@_fraudResult.RiskScore</span>
+                                                    <span class="extract-fraud-score__label">/ 100</span>
+                                                </div>
+                                            </div>
+                                            <div class="extract-fraud-recommendation">
+                                                <p>@_fraudResult.Recommendation</p>
+                                            </div>
+                                            @if (_fraudResult.Flags?.Count > 0)
+                                            {
+                                                <div class="extract-fraud-flags">
+                                                    @foreach (var flag in _fraudResult.Flags.OrderBy(f => GetSeverityOrder(f.Severity)))
+                                                    {
+                                                        <div class="extract-fraud-flag extract-fraud-flag--@flag.Severity.ToLower()">
+                                                            <div class="extract-fraud-flag__header">
+                                                                <span class="extract-fraud-flag__badge">@flag.Severity</span>
+                                                                <span class="extract-fraud-flag__category">@FormatCategory(flag.Category)</span>
+                                                            </div>
+                                                            <p class="extract-fraud-flag__desc">@flag.Description</p>
+                                                            <p class="extract-fraud-flag__action">→ @flag.Recommendation</p>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <div class="extract-fraud-clean">
+                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#27ae60" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                                                    <p>No fraud indicators detected. This invoice matches your vendor's historical patterns.</p>
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                    else if (_isPro && _extractedJson is not null && !_isFraudChecking)
+                                    {
+                                        <div class="extract-fraud-cta">
+                                            <div class="extract-fraud-cta__text">
+                                                <p class="extract-fraud-eyebrow">PRO FEATURE</p>
+                                                <p class="extract-fraud-cta__title">Run fraud detection on this invoice</p>
+                                                <p class="extract-fraud-cta__desc">Check for amount anomalies, bank account changes, math errors, and duplicate invoices.</p>
+                                            </div>
+                                            <button class="process-button" @onclick="RunFraudCheckOnly">
+                                                🔍 Run Fraud Check
+                                            </button>
+                                        </div>
+                                    }
+                                    else if (_isFraudChecking)
+                                    {
+                                        <div class="extract-fraud-cta">
+                                            <div class="extract-fraud-cta__text">
+                                                <p class="extract-fraud-eyebrow">ANALYZING</p>
+                                                <p class="extract-fraud-cta__title">Running fraud analysis...</p>
+                                            </div>
+                                            <div class="processing-dots"><span></span><span></span><span></span></div>
+                                        </div>
+                                    }
+
                                     @if (_excelReady)
                                     {
                                         <div class="extract-download-cta">
@@ -332,6 +399,30 @@
                             </div>
                         </div>
 
+                        <div class="extract-fraud-advertise">
+                            <p class="extract-fraud-advertise__title">Invoice Fraud Detection</p>
+                            @if (_isPro)
+                            {
+                                <span class="extract-fraud-advertise__badge">Pro — Active</span>
+                            }
+                            else
+                            {
+                                <span class="extract-fraud-advertise__badge extract-fraud-advertise__badge--upgrade">Pro feature</span>
+                            }
+                            <p class="extract-fraud-advertise__desc">After extraction, run AI fraud analysis to catch:</p>
+                            <ul class="extract-fraud-advertise__list">
+                                <li>Amount anomalies vs vendor history</li>
+                                <li>Bank account changes</li>
+                                <li>Math errors in totals</li>
+                                <li>Duplicate invoice numbers</li>
+                                <li>Unusual invoice dates</li>
+                            </ul>
+                            @if (!_isPro)
+                            {
+                                <a href="/pricing" class="extract-fraud-advertise__cta">Upgrade to Pro →</a>
+                            }
+                        </div>
+
                         <div class="extract-guidance-card">
                             Upload a document and run extraction to generate Excel output.
                         </div>
@@ -363,6 +454,63 @@
     </div>
 </div>
 
+<style>
+    .extract-fraud-panel { border-radius: 10px; border: 1.5px solid var(--border-subtle); overflow: hidden; margin: 20px 0; }
+    .extract-fraud-panel--critical { border-color: rgba(231,76,60,.4); }
+    .extract-fraud-panel--high { border-color: rgba(230,126,34,.4); }
+    .extract-fraud-panel--medium { border-color: rgba(243,156,18,.4); }
+    .extract-fraud-panel--low { border-color: rgba(39,174,96,.4); }
+    .extract-fraud-header { display:flex; align-items:center; gap:14px; padding:18px 20px; background:var(--surface-strong); border-bottom:1px solid var(--border-subtle); }
+    .extract-fraud-icon { font-size:2rem; flex-shrink:0; }
+    .extract-fraud-content { flex:1; min-width:0; }
+    .extract-fraud-eyebrow { margin:0 0 3px; font-size:.7rem; font-weight:900; letter-spacing:.1em; color:var(--text-muted); text-transform:uppercase; }
+    .extract-fraud-title { margin:0 0 4px; font-size:1.05rem; font-weight:900; color:var(--text-primary); }
+    .extract-fraud-meta { margin:0; font-size:.82rem; color:var(--text-muted); }
+    .extract-fraud-score { display:flex; flex-direction:column; align-items:center; padding:10px 16px; border-radius:8px; background:var(--surface); flex-shrink:0; }
+    .extract-fraud-score__num { font-size:2rem; font-weight:900; line-height:1; }
+    .extract-fraud-score__label { font-size:.72rem; color:var(--text-muted); font-weight:600; }
+    .extract-fraud-score--low .extract-fraud-score__num { color:#27ae60; }
+    .extract-fraud-score--medium .extract-fraud-score__num { color:#f39c12; }
+    .extract-fraud-score--high .extract-fraud-score__num { color:#e67e22; }
+    .extract-fraud-score--critical .extract-fraud-score__num { color:#e74c3c; }
+    .extract-fraud-recommendation { padding:12px 20px; border-bottom:1px solid var(--border-subtle); }
+    .extract-fraud-recommendation p { margin:0; font-size:.92rem; font-weight:600; color:var(--text-primary); line-height:1.5; }
+    .extract-fraud-flags { display:grid; }
+    .extract-fraud-flag { padding:12px 20px; border-bottom:1px solid var(--border-subtle); }
+    .extract-fraud-flag:last-child { border-bottom:none; }
+    .extract-fraud-flag--critical { background:rgba(231,76,60,.04); }
+    .extract-fraud-flag--high { background:rgba(230,126,34,.04); }
+    .extract-fraud-flag--medium { background:rgba(243,156,18,.04); }
+    .extract-fraud-flag__header { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+    .extract-fraud-flag__badge { font-size:.7rem; font-weight:900; letter-spacing:.06em; padding:2px 8px; border-radius:4px; color:#fff; }
+    .extract-fraud-flag--critical .extract-fraud-flag__badge { background:#e74c3c; }
+    .extract-fraud-flag--high .extract-fraud-flag__badge { background:#e67e22; }
+    .extract-fraud-flag--medium .extract-fraud-flag__badge { background:#f39c12; }
+    .extract-fraud-flag--low .extract-fraud-flag__badge { background:#95a5a6; }
+    .extract-fraud-flag__category { font-size:.85rem; font-weight:700; color:var(--text-primary); }
+    .extract-fraud-flag__desc { margin:0 0 5px; font-size:.88rem; color:var(--text-primary); line-height:1.5; }
+    .extract-fraud-flag__action { margin:0; font-size:.82rem; color:var(--text-muted); font-style:italic; }
+    .extract-fraud-clean { display:flex; align-items:center; gap:10px; padding:14px 20px; }
+    .extract-fraud-clean p { margin:0; font-size:.9rem; font-weight:600; color:#27ae60; }
+    .extract-fraud-cta { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:18px 20px; border:1px solid var(--border-subtle); border-radius:10px; background:var(--surface-strong); margin:20px 0; flex-wrap:wrap; }
+    .extract-fraud-cta__title { margin:4px 0 6px; font-size:1rem; font-weight:900; color:var(--text-primary); }
+    .extract-fraud-cta__desc { margin:0; font-size:.85rem; color:var(--text-muted); }
+    .processing-dots { display:flex; gap:6px; }
+    .processing-dots span { width:8px; height:8px; border-radius:50%; background:var(--brand-accent-blue); animation:bounce 1.2s infinite; }
+    .processing-dots span:nth-child(2) { animation-delay:.2s; }
+    .processing-dots span:nth-child(3) { animation-delay:.4s; }
+    .extract-fraud-advertise { margin-top:14px; padding:16px 18px; border-radius:12px; background:var(--surface-strong); }
+    .extract-fraud-advertise__title { margin:0 0 6px; font-size:.95rem; font-weight:700; color:var(--text-primary); }
+    .extract-fraud-advertise__badge { display:inline-block; padding:2px 8px; border-radius:20px; background:var(--brand-accent-blue); color:#fff; font-size:.68rem; font-weight:900; letter-spacing:.06em; margin-bottom:10px; }
+    .extract-fraud-advertise__badge--upgrade { background:transparent; color:var(--brand-accent-blue); border:1px solid var(--brand-accent-blue); }
+    .extract-fraud-advertise__desc { margin:0 0 8px; font-size:.88rem; color:var(--text-muted); line-height:1.5; }
+    .extract-fraud-advertise__list { margin:0 0 12px; padding-left:0; list-style:none; display:grid; gap:6px; }
+    .extract-fraud-advertise__list li { font-size:.88rem; color:var(--text-primary); font-weight:600; display:flex; align-items:center; gap:8px; }
+    .extract-fraud-advertise__list li::before { content:"●"; color:var(--brand-accent-blue); font-size:.5rem; flex-shrink:0; }
+    .extract-fraud-advertise__cta { display:inline-block; margin-top:4px; font-size:.85rem; font-weight:800; color:var(--brand-accent-blue); text-decoration:none; }
+    .extract-fraud-advertise__cta:hover { text-decoration:underline; }
+</style>
+
 @code {
     private enum PageState { Upload, Processing, Complete, Error }
     private PageState CurrentState = PageState.Upload;
@@ -384,6 +532,9 @@
     private string _textPreview = string.Empty;
     private bool _ocrFallbackUsed = false;
     private string? _ocrWarning;
+    private FraudAnalysisDto? _fraudResult;
+    private int _historyCount;
+    private bool _isFraudChecking;
 
     protected override async Task OnInitializedAsync()
     {
@@ -641,6 +792,99 @@
         _step = 0;
         _isRateLimit = false;
         _isFreeLimit = false;
+    }
+
+    private async Task RunFraudCheckOnly()
+    {
+        if (_fileBytes is null) return;
+        _isFraudChecking = true;
+        StateHasChanged();
+
+        try
+        {
+            var content = new MultipartFormDataContent();
+            content.Add(new ByteArrayContent(_fileBytes), "file", _fileName ?? "document.pdf");
+
+            var result = await ApiService.PostMultipartWithStatusAsync<FraudCheckResponse>(
+                "api/ai/fraud-check", content);
+
+            if (result.IsSuccess && result.Data is not null)
+            {
+                _fraudResult = result.Data.FraudAnalysis;
+                _historyCount = result.Data.HistoryCount;
+            }
+            else
+            {
+                Toast.ShowError(result.ErrorMessage ?? "Fraud check failed. Please try again.");
+            }
+        }
+        catch
+        {
+            Toast.ShowError("Fraud check failed. Please try again.");
+        }
+        finally
+        {
+            _isFraudChecking = false;
+        }
+    }
+
+    private static string GetRiskIcon(string level) => level?.ToUpper() switch
+    {
+        "CRITICAL" => "🚨",
+        "HIGH"     => "⚠️",
+        "MEDIUM"   => "⚡",
+        _          => "✅"
+    };
+
+    private static string GetRiskTitle(string level) => level?.ToUpper() switch
+    {
+        "CRITICAL" => "Critical Risk — Hold Payment Immediately",
+        "HIGH"     => "High Risk — Contact Vendor Before Paying",
+        "MEDIUM"   => "Medium Risk — Verify Before Processing",
+        _          => "Low Risk — Invoice Looks Normal"
+    };
+
+    private static int GetSeverityOrder(string s) => s?.ToUpper() switch
+    {
+        "CRITICAL" => 0, "HIGH" => 1, "MEDIUM" => 2, _ => 3
+    };
+
+    private static string FormatCategory(string cat) =>
+        cat?.Replace("_", " ") switch
+        {
+            "BANK CHANGE"          => "Bank Account Change",
+            "AMOUNT ANOMALY"       => "Amount Anomaly",
+            "DATE ANOMALY"         => "Date Anomaly",
+            "MATH ERROR"           => "Math Error",
+            "SEQUENCE GAP"         => "Invoice Sequence Gap",
+            "DUPLICATE"            => "Possible Duplicate",
+            "VENDOR INCONSISTENCY" => "Vendor Inconsistency",
+            "TAX ERROR"            => "Tax Calculation Error",
+            var other              => other ?? cat ?? string.Empty
+        };
+
+    private class FraudCheckResponse
+    {
+        public System.Text.Json.JsonElement ExtractedInvoice { get; set; }
+        public FraudAnalysisDto FraudAnalysis { get; set; } = new();
+        public string Vendor { get; set; } = string.Empty;
+        public int HistoryCount { get; set; }
+    }
+
+    private class FraudAnalysisDto
+    {
+        public int RiskScore { get; set; }
+        public string RiskLevel { get; set; } = "LOW";
+        public string Recommendation { get; set; } = string.Empty;
+        public List<FraudFlagDto> Flags { get; set; } = new();
+    }
+
+    private class FraudFlagDto
+    {
+        public string Category { get; set; } = string.Empty;
+        public string Severity { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public string Recommendation { get; set; } = string.Empty;
     }
 
     private static string ToLabel(string camelCase) =>

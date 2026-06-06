@@ -23,6 +23,7 @@ namespace PdfToolStack.Infrastructure.Data
         public DbSet<TeamMember> TeamMembers => Set<TeamMember>();
         public DbSet<TeamInvite> TeamInvites => Set<TeamInvite>();
         public DbSet<StripeProcessedEvent> StripeProcessedEvents => Set<StripeProcessedEvent>();
+        public DbSet<FraudAnalysis> FraudAnalyses => Set<FraudAnalysis>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

@@ -3,7 +3,10 @@ using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using PdfToolStack.Application.DTOs;
 using PdfToolStack.Application.Interfaces;
+using PdfToolStack.Infrastructure.Data;
 using PdfToolStack.Infrastructure.Services;
 using System.Collections.Concurrent;
 using System.Text.Json;
@@ -18,6 +21,7 @@ namespace PdfToolStack.API.Controllers
         private readonly IAiUsageService _usageService;
         private readonly SubscriptionService? _subscriptionService;
         private readonly ILogger<AiController> _logger;
+        private readonly AppDbContext _db;
 
         private const string HaikuModel = "claude-haiku-4-5-20251001";
         private const string OpusModel = "claude-opus-4-6";
@@ -45,15 +49,17 @@ namespace PdfToolStack.API.Controllers
             (int Count, DateTime WindowStart)> _supportCounts = new();
 
         public AiController(
-        AiService aiService,
-        IAiUsageService usageService,
-        ILogger<AiController> logger,
-        SubscriptionService? subscriptionService = null)
+            AiService aiService,
+            IAiUsageService usageService,
+            ILogger<AiController> logger,
+            AppDbContext db,
+            SubscriptionService? subscriptionService = null)
         {
             _aiService = aiService;
             _usageService = usageService;
             _subscriptionService = subscriptionService;
             _logger = logger;
+            _db = db;
         }
 
         // POST api/ai/extract
@@ -139,6 +145,202 @@ namespace PdfToolStack.API.Controllers
                 {
                     error = "Unable to extract structured invoice data from this document."
                 });
+            }
+        }
+
+        // POST api/ai/fraud-check
+        [HttpPost("fraud-check")]
+        [Authorize]
+        [RequestSizeLimit(52428800)]
+        public async Task<IActionResult> AnalyzeFraud(
+            IFormFile file,
+            CancellationToken cancellationToken = default)
+        {
+            string? userId = null;
+            var fileName = file?.FileName ?? "(missing)";
+            var fileSize = file?.Length ?? 0;
+
+            try
+            {
+                _logger.LogInformation(
+                    "Fraud check upload received. FileName: {FileName}, FileSize: {FileSize}",
+                    fileName, fileSize);
+
+                if (!IsValidPdf(file))
+                    return BadRequest(new { error = "A valid PDF file under 50MB is required." });
+
+                userId = GetRequiredUserId();
+                if (userId is null)
+                    return Unauthorized(new { error = "Authentication required." });
+
+                var isPro = await IsProUserAsync(userId);
+                if (!isPro)
+                    return StatusCode(403, new
+                    {
+                        error = "Invoice fraud detection is a Pro feature.",
+                        upgradeUrl = "/pricing"
+                    });
+
+                (bool allowed, IActionResult? limitResponse) = await CheckAiUsageAsync(
+                    userId, "fraud-check", "claude-sonnet-4-5");
+                if (!allowed) return limitResponse!;
+
+                using var ms = new MemoryStream();
+                await file!.CopyToAsync(ms, cancellationToken);
+                var pdfBytes = ms.ToArray();
+                var pageCount = TryCountPdfPages(pdfBytes);
+
+                var extractResult = await _aiService.ExtractDataAsync(
+                    pdfBytes, "invoice", cancellationToken, userId, isPro, pageCount);
+
+                if (!extractResult.IsSuccess || string.IsNullOrWhiteSpace(extractResult.JsonData))
+                    return UnprocessableEntity(new
+                    {
+                        error = "Could not extract invoice data from this PDF. Please ensure it is a valid invoice."
+                    });
+
+                var vendorName = ExtractVendorName(extractResult.JsonData);
+                var history = await GetVendorHistoryAsync(userId, vendorName, cancellationToken);
+
+                var fraudResult = await _aiService.AnalyzeFraudAsync(
+                    extractResult.JsonData, history, cancellationToken);
+
+                if (fraudResult.IsServiceError)
+                    return StatusCode(503, new { error = "Fraud analysis service temporarily unavailable." });
+
+                await SaveFraudAnalysisAsync(userId, extractResult.JsonData, fraudResult, cancellationToken);
+
+                _logger.LogInformation(
+                    "[AUDIT] FraudCheck UserId={UserId} Vendor={Vendor} RiskLevel={RiskLevel} Score={Score}",
+                    userId, vendorName, fraudResult.RiskLevel, fraudResult.RiskScore);
+
+                return Ok(new
+                {
+                    extractedInvoice = JsonSerializer.Deserialize<object>(extractResult.JsonData),
+                    fraudAnalysis = fraudResult,
+                    vendor = vendorName,
+                    historyCount = history.Count
+                });
+            }
+            catch (Exception ex)
+            {
+                LogExceptionDetails(ex,
+                    "Fraud check failed. FileName: {FileName}, FileSize: {FileSize}, UserId: {UserId}",
+                    fileName, fileSize, userId ?? "unknown");
+                return UnprocessableEntity(new { error = "Fraud analysis failed. Please try again." });
+            }
+        }
+
+        private string ExtractVendorName(string invoiceJson)
+        {
+            try
+            {
+                var doc = JsonDocument.Parse(invoiceJson);
+                if (doc.RootElement.TryGetProperty("vendor", out var vendor))
+                    return vendor.GetString() ?? "Unknown Vendor";
+            }
+            catch { }
+            return "Unknown Vendor";
+        }
+
+        private string? ExtractField(string invoiceJson, string fieldName)
+        {
+            try
+            {
+                var doc = JsonDocument.Parse(invoiceJson);
+                if (doc.RootElement.TryGetProperty(fieldName, out var val))
+                    return val.GetString();
+            }
+            catch { }
+            return null;
+        }
+
+        private DateTime? ExtractDateField(string invoiceJson, string fieldName)
+        {
+            try
+            {
+                var raw = ExtractField(invoiceJson, fieldName);
+                if (raw is not null && DateTime.TryParse(raw, out var date))
+                    return date;
+            }
+            catch { }
+            return null;
+        }
+
+        private decimal ExtractAmountField(string invoiceJson, string fieldName)
+        {
+            try
+            {
+                var raw = ExtractField(invoiceJson, fieldName);
+                if (raw is not null)
+                {
+                    var cleaned = raw.Trim().TrimStart('$', '€', '£', '¥').Replace(",", "");
+                    if (decimal.TryParse(cleaned, System.Globalization.NumberStyles.Any,
+                            System.Globalization.CultureInfo.InvariantCulture, out var amount))
+                        return amount;
+                }
+            }
+            catch { }
+            return 0m;
+        }
+
+        private async Task<List<FraudAnalysisHistoryItem>> GetVendorHistoryAsync(
+            string userId, string vendorName, CancellationToken cancellationToken)
+        {
+            try
+            {
+                return await _db.FraudAnalyses
+                    .Where(f => f.UserId == userId && f.VendorName == vendorName)
+                    .OrderByDescending(f => f.InvoiceDate)
+                    .Take(20)
+                    .Select(f => new FraudAnalysisHistoryItem
+                    {
+                        InvoiceNumber = f.InvoiceNumber,
+                        Amount = f.InvoiceAmount,
+                        Currency = f.Currency,
+                        InvoiceDate = f.InvoiceDate,
+                        Notes = f.RiskLevel
+                    })
+                    .ToListAsync(cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Could not load vendor history for {Vendor}", vendorName);
+                return new List<FraudAnalysisHistoryItem>();
+            }
+        }
+
+        private async Task SaveFraudAnalysisAsync(
+            string userId,
+            string invoiceJson,
+            FraudAnalysisResult result,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                var entity = new PdfToolStack.Domain.Entities.FraudAnalysis
+                {
+                    UserId = userId,
+                    VendorName = ExtractVendorName(invoiceJson),
+                    InvoiceNumber = ExtractField(invoiceJson, "invoiceNumber") ?? string.Empty,
+                    InvoiceDate = ExtractDateField(invoiceJson, "invoiceDate") ?? DateTime.UtcNow,
+                    InvoiceAmount = ExtractAmountField(invoiceJson, "totalAmount"),
+                    Currency = ExtractField(invoiceJson, "currency") ?? "USD",
+                    RiskScore = result.RiskScore,
+                    RiskLevel = result.RiskLevel,
+                    Recommendation = result.Recommendation,
+                    FlagsJson = JsonSerializer.Serialize(result.Flags),
+                    RawInvoiceJson = invoiceJson,
+                    AnalyzedAt = DateTime.UtcNow
+                };
+
+                _db.FraudAnalyses.Add(entity);
+                await _db.SaveChangesAsync(cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Could not save fraud analysis for user {UserId}", userId);
+                // Non-fatal — don't fail the request if save fails
             }
         }
 
