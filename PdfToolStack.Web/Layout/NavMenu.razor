@@ -163,6 +163,7 @@
                 <a href="/compare-pdf" class="mob-link" @onclick="CloseMobileMenu"><span class="mob-link-icon">🔍</span><div><div class="mob-link-name">Compare PDFs</div><div class="mob-link-desc">Word-level diff report</div></div></a>
                 <a href="/extract-invoice-data" class="mob-link" @onclick="CloseMobileMenu"><span class="mob-link-icon">📊</span><div><div class="mob-link-name">Extract Invoice Data</div><div class="mob-link-desc">PDF invoice → Excel instantly</div></div></a>
                 <a href="/review-contract" class="mob-link" @onclick="CloseMobileMenu"><span class="mob-link-icon">⚖️</span><div><div class="mob-link-name">Contract Reviewer</div><div class="mob-link-desc">Catch risky clauses with AI</div></div></a>
+                <a href="/contract-dashboard" class="mob-link" @onclick="CloseMobileMenu"><span class="mob-link-icon">📋</span><div><div class="mob-link-name">Contract Dashboard</div><div class="mob-link-desc">Full risk dashboard for contracts</div></div></a>
                 <a href="/ai-rewrite" class="mob-link" @onclick="CloseMobileMenu"><span class="mob-link-icon">✍️</span><div><div class="mob-link-name">AI Rewriter</div><div class="mob-link-desc">Rewrite and change tone</div></div></a>
                 <a href="/translate-pdf" class="mob-link" @onclick="CloseMobileMenu"><span class="mob-link-icon">🌍</span><div><div class="mob-link-name">Translate PDF</div><div class="mob-link-desc">Translate to any language</div></div></a>
             </div>
@@ -340,6 +341,7 @@
         new("Compare Contracts",    "Find differences in contracts",     "/compare-pdf",             "🔍"),
         new("AI Rewriter",          "Rewrite PDF content with AI",       "/ai-rewrite",              "✍️"),
         new("Contract Reviewer",    "Catch risky clauses with AI",       "/review-contract",         "⚖️"),
+        new("Contract Dashboard",   "Full risk dashboard for contracts",  "/contract-dashboard",      "📋"),
     };
 
     private IEnumerable<ToolInfo> FilteredTools =>

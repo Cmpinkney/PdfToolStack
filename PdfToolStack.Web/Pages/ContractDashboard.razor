@@ -1,0 +1,691 @@
+@page "/contract-dashboard"
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Forms
+@using System.Text.Json
+@using System.Text.Json.Serialization
+@inject PdfToolStack.Web.Services.ApiService ApiService
+@inject PdfToolStack.Web.Services.SubscriptionService SubService
+@inject AuthenticationStateProvider Auth
+@inject IJSRuntime JS
+@inject PdfToolStack.Web.Services.ToastService Toast
+
+<SeoHead Title="Contract Dashboard — AI Contract Review & Risk Analysis | PdfToolStack"
+         Description="Upload any contract and get an instant AI-powered dashboard: risk score, key dates, parties, risky clauses, and obligations. Pro feature." />
+
+<div class="tool-page ai-tool-page">
+    <div class="tool-container ai-tool-container">
+
+        @* ── Hero ── *@
+        <div class="tool-hero ai-tool-hero">
+            <div class="trust-row">
+                <span>AI-powered</span>
+                <span>Instant analysis</span>
+                <span>Pro feature</span>
+            </div>
+            <h1>Contract Dashboard</h1>
+            <p>Upload any contract and get a complete AI analysis — risk score, key dates, parties, obligations, and risky clauses in seconds.</p>
+        </div>
+
+        @* ── Stepper ── *@
+        <div class="stepper ai-tool-stepper" aria-label="Contract dashboard steps">
+            <div class="stepper-step active"><span>1</span>Upload</div>
+            <div class="stepper-step"><span>2</span>Reading</div>
+            <div class="stepper-step"><span>3</span>Analysis</div>
+            <div class="stepper-step"><span>4</span>Dashboard</div>
+        </div>
+
+        <AuthorizeView>
+            <NotAuthorized>
+                <div class="ai-upgrade-card">
+                    <div class="ai-upgrade-card__icon">🔒</div>
+                    <h2>Sign in to use Contract Dashboard</h2>
+                    <p>AI-powered contract analysis requires a free account. Pro subscription required.</p>
+                    <a href="/authentication/login" class="process-button ai-tool-primary-cta">Sign in free</a>
+                </div>
+            </NotAuthorized>
+
+            <Authorized>
+                <div class="workflow-grid ai-tool-workflow">
+
+                    @* ── Main workspace ── *@
+                    <div class="workspace-card ai-tool-workspace">
+
+                        @* UPLOAD STATE *@
+                        @if (CurrentState == PageState.Upload)
+                        {
+                            <div class="panel-header">
+                                <p class="panel-eyebrow">UPLOAD CONTRACT</p>
+                                <h2>Start with your contract PDF</h2>
+                                <p class="panel-desc">Upload any contract, agreement, or legal document. AI will build a complete risk dashboard.</p>
+                            </div>
+
+                            @if (!_isPro)
+                            {
+                                <div class="cd-pro-gate">
+                                    <div class="cd-pro-gate__icon">⭐</div>
+                                    <div>
+                                        <p class="cd-pro-gate__title">Contract Dashboard is a Pro feature</p>
+                                        <p class="cd-pro-gate__desc">Upgrade to Pro for full contract analysis — risk scoring, key dates, obligation tracking, and risky clause detection.</p>
+                                    </div>
+                                    <a href="/pricing" class="process-button ai-tool-primary-cta">Upgrade to Pro</a>
+                                </div>
+                            }
+
+                            <FileUpload OnFileSelected="HandleFileSelected"
+                                        OnFileRemoved="HandleFileRemoved"
+                                        Accept=".pdf"
+                                        HintText="Upload a contract PDF — up to 25MB free · 500MB with Pro"
+                                        ActionSummary="AI will read and analyze your entire contract" />
+
+                            @if (_fileBytes is not null && _isPro)
+                            {
+                                <button class="process-button ai-tool-primary-cta" @onclick="RunAnalysis">
+                                    📊 Analyze Contract
+                                </button>
+                            }
+
+                            @if (_error.Length > 0 && CurrentState == PageState.Upload)
+                            {
+                                <AiLimitBanner IsVisible="@_isRateLimit" IsFreeLimit="@_isFreeLimit" Limit="@(_isFreeLimit ? 5 : 200)" />
+                                @if (!_isRateLimit)
+                                {
+                                    <div class="error-container">
+                                        <p>@_error</p>
+                                    </div>
+                                }
+                            }
+                        }
+
+                        @* PROCESSING STATE *@
+                        @if (CurrentState == PageState.Processing)
+                        {
+                            <div class="processing-container">
+                                <div class="processing-spinner">
+                                    <span></span><span></span><span></span>
+                                </div>
+                                <h3>Analyzing your contract...</h3>
+                                <p>Reading your contract and building the risk dashboard. This may take 15–30 seconds for longer documents.</p>
+                            </div>
+                        }
+
+                        @* COMPLETE STATE *@
+                        @if (CurrentState == PageState.Complete && _review is not null)
+                        {
+                            @* Header *@
+                            <div class="review-header">
+                                <div class="review-header__file">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                    </svg>
+                                    <span>@_fileName</span>
+                                </div>
+                                <button class="process-button ai-tool-ghost-cta" @onclick="Reset">Review Another</button>
+                            </div>
+
+                            @* Risk score *@
+                            <div class="risk-score-card risk-score-@(_review.RiskLevel?.ToLower() ?? "low")">
+                                <div class="risk-score-card__header">
+                                    <div>
+                                        <p class="panel-eyebrow">OVERALL RISK LEVEL</p>
+                                        <h3 class="risk-score-card__title">@GetRiskTitle(_review.RiskLevel)</h3>
+                                    </div>
+                                    <span class="risk-badge risk-badge--@(_review.RiskLevel?.ToLower() ?? "low")">
+                                        @(_review.RiskLevel?.ToUpper() ?? "LOW")
+                                    </span>
+                                </div>
+                                <div class="risk-meter">
+                                    <div class="risk-meter__track">
+                                        <div class="risk-meter__fill risk-meter__fill--@(_review.RiskLevel?.ToLower() ?? "low")"></div>
+                                        <div class="risk-meter__marker risk-meter__marker--@(_review.RiskLevel?.ToLower() ?? "low")"></div>
+                                    </div>
+                                    <div class="risk-meter__labels">
+                                        <span>Low</span>
+                                        <span>Medium</span>
+                                        <span>High</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            @* Summary *@
+                            @if (!string.IsNullOrWhiteSpace(_review.Summary))
+                            {
+                                <div class="review-section">
+                                    <p class="panel-eyebrow">SUMMARY</p>
+                                    <p class="review-summary-text">@_review.Summary</p>
+                                </div>
+                            }
+
+                            @* Parties *@
+                            @if (_review.Parties?.Count > 0)
+                            {
+                                <div class="review-section">
+                                    <p class="panel-eyebrow">PARTIES</p>
+                                    <div class="cd-parties-grid">
+                                        @foreach (var party in _review.Parties)
+                                        {
+                                            <div class="cd-party-tag">
+                                                <span class="cd-party-tag__role">@party.Role</span>
+                                                <span class="cd-party-tag__name">@party.Name</span>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+
+                            @* Key Dates *@
+                            @if (_review.KeyDates?.Count > 0)
+                            {
+                                <div class="review-section">
+                                    <p class="panel-eyebrow">KEY DATES</p>
+                                    <div class="cd-dates-grid">
+                                        @foreach (var kd in _review.KeyDates)
+                                        {
+                                            <div class="cd-date-card cd-date-card--@(kd.Importance?.ToLower() ?? "normal")">
+                                                <p class="cd-date-card__label">@kd.Label</p>
+                                                <p class="cd-date-card__date">@kd.Date</p>
+                                                @if (!string.IsNullOrWhiteSpace(kd.Importance))
+                                                {
+                                                    <span class="cd-date-card__importance">@kd.Importance</span>
+                                                }
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+
+                            @* Risky Clauses *@
+                            @if (_review.RiskyClauses?.Count > 0)
+                            {
+                                <div class="review-section">
+                                    <p class="panel-eyebrow">RISKY CLAUSES (@_review.RiskyClauses.Count)</p>
+                                    <div class="cd-clauses">
+                                        @foreach (var clause in _review.RiskyClauses)
+                                        {
+                                            <div class="cd-clause cd-clause--@(clause.Severity?.ToLower() ?? "medium")">
+                                                <div class="cd-clause__header">
+                                                    <span class="cd-clause__severity">@(clause.Severity?.ToUpper() ?? "MEDIUM")</span>
+                                                    <p class="cd-clause__title">@clause.Title</p>
+                                                </div>
+                                                @if (!string.IsNullOrWhiteSpace(clause.Excerpt))
+                                                {
+                                                    <blockquote class="cd-clause__excerpt">"@clause.Excerpt"</blockquote>
+                                                }
+                                                <p class="cd-clause__risk">@clause.Risk</p>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+
+                            @* Obligations *@
+                            @if (_review.Obligations?.Count > 0)
+                            {
+                                <div class="review-section">
+                                    <p class="panel-eyebrow">OBLIGATIONS (@_review.Obligations.Count)</p>
+                                    <div class="cd-obligations">
+                                        @foreach (var ob in _review.Obligations)
+                                        {
+                                            <div class="cd-obligation @(ob.Critical ? "cd-obligation--critical" : "")">
+                                                <div class="cd-obligation__header">
+                                                    @if (ob.Critical)
+                                                    {
+                                                        <span class="cd-obligation__critical-badge">Critical</span>
+                                                    }
+                                                    <span class="cd-obligation__party">@ob.Party</span>
+                                                </div>
+                                                <p class="cd-obligation__desc">@ob.Description</p>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+
+                            @* Missing Elements *@
+                            @if (_review.MissingElements?.Count > 0)
+                            {
+                                <div class="review-section">
+                                    <p class="panel-eyebrow">MISSING ELEMENTS</p>
+                                    <div class="cd-list-items">
+                                        @foreach (var item in _review.MissingElements)
+                                        {
+                                            <div class="cd-list-item cd-list-item--warning">
+                                                <span>⚠️</span>
+                                                <p>@item</p>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+
+                            @* Recommendations *@
+                            @if (_review.Recommendations?.Count > 0)
+                            {
+                                <div class="review-section">
+                                    <p class="panel-eyebrow">RECOMMENDATIONS</p>
+                                    <div class="cd-list-items">
+                                        @foreach (var item in _review.Recommendations)
+                                        {
+                                            <div class="cd-list-item cd-list-item--success">
+                                                <span>✅</span>
+                                                <p>@item</p>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+
+                            @* Disclaimer *@
+                            <div class="cd-disclaimer">
+                                <p>⚖️ This analysis is AI-generated for informational purposes only. It does not constitute legal advice. Always consult a qualified attorney before signing any contract.</p>
+                            </div>
+
+                            <button class="process-button ai-tool-secondary-cta cd-reset-btn" @onclick="Reset">
+                                Review Another Contract
+                            </button>
+                        }
+
+                        @* ERROR STATE *@
+                        @if (CurrentState == PageState.Error)
+                        {
+                            <AiLimitBanner IsVisible="@_isRateLimit" IsFreeLimit="@_isFreeLimit" Limit="@(_isFreeLimit ? 5 : 200)" />
+                            @if (!_isRateLimit)
+                            {
+                                <div class="error-container">
+                                    <p>@_error</p>
+                                    <button class="process-button ai-tool-secondary-cta" @onclick="Reset" style="margin-top:12px;">Try Again</button>
+                                </div>
+                            }
+                        }
+
+                    </div>
+
+                    @* ── Sidebar ── *@
+                    <aside class="settings-card ai-tool-settings">
+                        <p class="panel-eyebrow">WHAT GETS ANALYZED</p>
+                        <h3 class="settings-card__title">Contract Dashboard</h3>
+                        <p class="settings-card__desc">AI reads your entire contract and produces a structured risk dashboard — no prompting required.</p>
+
+                        <div class="cd-sidebar-features">
+                            @foreach (var (icon, label, desc) in new (string, string, string)[] {
+                                ("⚖️", "Risk Score", "Overall contract risk rated low, medium, or high"),
+                                ("👥", "Parties", "All contracting parties identified by role"),
+                                ("📅", "Key Dates", "Deadlines, renewal dates, and critical milestones"),
+                                ("🚨", "Risky Clauses", "Problematic clauses flagged with severity ratings"),
+                                ("📋", "Obligations", "What each party must do — critical items highlighted"),
+                                ("⚠️", "Missing Elements", "Standard clauses absent from the contract"),
+                                ("✅", "Recommendations", "Specific actions to reduce risk before signing"),
+                            })
+                            {
+                                <div class="cd-sidebar-feature">
+                                    <span class="cd-sidebar-feature__icon">@icon</span>
+                                    <div>
+                                        <p class="cd-sidebar-feature__label">@label</p>
+                                        <p class="cd-sidebar-feature__desc">@desc</p>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+
+                        @if (!_isPro)
+                        {
+                            <div class="cd-sidebar-upgrade">
+                                <p class="panel-eyebrow" style="margin-top:20px;">PRO REQUIRED</p>
+                                <p style="font-size:.88rem;color:var(--text-muted);margin:6px 0 12px;line-height:1.5;">Contract Dashboard is included with Pro — along with 200 AI uses/month, batch processing, and more.</p>
+                                <a href="/pricing" class="process-button ai-tool-primary-cta" style="width:100%;text-align:center;">Upgrade to Pro</a>
+                            </div>
+                        }
+
+                        @if (_review is not null)
+                        {
+                            <div class="cd-sidebar-stats">
+                                <p class="panel-eyebrow" style="margin-top:20px;">ANALYSIS SUMMARY</p>
+                                <div class="cd-stat-grid">
+                                    <div class="cd-stat">
+                                        <span class="cd-stat__num">@(_review.RiskyClauses?.Count ?? 0)</span>
+                                        <span class="cd-stat__label">Risky Clauses</span>
+                                    </div>
+                                    <div class="cd-stat">
+                                        <span class="cd-stat__num">@(_review.KeyDates?.Count ?? 0)</span>
+                                        <span class="cd-stat__label">Key Dates</span>
+                                    </div>
+                                    <div class="cd-stat">
+                                        <span class="cd-stat__num">@(_review.Obligations?.Count ?? 0)</span>
+                                        <span class="cd-stat__label">Obligations</span>
+                                    </div>
+                                    <div class="cd-stat">
+                                        <span class="cd-stat__num">@(_review.MissingElements?.Count ?? 0)</span>
+                                        <span class="cd-stat__label">Missing</span>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </aside>
+
+                </div>
+
+                @* ── FAQ ── *@
+                <div class="faq-section">
+                    <h2>Frequently asked questions</h2>
+                    <div class="faq-grid">
+                        <div class="faq-item">
+                            <h3>What types of contracts work?</h3>
+                            <p>Any contract PDF — service agreements, NDAs, employment contracts, lease agreements, vendor contracts, partnership agreements, and more.</p>
+                        </div>
+                        <div class="faq-item">
+                            <h3>Is this legal advice?</h3>
+                            <p>No. The Contract Dashboard is an AI-powered analysis tool for informational purposes. Always consult a qualified attorney before signing any legal document.</p>
+                        </div>
+                        <div class="faq-item">
+                            <h3>How long does analysis take?</h3>
+                            <p>Typically 15–30 seconds depending on contract length. Longer contracts with many clauses take slightly more time.</p>
+                        </div>
+                        <div class="faq-item">
+                            <h3>Is my contract kept private?</h3>
+                            <p>Yes. Your contract is processed in memory and deleted immediately after analysis. We never store, share, or train on your documents.</p>
+                        </div>
+                        <div class="faq-item">
+                            <h3>How is this different from AI contract review?</h3>
+                            <p>The Contract Dashboard structures every finding into a visual dashboard — risk score, date tracker, obligation matrix, and clause severity ratings — rather than a plain text summary.</p>
+                        </div>
+                        <div class="faq-item">
+                            <h3>What is the file size limit?</h3>
+                            <p>Up to 25MB on the free tier. Pro users can upload contracts up to 500MB — covering even the largest multi-party agreements.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </Authorized>
+        </AuthorizeView>
+
+    </div>
+</div>
+
+<style>
+    /* ── Layout — mirrors ReviewContract exactly ── */
+    .cd-pro-gate { display:flex; align-items:center; gap:16px; padding:16px 18px; border:1px solid var(--border-subtle); border-radius:10px; background:var(--surface-muted); margin-bottom:20px; flex-wrap:wrap; }
+    .cd-pro-gate__icon { font-size:1.6rem; flex-shrink:0; }
+    .cd-pro-gate__title { margin:0 0 4px; font-size:.95rem; font-weight:900; color:var(--text-primary); }
+    .cd-pro-gate__desc { margin:0; font-size:.85rem; color:var(--text-muted); line-height:1.5; }
+
+    /* ── Risk score card ── */
+    .risk-score-card { padding:20px 22px; border-radius:10px; border:1px solid var(--border-subtle); background:var(--surface-muted); margin-bottom:20px; }
+    .risk-score-card__header { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:16px; }
+    .risk-score-card__title { margin:4px 0 0; font-size:1.1rem; font-weight:900; color:var(--text-primary); }
+    .risk-badge { display:inline-flex; padding:4px 12px; border-radius:20px; font-size:.75rem; font-weight:900; letter-spacing:.06em; flex-shrink:0; }
+    .risk-badge--low { background:rgba(34,197,94,.15); color:#16a34a; }
+    .risk-badge--medium { background:rgba(234,179,8,.15); color:#ca8a04; }
+    .risk-badge--high { background:rgba(239,68,68,.15); color:#dc2626; }
+    .risk-meter { margin-top:8px; }
+    .risk-meter__track { position:relative; height:8px; border-radius:999px; background:var(--border-subtle); overflow:visible; margin-bottom:6px; }
+    .risk-meter__fill { height:100%; border-radius:999px; }
+    .risk-meter__fill--low { width:20%; background:#16a34a; }
+    .risk-meter__fill--medium { width:55%; background:#ca8a04; }
+    .risk-meter__fill--high { width:90%; background:#dc2626; }
+    .risk-meter__marker { position:absolute; top:50%; width:14px; height:14px; border-radius:50%; border:2px solid var(--surface); transform:translateY(-50%); }
+    .risk-meter__marker--low { left:calc(20% - 7px); background:#16a34a; }
+    .risk-meter__marker--medium { left:calc(55% - 7px); background:#ca8a04; }
+    .risk-meter__marker--high { left:calc(90% - 7px); background:#dc2626; }
+    .risk-meter__labels { display:flex; justify-content:space-between; font-size:.75rem; color:var(--text-muted); font-weight:600; }
+
+    /* ── Review sections ── */
+    .review-section { margin-bottom:24px; padding-bottom:24px; border-bottom:1px solid var(--border-subtle); }
+    .review-section:last-of-type { border-bottom:none; }
+    .review-summary-text { margin:8px 0 0; font-size:.95rem; color:var(--text-primary); line-height:1.7; }
+
+    /* ── Parties ── */
+    .cd-parties-grid { display:flex; flex-wrap:wrap; gap:10px; margin-top:10px; }
+    .cd-party-tag { display:flex; flex-direction:column; gap:2px; padding:10px 14px; border:1px solid var(--border-subtle); border-radius:8px; background:var(--surface-muted); }
+    .cd-party-tag__role { font-size:.72rem; font-weight:900; letter-spacing:.06em; color:var(--brand-accent); text-transform:uppercase; }
+    .cd-party-tag__name { font-size:.92rem; font-weight:700; color:var(--text-primary); }
+
+    /* ── Key dates ── */
+    .cd-dates-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(180px, 1fr)); gap:12px; margin-top:10px; }
+    .cd-date-card { padding:14px; border-radius:8px; border:1px solid var(--border-subtle); background:var(--surface-muted); }
+    .cd-date-card--critical { border-color:rgba(239,68,68,.3); background:rgba(239,68,68,.04); }
+    .cd-date-card--high { border-color:rgba(234,179,8,.3); background:rgba(234,179,8,.04); }
+    .cd-date-card__label { margin:0 0 6px; font-size:.8rem; font-weight:900; color:var(--text-muted); text-transform:uppercase; letter-spacing:.04em; }
+    .cd-date-card__date { margin:0 0 6px; font-size:1rem; font-weight:900; color:var(--text-primary); }
+    .cd-date-card__importance { display:inline-block; font-size:.7rem; font-weight:700; padding:2px 8px; border-radius:4px; background:var(--border-subtle); color:var(--text-muted); }
+
+    /* ── Risky clauses ── */
+    .cd-clauses { display:grid; gap:12px; margin-top:10px; }
+    .cd-clause { border-radius:8px; border:1px solid var(--border-subtle); overflow:hidden; }
+    .cd-clause--high, .cd-clause--critical { border-color:rgba(239,68,68,.3); }
+    .cd-clause--medium { border-color:rgba(234,179,8,.3); }
+    .cd-clause--low { border-color:rgba(34,197,94,.3); }
+    .cd-clause__header { display:flex; align-items:center; gap:10px; padding:12px 14px; background:var(--surface-muted); }
+    .cd-clause__severity { font-size:.7rem; font-weight:900; letter-spacing:.06em; padding:2px 8px; border-radius:4px; color:#fff; flex-shrink:0; }
+    .cd-clause--high .cd-clause__severity, .cd-clause--critical .cd-clause__severity { background:#dc2626; }
+    .cd-clause--medium .cd-clause__severity { background:#ca8a04; }
+    .cd-clause--low .cd-clause__severity { background:#16a34a; }
+    .cd-clause__title { margin:0; font-size:.92rem; font-weight:800; color:var(--text-primary); }
+    .cd-clause__excerpt { margin:10px 14px 6px; padding:10px 12px; border-left:3px solid var(--border-subtle); background:var(--surface-muted); font-size:.85rem; color:var(--text-muted); font-style:italic; line-height:1.6; border-radius:0 6px 6px 0; }
+    .cd-clause--high .cd-clause__excerpt, .cd-clause--critical .cd-clause__excerpt { border-left-color:#dc2626; }
+    .cd-clause--medium .cd-clause__excerpt { border-left-color:#ca8a04; }
+    .cd-clause__risk { margin:0 14px 12px; font-size:.88rem; color:var(--text-primary); line-height:1.5; }
+
+    /* ── Obligations ── */
+    .cd-obligations { display:grid; gap:10px; margin-top:10px; }
+    .cd-obligation { padding:12px 14px; border-radius:8px; border:1px solid var(--border-subtle); background:var(--surface-muted); }
+    .cd-obligation--critical { border-color:rgba(239,68,68,.3); background:rgba(239,68,68,.04); }
+    .cd-obligation__header { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+    .cd-obligation__critical-badge { font-size:.7rem; font-weight:900; padding:2px 8px; border-radius:4px; background:#dc2626; color:#fff; }
+    .cd-obligation__party { font-size:.8rem; font-weight:900; color:var(--brand-accent); text-transform:uppercase; letter-spacing:.04em; }
+    .cd-obligation__desc { margin:0; font-size:.9rem; color:var(--text-primary); line-height:1.55; }
+
+    /* ── List items (missing / recommendations) ── */
+    .cd-list-items { display:grid; gap:8px; margin-top:10px; }
+    .cd-list-item { display:flex; gap:10px; align-items:flex-start; padding:10px 12px; border-radius:8px; border:1px solid var(--border-subtle); background:var(--surface-muted); }
+    .cd-list-item--warning { border-color:rgba(234,179,8,.3); background:rgba(234,179,8,.04); }
+    .cd-list-item--success { border-color:rgba(34,197,94,.3); background:rgba(34,197,94,.04); }
+    .cd-list-item p { margin:0; font-size:.9rem; color:var(--text-primary); line-height:1.5; }
+
+    /* ── Disclaimer ── */
+    .cd-disclaimer { padding:14px 16px; border-radius:8px; background:var(--surface-muted); border:1px solid var(--border-subtle); margin:20px 0; }
+    .cd-disclaimer p { margin:0; font-size:.82rem; color:var(--text-muted); line-height:1.5; }
+
+    /* ── Reset button ── */
+    .cd-reset-btn { width:100%; }
+
+    /* ── Sidebar ── */
+    .settings-card__title { margin:6px 0 8px; font-size:1.05rem; font-weight:900; color:var(--text-primary); }
+    .settings-card__desc { margin:0 0 18px; font-size:.88rem; color:var(--text-muted); line-height:1.55; }
+    .cd-sidebar-features { display:grid; gap:14px; }
+    .cd-sidebar-feature { display:flex; gap:10px; align-items:flex-start; }
+    .cd-sidebar-feature__icon { font-size:1.1rem; flex-shrink:0; margin-top:1px; }
+    .cd-sidebar-feature__label { margin:0 0 2px; font-size:.88rem; font-weight:800; color:var(--text-primary); }
+    .cd-sidebar-feature__desc { margin:0; font-size:.8rem; color:var(--text-muted); line-height:1.4; }
+    .cd-sidebar-upgrade { padding:14px; border-radius:8px; background:var(--surface-muted); border:1px solid var(--border-subtle); margin-top:16px; }
+    .cd-stat-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px; }
+    .cd-stat { padding:12px; border-radius:8px; background:var(--surface-muted); border:1px solid var(--border-subtle); text-align:center; }
+    .cd-stat__num { display:block; font-size:1.6rem; font-weight:900; color:var(--brand-primary); }
+    .cd-stat__label { display:block; font-size:.75rem; font-weight:700; color:var(--text-muted); margin-top:2px; }
+
+    /* ── Review header ── */
+    .review-header { display:flex; align-items:center; justify-content:space-between; gap:12px; padding-bottom:16px; margin-bottom:20px; border-bottom:1px solid var(--border-subtle); }
+    .review-header__file { display:flex; align-items:center; gap:8px; font-size:.9rem; font-weight:700; color:var(--text-primary); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+</style>
+
+@code {
+    private enum PageState { Upload, Processing, Complete, Error }
+    private PageState CurrentState = PageState.Upload;
+
+    private byte[]? _fileBytes;
+    private string? _fileName;
+    private bool _isPro = false;
+    private string _error = string.Empty;
+    private bool _isRateLimit = false;
+    private bool _isFreeLimit = false;
+
+    private ContractReview? _review;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await Auth.GetAuthenticationStateAsync();
+        var user = auth.User;
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            var userId = user.FindFirst("sub")?.Value ?? string.Empty;
+            if (!string.IsNullOrEmpty(userId))
+            {
+                var status = await SubService.GetStatusAsync(userId);
+                _isPro = status.HasPro;
+            }
+        }
+    }
+
+    private void HandleFileSelected(IBrowserFile file)
+    {
+        _fileName = file.Name;
+        var task = ReadFileAsync(file);
+    }
+
+    private async Task ReadFileAsync(IBrowserFile file)
+    {
+        using var stream = file.OpenReadStream(maxAllowedSize: 524_288_000);
+        using var ms = new MemoryStream();
+        await stream.CopyToAsync(ms);
+        _fileBytes = ms.ToArray();
+        StateHasChanged();
+    }
+
+    private void HandleFileRemoved()
+    {
+        _fileBytes = null;
+        _fileName = null;
+    }
+
+    private async Task RunAnalysis()
+    {
+        if (_fileBytes is null) return;
+
+        CurrentState = PageState.Processing;
+        _error = string.Empty;
+        _isRateLimit = false;
+        _isFreeLimit = false;
+        StateHasChanged();
+
+        try
+        {
+            var content = new MultipartFormDataContent();
+            content.Add(new ByteArrayContent(_fileBytes), "file", _fileName ?? "contract.pdf");
+
+            var result = await ApiService.PostMultipartWithStatusAsync<ReviewResponse>(
+                "api/ai/review", content);
+
+            if (result.IsRateLimit)
+            {
+                _isRateLimit = true;
+                _isFreeLimit = result.ErrorMessage?.Contains("free") == true;
+                CurrentState = PageState.Error;
+                return;
+            }
+
+            if (result.IsSuccess && result.Data?.Json is not null)
+            {
+                _review = ParseReview(result.Data.Json);
+                if (_review is not null)
+                {
+                    CurrentState = PageState.Complete;
+                    Toast.ShowSuccess("Contract analysis complete.");
+                }
+                else
+                {
+                    _error = "Could not parse the contract analysis. Please try again.";
+                    CurrentState = PageState.Error;
+                }
+            }
+            else
+            {
+                _error = result.ErrorMessage ?? "Analysis failed. Please try again.";
+                CurrentState = PageState.Error;
+            }
+        }
+        catch (Exception)
+        {
+            _error = "Something went wrong. Please try again.";
+            CurrentState = PageState.Error;
+        }
+    }
+
+    private ContractReview? ParseReview(string json)
+    {
+        try
+        {
+            var clean = json.Trim();
+            if (clean.StartsWith("```"))
+            {
+                clean = System.Text.RegularExpressions.Regex.Replace(
+                    clean, @"^```[a-z]*\n?", "", System.Text.RegularExpressions.RegexOptions.Multiline);
+                clean = clean.Replace("```", "").Trim();
+            }
+            return JsonSerializer.Deserialize<ContractReview>(clean,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        }
+        catch { return null; }
+    }
+
+    private void Reset()
+    {
+        CurrentState = PageState.Upload;
+        _fileBytes = null;
+        _fileName = null;
+        _review = null;
+        _error = string.Empty;
+        _isRateLimit = false;
+        _isFreeLimit = false;
+    }
+
+    private static string GetRiskTitle(string? level) => level?.ToLower() switch
+    {
+        "high"   => "High Risk — Review Carefully Before Signing",
+        "medium" => "Medium Risk — Some Issues Require Attention",
+        _        => "Low Risk — Contract Looks Reasonable"
+    };
+
+    // ── Inner DTOs ────────────────────────────────────────────────────────────
+    private class ReviewResponse
+    {
+        public string? Json { get; set; }
+    }
+
+    private class ContractReview
+    {
+        public string? Summary { get; set; }
+        public string? RiskLevel { get; set; }
+        public List<KeyDate>? KeyDates { get; set; }
+        public List<Party>? Parties { get; set; }
+        public List<Obligation>? Obligations { get; set; }
+        public List<RiskyClause>? RiskyClauses { get; set; }
+        public List<string>? MissingElements { get; set; }
+        public List<string>? Recommendations { get; set; }
+    }
+
+    private class KeyDate
+    {
+        public string? Label { get; set; }
+        public string? Date { get; set; }
+        public string? Importance { get; set; }
+    }
+
+    private class Party
+    {
+        public string? Role { get; set; }
+        public string? Name { get; set; }
+    }
+
+    private class Obligation
+    {
+        public string? Party { get; set; }
+        public string? Description { get; set; }
+        public bool Critical { get; set; }
+    }
+
+    private class RiskyClause
+    {
+        public string? Title { get; set; }
+        public string? Excerpt { get; set; }
+        public string? Risk { get; set; }
+        public string? Severity { get; set; }
+    }
+}
