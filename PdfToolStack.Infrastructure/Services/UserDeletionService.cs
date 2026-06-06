@@ -147,6 +147,26 @@ namespace PdfToolStack.Infrastructure.Services
                 .ToListAsync(cancellationToken);
             _db.UserSubscriptions.RemoveRange(subscriptions);
 
+            var fraudAnalyses = await _db.FraudAnalyses
+                .Where(f => f.UserId == userId)
+                .ToListAsync(cancellationToken);
+            _db.FraudAnalyses.RemoveRange(fraudAnalyses);
+
+            var apiKeys = await _db.ApiKeys
+                .Where(k => k.UserId == userId)
+                .ToListAsync(cancellationToken);
+            _db.ApiKeys.RemoveRange(apiKeys);
+
+            var referrals = await _db.Referrals
+                .Where(r => r.ReferrerId == userId || r.ReferredUserId == userId)
+                .ToListAsync(cancellationToken);
+            _db.Referrals.RemoveRange(referrals);
+
+            var aiCreditPurchases = await _db.AiCreditPurchases
+                .Where(a => a.UserId == userId)
+                .ToListAsync(cancellationToken);
+            _db.AiCreditPurchases.RemoveRange(aiCreditPurchases);
+
             await _db.SaveChangesAsync(cancellationToken);
 
             _logger.LogInformation(

@@ -156,6 +156,22 @@ namespace PdfToolStack.Infrastructure.Data
                 entity.HasIndex(e => e.EventId).IsUnique();
                 entity.HasIndex(e => e.ProcessedAt);
             });
+
+            modelBuilder.Entity<DocumentMemory>(entity =>
+            {
+                entity.Property(e => e.UserId).HasMaxLength(256);
+                entity.Property(e => e.FileName).HasMaxLength(512);
+                entity.Property(e => e.DocumentType).HasMaxLength(64);
+                entity.HasIndex(e => e.UserId);
+                entity.HasIndex(e => e.ExpiresAt);
+                entity.Ignore(e => e.IsExpired);
+            });
+
+            modelBuilder.Entity<UserMemorySettings>(entity =>
+            {
+                entity.Property(e => e.UserId).HasMaxLength(256);
+                entity.HasIndex(e => e.UserId).IsUnique();
+            });
         }
     }
 }
