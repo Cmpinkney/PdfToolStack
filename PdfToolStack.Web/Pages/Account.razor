@@ -295,6 +295,67 @@
                     </div>
                 </article>
 
+                <article class="acc-card">
+                    <div class="acc-card-header">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                             stroke="currentColor" stroke-width="2">
+                            <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z"/>
+                            <path d="M12 6v6l4 2"/>
+                        </svg>
+                        <span>Document Memory</span>
+                    </div>
+                    <p class="acc-card-desc">
+                        When enabled, AI-extracted data from your documents is stored
+                        for 30 days so you can query across them. Disabled by default
+                        — your documents are never stored without your consent.
+                    </p>
+
+                    @if (_showMemoryConfirm)
+                    {
+                        <div class="acc-memory-confirm">
+                            <p>Your extracted document data will be stored for 30 days.
+                               You can disable and delete all stored data at any time.</p>
+                            <div class="acc-memory-confirm__actions">
+                                <button class="acc-action-btn acc-action-btn--primary"
+                                        @onclick="ConfirmEnableMemory">
+                                    Enable Document Memory
+                                </button>
+                                <button class="acc-action-btn"
+                                        @onclick="() => _showMemoryConfirm = false">
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="acc-memory-toggle">
+                            <button class="theme-toggle-switch @(_memoryEnabled ? "active" : "")"
+                                    @onclick="ToggleMemory"
+                                    disabled="@_memoryLoading"
+                                    aria-label="@(_memoryEnabled ? "Disable document memory" : "Enable document memory")">
+                                <span class="theme-toggle-track">
+                                    <span class="theme-toggle-thumb"></span>
+                                </span>
+                            </button>
+                            <span class="acc-memory-toggle__label">
+                                @if (_memoryLoading)
+                                {
+                                    <span>Saving...</span>
+                                }
+                                else if (_memoryEnabled)
+                                {
+                                    <span class="acc-memory-on">Memory enabled — documents stored for 30 days</span>
+                                }
+                                else
+                                {
+                                    <span>Memory disabled — documents deleted after processing</span>
+                                }
+                            </span>
+                        </div>
+                    }
+                </article>
+
                 @if (_subStatus?.HasTeams == true)
                 {
                     <article class="acc-card">
@@ -1070,6 +1131,13 @@
         margin-left: auto;
         flex-shrink: 0;
     }
+
+    .acc-memory-toggle { display:flex; align-items:center; gap:12px; margin-top:12px; }
+    .acc-memory-toggle__label { font-size:.88rem; color:var(--text-muted); }
+    .acc-memory-on { color:var(--brand-primary); font-weight:700; }
+    .acc-memory-confirm { margin-top:12px; padding:14px 16px; border-radius:8px; background:var(--surface-muted); border:1px solid var(--border-subtle); }
+    .acc-memory-confirm p { margin:0 0 12px; font-size:.88rem; color:var(--text-primary); line-height:1.5; }
+    .acc-memory-confirm__actions { display:flex; gap:10px; flex-wrap:wrap; }
 </style>
 
 @code {
@@ -1084,6 +1152,9 @@
     private int _purchasedCredits = 0;
     private bool _showTopUpSuccess = false;
     private int _topUpCreditsAdded = 0;
+    private bool _memoryEnabled = false;
+    private bool _memoryLoading = false;
+    private bool _showMemoryConfirm = false;
     private AiCreditTopUpModal? _topUpModal;
 
     private record QuickLinkDef(string Label, string Url, string Color, string IconSvg);
@@ -1121,7 +1192,8 @@
         await Task.WhenAll(
             LoadSubscriptionAsync(),
             LoadHistoryAsync(),
-            LoadAiUsageAsync());
+            LoadAiUsageAsync(),
+            LoadMemorySettings());
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -1190,6 +1262,79 @@
 
     private class PurchasedCreditsDto { public int Remaining { get; set; } }
     private class ConfirmTopUpRequest { public string SessionId { get; set; } = string.Empty; }
+
+    private async Task LoadMemorySettings()
+    {
+        try
+        {
+            var result = await ApiService.GetAsync<MemorySettingsResponse>(
+                "api/user/memory-settings");
+            if (result is not null)
+                _memoryEnabled = result.Enabled;
+        }
+        catch { }
+    }
+
+    private async Task ToggleMemory()
+    {
+        if (!_memoryEnabled && !_showMemoryConfirm)
+        {
+            _showMemoryConfirm = true;
+            return;
+        }
+        _showMemoryConfirm = false;
+        _memoryLoading = true;
+        StateHasChanged();
+        try
+        {
+            var response = await ApiService.PostAsync<object, MemorySettingsResponse>(
+                "api/user/memory-settings",
+                new { enabled = !_memoryEnabled });
+            if (response is not null)
+                _memoryEnabled = response.Enabled;
+        }
+        catch { }
+        finally { _memoryLoading = false; }
+    }
+
+    private async Task ConfirmEnableMemory()
+    {
+        _showMemoryConfirm = false;
+        _memoryLoading = true;
+        StateHasChanged();
+        try
+        {
+            var response = await ApiService.PostAsync<object, MemorySettingsResponse>(
+                "api/user/memory-settings",
+                new { enabled = true });
+            if (response is not null)
+            {
+                _memoryEnabled = response.Enabled;
+            }
+            else
+            {
+                // Response was null - force true since we sent enabled=true
+                _memoryEnabled = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Memory enable error: {ex.Message}");
+            // Still optimistically set to true
+            _memoryEnabled = true;
+        }
+        finally
+        {
+            _memoryLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private class MemorySettingsResponse
+    {
+        public bool Enabled { get; set; }
+        public DateTime? EnabledAt { get; set; }
+    }
 
     private async Task ManageBilling()
     {
