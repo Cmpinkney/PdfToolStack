@@ -23,6 +23,9 @@ namespace PdfToolStack.Infrastructure.Data
         public DbSet<TeamMember> TeamMembers => Set<TeamMember>();
         public DbSet<TeamInvite> TeamInvites => Set<TeamInvite>();
         public DbSet<StripeProcessedEvent> StripeProcessedEvents => Set<StripeProcessedEvent>();
+        public DbSet<FraudAnalysis> FraudAnalyses => Set<FraudAnalysis>();
+        public DbSet<DocumentMemory> DocumentMemories => Set<DocumentMemory>();
+        public DbSet<UserMemorySettings> UserMemorySettings => Set<UserMemorySettings>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -152,6 +155,22 @@ namespace PdfToolStack.Infrastructure.Data
                 entity.Property(e => e.EventType).IsRequired().HasMaxLength(128);
                 entity.HasIndex(e => e.EventId).IsUnique();
                 entity.HasIndex(e => e.ProcessedAt);
+            });
+
+            modelBuilder.Entity<DocumentMemory>(entity =>
+            {
+                entity.Property(e => e.UserId).HasMaxLength(256);
+                entity.Property(e => e.FileName).HasMaxLength(512);
+                entity.Property(e => e.DocumentType).HasMaxLength(64);
+                entity.HasIndex(e => e.UserId);
+                entity.HasIndex(e => e.ExpiresAt);
+                entity.Ignore(e => e.IsExpired);
+            });
+
+            modelBuilder.Entity<UserMemorySettings>(entity =>
+            {
+                entity.Property(e => e.UserId).HasMaxLength(256);
+                entity.HasIndex(e => e.UserId).IsUnique();
             });
         }
     }
