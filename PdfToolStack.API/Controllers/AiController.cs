@@ -260,14 +260,20 @@ namespace PdfToolStack.API.Controllers
 
             using var ms = new MemoryStream();
             await file.CopyToAsync(ms, cancellationToken);
+            var isPro = await IsProUserAsync(userId);
 
             var result = await _aiService.ReviewContractAsync(
-                ms.ToArray(), cancellationToken);
+                ms.ToArray(), userId, isPro, cancellationToken);
 
             if (!result.IsSuccess)
                 return UnprocessableEntity(new { error = result.ErrorMessage });
 
-            return Ok(new { json = result.JsonData });
+            return Ok(new
+            {
+                json = result.JsonData,
+                warning = result.Warning,
+                ocrFallbackUsed = !string.IsNullOrWhiteSpace(result.Warning)
+            });
         }
 
         // POST api/ai/ocr

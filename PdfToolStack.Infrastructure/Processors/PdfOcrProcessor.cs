@@ -137,11 +137,12 @@ namespace PdfToolStack.Infrastructure.Processors
         public string ExtractText(
             byte[] pdfBytes,
             string language = "eng",
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken = default,
+            int? maxPages = null)
         {
             language = ValidateLanguageData(language);
 
-            var images = RenderPages(pdfBytes, cancellationToken);
+            var images = RenderPages(pdfBytes, cancellationToken, maxPages);
             var sb = new System.Text.StringBuilder();
 
             using var engine = new TesseractEngine(

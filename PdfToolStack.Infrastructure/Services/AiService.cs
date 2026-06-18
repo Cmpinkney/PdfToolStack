@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using PdfToolStack.Application.DTOs;
+using PdfToolStack.Infrastructure.Services.Ocr;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
@@ -16,6 +17,7 @@ namespace PdfToolStack.Infrastructure.Services
         private readonly string _model;
         private readonly int _maxTokens;
         private readonly ILogger<AiService> _logger;
+        private readonly SmartOcrTextService? _smartOcrTextService;
         // Add these constants inside AiService class
         private const string HaikuModel = "claude-haiku-4-5-20251001";
         // _model field stays as Opus for contract review
@@ -25,13 +27,15 @@ namespace PdfToolStack.Infrastructure.Services
             string apiKey,
             string model,
             int maxTokens,
-            ILogger<AiService> logger)
+            ILogger<AiService> logger,
+            SmartOcrTextService? smartOcrTextService = null)
         {
             _http = http;
             _apiKey = apiKey;
             _model = model;
             _maxTokens = maxTokens;
             _logger = logger;
+            _smartOcrTextService = smartOcrTextService;
         }
 
         public async Task<ExtractResult> ExtractDataAsync(
@@ -163,14 +167,49 @@ namespace PdfToolStack.Infrastructure.Services
 
         public async Task<ContractReviewResult> ReviewContractAsync(
             byte[] pdfBytes,
+            string userId = "unknown",
+            bool isProUser = false,
             CancellationToken cancellationToken = default)
         {
             var text = ExtractText(pdfBytes);
+            string? ocrWarning = null;
 
-            if (string.IsNullOrWhiteSpace(text))
-                return ContractReviewResult.Failure(
-                    "Could not extract text from this PDF. " +
-                    "It may be a scanned image — try OCR first.");
+            if (IsLowQualityContractText(text, pdfBytes))
+            {
+                if (_smartOcrTextService == null)
+                {
+                    return ContractReviewResult.Failure(
+                        "This appears to be a scanned PDF and the text quality is too low for contract review. Try a clearer scan.");
+                }
+
+                var ocrResult = await _smartOcrTextService.ExtractTextAsync(
+                    pdfBytes,
+                    new OcrRequestContext(userId, isProUser),
+                    cancellationToken);
+
+                if (!ocrResult.HasUsableText ||
+                    IsLowQualityContractText(ocrResult.Text, pdfBytes))
+                {
+                    _logger.LogInformation(
+                        "Contract review OCR text too low quality. Provider: {Provider}, PageCount: {PageCount}, PagesProcessed: {PagesProcessed}, ExtractedTextLength: {ExtractedTextLength}, FallbackReason: {FallbackReason}, UserId: {UserId}, IsPro: {IsPro}",
+                        ocrResult.Provider,
+                        ocrResult.PageCount,
+                        ocrResult.PagesProcessed,
+                        ocrResult.ExtractedTextLength,
+                        ocrResult.FallbackReason,
+                        userId,
+                        isProUser);
+
+                    return ContractReviewResult.Failure(
+                        "This appears to be a scanned PDF and the text quality is too low for contract review. Try a clearer scan.");
+                }
+
+                text = ocrResult.Text;
+                ocrWarning = ocrResult.FallbackUsed
+                    ? ocrResult.Warning ??
+                      "This review was generated from OCR text. Handwriting and poor scans may reduce accuracy."
+                    : null;
+            }
 
             if (text.Length > 16000)
                 text = text[..16000] + "\n[Document truncated]";
@@ -230,7 +269,7 @@ namespace PdfToolStack.Infrastructure.Services
             if (content.EndsWith("```"))
                 content = content[..^3];
 
-            return ContractReviewResult.Success(content.Trim());
+            return ContractReviewResult.Success(content.Trim(), ocrWarning);
         }
 
         public class ContractReviewResult
@@ -238,9 +277,12 @@ namespace PdfToolStack.Infrastructure.Services
             public bool IsSuccess { get; private set; }
             public string JsonData { get; private set; } = string.Empty;
             public string? ErrorMessage { get; private set; }
+            public string? Warning { get; private set; }
 
-            public static ContractReviewResult Success(string json) =>
-                new() { IsSuccess = true, JsonData = json };
+            public static ContractReviewResult Success(
+                string json,
+                string? warning = null) =>
+                new() { IsSuccess = true, JsonData = json, Warning = warning };
 
             public static ContractReviewResult Failure(string error) =>
                 new() { IsSuccess = false, ErrorMessage = error };
@@ -523,6 +565,27 @@ namespace PdfToolStack.Infrastructure.Services
             catch
             {
                 return string.Empty;
+            }
+        }
+
+        private static bool IsLowQualityContractText(
+            string? text,
+            byte[] pdfBytes)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+                return true;
+
+            if (OcrTextResult.CountMeaningfulCharacters(text) >= 800)
+                return false;
+
+            try
+            {
+                using var doc = PdfDocument.Open(pdfBytes);
+                return doc.GetPages().Take(2).Count() > 1;
+            }
+            catch
+            {
+                return true;
             }
         }
 

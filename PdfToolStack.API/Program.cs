@@ -14,6 +14,7 @@ using PdfToolStack.Infrastructure.Data;
 using PdfToolStack.Infrastructure.Processors;
 using PdfToolStack.Infrastructure.Repositories;
 using PdfToolStack.Infrastructure.Services;
+using PdfToolStack.Infrastructure.Services.Ocr;
 using PdfToolStack.Infrastructure.Storage;
 using Serilog;
 using Syncfusion.Blazor;
@@ -277,19 +278,35 @@ try
 
     // ── AI Service ────────────────────────────────────────────────────────────
     builder.Services.AddHttpClient();
+    builder.Services.Configure<GoogleVisionOptions>(
+        builder.Configuration.GetSection(GoogleVisionOptions.SectionName));
+    builder.Services.AddScoped<TesseractOcrTextProvider>(sp =>
+    {
+        var tessDataPath = Path.Combine(AppContext.BaseDirectory, "tessdata");
+        var logger = sp.GetRequiredService<ILogger<TesseractOcrTextProvider>>();
+        return new TesseractOcrTextProvider(tessDataPath, logger);
+    });
+    builder.Services.AddScoped<GoogleVisionOcrTextProvider>();
+    builder.Services.AddScoped<IOcrTextProvider>(sp =>
+        sp.GetRequiredService<TesseractOcrTextProvider>());
+    builder.Services.AddScoped<IOcrTextProvider>(sp =>
+        sp.GetRequiredService<GoogleVisionOcrTextProvider>());
+    builder.Services.AddScoped<SmartOcrTextService>();
     builder.Services.AddScoped<AiService>(sp =>
     {
         var config = sp.GetRequiredService<IConfiguration>();
         var http = sp.GetRequiredService<IHttpClientFactory>()
             .CreateClient();
         var logger = sp.GetRequiredService<ILogger<AiService>>();
+        var smartOcr = sp.GetRequiredService<SmartOcrTextService>();
         return new AiService(
             http,
             config["Anthropic:ApiKey"] ?? throw new InvalidOperationException("Missing Anthropic:ApiKey"),
             config["Anthropic:Model"] ?? "claude-opus-4-6",
             int.TryParse(config["Anthropic:MaxTokens"],
                 out var mt) ? mt : 2000,
-            logger);
+            logger,
+            smartOcr);
     });
 
     // ── Cloud Service ────────────────────────────────────────────────────────────
