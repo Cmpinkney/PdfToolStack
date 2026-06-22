@@ -126,6 +126,9 @@
                     <div class="processing-container">
                         <div class="spinner"></div>
                         <h2>Compressing your PDF</h2>
+                        <div class="processing-progress-track" aria-hidden="true">
+                            <div class="processing-progress-fill"></div>
+                        </div>
                         <span>Optimizing file size while preserving readable text and layout.</span>
                     </div>
                 }
@@ -857,6 +860,28 @@
         box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
         margin-top: 0.9rem;
         padding: 1rem 1.1rem;
+    }
+
+    .processing-progress-track {
+        width: 100%;
+        max-width: 320px;
+        height: 4px;
+        background: #dbeafe;
+        border-radius: 99px;
+        overflow: hidden;
+    }
+
+    .processing-progress-fill {
+        height: 100%;
+        border-radius: 99px;
+        background: linear-gradient(90deg, #6d5dfc, #2563eb, #06b6d4);
+        animation: compress-sweep 1.6s ease-in-out infinite;
+    }
+
+    @@keyframes compress-sweep {
+        0%   { width: 0%;   margin-left: 0%;   }
+        50%  { width: 60%;  margin-left: 20%;  }
+        100% { width: 0%;   margin-left: 100%; }
     }
 
     @@keyframes spin {

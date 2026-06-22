@@ -21,7 +21,7 @@
 
         body {
             margin: 0;
-            background: #f8fafc;
+            background: #eef0f8;
         }
 
         #app {
@@ -34,146 +34,172 @@
             place-items: center;
             padding: 32px 18px;
             box-sizing: border-box;
-            color: #172033;
             font-family: Inter, "Segoe UI", Arial, sans-serif;
-            background:
-                radial-gradient(circle at 18% 18%, rgba(109, 93, 252, 0.14), transparent 30%),
-                radial-gradient(circle at 82% 10%, rgba(6, 182, 212, 0.14), transparent 28%),
-                linear-gradient(135deg, #f8f7ff 0%, #eef5ff 48%, #f8fafc 100%);
+            background: #eef0f8;
         }
 
         .startup-card {
-            width: min(760px, 100%);
+            width: min(680px, 100%);
             border: 1px solid rgba(148, 163, 184, 0.18);
             border-radius: 28px;
-            background: rgba(255, 255, 255, 0.88);
-            box-shadow: 0 28px 80px rgba(15, 23, 42, 0.12);
+            background: #ffffff;
+            box-shadow: 0 24px 64px rgba(15, 23, 42, 0.08);
             padding: clamp(28px, 6vw, 48px);
             text-align: center;
         }
 
         .startup-logo {
-            width: min(280px, 72vw);
+            width: min(260px, 68vw);
             height: auto;
             display: block;
-            margin: 0 auto 22px;
+            margin: 0 auto 6px;
         }
 
-        .startup-status {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            min-height: 34px;
-            border: 1px solid rgba(37, 99, 235, 0.16);
-            border-radius: 999px;
-            background: #eff6ff;
-            color: #1d4ed8;
-            font-size: 0.86rem;
-            font-weight: 800;
-            padding: 0.38rem 0.76rem;
+        .startup-tagline {
+            font-size: 0.68rem;
+            letter-spacing: 0.14em;
+            color: #94a3b8;
+            text-transform: uppercase;
+            margin: 0 0 24px;
         }
 
-        .startup-spinner {
-            width: 14px;
-            height: 14px;
-            border: 2px solid rgba(37, 99, 235, 0.22);
-            border-top-color: #2563eb;
-            border-radius: 999px;
-            animation: startup-spin 0.8s linear infinite;
+        .startup-progress-track {
+            width: 100%;
+            height: 3px;
+            background: #e2e6f0;
+            border-radius: 99px;
+            margin: 0 0 28px;
+            overflow: hidden;
+        }
+
+        .startup-progress-fill {
+            height: 100%;
+            border-radius: 99px;
+            background: #2250F4;
+            animation: startup-sweep 2s ease-in-out infinite;
+        }
+
+        @keyframes startup-sweep {
+            0%   { width: 0%;   margin-left: 0%;   }
+            50%  { width: 60%;  margin-left: 20%;  }
+            100% { width: 0%;   margin-left: 100%; }
         }
 
         .startup-card h1 {
-            margin: 22px 0 10px;
-            color: #111827;
+            margin: 0 0 10px;
+            color: #172033;
             font-family: "Plus Jakarta Sans", Inter, "Segoe UI", Arial, sans-serif;
-            font-size: clamp(2rem, 5vw, 3.3rem);
-            line-height: 1.05;
-            letter-spacing: -0.02em;
+            font-size: clamp(1.8rem, 4.5vw, 2.8rem);
+            line-height: 1.08;
+            letter-spacing: -0.025em;
+            font-weight: 700;
+        }
+
+        .startup-card h1 span {
+            color: #2250F4;
         }
 
         .startup-card p {
-            max-width: 600px;
-            margin: 0 auto 26px;
+            max-width: 480px;
+            margin: 0 auto 28px;
             color: #526173;
-            font-size: 1rem;
-            line-height: 1.7;
+            font-size: 0.95rem;
+            line-height: 1.65;
         }
 
-        .startup-skeleton {
+        .startup-tools {
             display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 12px;
-            margin: 0 auto 24px;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 8px;
+            margin: 0 0 20px;
         }
 
-        .startup-skeleton span {
-            height: 74px;
-            border: 1px solid rgba(148, 163, 184, 0.18);
-            border-radius: 18px;
-            background:
-                linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0)),
-                linear-gradient(135deg, #eef2ff, #ecfeff);
-            background-size: 220% 100%, 100% 100%;
-            animation: startup-shimmer 1.35s ease-in-out infinite;
+        .startup-tool {
+            border: 1px solid #e2e6f0;
+            border-radius: 12px;
+            padding: 12px 6px 10px;
+            background: #f7f8fc;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 7px;
+            text-decoration: none;
+            color: #172033;
+            font-size: 0.73rem;
+            font-weight: 500;
+            transition: border-color 0.15s, background 0.15s;
+        }
+
+        .startup-tool:hover {
+            border-color: #2250F4;
+            background: #eef2ff;
+        }
+
+        .startup-tool-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: #e8eeff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .startup-tool-icon svg {
+            width: 15px;
+            height: 15px;
+            stroke: #2250F4;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
         }
 
         .startup-links {
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
-            gap: 10px;
+            gap: 8px;
         }
 
         .startup-links a {
             display: inline-flex;
             align-items: center;
-            min-height: 36px;
-            border: 1px solid rgba(37, 99, 235, 0.16);
+            min-height: 34px;
+            border: 1px solid rgba(34, 80, 244, 0.2);
             border-radius: 999px;
             background: #ffffff;
-            color: #2563eb;
-            font-size: 0.9rem;
-            font-weight: 800;
-            padding: 0.42rem 0.72rem;
+            color: #2250F4;
+            font-size: 0.82rem;
+            font-weight: 600;
+            padding: 0.3rem 0.9rem;
             text-decoration: none;
+            transition: background 0.12s, border-color 0.12s;
+        }
+
+        .startup-links a:hover {
+            background: #eef2ff;
+            border-color: #2250F4;
         }
 
         .startup-noscript {
-            margin-top: 22px;
-            border-radius: 16px;
+            margin-top: 20px;
+            border-radius: 12px;
             background: #fff7ed;
             color: #9a3412;
-            padding: 14px 16px;
-            font-size: 0.92rem;
+            padding: 12px 16px;
+            font-size: 0.88rem;
             line-height: 1.55;
         }
 
-        @keyframes startup-spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        @keyframes startup-shimmer {
-            0% {
-                background-position: 180% 0, 0 0;
-            }
-            100% {
-                background-position: -80% 0, 0 0;
-            }
-        }
-
-        @media (max-width: 640px) {
+        @media (max-width: 520px) {
             .startup-card {
-                border-radius: 22px;
+                border-radius: 20px;
             }
 
-            .startup-skeleton {
-                grid-template-columns: 1fr;
-            }
-
-            .startup-skeleton span {
-                height: 54px;
+            .startup-tools {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
             }
         }
     </style>
@@ -384,23 +410,48 @@
     <div id="app">
         <div class="startup-screen" role="status" aria-live="polite">
             <div class="startup-card">
+
                 <img class="startup-logo"
                      src="/images/pdftoolstack-logo-full.png"
                      alt="PdfToolStack" />
-                <div class="startup-status">
-                    <span class="startup-spinner" aria-hidden="true"></span>
-                    <span>Loading PdfToolStack...</span>
+
+                <p class="startup-tagline">Compress &middot; Sign &middot; Extract</p>
+
+                <div class="startup-progress-track" aria-hidden="true">
+                    <div class="startup-progress-fill"></div>
                 </div>
-                <h1>PDF workflows are getting ready.</h1>
-                <p>
-                    PdfToolStack helps you compress, merge, split, convert, sign, redact,
-                    OCR, and summarize PDFs online with practical document tools.
-                </p>
-                <div class="startup-skeleton" aria-hidden="true">
-                    <span></span>
-                    <span></span>
-                    <span></span>
+
+                <h1>Your PDF workspace<br>is <span>loading.</span></h1>
+
+                <p>35+ tools. AI-powered. Privacy-first.<br>Files deleted in 1&nbsp;hour — no account needed.</p>
+
+                <div class="startup-tools" aria-hidden="true">
+                    <a class="startup-tool" href="/merge-pdf">
+                        <div class="startup-tool-icon">
+                            <svg viewBox="0 0 24 24"><path d="M8 3H5L2 9h20l-3-6h-3M8 3h8M2 9l2 12h16l2-12"/></svg>
+                        </div>
+                        Merge PDF
+                    </a>
+                    <a class="startup-tool" href="/compress-pdf">
+                        <div class="startup-tool-icon">
+                            <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        </div>
+                        Compress
+                    </a>
+                    <a class="startup-tool" href="/sign-pdf">
+                        <div class="startup-tool-icon">
+                            <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                        </div>
+                        Sign PDF
+                    </a>
+                    <a class="startup-tool" href="/review-contract">
+                        <div class="startup-tool-icon">
+                            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                        </div>
+                        AI Review
+                    </a>
                 </div>
+
                 <nav class="startup-links" aria-label="Popular PDF tools">
                     <a href="/compress-pdf">Compress PDF</a>
                     <a href="/merge-pdf">Merge PDF</a>
@@ -411,12 +462,14 @@
                     <a href="/ai-summarizer">AI PDF Summarizer</a>
                     <a href="/pdf-ocr">PDF OCR</a>
                 </nav>
+
                 <noscript>
                     <div class="startup-noscript">
                         JavaScript is required to run the interactive PDF tools.
                         You can still use the links above to browse available workflows.
                     </div>
                 </noscript>
+
             </div>
         </div>
     </div>
