@@ -28,6 +28,12 @@ builder.Services.AddScoped(_ =>
     }));
 builder.Services.AddScoped<FormulaUsageService>();
 
+builder.Services.AddScoped(_ =>
+    new InvoiceExtractApiService(new HttpClient
+    {
+        BaseAddress = new Uri(apiBaseUrl)
+    }));
+
 var auth0Authority = builder.Configuration["Auth0:Authority"];
 var auth0ClientId = builder.Configuration["Auth0:ClientId"];
 

@@ -7,8 +7,10 @@
     <base href="/" />
     <meta name="description" content="ExcelToolStack is a premium workspace for AI spreadsheet workflows, templates, tools, and practical guides." />
     <link rel="canonical" href="https://exceltoolstack.com/" />
-    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
-    <link rel="apple-touch-icon" href="images/brand/exceltoolstack-app-icon.svg" />
+    <link rel="icon" type="image/svg+xml" href="/images/favicon.svg" />
+    <link rel="apple-touch-icon" href="/images/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
     <meta name="theme-color" content="#075c46" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#0a1713" media="(prefers-color-scheme: dark)" />
     <script>
@@ -141,5 +143,11 @@
         </div>
     </div>
     <script src="_framework/blazor.webassembly.js"></script>
+    <script>
+        window.addEventListener('scroll', () => {
+            const nav = document.getElementById('xlNavbar');
+            if (nav) nav.classList.toggle('scrolled', window.scrollY > 10);
+        });
+    </script>
 </body>
 </html>

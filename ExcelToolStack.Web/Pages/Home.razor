@@ -1,319 +1,262 @@
 @page "/"
-@inject ProductBranding Branding
+@using Microsoft.AspNetCore.Components.Authorization
 
-<PageTitle>@Branding.SiteName - AI Spreadsheet Workflows, Templates, and Tools</PageTitle>
+<PageTitle>ExcelToolStack — AI Spreadsheet Tools for Teams</PageTitle>
 <HeadContent>
-    <meta name="description" content="ExcelToolStack is the upcoming AI-first workspace for spreadsheet workflows, Excel templates, everyday productivity tools, and practical how-to guides." />
-    <link rel="canonical" href="@Branding.SiteUrl" />
-    <meta property="og:title" content="@($"{Branding.SiteName} - AI Spreadsheet Workflows")" />
-    <meta property="og:description" content="Plan AI spreadsheet workflows, templates, tools, and guides for everyday Excel productivity." />
+    <meta name="description" content="Generate formulas, clean data, convert files, and review workbooks with AI. ExcelToolStack gives spreadsheet-heavy teams a faster, smarter workflow." />
+    <meta name="keywords" content="excel formula generator, clean excel data, csv to excel, ai spreadsheet tools, excel workflow automation" />
+    <link rel="canonical" href="https://exceltoolstack.com/" />
+    <meta property="og:title" content="ExcelToolStack — AI Spreadsheet Tools for Teams" />
+    <meta property="og:description" content="Generate formulas, clean data, convert files, and review workbooks with AI." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://exceltoolstack.com/" />
     <script type="application/ld+json">
     {
       "@@context": "https://schema.org",
-      "@@type": "FAQPage",
-      "@@id": "@($"{Branding.SiteUrl}/#faq")",
-      "mainEntity": [
-        {
-          "@@type": "Question",
-          "name": "What is ExcelToolStack for?",
-          "acceptedAnswer": {
-            "@@type": "Answer",
-            "text": "ExcelToolStack is positioned for AI spreadsheet workflows including formula generation, cleanup, templates, workbook review, and reporting operations."
-          }
-        },
-        {
-          "@@type": "Question",
-          "name": "Does ExcelToolStack require an install?",
-          "acceptedAnswer": {
-            "@@type": "Answer",
-            "text": "No. The public ExcelToolStack shell runs in the browser. Individual tool pages describe which workflows are live or planned."
-          }
-        },
-        {
-          "@@type": "Question",
-          "name": "Can teams use ExcelToolStack?",
-          "acceptedAnswer": {
-            "@@type": "Answer",
-            "text": "The product direction is built for operations, finance, reporting, and spreadsheet-heavy teams that need repeatable workbook workflows."
-          }
-        }
-      ]
+      "@@type": "SoftwareApplication",
+      "name": "ExcelToolStack",
+      "applicationCategory": "BusinessApplication",
+      "operatingSystem": "Web",
+      "url": "https://exceltoolstack.com/",
+      "description": "AI-powered spreadsheet tools for teams. Generate formulas, clean data, convert CSV files, and review workbooks.",
+      "offers": { "@@type": "Offer", "price": "0", "priceCurrency": "USD" }
     }
     </script>
 </HeadContent>
 
-<section class="hero home-hero concept-hero">
-    <div class="hero-copy">
-        <p class="eyebrow">AI spreadsheet workflow platform</p>
-        <h1>AI spreadsheet workflows, templates, and tools for <span class="text-highlight">teams.</span></h1>
-        <p class="lead">
-            @Branding.SiteName gives spreadsheet-heavy teams a premium workspace for generating formulas,
-            cleaning data, packaging reports, and automating Excel workflows.
-        </p>
-        <div class="hero-actions">
-            <a class="button button--primary" href="/ai-excel-formula-generator"><span aria-hidden="true">AI</span> Explore AI Tools</a>
-            <a class="button button--secondary" href="/templates"><span aria-hidden="true">T</span> Browse Templates</a>
-            <a class="button button--secondary" href="/pricing"><span aria-hidden="true">$</span> View Pricing</a>
+<!-- HERO -->
+<section class="xl-hero">
+    <div class="xl-hero-inner">
+        <div class="xl-hero-content">
+            <div class="xl-hero-eyebrow">AI Spreadsheet Workflows</div>
+            <h1 class="xl-hero-headline">
+                Stop fighting your<br />
+                <span class="xl-hero-accent">spreadsheets.</span>
+            </h1>
+            <p class="xl-hero-sub">
+                Generate formulas from plain English, clean messy exports, convert CSV files,
+                and review workbooks — without leaving your browser.
+            </p>
+            <div class="xl-hero-actions">
+                <a href="/ai-excel-formula-generator" class="xl-btn-primary">
+                    Try AI Formula Copilot
+                </a>
+                <a href="/tools" class="xl-btn-secondary">Browse all tools</a>
+            </div>
+            <div class="xl-hero-proof">
+                <span>✓ No install required</span>
+                <span>✓ Works in your browser</span>
+                <span>✓ Free to start</span>
+            </div>
+            <div class="xl-hero-stats">
+                <div class="xl-hero-stat">
+                    <span class="xl-stat-value">10+</span>
+                    <span class="xl-stat-label">Excel tools</span>
+                </div>
+                <div class="xl-hero-stat-divider"></div>
+                <div class="xl-hero-stat">
+                    <span class="xl-stat-value">AI</span>
+                    <span class="xl-stat-label">Formula Copilot</span>
+                </div>
+                <div class="xl-hero-stat-divider"></div>
+                <div class="xl-hero-stat">
+                    <span class="xl-stat-value">$0</span>
+                    <span class="xl-stat-label">to start</span>
+                </div>
+                <div class="xl-hero-stat-divider"></div>
+                <div class="xl-hero-stat">
+                    <span class="xl-stat-value">Free</span>
+                    <span class="xl-stat-label">no signup</span>
+                </div>
+            </div>
         </div>
-        <div class="hero-proof" aria-label="Product focus areas">
-            <span>AI Powered</span>
-            <span>Secure</span>
-            <span>No Install</span>
-            <span>Works in your browser</span>
+        <div class="xl-hero-visual">
+            <ExcelWorkflowHeroVisual />
         </div>
     </div>
-    <ExcelWorkflowHeroVisual />
 </section>
 
-<section class="excel-command-center" id="workflows">
-    <div class="section-heading section-heading--center">
-        <p class="eyebrow">Command center</p>
-        <h2>Start with the spreadsheet workflow in front of you.</h2>
-        <p>Jump into formula generation, cleanup, conversion, templates, or workflow planning without hunting through a utility directory.</p>
-    </div>
-    <div class="command-search-shell" aria-label="Spreadsheet workflow search preview">
-        <span aria-hidden="true">Search</span>
-        <strong>formula for commission, clean CRM export, convert CSV, review workbook...</strong>
-    </div>
-    <div class="command-hints" aria-label="Popular spreadsheet workflows">
-        <a href="/ai-excel-formula-generator">Formula Copilot</a>
-        <a href="/clean-excel-data">Clean data</a>
-        <a href="/csv-to-excel">CSV to Excel</a>
-        <a href="/remove-duplicates-excel">Remove duplicates</a>
-        <a href="/templates">Templates</a>
-    </div>
-</section>
-
-<section class="trust-bar excel-trust-bar" aria-label="ExcelToolStack trust highlights">
-    <div class="trust-item">Browser-first workflow previews</div>
-    <div class="trust-divider"></div>
-    <div class="trust-item">No install required</div>
-    <div class="trust-divider"></div>
-    <div class="trust-item">Built for workbook review</div>
-    <div class="trust-divider"></div>
-    <div class="trust-item">AI-assisted spreadsheet logic</div>
-</section>
-
-<section class="hero-metrics" aria-label="ExcelToolStack platform highlights">
-    <div>
-        <span class="metric-icon" aria-hidden="true">TM</span>
-        <strong>10K+</strong>
-        <span>Teams</span>
-    </div>
-    <div>
-        <span class="metric-icon" aria-hidden="true">UP</span>
-        <strong>99.9%</strong>
-        <span>Uptime</span>
-    </div>
-    <div>
-        <span class="metric-icon" aria-hidden="true">AI</span>
-        <strong>AI Powered</strong>
-        <span>Workflows</span>
-    </div>
-    <div>
-        <span class="metric-icon" aria-hidden="true">SE</span>
-        <strong>Enterprise</strong>
-        <span>Security</span>
-    </div>
-</section>
-
-<section class="section-shell section-shell--tight">
-    <div class="section-heading section-heading--split">
-        <div>
-            <p class="eyebrow">Popular workflows</p>
-            <h2>Common spreadsheet problems, framed as outcomes.</h2>
-            <p>Mirrors the PdfToolStack workflow-card pattern, tuned for teams that live in workbooks and exports.</p>
+<!-- TOOLS GRID -->
+<section class="xl-section xl-tools-section">
+    <div class="xl-container">
+        <div class="xl-section-header">
+            <div class="xl-eyebrow">Core Tools</div>
+            <h2>Everything your spreadsheet workflow needs.</h2>
+            <p>Four tools that cover the most common — and most painful — parts of working with Excel and CSV files every day.</p>
         </div>
-        <a class="text-link" href="/tools">View all workflows</a>
+        <div class="xl-tools-grid">
+            <a href="/ai-excel-formula-generator" class="xl-tool-card xl-tool-featured">
+                <div class="xl-tool-badge">Live — Try it now</div>
+                <h3>AI Formula Copilot</h3>
+                <p>Describe what you need in plain English. Get the exact Excel or Google Sheets formula with a clear explanation of how it works.</p>
+                <span class="xl-tool-link">Open Formula Copilot →</span>
+            </a>
+            <a href="/clean-excel-data" class="xl-tool-card">
+                <h3>Clean Excel Data</h3>
+                <p>Remove duplicates, fix formatting, normalize dates, and trim whitespace. Turn messy exports into dependable tables.</p>
+                <span class="xl-tool-link">Preview cleanup →</span>
+            </a>
+            <a href="/csv-to-excel" class="xl-tool-card">
+                <h3>CSV to Excel</h3>
+                <p>Convert CSV exports from any source into properly structured Excel workbooks ready for analysis, reporting, or handoff.</p>
+                <span class="xl-tool-link">Preview converter →</span>
+            </a>
+            <a href="/remove-duplicates-excel" class="xl-tool-card">
+                <h3>Remove Duplicates</h3>
+                <p>Identify and remove duplicate rows across any column combination. Preview matches before committing to changes.</p>
+                <span class="xl-tool-link">Preview tool →</span>
+            </a>
+        </div>
     </div>
-    <div class="popular-workflow-grid">
-        <a href="/ai-excel-formula-generator" class="popular-workflow-tile">
-            <span>AI</span>
-            <h3>Generate formulas from plain English</h3>
-            <p>Turn business rules into Excel or Google Sheets formulas with reviewable explanations.</p>
-            <strong>Open Formula Copilot</strong>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="xl-section xl-how-section">
+    <div class="xl-container">
+        <div class="xl-section-header">
+            <div class="xl-eyebrow">How It Works</div>
+            <h2>From messy workbook to clean output in minutes.</h2>
+        </div>
+        <div class="xl-steps">
+            <div class="xl-step">
+                <div class="xl-step-num">01</div>
+                <h3>Upload or describe your problem</h3>
+                <p>Upload an Excel or CSV file, or just describe what formula or transformation you need in plain English.</p>
+            </div>
+            <div class="xl-step-arrow">→</div>
+            <div class="xl-step">
+                <div class="xl-step-num">02</div>
+                <h3>AI reviews and generates</h3>
+                <p>The AI reads your file or prompt and produces the exact formula, cleaned data, or converted file you asked for.</p>
+            </div>
+            <div class="xl-step-arrow">→</div>
+            <div class="xl-step">
+                <div class="xl-step-num">03</div>
+                <h3>Download and use immediately</h3>
+                <p>Download your result as an Excel file or copy the formula directly. No setup, no account required for basic tools.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CROSS-SELL -->
+<section class="xl-section xl-crosssell-section">
+    <div class="xl-container">
+        <div class="xl-crosssell-card">
+            <div class="xl-crosssell-content">
+                <div class="xl-eyebrow" style="color: #2250F4;">Also from ToolStack</div>
+                <h2>Need to work with PDFs too?</h2>
+                <p>PdfToolStack handles the other half of your document workflow — compress, merge, sign, extract invoice data, and review contracts with AI. Same privacy-first approach, files deleted in 1 hour.</p>
+                <a href="https://pdftoolstack.com" class="xl-btn-outline" target="_blank">
+                    Visit PdfToolStack →
+                </a>
+            </div>
+            <div class="xl-crosssell-tools">
+                <div class="xl-crosssell-tool">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2250F4" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    AI Invoice Data Extractor
+                </div>
+                <div class="xl-crosssell-tool">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2250F4" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    AI Contract Reviewer
+                </div>
+                <div class="xl-crosssell-tool">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2250F4" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    Compress, Merge, Split PDFs
+                </div>
+                <div class="xl-crosssell-tool">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2250F4" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    Sign PDF Online
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- PRICING TEASER -->
+<section class="xl-section xl-pricing-teaser">
+    <div class="xl-container">
+        <div class="xl-section-header">
+            <div class="xl-eyebrow">Pricing</div>
+            <h2>Start free. Upgrade when you need more.</h2>
+            <p>Core tools are free with no signup. Pro unlocks AI tools, batch processing, and team features.</p>
+        </div>
+        <div class="xl-pricing-cards">
+            <div class="xl-pricing-card">
+                <div class="xl-pricing-tier">Free</div>
+                <div class="xl-pricing-price">$0<span>/month</span></div>
+                <ul class="xl-pricing-features">
+                    <li>✓ CSV to Excel conversion</li>
+                    <li>✓ Remove duplicates</li>
+                    <li>✓ Basic data cleaning</li>
+                    <li>✓ No signup required</li>
+                </ul>
+                <a href="/tools" class="xl-btn-secondary xl-btn-full">Start for free</a>
+            </div>
+            <div class="xl-pricing-card xl-pricing-card--featured">
+                <div class="xl-pricing-badge">Most popular</div>
+                <div class="xl-pricing-tier">Pro</div>
+                <div class="xl-pricing-price">$19<span>/month</span></div>
+                <ul class="xl-pricing-features">
+                    <li>✓ Everything in Free</li>
+                    <li>✓ AI Formula Copilot (unlimited)</li>
+                    <li>✓ AI workbook review</li>
+                    <li>✓ Batch processing</li>
+                    <li>✓ Download history</li>
+                    <li>✓ Priority processing</li>
+                </ul>
+                <a href="/pricing" class="xl-btn-primary xl-btn-full">Get Pro</a>
+            </div>
+            <div class="xl-pricing-card">
+                <div class="xl-pricing-tier">Bundle</div>
+                <div class="xl-pricing-price">$29<span>/month</span></div>
+                <ul class="xl-pricing-features">
+                    <li>✓ ExcelToolStack Pro</li>
+                    <li>✓ PdfToolStack Pro</li>
+                    <li>✓ One subscription</li>
+                    <li>✓ Best value for teams</li>
+                </ul>
+                <a href="/pricing" class="xl-btn-secondary xl-btn-full">Get Bundle</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FAQ -->
+<section class="xl-section xl-faq-section">
+    <div class="xl-container xl-faq-container">
+        <div class="xl-section-header">
+            <div class="xl-eyebrow">FAQ</div>
+            <h2>Common questions.</h2>
+        </div>
+        <div class="xl-faq-grid">
+            <details class="xl-faq-item">
+                <summary>Does the AI Formula Copilot work for Google Sheets too?</summary>
+                <p>Yes — formulas are generated for both Excel and Google Sheets. The syntax is nearly identical for most functions, and the AI notes any differences when they matter.</p>
+            </details>
+            <details class="xl-faq-item">
+                <summary>Is my data stored after I upload it?</summary>
+                <p>No. Uploaded files are processed in memory and never written to permanent storage. We don't store, share, or train on your spreadsheet data.</p>
+            </details>
+            <details class="xl-faq-item">
+                <summary>What's the difference between ExcelToolStack and PdfToolStack?</summary>
+                <p>ExcelToolStack handles spreadsheet workflows — formulas, data cleaning, CSV conversion. PdfToolStack handles document workflows — compress, merge, sign, extract invoice data, review contracts. They share the same account and are available together in the Bundle plan.</p>
+            </details>
+            <details class="xl-faq-item">
+                <summary>Do I need an account to use the tools?</summary>
+                <p>Free tools work without any account. AI tools and batch processing require a Pro account. Signing up takes under a minute via Google, GitHub, or email.</p>
+            </details>
+        </div>
+    </div>
+</section>
+
+<!-- FOOTER CTA -->
+<section class="xl-footer-cta">
+    <div class="xl-container">
+        <h2>Ready to work faster in Excel?</h2>
+        <p>Start with the AI Formula Copilot — free, no signup required.</p>
+        <a href="/ai-excel-formula-generator" class="xl-btn-primary xl-btn-large">
+            Try AI Formula Copilot Free →
         </a>
-        <a href="/clean-excel-data" class="popular-workflow-tile">
-            <span>Clean</span>
-            <h3>Prepare messy exports for reporting</h3>
-            <p>Frame duplicate removal, whitespace cleanup, date normalization, and missing-value review.</p>
-            <strong>Preview cleanup</strong>
-        </a>
-        <a href="/csv-to-excel" class="popular-workflow-tile">
-            <span>Convert</span>
-            <h3>Move CSV exports into workbook structure</h3>
-            <p>Preview a cleaner intake flow for operations, finance, CRM, and ecommerce exports.</p>
-            <strong>Preview converter</strong>
-        </a>
-        <a href="/templates" class="popular-workflow-tile">
-            <span>Report</span>
-            <h3>Start recurring work from templates</h3>
-            <p>Use reporting, finance, and operations template positioning as the path into repeatable workflows.</p>
-            <strong>Browse templates</strong>
-        </a>
     </div>
-</section>
-
-<section class="section-shell section-shell--tight">
-    <div class="section-heading">
-        <p class="eyebrow">Workflow preview</p>
-        <h2>Built around the real rhythm of spreadsheet work.</h2>
-        <p>
-            The public shell sets up the product surface for future AI workflows without connecting processing,
-            APIs, billing, or account behavior yet.
-        </p>
-    </div>
-    <div class="workflow-steps">
-        <article>
-            <span>01</span>
-            <h3>Bring structure to messy workbooks</h3>
-            <p>Future workflows will focus on imports, inconsistent columns, duplicated tabs, and workbook prep.</p>
-        </article>
-        <article>
-            <span>02</span>
-            <h3>Use AI where judgment matters</h3>
-            <p>Planned AI surfaces emphasize summaries, review prompts, explanations, and decision-ready notes.</p>
-        </article>
-        <article>
-            <span>03</span>
-            <h3>Package repeatable outputs</h3>
-            <p>Templates and guides will help turn one-off analysis into repeatable reporting systems.</p>
-        </article>
-    </div>
-</section>
-
-<section class="section-shell">
-    <div class="section-heading section-heading--split">
-        <div>
-            <p class="eyebrow">Future tool categories</p>
-            <h2>Planned for everyday Excel productivity and higher-trust work.</h2>
-        </div>
-        <a class="text-link" href="/tools">View all planned tools</a>
-    </div>
-    <div class="category-grid">
-        <article>
-            <span class="category-kicker">Clean</span>
-            <h3>Clean Excel Data</h3>
-            <p>Preview the planned cleanup workflow for duplicates, formatting, missing values, whitespace, and CSV normalization.</p>
-            <a href="/clean-excel-data">Preview cleanup tools</a>
-        </article>
-        <article>
-            <span class="category-kicker">Analyze</span>
-            <h3>AI Formula Copilot</h3>
-            <p>Try the first AI tool for generating spreadsheet formulas from plain English with concise explanations.</p>
-            <a href="/ai-excel-formula-generator">Try AI Formula Copilot</a>
-        </article>
-        <article>
-            <span class="category-kicker">Validate</span>
-            <h3>Excel to CSV</h3>
-            <p>Preview the planned export workflow for database imports, CRM imports, ecommerce feeds, and analytics tools.</p>
-            <a href="/excel-to-csv">Preview Excel to CSV</a>
-        </article>
-    </div>
-</section>
-
-<section class="section-shell section-shell--accent">
-    <div class="section-heading section-heading--split">
-        <div>
-            <p class="eyebrow">Templates</p>
-            <h2>Reusable starting points for reporting, operations, and planning.</h2>
-            <p>Templates will give teams a cleaner place to begin before automation arrives.</p>
-        </div>
-        <a class="button button--secondary" href="/templates">Browse templates</a>
-    </div>
-    <div class="template-strip">
-        <article>
-            <span>Reporting</span>
-            <h3>Monthly KPI pack</h3>
-        </article>
-        <article>
-            <span>Finance</span>
-            <h3>Forecast assumptions tracker</h3>
-        </article>
-        <article>
-            <span>Operations</span>
-            <h3>Workbook review checklist</h3>
-        </article>
-    </div>
-</section>
-
-<section class="section-shell">
-    <div class="section-heading section-heading--split">
-        <div>
-            <p class="eyebrow">How-to guides</p>
-            <h2>Practical writing for people who live in workbooks.</h2>
-        </div>
-        <a class="text-link" href="/blog">Read the guide preview</a>
-    </div>
-    <div class="guide-grid">
-        <article>
-            <span>Guide</span>
-            <h3>How to clean imported spreadsheet data before analysis</h3>
-            <p>Patterns for turning pasted exports into dependable tables.</p>
-            <a href="/blog">View guides</a>
-        </article>
-        <article>
-            <span>Playbook</span>
-            <h3>How to make monthly reporting less manual</h3>
-            <p>Workflow ideas for repeatable summaries, commentary, and review.</p>
-            <a href="/blog">View playbooks</a>
-        </article>
-    </div>
-</section>
-
-<section class="cta-section">
-    <p class="eyebrow">Launch preview</p>
-    <h2>Explore the public shell before the tools arrive.</h2>
-    <p>
-        See the planned tool categories, template library, guide structure, and pricing surface while the product
-        stays anonymous and processing-free.
-    </p>
-    <div class="hero-actions">
-        <a class="button button--primary" href="/tools">Review tools</a>
-        <a class="button button--secondary" href="/pricing">See pricing preview</a>
-    </div>
-</section>
-
-<section class="section-shell section-shell--accent" id="faq">
-    <div class="section-heading section-heading--center">
-        <p class="eyebrow">FAQ</p>
-        <h2>Spreadsheet workflow questions.</h2>
-        <p>Clear expectations for the public shell today and the product direction it is preparing for.</p>
-    </div>
-    <div class="faq-grid">
-        <article>
-            <h3>What workflows is ExcelToolStack focused on?</h3>
-            <p>Formula generation, cleanup, conversion, templates, workbook QA, reporting, and spreadsheet automation for modern teams.</p>
-        </article>
-        <article>
-            <h3>Is every tool live today?</h3>
-            <p>No. Some pages are public positioning and static previews, while the formula copilot connects to the current formula API.</p>
-        </article>
-        <article>
-            <h3>How is this different from PdfToolStack?</h3>
-            <p>PdfToolStack focuses on document workflows. ExcelToolStack keeps its own spreadsheet identity while sharing a familiar ToolStack UX language.</p>
-        </article>
-        <article>
-            <h3>Who is this built for?</h3>
-            <p>Operations, finance, reporting, founders, analysts, and teams that repeatedly clean, explain, review, and package workbook work.</p>
-        </article>
-    </div>
-</section>
-
-<section class="feature-band" aria-label="ExcelToolStack positioning">
-    <article>
-        <span>01</span>
-        <h2>AI workflows</h2>
-        <p>Positioned for analysis support, commentary, review, and repeatable spreadsheet operations.</p>
-    </article>
-    <article>
-        <span>02</span>
-        <h2>Everyday productivity</h2>
-        <p>Useful for cleanup, reporting, validation, documentation, and workbook handoff habits.</p>
-    </article>
-    <article>
-        <span>03</span>
-        <h2>Templates and guides</h2>
-        <p>Structured around reusable assets and practical how-to content, not a thin utility directory.</p>
-    </article>
 </section>

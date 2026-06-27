@@ -69,7 +69,8 @@ namespace PdfToolStack.API.Middleware
                     return;
                 }
             }
-            else if (path.StartsWithSegments("/api/ai"))
+            else if (path.StartsWithSegments("/api/ai") ||
+                     path.StartsWithSegments("/api/excel-ai"))
             {
                 if (IsRateLimited(_aiCounts, rateLimitKey, aiLimit))
                 {

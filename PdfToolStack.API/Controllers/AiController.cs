@@ -1349,7 +1349,7 @@ namespace PdfToolStack.API.Controllers
                 upgradePath = "/pricing"
             });
 
-        private static int CountPdfPages(byte[] pdfBytes)
+        internal static int CountPdfPages(byte[] pdfBytes)
         {
             using var reader = new iTextSharp.text.pdf.PdfReader(pdfBytes);
             return reader.NumberOfPages;
@@ -1412,7 +1412,7 @@ namespace PdfToolStack.API.Controllers
             _logger.LogError(ex, fullMessage, fullArgs);
         }
 
-        private static bool IsValidPdf(IFormFile? file)
+        internal static bool IsValidPdf(IFormFile? file)
         {
             if (file == null || file.Length == 0) return false;
             if (file.Length > 52_428_800) return false;
@@ -1432,7 +1432,7 @@ namespace PdfToolStack.API.Controllers
                    header[2] == 0x44 && header[3] == 0x46;
         }
 
-        private static byte[] BuildExcel(string json, string type)
+        internal static byte[] BuildExcel(string json, string type)
         {
             using var wb = new XLWorkbook();
             var ws = wb.Worksheets.Add("Extracted Data");

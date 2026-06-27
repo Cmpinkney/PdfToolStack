@@ -1,25 +1,163 @@
-@inject ProductBranding Branding
-
-<footer class="site-footer">
-    <div>
-        <a class="footer-brand" href="/" aria-label="@($"{Branding.SiteName} home")">
-            <span class="brand-mark" aria-hidden="true">
-                <img class="brand-mark__image brand-mark__image--light" src="images/brand/exceltoolstack-mark.svg" alt="" width="54" height="54" />
-                <img class="brand-mark__image brand-mark__image--dark" src="images/brand/exceltoolstack-mark-dark.svg" alt="" width="54" height="54" />
-            </span>
-            <span class="brand-lockup">
-                <span class="brand-wordmark"><span class="brand-wordmark__excel">Excel</span><span class="brand-wordmark__toolstack">ToolStack</span></span>
-                <span class="brand-tagline"><span>AI Spreadsheet</span> <span class="brand-tagline__work">Work</span><span class="brand-tagline__flows">flows</span></span>
-            </span>
-        </a>
-        <p>AI spreadsheet workflows, templates, and guides for teams that need workbook logic they can trust.</p>
+<footer class="xl-site-footer">
+    <div class="xl-footer-inner">
+        <div class="xl-footer-brand">
+            <a href="/" class="xl-footer-logo">
+                <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="28" height="28" rx="7" fill="#16A34A"/>
+                    <path d="M7 8.5L11.5 14L7 19.5H10.5L14 15.2L17.5 19.5H21L16.5 14L21 8.5H17.5L14 12.8L10.5 8.5H7Z" fill="white"/>
+                </svg>
+                <div class="xl-footer-logo-text">
+                    <span class="xl-footer-logo-excel">Excel</span><span class="xl-footer-logo-toolstack">ToolStack</span>
+                </div>
+            </a>
+            <p class="xl-footer-desc">AI spreadsheet workflows for teams that need formulas, clean data, and workbook logic they can trust.</p>
+        </div>
+        <nav class="xl-footer-nav" aria-label="Footer navigation">
+            <div class="xl-footer-nav-group">
+                <div class="xl-footer-nav-label">Tools</div>
+                <a href="/ai-excel-formula-generator">Formula Copilot</a>
+                <a href="/clean-excel-data">Clean Data</a>
+                <a href="/csv-to-excel">CSV to Excel</a>
+                <a href="/remove-duplicates-excel">Remove Duplicates</a>
+            </div>
+            <div class="xl-footer-nav-group">
+                <div class="xl-footer-nav-label">Product</div>
+                <a href="/templates">Templates</a>
+                <a href="/blog">Blog</a>
+                <a href="/pricing">Pricing</a>
+                <a href="https://pdftoolstack.com" target="_blank">PdfToolStack</a>
+            </div>
+            <div class="xl-footer-nav-group">
+                <div class="xl-footer-nav-label">Support</div>
+                <a href="mailto:support@exceltoolstack.com">support@exceltoolstack.com</a>
+            </div>
+        </nav>
     </div>
-    <div class="footer-links" aria-label="Footer navigation">
-        <a href="/tools">Tools</a>
-        <a href="/templates">Templates</a>
-        <a href="/blog">Blog</a>
-        <a href="/pricing">Pricing</a>
-        <a href="https://pdftoolstack.com">PdfToolStack</a>
-        <a href="mailto:@Branding.SupportEmail">@Branding.SupportEmail</a>
+    <div class="xl-footer-bottom">
+        <span>© 2026 ExcelToolStack. All rights reserved.</span>
+        <span>A product by <a href="https://pdftoolstack.com" target="_blank">Obsidian Labs LLC</a></span>
     </div>
 </footer>
+
+<style>
+.xl-site-footer {
+    background: var(--surface-muted, #f8fafc);
+    border-top: 1px solid var(--border-solid, #e2e8f0);
+    padding: 3.5rem 1.5rem 1.5rem;
+}
+
+.xl-footer-inner {
+    max-width: 1280px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1.5fr 2fr;
+    gap: 3rem;
+    margin-bottom: 2.5rem;
+}
+
+.xl-footer-brand { display: flex; flex-direction: column; gap: 1rem; }
+
+.xl-footer-logo {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    text-decoration: none;
+}
+
+.xl-footer-logo-text {
+    display: flex;
+    align-items: baseline;
+    gap: 0;
+}
+
+.xl-footer-logo-excel {
+    font-family: 'Plus Jakarta Sans', Inter, sans-serif;
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #16A34A;
+    letter-spacing: -0.02em;
+}
+
+.xl-footer-logo-toolstack {
+    font-family: 'Plus Jakarta Sans', Inter, sans-serif;
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #172033;
+    letter-spacing: -0.02em;
+}
+
+.xl-footer-desc {
+    font-size: 0.875rem;
+    color: #526173;
+    line-height: 1.65;
+    margin: 0;
+    max-width: 280px;
+}
+
+.xl-footer-nav {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+}
+
+.xl-footer-nav-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+}
+
+.xl-footer-nav-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #94a3b8;
+    margin-bottom: 0.25rem;
+}
+
+.xl-footer-nav-group a {
+    font-size: 0.875rem;
+    color: #526173;
+    text-decoration: none;
+    transition: color 0.15s;
+}
+
+.xl-footer-nav-group a:hover { color: #16A34A; }
+
+.xl-footer-bottom {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    color: #94a3b8;
+}
+
+.xl-footer-bottom a {
+    color: #16A34A;
+    text-decoration: none;
+}
+
+@@media (max-width: 768px) {
+    .xl-footer-inner {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+    }
+
+    .xl-footer-nav {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .xl-footer-desc { max-width: 100%; }
+}
+
+@@media (max-width: 480px) {
+    .xl-footer-nav { grid-template-columns: 1fr; }
+    .xl-footer-bottom { flex-direction: column; text-align: center; }
+}
+</style>

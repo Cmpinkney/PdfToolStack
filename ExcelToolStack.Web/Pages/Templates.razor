@@ -1,110 +1,92 @@
 @page "/templates"
 @inject ProductBranding Branding
 
-<PageTitle>Excel Templates for Reporting, Forecasting, and Operations - @Branding.SiteName</PageTitle>
+<PageTitle>Excel Templates — Reporting, Finance & Operations | ExcelToolStack</PageTitle>
 <HeadContent>
-    <meta name="description" content="Preview ExcelToolStack templates for reporting, forecasting, operations, model review, and AI-ready spreadsheet workflows." />
+    <meta name="description" content="Download free Excel templates for reporting, finance, forecasting, and operations. Clean starting points built for teams that work in spreadsheets every day." />
     <link rel="canonical" href="@($"{Branding.SiteUrl}/templates")" />
-    <meta property="og:title" content="@($"Excel templates for serious spreadsheet work - {Branding.SiteName}")" />
-    <meta property="og:description" content="A curated template preview for reporting, forecasting, operations, and workbook quality control." />
 </HeadContent>
 
-<section class="directory-hero">
-    <div>
-        <p class="eyebrow">Templates</p>
-        <h1>Templates for serious spreadsheet work.</h1>
-        <p class="lead">
-            The template library is positioned around repeatable Excel work: reporting packs, trackers, model review,
-            forecasting, and AI-ready prompts that help teams start with structure.
-        </p>
-        <div class="hero-actions">
-            <a class="button button--primary" href="/templates/invoice-template-excel">Preview invoice template</a>
-            <a class="button button--secondary" href="/tools">Explore planned tools</a>
-            <a class="button button--secondary" href="/blog">Read template guides</a>
+<section class="xl-page-hero">
+    <div class="xl-container">
+        <div class="xl-page-hero-inner">
+            <div class="xl-eyebrow">Templates</div>
+            <h1>Reusable starting points for reporting, finance, and operations.</h1>
+            <p>Download and customize immediately. Built for teams that run the same workflows every month.</p>
+            <div class="xl-hero-actions">
+                <a href="/tools" class="xl-btn-primary">Browse all tools</a>
+                <a href="/pricing" class="xl-btn-secondary">View Pro plan</a>
+            </div>
         </div>
-    </div>
-    <div class="template-preview-panel" aria-label="Template library preview">
-        <div class="template-preview-panel__sheet">
-            <span></span><span></span><span></span><span></span>
-            <span></span><span></span><span></span><span></span>
-            <span></span><span></span><span></span><span></span>
-        </div>
-        <strong>Reporting, finance, operations, QA</strong>
-        <p>Reusable starting points for teams that need consistent workbook structure.</p>
     </div>
 </section>
 
-<section class="section-shell section-shell--tight">
-    <div class="template-grid page-grid excel-card-grid">
-        <article class="workflow-directory-card">
-            <span>Invoice</span>
-            <h2>Excel invoice template</h2>
-            <p>Public landing page for a clean invoice structure with line items, taxes, totals, notes, and payment terms.</p>
-            <a href="/templates/invoice-template-excel">Preview invoice template</a>
-        </article>
-        <article class="workflow-directory-card">
-            <span>Reporting</span>
-            <h2>Monthly KPI reporting pack</h2>
-            <p>Preview category for recurring dashboards, variance notes, and leadership-ready summaries.</p>
-            <a href="/blog">Read reporting guides</a>
-        </article>
-        <article class="workflow-directory-card">
-            <span>Forecasting</span>
-            <h2>Forecast assumptions workbook</h2>
-            <p>Planned templates for scenario planning, assumptions tracking, and cleaner model inputs.</p>
-            <a href="/tools">View analysis tools</a>
-        </article>
-        <article class="workflow-directory-card">
-            <span>Operations</span>
-            <h2>Operations tracker kit</h2>
-            <p>Structured surfaces for recurring trackers, reconciliations, task ownership, and status views.</p>
-            <a href="/tools">View productivity tools</a>
-        </article>
-        <article class="workflow-directory-card">
-            <span>Quality</span>
-            <h2>Workbook review checklist</h2>
-            <p>Reserved for model QA, formula review, handoff notes, and pre-presentation checks.</p>
-            <a href="/blog">Read review guides</a>
-        </article>
-        <article class="workflow-directory-card">
-            <span>AI prompts</span>
-            <h2>AI spreadsheet prompt library</h2>
-            <p>Future prompt patterns for explaining changes, summarizing tables, and creating analyst notes.</p>
-            <a href="/">See AI workflow preview</a>
-        </article>
-        <article class="workflow-directory-card">
-            <span>Launch</span>
-            <h2>Template release preview</h2>
-            <p>Public positioning only for now. No files are generated, uploaded, transformed, or processed.</p>
-            <a href="/pricing">See pricing preview</a>
-        </article>
+<section class="xl-section" style="background: var(--surface, #fff);">
+    <div class="xl-container">
+        <div class="xl-section-header">
+            <div class="xl-eyebrow">Template Library</div>
+            <h2>Ready-to-use Excel templates.</h2>
+            <p>Each template is a clean, structured starting point — not a bloated showcase file.</p>
+        </div>
+        <div class="xl-card-grid">
+
+            <div class="xl-content-card xl-content-card--featured">
+                <div class="xl-content-card-kicker">Finance</div>
+                <h3>Invoice Tracker</h3>
+                <p>Track outstanding invoices, payment status, due dates, and client totals. Built for freelancers and small teams billing 10–50 clients monthly.</p>
+                <a href="/tools" class="xl-content-card-link">Download template →</a>
+            </div>
+
+            <div class="xl-content-card">
+                <div class="xl-content-card-kicker">Reporting</div>
+                <h3>Monthly KPI Pack</h3>
+                <p>Revenue, pipeline, headcount, and operational metrics in one structured workbook. Designed for monthly reporting handoffs.</p>
+                <a href="/tools" class="xl-content-card-link">Download template →</a>
+            </div>
+
+            <div class="xl-content-card">
+                <div class="xl-content-card-kicker">Finance</div>
+                <h3>Cash Flow Forecast</h3>
+                <p>13-week rolling cash flow model with actuals vs forecast tracking. Clean enough to share with a CFO or board.</p>
+                <a href="/tools" class="xl-content-card-link">Download template →</a>
+            </div>
+
+            <div class="xl-content-card">
+                <div class="xl-content-card-kicker">Operations</div>
+                <h3>Workbook Review Checklist</h3>
+                <p>QA checklist for reviewing Excel files before sharing — covers formula consistency, broken references, stale data, and formatting.</p>
+                <a href="/tools" class="xl-content-card-link">Download template →</a>
+            </div>
+
+            <div class="xl-content-card">
+                <div class="xl-content-card-kicker">Planning</div>
+                <h3>Forecast Assumptions Tracker</h3>
+                <p>Document your model assumptions with owner, confidence level, last updated date, and linked cell reference. Keeps models auditable.</p>
+                <a href="/tools" class="xl-content-card-link">Download template →</a>
+            </div>
+
+            <div class="xl-content-card">
+                <div class="xl-content-card-kicker">AI</div>
+                <h3>AI Formula Prompt Library</h3>
+                <p>A curated set of plain-English prompts optimized for the AI Formula Copilot. Covers VLOOKUP replacements, conditional sums, date math, and more.</p>
+                <a href="/ai-excel-formula-generator" class="xl-content-card-link">Open Formula Copilot →</a>
+            </div>
+
+            <div class="xl-content-card">
+                <div class="xl-content-card-kicker">Operations</div>
+                <h3>SaaS Metrics Dashboard</h3>
+                <p>MRR, churn, LTV, CAC, and net revenue retention in one clean workbook. Built for founders and operators tracking monthly SaaS metrics.</p>
+                <a href="/tools" class="xl-content-card-link">Download template →</a>
+            </div>
+
+        </div>
     </div>
 </section>
 
-<section class="section-shell section-shell--accent">
-    <div class="section-heading section-heading--split">
-        <div>
-            <p class="eyebrow">Template workflow</p>
-            <h2>Start structured, then automate the repeatable parts.</h2>
-            <p>Templates connect the ExcelToolStack tool pages into reporting, finance, and operations workflows.</p>
-        </div>
-        <a class="text-link" href="/ai-excel-formula-generator">Open Formula Copilot</a>
-    </div>
-    <div class="workflow-steps">
-        <article>
-            <span>01</span>
-            <h3>Pick the workbook shape</h3>
-            <p>Start from a reporting pack, tracker, invoice, or QA checklist instead of a blank workbook.</p>
-        </article>
-        <article>
-            <span>02</span>
-            <h3>Clean and normalize inputs</h3>
-            <p>Use cleanup and conversion workflows to prepare data before formulas, review, or handoff.</p>
-        </article>
-        <article>
-            <span>03</span>
-            <h3>Document the logic</h3>
-            <p>Add formula explanations, assumptions, and reviewer notes so teams can trust the workbook.</p>
-        </article>
+<section class="xl-footer-cta">
+    <div class="xl-container">
+        <h2>Need a formula to go with your template?</h2>
+        <p>Use the AI Formula Copilot to generate the exact formula your template needs — in plain English.</p>
+        <a href="/ai-excel-formula-generator" class="xl-btn-primary xl-btn-large">Try AI Formula Copilot Free →</a>
     </div>
 </section>

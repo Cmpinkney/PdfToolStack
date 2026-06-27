@@ -469,25 +469,46 @@ try
                     AutoReplenishment = true
                 }));
 
+        options.AddPolicy("InvoiceExtractPerIp", httpContext =>
+            RateLimitPartition.GetFixedWindowLimiter(
+                GetFormulaRateLimitPartitionKey(httpContext),
+                _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = 3,
+                    Window = TimeSpan.FromHours(24),
+                    QueueLimit = 0,
+                    AutoReplenishment = true
+                }));
+
         options.OnRejected = async (context, cancellationToken) =>
         {
+            var path = context.HttpContext.Request.Path.Value ?? "";
+            var isInvoiceExtract = path.Contains(
+                "/extract-invoice", StringComparison.OrdinalIgnoreCase);
+
             var logger = context.HttpContext.RequestServices
                 .GetRequiredService<ILoggerFactory>()
-                .CreateLogger("FormulaAiRateLimit");
+                .CreateLogger(isInvoiceExtract
+                    ? "InvoiceExtractRateLimit"
+                    : "FormulaAiRateLimit");
 
             logger.LogWarning(
-                "Formula generation rate limit exceeded. RemoteIp: {RemoteIp}, Path: {Path}",
+                "{Feature} rate limit exceeded. RemoteIp: {RemoteIp}, Path: {Path}",
+                isInvoiceExtract ? "Invoice extraction" : "Formula generation",
                 context.HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-                context.HttpContext.Request.Path.Value);
+                path);
 
             context.HttpContext.Response.StatusCode =
                 StatusCodes.Status429TooManyRequests;
-            context.HttpContext.Response.Headers.Append("Retry-After", "60");
+            context.HttpContext.Response.Headers.Append(
+                "Retry-After", isInvoiceExtract ? "86400" : "60");
 
             await context.HttpContext.Response.WriteAsJsonAsync(
                 new
                 {
-                    error = "Too many formula requests. Please wait a minute and try again.",
+                    error = isInvoiceExtract
+                        ? "You've used your 3 free invoice extractions for today. Try again tomorrow, or upgrade to Pro for unlimited extractions."
+                        : "Too many formula requests. Please wait a minute and try again.",
                     statusCode = 429
                 },
                 cancellationToken);

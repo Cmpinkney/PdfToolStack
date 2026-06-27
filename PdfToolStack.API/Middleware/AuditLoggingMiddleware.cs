@@ -39,6 +39,7 @@ namespace PdfToolStack.API.Middleware
             ["/api/ai/review-contract"] = "AI Contract Reviewer",
             ["/api/ai/summarize"] = "AI Summarizer",
             ["/api/ai/extract-data"] = "AI Data Extractor",
+            ["/api/excel-ai/extract-invoice"] = "AI Invoice Extractor (ExcelToolStack)",
         };
 
         public AuditLoggingMiddleware(
@@ -57,7 +58,8 @@ namespace PdfToolStack.API.Middleware
 
             bool isToolRequest =
                 path.StartsWith("/api/pdf/") ||
-                path.StartsWith("/api/ai/");
+                path.StartsWith("/api/ai/") ||
+                path.StartsWith("/api/excel-ai/");
 
             // Skip OPTIONS, health checks, page-count, status
             bool isSkipped =
