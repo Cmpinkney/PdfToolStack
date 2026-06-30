@@ -11050,9 +11050,8 @@ div.picker-dialog,
     gap: 0 !important;
     align-items: center !important;
     text-align: left !important;
-    max-width: 1400px !important;
     width: 100% !important;
-    margin: 0 auto !important;
+    margin: 0 !important;
     padding: 3rem 2rem 2.5rem !important;
     overflow: visible !important; /* let illustration breathe */
     box-sizing: border-box !important;
@@ -11105,14 +11104,6 @@ div.picker-dialog,
     width: 100% !important;
 }
 
-    /* Gradient background section — transparent so page gradient shows */
-    .hero-section.hero-split-layout {
-        background: transparent !important;
-        border-radius: 0 !important;
-        padding: 4rem 3rem 2.5rem !important;
-        max-width: 1400px !important;
-        margin: 0 auto !important;
-    }
 
 /* home-page must not clip */
 .home-page {
@@ -11181,12 +11172,6 @@ div.picker-dialog,
 }
 
 /* ── Hero Gradient Background — Light (Option B) ─────────────────────────── */
-.hero-section.hero-split-layout {
-    background: linear-gradient(135deg, #f0f4ff 0%, #e8e0ff 40%, #dbeafe 80%, #eff6ff 100%);
-    border-radius: 0 0 24px 24px;
-    padding: 3.5rem 3rem 3rem !important;
-}
-
 /* ── Gradient Text on "your documents." ──────────────────────────────────── */
 .hero-split-text h1 span.hero-gradient-text {
     background: linear-gradient(90deg, #2250F4, #7C3AED);
@@ -11252,11 +11237,6 @@ div.picker-dialog,
             color: var(--text-muted);
         }
 
-/* ── Dark Mode — Hero (Option A: deep navy + indigo) ─────────────────────── */
-[data-theme="dark"] .hero-section.hero-split-layout {
-    background: linear-gradient(135deg, #0a0a1a 0%, #1a1040 40%, #0d2060 70%, #0a1a40 100%);
-}
-
 [data-theme="dark"] .hero-no-trials-badge {
     background: rgba(79,70,229,0.2);
     border-color: rgba(79,70,229,0.4);
@@ -11293,11 +11273,6 @@ div.picker-dialog,
 
 /* ── Mobile adjustments ──────────────────────────────────────────────────── */
 @media (max-width: 768px) {
-    .hero-section.hero-split-layout {
-        padding: 2.5rem 1.5rem 2rem !important;
-        border-radius: 0 0 16px 16px;
-    }
-
     .hero-split-layout .hero-stats-row {
         width: 100%;
         justify-content: space-around;
@@ -11312,15 +11287,6 @@ div.picker-dialog,
 
 [data-theme="dark"] .home-page {
     background: linear-gradient(135deg, #0a0a1a 0%, #1a1040 40%, #0d2060 70%, #0a1a40 100%);
-}
-
-/* Remove the box look from the hero — make it blend into the page bg */
-.hero-section.hero-split-layout {
-    background: transparent !important;
-    border-radius: 0 !important;
-    padding: 4rem 3rem 2.5rem !important;
-    max-width: 1200px;
-    margin: 0 auto;
 }
 
 /* Trust bar and tools section sit on the same gradient */
@@ -11373,9 +11339,6 @@ div.picker-dialog,
 }
 
 @media (max-width: 768px) {
-    .hero-section.hero-split-layout {
-        padding: 2.5rem 1.25rem 2rem !important;
-    }
 
     .tools-section {
         border-radius: 16px 16px 0 0;
@@ -21516,22 +21479,6 @@ html {
     color: var(--text);
 }
 
-.hero-section.hero-split-layout {
-    width: min(var(--home-max), calc(100% - 64px)) !important;
-    max-width: var(--home-max) !important;
-    margin: 34px auto 28px !important;
-    padding: clamp(42px, 6vw, 76px) clamp(28px, 4vw, 58px) !important;
-    border: 1px solid rgba(148, 163, 184, .16) !important;
-    border-radius: 34px !important;
-    background:
-        radial-gradient(circle at 18% 10%, rgba(109, 93, 252, .16), transparent 32%),
-        radial-gradient(circle at 95% 20%, rgba(6, 182, 212, .15), transparent 34%),
-        linear-gradient(135deg, rgba(255, 255, 255, .9), rgba(248, 250, 252, .72)) !important;
-    box-shadow: var(--home-shadow) !important;
-    backdrop-filter: blur(18px) saturate(135%) !important;
-    -webkit-backdrop-filter: blur(18px) saturate(135%) !important;
-}
-
 .hero-split-text h1 {
     max-width: 650px !important;
     margin-bottom: 20px !important;
@@ -21891,14 +21838,6 @@ html {
     border-radius: 20px !important;
 }
 
-[data-theme="dark"] .hero-section.hero-split-layout {
-    background:
-        radial-gradient(circle at 18% 10%, rgba(109, 93, 252, .24), transparent 32%),
-        radial-gradient(circle at 95% 20%, rgba(6, 182, 212, .18), transparent 34%),
-        linear-gradient(135deg, rgba(28, 25, 41, .9), rgba(19, 17, 31, .74)) !important;
-    border-color: rgba(255, 255, 255, .09) !important;
-}
-
 [data-theme="dark"] .hero-no-trials-badge,
 [data-theme="dark"] .hero-split-layout .hero-stats-row,
 [data-theme="dark"] .hero-cta-secondary,
@@ -21969,8 +21908,6 @@ html {
 
     .hero-section.hero-split-layout {
         margin-top: 18px !important;
-        padding: 30px 18px !important;
-        border-radius: 26px !important;
     }
 
     .hero-split-text h1 {
@@ -28948,4 +28885,298 @@ body {
 
 :is([data-theme="dark"], body.dark-theme, .dark) .tool-input::placeholder {
     color: var(--input-placeholder, #94a3b8);
+}
+
+/* ── Hero: full-width, edge-to-edge, dark navy/indigo gradient ───────────── */
+.hero-section.hero-split-layout {
+    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 60%, #312e81 100%) !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    width: 100% !important;
+}
+
+/* Hero dark mode text fixes */
+.hero-section.hero-split-layout h1 {
+    color: #ffffff !important;
+}
+
+.hero-section.hero-split-layout p {
+    color: rgba(255, 255, 255, 0.75) !important;
+}
+
+.hero-section.hero-split-layout .hero-no-trials-badge {
+    background: rgba(255, 255, 255, 0.12) !important;
+    color: rgba(255, 255, 255, 0.9) !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.hero-section.hero-split-layout .hero-stats-row {
+    background: rgba(255, 255, 255, 0.06) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-radius: 999px !important;
+    box-shadow: none !important;
+}
+
+.hero-section.hero-split-layout .hero-split-text {
+    padding-left: 3rem !important;
+}
+
+.hero-section.hero-split-layout .hero-stat-num {
+    color: #ffffff !important;
+}
+
+.hero-section.hero-split-layout .hero-stat-label {
+    color: rgba(255, 255, 255, 0.65) !important;
+}
+
+.hero-section.hero-split-layout .hero-stat-divider {
+    background: rgba(255, 255, 255, 0.2) !important;
+}
+
+.hero-section.hero-split-layout h1 {
+    font-family: 'Plus Jakarta Sans', Inter, sans-serif !important;
+    font-size: clamp(2.75rem, 5vw, 4.5rem) !important;
+    font-weight: 800 !important;
+    line-height: 1.05 !important;
+    letter-spacing: -0.03em !important;
+    margin-bottom: 1.25rem !important;
+}
+
+.hero-section.hero-split-layout p {
+    font-size: 1.1rem !important;
+    line-height: 1.6 !important;
+    max-width: 480px;
+    margin-bottom: 2rem !important;
+}
+
+.hero-section.hero-split-layout .hero-no-trials-badge {
+    font-size: 0.85rem !important;
+    padding: 0.5rem 1rem !important;
+    margin-bottom: 1.5rem !important;
+}
+
+.hero-section.hero-split-layout .hero-cta-row {
+    margin-bottom: 2rem !important;
+    gap: 1rem !important;
+}
+
+.hero-section.hero-split-layout .hero-stats-row {
+    border-radius: 16px !important;
+    padding: 1rem 1.5rem !important;
+    gap: 1.5rem !important;
+}
+
+/* ── Hero override pin — duplicated at EOF to guarantee these win over the
+   "Enterprise homepage refresh" block (line ~21472) regardless of source
+   order or future edits inserted between them. Keep this the last rule
+   block in the file. ───────────────────────────────────────────────── */
+.hero-section.hero-split-layout {
+    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 60%, #312e81 100%) !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    width: 100% !important;
+}
+
+.hero-section.hero-split-layout h1 {
+    color: #ffffff !important;
+    font-family: 'Plus Jakarta Sans', Inter, sans-serif !important;
+    font-size: clamp(2.75rem, 5vw, 4.5rem) !important;
+    font-weight: 800 !important;
+    line-height: 1.05 !important;
+    letter-spacing: -0.03em !important;
+    margin-bottom: 1.25rem !important;
+}
+
+.hero-section.hero-split-layout p {
+    color: rgba(255, 255, 255, 0.75) !important;
+    font-size: 1.1rem !important;
+    line-height: 1.6 !important;
+    max-width: 480px !important;
+    margin-bottom: 2rem !important;
+}
+
+.hero-section.hero-split-layout .hero-no-trials-badge {
+    background: rgba(255, 255, 255, 0.12) !important;
+    color: rgba(255, 255, 255, 0.9) !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+    font-size: 0.85rem !important;
+    padding: 0.5rem 1rem !important;
+    margin-bottom: 1.5rem !important;
+}
+
+.hero-section.hero-split-layout .hero-split-text {
+    padding-left: 3rem !important;
+}
+
+.hero-section.hero-split-layout .hero-cta-row {
+    margin-bottom: 2rem !important;
+    gap: 1rem !important;
+}
+
+.hero-section.hero-split-layout .hero-stats-row {
+    background: rgba(255, 255, 255, 0.06) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-radius: 16px !important;
+    padding: 1rem 1.5rem !important;
+    gap: 1.5rem !important;
+    box-shadow: none !important;
+}
+
+.hero-section.hero-split-layout .hero-stat-num {
+    color: #ffffff !important;
+}
+
+.hero-section.hero-split-layout .hero-stat-label {
+    color: rgba(255, 255, 255, 0.65) !important;
+}
+
+.hero-section.hero-split-layout .hero-stat-divider {
+    background: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* ── Hero visual overflow fix + ExcelToolStack column proportions ───────── */
+.hero-split-layout .hero-split-illustration {
+    overflow: visible !important;
+    height: auto !important;
+    max-height: none !important;
+}
+
+.hero-split-layout .hero-split-illustration > * {
+    height: auto !important;
+    max-height: none !important;
+}
+
+.hero-split-layout {
+    grid-template-columns: 44% 56% !important;
+    gap: 2rem !important;
+    align-items: center !important;
+    padding: 3rem 2rem !important;
+}
+
+/* ── PdfToolStack dedicated hero namespace (mirrors ExcelToolStack .xl-hero-full pattern) ── */
+.pdf-hero-full {
+    background: linear-gradient(160deg, #0f172a 0%, #1e1b4b 60%, #312e81 100%);
+    padding: 4rem 2rem;
+    position: relative;
+    overflow: visible;
+}
+
+.pdf-hero-full-inner {
+    max-width: 1280px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 5fr 6fr;
+    gap: 3rem;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+}
+
+.pdf-hero-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.pdf-hero-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: fit-content;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.16);
+    color: rgba(255,255,255,0.9);
+    padding: 0.5rem 1rem;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+}
+
+.pdf-hero-display {
+    font-family: 'Plus Jakarta Sans', Inter, sans-serif;
+    font-size: clamp(2.5rem, 4.5vw, 4.25rem);
+    font-weight: 800;
+    color: #ffffff;
+    letter-spacing: -0.04em;
+    line-height: 1.08;
+    margin: 0 0 1.5rem;
+}
+
+.pdf-hero-display-accent {
+    background: linear-gradient(90deg, #60a5fa 0%, #38bdf8 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.pdf-hero-body {
+    color: rgba(255,255,255,0.75);
+    font-size: 1.1rem;
+    line-height: 1.6;
+    max-width: 480px;
+    margin: 0 0 2rem;
+}
+
+.pdf-hero-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+}
+
+.pdf-hero-stats {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    width: fit-content;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 16px;
+    padding: 1rem 1.5rem;
+}
+
+.pdf-hero-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.pdf-stat-value {
+    color: #ffffff;
+    font-size: 1.5rem;
+    font-weight: 800;
+}
+
+.pdf-stat-label {
+    color: rgba(255,255,255,0.65);
+    font-size: 0.75rem;
+}
+
+.pdf-hero-stat-divider {
+    width: 1px;
+    height: 36px;
+    background: rgba(255,255,255,0.2);
+}
+
+.pdf-hero-visual {
+    width: 100%;
+    max-width: none;
+    overflow: visible;
+}
+
+@media (max-width: 1100px) {
+    .pdf-hero-full-inner {
+        grid-template-columns: 1fr;
+        text-align: center;
+    }
+    .pdf-hero-content {
+        align-items: center;
+    }
+    .pdf-hero-actions {
+        justify-content: center;
+    }
 }

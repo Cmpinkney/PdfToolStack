@@ -4597,7 +4597,7 @@ h3 {
 }
 
 .xl-section {
-    padding: 5rem 0;
+    padding: 4rem 0;
 }
 
 .xl-section-header {
@@ -4847,7 +4847,11 @@ h3 {
 }
 
 /* — Tools Grid — */
-.xl-tools-section { background: #ffffff; }
+.xl-tools-section {
+    background: #ffffff;
+    padding-top: 2.5rem;
+    padding-bottom: 4rem;
+}
 
 .xl-tools-grid {
     display: grid;
@@ -4933,7 +4937,10 @@ h3 {
 }
 
 /* — How it works — */
-.xl-how-section { background: #eef0f8; }
+.xl-how-section {
+    background: #eef0f8;
+    padding-top: 3rem;
+}
 
 .xl-steps {
     display: flex;
@@ -5165,17 +5172,19 @@ h3 {
 }
 
 .xl-footer-cta .xl-btn-primary {
-    background: rgba(255,255,255,0.15);
-    color: #fff;
-    border: 2px solid rgba(255,255,255,0.4);
-    backdrop-filter: blur(8px);
+    background: #ffffff !important;
+    color: #15803D !important;
+    border: none !important;
+    font-weight: 700;
     padding: 0.875rem 2rem;
     font-size: 1rem;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
 }
 
 .xl-footer-cta .xl-btn-primary:hover {
-    background: rgba(255,255,255,0.25);
-    border-color: rgba(255,255,255,0.7);
+    background: #f0fdf4 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
 }
 
 /* — Navbar scroll behavior — */
@@ -5657,18 +5666,25 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 [data-theme="dark"] .xl-hero-stats,
-[data-theme="dark"] .xl-crosssell-card,
-[data-theme="dark"] .xl-section {
+[data-theme="dark"] .xl-crosssell-card {
     background: #0f1620 !important;
     border-color: #1e2d3d !important;
 }
 
-[data-theme="dark"] .xl-how-section,
-[data-theme="dark"] .xl-pricing-teaser,
-[data-theme="dark"] .xl-compare-section,
-[data-theme="dark"] .xl-faq-section,
-[data-theme="dark"] .xl-tools-section {
+[data-theme="dark"] .xl-section {
     background: #0a0a0f !important;
+    border-color: #1e2d3d !important;
+}
+
+[data-theme="dark"] .xl-how-section,
+[data-theme="dark"] .xl-compare-section {
+    background: #0a0a0f !important;
+}
+
+[data-theme="dark"] .xl-tools-section,
+[data-theme="dark"] .xl-crosssell-section,
+[data-theme="dark"] .xl-faq-section {
+    background: #0f1620 !important;
 }
 
 [data-theme="dark"] .xl-nav-link {
@@ -5753,7 +5769,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 [data-theme="dark"] .xl-page-hero {
-    background: linear-gradient(135deg, #0a0a0f 0%, #071a0e 50%, #0a0a0f 100%) !important;
+    background: linear-gradient(160deg, #0a1628 0%, #0d2818 50%, #0a1628 100%) !important;
 }
 
 [data-theme="dark"] .xl-quick-links a {
@@ -5799,11 +5815,278 @@ h1, h2, h3, h4, h5, h6 {
     background: var(--surface, #fff);
 }
 
-[data-theme="dark"] .xl-pricing-section {
+[data-theme="dark"] .xl-pricing-section,
+[data-theme="dark"] section.xl-section.xl-pricing-teaser {
     background: #0a0a0f !important;
 }
 
 [data-theme="dark"] .xl-price-card {
     color: #f1f5f9 !important;
+}
+
+/* ── Full-viewport hero ── */
+.xl-hero-full {
+    background: linear-gradient(160deg, #0a1628 0%, #0d2818 40%, #0a1628 100%);
+    padding: 4rem 2rem;
+    position: relative;
+    overflow: visible;
+}
+
+.xl-hero-full::before {
+    content: '';
+    position: absolute;
+    top: -200px;
+    right: -100px;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(22, 163, 74, 0.15) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.xl-hero-full::after {
+    content: '';
+    position: absolute;
+    bottom: -100px;
+    left: -100px;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(22, 163, 74, 0.08) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.xl-hero-full-inner {
+    max-width: 1280px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 5fr 6fr;
+    gap: 3rem;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+}
+
+.xl-hero-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(22, 163, 74, 0.15);
+    border: 1px solid rgba(22, 163, 74, 0.3);
+    color: #86efac;
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 0.375rem 0.875rem;
+    border-radius: 99px;
+    margin-bottom: 1.5rem;
+    width: fit-content;
+}
+
+.xl-hero-pill-dot {
+    width: 6px;
+    height: 6px;
+    background: #22c55e;
+    border-radius: 50%;
+    animation: xl-pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes xl-pulse-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+}
+
+.xl-hero-display {
+    font-family: 'Plus Jakarta Sans', Inter, sans-serif;
+    font-size: clamp(2.5rem, 4.5vw, 4.25rem);
+    font-weight: 800;
+    color: #ffffff;
+    letter-spacing: -0.04em;
+    line-height: 1.08;
+    margin: 0 0 1.5rem;
+    border: none !important;
+    outline: none !important;
+    -webkit-text-stroke: 0 !important;
+}
+
+.xl-hero-display-accent {
+    color: #22c55e;
+}
+
+.xl-hero-body {
+    font-size: 1.1rem;
+    color: rgba(255, 255, 255, 0.7);
+    line-height: 1.7;
+    margin: 0 0 2.5rem;
+    max-width: 480px;
+}
+
+.xl-hero-full-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+}
+
+.xl-cta-primary {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.875rem 1.75rem;
+    background: #16A34A;
+    color: #ffffff;
+    font-size: 0.95rem;
+    font-weight: 700;
+    text-decoration: none;
+    border-radius: 10px;
+    transition: background 0.15s, transform 0.15s;
+    white-space: nowrap;
+    box-shadow: 0 8px 24px rgba(22, 163, 74, 0.35);
+}
+
+.xl-cta-primary:hover {
+    background: #15803D;
+    transform: translateY(-1px);
+    box-shadow: 0 12px 32px rgba(22, 163, 74, 0.45);
+}
+
+.xl-cta-ghost {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.875rem 1.5rem;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-decoration: none;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+    white-space: nowrap;
+}
+
+.xl-cta-ghost:hover {
+    border-color: rgba(255, 255, 255, 0.3);
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.xl-hero-trust-inline {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.xl-hero-trust-inline span {
+    font-size: 0.82rem;
+    color: rgba(255, 255, 255, 0.5);
+    font-weight: 500;
+}
+
+.xl-hero-full-visual {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: visible;
+}
+
+/* ── Trust band ── */
+.xl-trust-band {
+    background: #ffffff;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 1.25rem 2rem;
+}
+
+.xl-trust-band-inner {
+    max-width: 1280px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+}
+
+.xl-trust-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.xl-trust-items {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.xl-trust-items span {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #526173;
+    padding: 0.375rem 0.875rem;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 99px;
+    white-space: nowrap;
+    transition: border-color 0.15s, color 0.15s;
+}
+
+.xl-trust-items span:hover {
+    border-color: #16A34A;
+    color: #16A34A;
+}
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+    .xl-hero-full-inner {
+        grid-template-columns: 1fr;
+        gap: 3rem;
+    }
+
+    .xl-hero-full-visual {
+        order: -1;
+    }
+
+    .xl-hero-display {
+        font-size: clamp(2.5rem, 8vw, 4rem) !important;
+    }
+}
+
+@media (max-width: 560px) {
+    .xl-hero-full {
+        padding: 3rem 1rem 3rem;
+    }
+
+    .xl-hero-full-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .xl-hero-full-actions a {
+        text-align: center;
+        justify-content: center;
+    }
+
+    .xl-trust-band-inner {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+}
+
+/* Dark mode for new hero */
+[data-theme="dark"] .xl-trust-band {
+    background: #0f1620;
+    border-color: #1e2d3d;
+}
+
+[data-theme="dark"] .xl-trust-items span {
+    background: #131d2a;
+    border-color: #1e2d3d;
+    color: #94a3b8;
+}
+
+[data-theme="dark"] .xl-trust-label {
+    color: #64748b;
 }
 

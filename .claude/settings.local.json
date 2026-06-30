@@ -3,7 +3,26 @@
     "allow": [
       "Bash(dotnet build *)",
       "Bash(git stash *)",
-      "Bash(git checkout *)"
+      "Bash(git checkout *)",
+      "Bash(netstat -ano)",
+      "Bash(npx --yes playwright install chromium --with-deps)",
+      "Bash(timeout 90 bash -c 'until grep -q \"Now listening on\\\\|Unhandled exception\\\\|error\" /tmp/excel-run.out.log /tmp/excel-run.err.log 2>/dev/null; do sleep 2; done')",
+      "Read(//tmp/**)",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\\\\n\" http://localhost:5000/)",
+      "PowerShell(Get-Process -Id 33640 -ErrorAction SilentlyContinue)",
+      "PowerShell(Get-CimInstance Win32_Process -Filter \"ProcessId = 33640\" -ErrorAction SilentlyContinue)",
+      "Bash(git commit -m ' *)",
+      "Bash(mkdir -p /c/Users/chrys/AppData/Local/Temp/claude/c--Dev-PdfToolStack/2c777be3-c83a-42ba-af63-cb7fd413b957/scratchpad/home-sections)",
+      "Read(//c/Users/chrys/AppData/Local/Temp/claude/c--Dev-PdfToolStack/2c777be3-c83a-42ba-af63-cb7fd413b957/scratchpad/**)",
+      "Bash(npm install *)",
+      "Bash(git show *)",
+      "Bash(curl -sk -o /dev/null -w \"HTTP %{http_code}\\\\n\" --max-time 3 https://localhost:7025/)",
+      "Bash(nohup dotnet run --launch-profile https)",
+      "Bash(echo \"Started with PID $!\")",
+      "Bash(npx playwright *)"
+    ],
+    "additionalDirectories": [
+      "\\tmp"
     ]
   }
 }
