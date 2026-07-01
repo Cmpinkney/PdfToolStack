@@ -1,0 +1,19 @@
+<CascadingAuthenticationState>
+    <Router AppAssembly="@typeof(App).Assembly">
+        <Found Context="routeData">
+            <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
+            <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+        </Found>
+        <NotFound>
+            <PageTitle>Not found - ExcelToolStack</PageTitle>
+            <LayoutView Layout="@typeof(MainLayout)">
+                <section class="shell-page shell-page--compact">
+                    <p class="eyebrow">404</p>
+                    <h1>That sheet is not here yet.</h1>
+                    <p class="lead">Return home to explore the ExcelToolStack preview shell.</p>
+                    <a class="button button--primary" href="/">Go Home</a>
+                </section>
+            </LayoutView>
+        </NotFound>
+    </Router>
+</CascadingAuthenticationState>

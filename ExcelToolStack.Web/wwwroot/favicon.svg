@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <style>
+    .tile-start { stop-color: #22c55e; }
+    .tile-mid { stop-color: #11864d; }
+    .tile-end { stop-color: #0f5b3d; }
+    .teal-start { stop-color: #06b6d4; }
+    .teal-end { stop-color: #0f766e; }
+    .gold-start { stop-color: #f59e0b; }
+    .gold-end { stop-color: #d97706; }
+    .px1 { fill: #22c55e; }
+    .px2 { fill: #06b6d4; }
+    .px3 { fill: #f59e0b; }
+    @media (prefers-color-scheme: dark) {
+      .tile-start { stop-color: #22c55e; }
+      .tile-mid { stop-color: #11864d; }
+      .tile-end { stop-color: #0f5b3d; }
+    }
+  </style>
+  <defs>
+    <linearGradient id="tile" x1="14" y1="9" x2="47" y2="49" gradientUnits="userSpaceOnUse">
+      <stop class="tile-start"/>
+      <stop class="tile-mid" offset=".46"/>
+      <stop class="tile-end" offset="1"/>
+    </linearGradient>
+    <linearGradient id="teal" x1="11" y1="20" x2="48" y2="53" gradientUnits="userSpaceOnUse">
+      <stop class="teal-start"/>
+      <stop class="teal-end" offset="1"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="18" y1="17" x2="54" y2="55" gradientUnits="userSpaceOnUse">
+      <stop class="gold-start"/>
+      <stop class="gold-end" offset="1"/>
+    </linearGradient>
+  </defs>
+  <rect x="20" y="15" width="34" height="39" rx="10" fill="url(#gold)"/>
+  <rect x="15" y="12" width="35" height="39" rx="10" fill="url(#teal)"/>
+  <rect x="8" y="8" width="39" height="40" rx="10" fill="url(#tile)"/>
+  <path d="M24 18h18v7H31v5h10v7H31v5h12v7H24V18Z" fill="#fff"/>
+  <path class="px1" d="M42 12h7v7h-7z"/>
+  <path class="px2" d="M50 8h5v5h-5z"/>
+  <path class="px3" d="M53 16h7v7h-7z"/>
+</svg>

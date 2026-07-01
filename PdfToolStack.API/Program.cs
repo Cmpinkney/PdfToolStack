@@ -1,5 +1,6 @@
 using Azure.Storage.Blobs;
 using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using PdfToolStack.API.Configuration;
 using PdfToolStack.API.Middleware;
@@ -8,17 +9,20 @@ using PdfToolStack.Application.Factories;
 using PdfToolStack.Application.Interfaces;
 using PdfToolStack.Application.Services;
 using PdfToolStack.Application.Strategies;
+using PdfToolStack.Domain.Configuration;
 using PdfToolStack.Domain.Interfaces;
 using PdfToolStack.Infrastructure.Auth;
 using PdfToolStack.Infrastructure.Configuration;
 using PdfToolStack.Infrastructure.Data;
 using PdfToolStack.Infrastructure.Processors;
+using PdfToolStack.Infrastructure.Processors.Excel;
 using PdfToolStack.Infrastructure.Repositories;
 using PdfToolStack.Infrastructure.Services;
 using PdfToolStack.Infrastructure.Services.Ocr;
 using PdfToolStack.Infrastructure.Storage;
 using Serilog;
 using Syncfusion.Blazor;
+using System.Threading.RateLimiting;
 
 // ── Serilog Bootstrap Logger ──────────────────────────────────────────────
 Log.Logger = new LoggerConfiguration()
@@ -39,6 +43,19 @@ try
             .WriteTo.Console());
 
     // ── Configuration Options ─────────────────────────────────────────────
+    builder.Services.Configure<ProductOptions>(
+        builder.Configuration.GetSection(ProductOptions.SectionName));
+
+    builder.Services.Configure<BillingCatalogOptions>(
+        builder.Configuration.GetSection(BillingCatalogOptions.SectionName));
+
+    var productOptions = builder.Configuration
+        .GetSection(ProductOptions.SectionName)
+        .Get<ProductOptions>() ?? new ProductOptions();
+    var productContext = new ProductContext(productOptions);
+    builder.Services.AddSingleton(productOptions);
+    builder.Services.AddSingleton<IProductContext>(productContext);
+
     builder.Services.Configure<AzureStorageOptions>(
         builder.Configuration.GetSection(AzureStorageOptions.SectionName));
 
@@ -132,6 +149,11 @@ try
     builder.Services.AddScoped<PdfToJpgProcessor>();
     builder.Services.AddScoped<PdfToExcelProcessor>();
     builder.Services.AddScoped<CropPdfProcessor>();
+    builder.Services.AddScoped<CsvToExcelProcessor>();
+    builder.Services.AddScoped<ExcelToCsvProcessor>();
+    builder.Services.AddScoped<CleanExcelDataProcessor>();
+    builder.Services.AddScoped<RemoveDuplicatesProcessor>();
+
     builder.Services.AddScoped(_ =>
         new PdfOcrProcessor(Path.Combine(AppContext.BaseDirectory, "tessdata")));
     builder.Services.AddScoped<TesseractOcrTextProvider>();
@@ -291,6 +313,9 @@ try
 
     // ── AI Service ────────────────────────────────────────────────────────────
     builder.Services.AddHttpClient();
+    builder.Services.AddScoped<IFormulaGenerationService, FormulaGenerationService>();
+    builder.Services.AddHttpClient<IFormulaAiProvider, AnthropicFormulaAiProvider>();
+
     builder.Services.AddScoped<AiService>(sp =>
     {
         var config = sp.GetRequiredService<IConfiguration>();
@@ -337,13 +362,17 @@ try
     var productionCorsOrigins = new[]
     {
         "https://pdftoolstack.com",
-        "https://www.pdftoolstack.com"
+        "https://www.pdftoolstack.com",
+        "https://exceltoolstack.com",
+        "https://www.exceltoolstack.com"
     };
 
     var developmentCorsOrigins = new[]
     {
         "https://localhost:7025",
-        "http://localhost:5049"
+        "http://localhost:5049",
+        "https://localhost:5001",
+        "http://localhost:5000"
     };
 
     string? NormalizeCorsOrigin(string? origin)
@@ -425,6 +454,65 @@ try
                   .AllowAnyHeader()
                   .SetPreflightMaxAge(TimeSpan.FromHours(1));
         });
+    });
+
+    builder.Services.AddRateLimiter(options =>
+    {
+        options.AddPolicy("FormulaAiPerIp", httpContext =>
+            RateLimitPartition.GetFixedWindowLimiter(
+                GetFormulaRateLimitPartitionKey(httpContext),
+                _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = 10,
+                    Window = TimeSpan.FromMinutes(1),
+                    QueueLimit = 0,
+                    AutoReplenishment = true
+                }));
+
+        options.AddPolicy("InvoiceExtractPerIp", httpContext =>
+            RateLimitPartition.GetFixedWindowLimiter(
+                GetFormulaRateLimitPartitionKey(httpContext),
+                _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = 3,
+                    Window = TimeSpan.FromHours(24),
+                    QueueLimit = 0,
+                    AutoReplenishment = true
+                }));
+
+        options.OnRejected = async (context, cancellationToken) =>
+        {
+            var path = context.HttpContext.Request.Path.Value ?? "";
+            var isInvoiceExtract = path.Contains(
+                "/extract-invoice", StringComparison.OrdinalIgnoreCase);
+
+            var logger = context.HttpContext.RequestServices
+                .GetRequiredService<ILoggerFactory>()
+                .CreateLogger(isInvoiceExtract
+                    ? "InvoiceExtractRateLimit"
+                    : "FormulaAiRateLimit");
+
+            logger.LogWarning(
+                "{Feature} rate limit exceeded. RemoteIp: {RemoteIp}, Path: {Path}",
+                isInvoiceExtract ? "Invoice extraction" : "Formula generation",
+                context.HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                path);
+
+            context.HttpContext.Response.StatusCode =
+                StatusCodes.Status429TooManyRequests;
+            context.HttpContext.Response.Headers.Append(
+                "Retry-After", isInvoiceExtract ? "86400" : "60");
+
+            await context.HttpContext.Response.WriteAsJsonAsync(
+                new
+                {
+                    error = isInvoiceExtract
+                        ? "You've used your 3 free invoice extractions for today. Try again tomorrow, or upgrade to Pro for unlimited extractions."
+                        : "Too many formula requests. Please wait a minute and try again.",
+                    statusCode = 429
+                },
+                cancellationToken);
+        };
     });
 
     // ── Controllers + Swagger ─────────────────────────────────────────────
@@ -583,6 +671,7 @@ try
     app.UseHttpsRedirection();
     app.UseRouting();
     app.UseCors(CorsPolicyName);
+    app.UseRateLimiter();
     app.UseMiddleware<ErrorHandlingMiddleware>();
     app.UseMiddleware<AuditLoggingMiddleware>();
     app.UseMiddleware<RateLimitingMiddleware>();
@@ -619,3 +708,6 @@ finally
 {
     Log.CloseAndFlush();
 }
+
+static string GetFormulaRateLimitPartitionKey(HttpContext httpContext) =>
+    httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";

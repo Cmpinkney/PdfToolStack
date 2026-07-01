@@ -864,9 +864,9 @@ namespace PdfToolStack.Infrastructure.Services
             - Be concise and friendly — 2-3 sentences max unless more detail is needed
             - If asked about a specific tool, explain exactly how to use it
             - If the question is about billing, account deletion, or a technical
-              error you cannot resolve, tell them to email support@pdftoolstack.com
+              error you cannot resolve, tell them to email admin@pdftoolstack.com
             - Never make up features that don't exist
-            - If unsure, say so and suggest support@pdftoolstack.com
+            - If unsure, say so and suggest admin@pdftoolstack.com
             - Do not discuss competitors
             """;
 

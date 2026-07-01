@@ -1,0 +1,169 @@
+@page "/blog/how-to-generate-excel-formulas-with-ai"
+@inject ProductBranding Branding
+
+<PageTitle>How to Generate Excel Formulas with AI - @Branding.SiteName</PageTitle>
+<HeadContent>
+    <meta name="description" content="Learn how to generate Excel formulas with AI using better prompts, examples, formula patterns, debugging tips, and safe review habits before trusting spreadsheet output." />
+    <link rel="canonical" href="@($"{Branding.SiteUrl}/blog/how-to-generate-excel-formulas-with-ai")" />
+    <meta property="og:title" content="@($"How to generate Excel formulas with AI - {Branding.SiteName}")" />
+    <meta property="og:description" content="A practical guide to AI-generated Excel formulas, including prompt patterns, examples, common use cases, mistakes to avoid, and review tips." />
+</HeadContent>
+
+<article class="article-page">
+    <header class="article-hero">
+        <p class="eyebrow">How-to guide</p>
+        <h1>How to generate Excel formulas with AI.</h1>
+        <p class="lead">
+            AI can help you write Excel formulas faster, but the best results come from clear prompts,
+            realistic examples, and a quick review pass before you trust the output in a live workbook.
+        </p>
+        <dl class="article-meta" aria-label="Article metadata">
+            <div>
+                <dt>Published</dt>
+                <dd>May 26, 2026</dd>
+            </div>
+            <div>
+                <dt>Updated</dt>
+                <dd>May 26, 2026</dd>
+            </div>
+            <div>
+                <dt>Reading time</dt>
+                <dd>7 minutes</dd>
+            </div>
+            <div>
+                <dt>Author</dt>
+                <dd>ExcelToolStack Team</dd>
+            </div>
+        </dl>
+    </header>
+
+    <section class="article-content">
+        <p>
+            The fastest way to use AI for spreadsheet formulas is to describe the job like you would explain it
+            to a careful analyst: name the columns, identify the condition, say what should happen when the
+            condition is true or false, and mention whether the formula is for Excel or Google Sheets.
+        </p>
+        <p>
+            A vague prompt such as "make a commission formula" can produce something plausible but wrong.
+            A better prompt gives the model enough context to choose the right functions and edge-case behavior.
+        </p>
+
+        <h2>Start with the outcome</h2>
+        <p>
+            Before asking AI for a formula, write down the outcome you want in plain English. Include the input
+            cells, table names, date rules, blank-cell behavior, and fallback values.
+        </p>
+        <div class="article-callout">
+            <strong>Better prompt</strong>
+            <p>
+                Write an Excel formula for row 2 that returns "Overdue" when Status in C2 is "Open" and Due Date
+                in D2 is before today. Otherwise return "On track". If D2 is blank, return "Missing date".
+            </p>
+        </div>
+
+        <h2>Examples of AI-generated Excel formulas</h2>
+        <div class="article-example-grid">
+            <article>
+                <span>Conditional logic</span>
+                <h3>Flag overdue tasks</h3>
+                <code>=IF(D2="","Missing date",IF(AND(C2="Open",D2&lt;TODAY()),"Overdue","On track"))</code>
+            </article>
+            <article>
+                <span>Lookups</span>
+                <h3>Find customer status</h3>
+                <code>=XLOOKUP(A2,Customers[Email],Customers[Status],"Missing")</code>
+            </article>
+            <article>
+                <span>Text cleanup</span>
+                <h3>Extract email domain</h3>
+                <code>=IF(A2="","",TEXTAFTER(A2,"@@"))</code>
+            </article>
+        </div>
+
+        <h2>Prompt patterns that work well</h2>
+        <p>
+            You do not need a perfect prompt. You need a prompt that makes the spreadsheet context obvious.
+            These patterns cover most AI formula requests.
+        </p>
+        <ul>
+            <li><strong>Generate:</strong> "Write an Excel formula that [goal] using [cells or columns]."</li>
+            <li><strong>Explain:</strong> "Explain this formula step by step and point out any assumptions."</li>
+            <li><strong>Debug:</strong> "This formula returns [error]. What are likely causes and a safer version?"</li>
+            <li><strong>Convert:</strong> "Convert this Excel formula to Google Sheets syntax."</li>
+            <li><strong>Simplify:</strong> "Rewrite this nested IF formula using IFS or a clearer lookup table."</li>
+        </ul>
+
+        <h2>Common formula use cases</h2>
+        <p>
+            AI formula help is most useful when the logic is common but easy to mistype. Good candidates include
+            commission rules, overdue flags, customer lookups, date calculations, text cleanup, tiered pricing,
+            conditional labels, and summary calculations.
+        </p>
+        <div class="article-table">
+            <div class="article-table-row article-table-row--head">
+                <span>Use case</span>
+                <span>Useful functions</span>
+                <span>Review carefully</span>
+            </div>
+            <div class="article-table-row">
+                <span>Lookup a value</span>
+                <span>XLOOKUP, INDEX/MATCH, VLOOKUP</span>
+                <span>Exact match, blank fallback, duplicate keys</span>
+            </div>
+            <div class="article-table-row">
+                <span>Flag a status</span>
+                <span>IF, AND, OR, IFS</span>
+                <span>Text spelling, date comparisons, empty cells</span>
+            </div>
+            <div class="article-table-row">
+                <span>Clean text</span>
+                <span>TEXTAFTER, LEFT, RIGHT, MID, TRIM</span>
+                <span>Missing separators, extra spaces, invalid input</span>
+            </div>
+        </div>
+
+        <h2>Mistakes to avoid</h2>
+        <p>
+            AI can produce confident formulas that are syntactically valid but semantically wrong. Do not paste
+            a generated formula into an important workbook without testing it against rows where you already know
+            the expected result.
+        </p>
+        <ul>
+            <li>Do not omit whether you are using Excel or Google Sheets.</li>
+            <li>Do not forget to describe blank-cell behavior.</li>
+            <li>Do not accept a lookup formula without checking exact-match behavior.</li>
+            <li>Do not use a formula you cannot explain to the next person who owns the workbook.</li>
+            <li>Do not assume regional separators, date formats, or function availability are identical everywhere.</li>
+        </ul>
+
+        <div class="article-cta">
+            <p class="eyebrow">Formula workflow</p>
+            <h2>Try the AI Formula Copilot preview.</h2>
+            <p>
+                Use the frontend-only Formula Copilot page to explore prompt examples, mock outputs, explanations,
+                and debugging patterns before backend AI processing is added.
+            </p>
+            <a class="button button--primary" href="/ai-excel-formula-generator">Open Formula Copilot</a>
+        </div>
+
+        <h2>FAQ</h2>
+        <div class="faq-grid article-faq">
+            <article>
+                <h3>Can AI write accurate Excel formulas?</h3>
+                <p>It can help draft useful formulas, but you should review the logic, test sample rows, and confirm edge cases before relying on the result.</p>
+            </article>
+            <article>
+                <h3>What should I include in an AI formula prompt?</h3>
+                <p>Include the goal, spreadsheet app, cell references or column names, expected outputs, fallback behavior, and any known errors.</p>
+            </article>
+            <article>
+                <h3>Can AI explain existing formulas?</h3>
+                <p>Yes, explanation is one of the best uses: ask for a step-by-step breakdown, assumptions, and possible failure points.</p>
+            </article>
+            <article>
+                <h3>Is this article connected to an AI provider?</h3>
+                <p>No. This is a public, crawlable guide. It does not add API calls, AI provider integration, auth, billing, or backend processing.</p>
+            </article>
+        </div>
+    </section>
+</article>

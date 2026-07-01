@@ -1,3 +1,6 @@
+@using PdfToolStack.Domain.Configuration
+@inject IProductContext Product
+
 <PageTitle>@Title</PageTitle>
 
 <HeadContent>
@@ -7,12 +10,12 @@
     }
     <meta name="description" content="@Description" />
     <link rel="canonical" href="@ResolvedCanonicalUrl" />
-    <meta property="og:type" content="@Type" />
-    <meta property="og:site_name" content="PdfToolStack" />
+    <meta property="og:type" content="@ResolvedType" />
+    <meta property="og:site_name" content="@Product.SiteName" />
     <meta property="og:title" content="@Title" />
     <meta property="og:description" content="@Description" />
     <meta property="og:url" content="@ResolvedCanonicalUrl" />
-    <meta name="twitter:card" content="@TwitterCard" />
+    <meta name="twitter:card" content="@ResolvedTwitterCard" />
     <meta name="twitter:title" content="@Title" />
     <meta name="twitter:description" content="@Description" />
     @if (!string.IsNullOrWhiteSpace(ImageUrl))
@@ -23,8 +26,6 @@
 </HeadContent>
 
 @code {
-    private const string SiteUrl = "https://pdftoolstack.com";
-
     [Parameter]
     public string Title { get; set; } = string.Empty;
 
@@ -41,10 +42,10 @@
     public string? ImageUrl { get; set; }
 
     [Parameter]
-    public string Type { get; set; } = "website";
+    public string? Type { get; set; }
 
     [Parameter]
-    public string TwitterCard { get; set; } = "summary";
+    public string? TwitterCard { get; set; }
 
     [Parameter]
     public bool NoIndex { get; set; }
@@ -52,14 +53,24 @@
     private string ResolvedCanonicalUrl =>
         !string.IsNullOrWhiteSpace(CanonicalUrl)
             ? CanonicalUrl
-            : $"{SiteUrl}{NormalizePath(CanonicalPath)}";
+            : Product.ResolveUrl(NormalizePath(CanonicalPath));
 
     private string? ResolvedImageUrl =>
         string.IsNullOrWhiteSpace(ImageUrl)
             ? null
             : ImageUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase)
                 ? ImageUrl
-                : $"{SiteUrl}{NormalizePath(ImageUrl)}";
+                : Product.ResolveUrl(NormalizePath(ImageUrl));
+
+    private string ResolvedType =>
+        string.IsNullOrWhiteSpace(Type)
+            ? Product.DefaultSeoType
+            : Type;
+
+    private string ResolvedTwitterCard =>
+        string.IsNullOrWhiteSpace(TwitterCard)
+            ? Product.DefaultTwitterCard
+            : TwitterCard;
 
     private static string NormalizePath(string path)
     {

@@ -1,0 +1,87 @@
+@page "/blog"
+@inject ProductBranding Branding
+
+<PageTitle>Excel Guides & How-To Articles | ExcelToolStack</PageTitle>
+<HeadContent>
+    <meta name="description" content="Practical guides for Excel and spreadsheet workflows — formula help, data cleaning tips, reporting playbooks, and AI-assisted spreadsheet techniques." />
+    <link rel="canonical" href="@($"{Branding.SiteUrl}/blog")" />
+</HeadContent>
+
+<section class="xl-page-hero">
+    <div class="xl-container">
+        <div class="xl-page-hero-inner">
+            <div class="xl-eyebrow">Blog & Guides</div>
+            <h1>Practical writing for people who live in spreadsheets.</h1>
+            <p>Formula help, data cleaning techniques, reporting playbooks, and AI-assisted workflows — written for the work you actually do.</p>
+        </div>
+    </div>
+</section>
+
+<section class="xl-section" style="background: var(--surface, #fff);">
+    <div class="xl-container">
+        <div class="xl-section-header">
+            <div class="xl-eyebrow">All Articles</div>
+            <h2>Guides, how-tos, and workflow playbooks.</h2>
+        </div>
+        <div class="xl-card-grid">
+
+            <a href="/blog/how-to-generate-excel-formulas-with-ai" class="xl-content-card xl-content-card--featured xl-content-card--link">
+                <div class="xl-content-card-kicker">Guide · AI</div>
+                <h3>How to Generate Excel Formulas with AI</h3>
+                <p>Stop memorizing syntax. Learn how to describe what you need in plain English and get the exact formula — with a full explanation of how it works.</p>
+                <span class="xl-content-card-link">Read article →</span>
+            </a>
+
+            <a href="/tools" class="xl-content-card xl-content-card--link">
+                <div class="xl-content-card-kicker">How-To</div>
+                <h3>How to Clean Imported Spreadsheet Data Before Analysis</h3>
+                <p>Patterns for turning pasted exports into dependable tables — duplicates, formatting inconsistencies, whitespace, and missing values.</p>
+                <span class="xl-content-card-link">Read guide →</span>
+            </a>
+
+            <a href="/templates" class="xl-content-card xl-content-card--link">
+                <div class="xl-content-card-kicker">Playbook</div>
+                <h3>How to Make Monthly Reporting Less Manual</h3>
+                <p>Workflow ideas for teams that repeat the same reporting cycle every month — templates, formulas, and handoff habits that save hours.</p>
+                <span class="xl-content-card-link">Read playbook →</span>
+            </a>
+
+            <a href="/ai-excel-formula-generator" class="xl-content-card xl-content-card--link">
+                <div class="xl-content-card-kicker">Guide · Formula</div>
+                <h3>VLOOKUP vs XLOOKUP — Which One Should You Use?</h3>
+                <p>A plain-English comparison of the two most common lookup functions, with examples for when each one is the right choice.</p>
+                <span class="xl-content-card-link">Read guide →</span>
+            </a>
+
+            <a href="/remove-duplicates-excel" class="xl-content-card xl-content-card--link">
+                <div class="xl-content-card-kicker">How-To</div>
+                <h3>3 Ways to Remove Duplicates in Excel (And Which to Use)</h3>
+                <p>Built-in tools, formulas, and AI-assisted methods — with guidance on which approach fits your data and workflow.</p>
+                <span class="xl-content-card-link">Read guide →</span>
+            </a>
+
+            <a href="/csv-to-excel" class="xl-content-card xl-content-card--link">
+                <div class="xl-content-card-kicker">How-To</div>
+                <h3>How to Convert CSV to Excel Without Losing Formatting</h3>
+                <p>The common pitfalls when importing CSV files into Excel — and how to avoid dates turning into numbers and leading zeros disappearing.</p>
+                <span class="xl-content-card-link">Read guide →</span>
+            </a>
+
+            <a href="/pricing" class="xl-content-card xl-content-card--link">
+                <div class="xl-content-card-kicker">Guide · AI</div>
+                <h3>How AI Is Changing Spreadsheet Work in 2026</h3>
+                <p>From formula generation to workbook review — where AI is genuinely saving time in spreadsheet-heavy workflows and where it still falls short.</p>
+                <span class="xl-content-card-link">Read guide →</span>
+            </a>
+
+        </div>
+    </div>
+</section>
+
+<section class="xl-footer-cta">
+    <div class="xl-container">
+        <h2>Put the guides into practice.</h2>
+        <p>Use the AI Formula Copilot to generate any formula from the guides instantly.</p>
+        <a href="/ai-excel-formula-generator" class="xl-btn-primary xl-btn-large">Try AI Formula Copilot Free →</a>
+    </div>
+</section>

@@ -4,6 +4,14 @@
   },
   "routes": [
     {
+      "route": "/*",
+      "redirect": "https://pdftoolstack.com{request.path}",
+      "statusCode": 301,
+      "conditions": {
+        "isClientSecure": false
+      }
+    },
+    {
       "route": "/robots.txt",
       "rewrite": "/robots.txt",
       "headers": {

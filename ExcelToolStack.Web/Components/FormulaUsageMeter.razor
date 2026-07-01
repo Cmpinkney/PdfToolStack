@@ -1,0 +1,95 @@
+@implements IDisposable
+@inject FormulaUsageService UsageService
+
+<div class="formula-usage-meter @ToneClass" aria-live="polite">
+    <div class="formula-usage-header">
+        <div>
+            <span class="formula-usage-kicker">@KickerText</span>
+            <strong>@Title</strong>
+        </div>
+        <span class="formula-usage-count">@UsageText</span>
+    </div>
+
+    <div class="formula-usage-track" aria-hidden="true">
+        <span style="width:@ProgressWidth"></span>
+    </div>
+
+    <div class="formula-usage-footer">
+        <span>@FooterText</span>
+        @if (_snapshot?.IsAuthenticated == false)
+        {
+            <a href="/account">Sign in to track usage</a>
+        }
+        else
+        {
+            <a href="/account">View dashboard</a>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public string Title { get; set; } = "AI formula generations";
+
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthenticationStateTask { get; set; }
+
+    private FormulaUsageSnapshot? _snapshot;
+    private bool _isAuthenticated;
+
+    private string KickerText => _snapshot?.IsAuthenticated == true
+        ? "Monthly usage"
+        : "Free preview";
+
+    private string UsageText => _snapshot is null
+        ? "Loading..."
+        : $"{_snapshot.Remaining} left";
+
+    private string FooterText => _snapshot switch
+    {
+        null => "Checking formula usage.",
+        { IsAuthenticated: true } => $"{_snapshot.Used} of {_snapshot.Limit} formula generations used this month. Backend usage sync is not connected yet.",
+        _ => $"{_snapshot.Used} of {_snapshot.Limit} free preview generations used in this browser."
+    };
+
+    private string ProgressWidth => $"{_snapshot?.Percentage ?? 0:0.##}%";
+
+    private string ToneClass => _snapshot switch
+    {
+        null => string.Empty,
+        { Remaining: <= 0 } => "formula-usage-meter--limit",
+        { Remaining: <= 2 } => "formula-usage-meter--warn",
+        _ => string.Empty
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        UsageService.Changed += HandleUsageChanged;
+        await RefreshAsync();
+    }
+
+    private void HandleUsageChanged()
+    {
+        _ = InvokeAsync(async () =>
+        {
+            await RefreshAsync();
+            StateHasChanged();
+        });
+    }
+
+    private async Task RefreshAsync()
+    {
+        if (AuthenticationStateTask is not null)
+        {
+            var authState = await AuthenticationStateTask;
+            _isAuthenticated = authState.User.Identity?.IsAuthenticated == true;
+        }
+
+        _snapshot = await UsageService.GetSnapshotAsync(_isAuthenticated);
+    }
+
+    public void Dispose()
+    {
+        UsageService.Changed -= HandleUsageChanged;
+    }
+}

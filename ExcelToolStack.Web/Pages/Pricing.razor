@@ -1,0 +1,166 @@
+@page "/pricing"
+@inject ProductBranding Branding
+
+<PageTitle>Pricing — ExcelToolStack</PageTitle>
+<HeadContent>
+    <meta name="description" content="ExcelToolStack pricing. Free tools with no account required. Pro plan from $19/month unlocks AI Formula Copilot, batch processing, and more." />
+    <link rel="canonical" href="@($"{Branding.SiteUrl}/pricing")" />
+</HeadContent>
+
+<section class="xl-page-hero">
+    <div class="xl-container">
+        <div class="xl-page-hero-inner">
+            <div class="xl-eyebrow">Pricing</div>
+            <h1>Start free. Upgrade when you need more.</h1>
+            <p>Core tools work without any account. Pro unlocks AI tools, batch processing, and team features.</p>
+        </div>
+    </div>
+</section>
+
+<section class="xl-section xl-pricing-section">
+    <div class="xl-container">
+        <div class="xl-pricing-grid">
+
+            <div class="xl-price-card">
+                <div class="xl-price-tier">Free</div>
+                <div class="xl-price-amount">$0<span>/month</span></div>
+                <p class="xl-price-desc">Core tools, no account required.</p>
+                <ul class="xl-price-features">
+                    <li>CSV to Excel conversion</li>
+                    <li>Excel to CSV export</li>
+                    <li>Remove duplicates</li>
+                    <li>Basic data cleaning</li>
+                    <li>No signup required</li>
+                    <li>Files processed securely</li>
+                </ul>
+                <a href="/tools" class="xl-btn-secondary xl-btn-full">Start for free</a>
+            </div>
+
+            <div class="xl-price-card xl-price-card--featured">
+                <div class="xl-price-badge">Most popular</div>
+                <div class="xl-price-tier">Pro</div>
+                <div class="xl-price-amount">$19<span>/month</span></div>
+                <p class="xl-price-desc">Everything you need for serious spreadsheet work.</p>
+                <ul class="xl-price-features">
+                    <li>Everything in Free</li>
+                    <li>AI Formula Copilot (unlimited)</li>
+                    <li>AI workbook review</li>
+                    <li>Batch processing</li>
+                    <li>Download history (30 days)</li>
+                    <li>Priority processing</li>
+                    <li>Cloud storage (Google Drive, Dropbox)</li>
+                </ul>
+                <a href="/pricing" class="xl-btn-primary xl-btn-full">Get Pro — $19/mo</a>
+            </div>
+
+            <div class="xl-price-card">
+                <div class="xl-price-tier">Bundle</div>
+                <div class="xl-price-amount">$29<span>/month</span></div>
+                <p class="xl-price-desc">ExcelToolStack Pro + PdfToolStack Pro together.</p>
+                <ul class="xl-price-features">
+                    <li>Everything in Pro</li>
+                    <li>PdfToolStack Pro included</li>
+                    <li>AI invoice data extractor</li>
+                    <li>AI contract reviewer</li>
+                    <li>One subscription, two products</li>
+                    <li>Best value for teams</li>
+                </ul>
+                <a href="/pricing" class="xl-btn-secondary xl-btn-full">Get Bundle — $29/mo</a>
+            </div>
+
+            <div class="xl-price-card">
+                <div class="xl-price-tier">Teams</div>
+                <div class="xl-price-amount">$39<span>/month</span></div>
+                <p class="xl-price-desc">5 seats included, $6/mo per additional seat.</p>
+                <ul class="xl-price-features">
+                    <li>Everything in Bundle</li>
+                    <li>5 seats included</li>
+                    <li>Shared team workspace</li>
+                    <li>Admin usage dashboard</li>
+                    <li>Invoice & PO billing</li>
+                    <li>Priority support</li>
+                </ul>
+                <a href="/pricing" class="xl-btn-secondary xl-btn-full">Get Teams — $39/mo</a>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<section class="xl-section xl-compare-section">
+    <div class="xl-container">
+        <div class="xl-section-header">
+            <div class="xl-eyebrow">Compare Plans</div>
+            <h2>Everything side by side.</h2>
+        </div>
+        <div class="xl-table-wrap">
+            <table class="xl-compare-table">
+                <thead>
+                    <tr>
+                        <th>Feature</th>
+                        <th>Free</th>
+                        <th>Pro</th>
+                        <th>Bundle</th>
+                        <th>Teams</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>CSV to Excel</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td></tr>
+                    <tr><td>Remove duplicates</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td></tr>
+                    <tr><td>Basic data cleaning</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td></tr>
+                    <tr><td>No signup required</td><td>✓</td><td>—</td><td>—</td><td>—</td></tr>
+                    <tr><td>AI Formula Copilot</td><td>—</td><td>✓</td><td>✓</td><td>✓</td></tr>
+                    <tr><td>AI workbook review</td><td>—</td><td>✓</td><td>✓</td><td>✓</td></tr>
+                    <tr><td>Batch processing</td><td>—</td><td>✓</td><td>✓</td><td>✓</td></tr>
+                    <tr><td>Download history</td><td>—</td><td>✓</td><td>✓</td><td>✓</td></tr>
+                    <tr><td>PdfToolStack Pro</td><td>—</td><td>—</td><td>✓</td><td>✓</td></tr>
+                    <tr><td>Team seats</td><td>—</td><td>—</td><td>—</td><td>5 included</td></tr>
+                    <tr><td>Admin dashboard</td><td>—</td><td>—</td><td>—</td><td>✓</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<section class="xl-section xl-faq-section">
+    <div class="xl-container xl-faq-container">
+        <div class="xl-section-header">
+            <div class="xl-eyebrow">FAQ</div>
+            <h2>Pricing questions.</h2>
+        </div>
+        <div class="xl-faq-grid">
+            <details class="xl-faq-item">
+                <summary>Do I need an account to use ExcelToolStack?</summary>
+                <p>Free tools work without any account. AI tools, batch processing, and download history require a Pro account. Signing up takes under a minute via Google, GitHub, or email.</p>
+            </details>
+            <details class="xl-faq-item">
+                <summary>What's included in the Bundle plan?</summary>
+                <p>The Bundle gives you Pro access to both ExcelToolStack and PdfToolStack under one subscription. That means AI Formula Copilot, AI workbook review, AI invoice extraction, AI contract review, and batch processing across both products.</p>
+            </details>
+            <details class="xl-faq-item">
+                <summary>Can I cancel anytime?</summary>
+                <p>Yes — cancel anytime from your account page. Your access continues until the end of the billing period. No cancellation fees.</p>
+            </details>
+            <details class="xl-faq-item">
+                <summary>Is there an annual discount?</summary>
+                <p>Yes — annual plans are approximately 33% less than monthly. The annual pricing is shown at checkout.</p>
+            </details>
+            <details class="xl-faq-item">
+                <summary>How does the Teams plan work?</summary>
+                <p>Teams includes 5 seats, a shared workspace, and an admin dashboard for usage tracking. Additional seats are $6/month each. Billing is at the account level, not per user.</p>
+            </details>
+            <details class="xl-faq-item">
+                <summary>Is my data safe?</summary>
+                <p>Uploaded files are processed securely and never stored permanently. We don't train AI models on your data and don't share files with third parties.</p>
+            </details>
+        </div>
+    </div>
+</section>
+
+<section class="xl-footer-cta">
+    <div class="xl-container">
+        <h2>Start free — no credit card required.</h2>
+        <p>Core tools work immediately. Upgrade to Pro when you need AI and batch processing.</p>
+        <a href="/tools" class="xl-btn-primary xl-btn-large">Start for free →</a>
+    </div>
+</section>

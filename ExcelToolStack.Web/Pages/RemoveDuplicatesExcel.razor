@@ -1,0 +1,197 @@
+@page "/remove-duplicates-excel"
+@using ExcelToolStack.Web.Configuration
+@using ExcelToolStack.Web.Services
+@inject FormulaApiService ApiService
+@inject IJSRuntime JS
+@inject ProductBranding Branding
+
+<PageTitle>Remove Duplicate Rows from Excel Online Free | ExcelToolStack</PageTitle>
+<HeadContent>
+    <meta name="description" content="Remove duplicate rows from Excel or CSV files online for free. Keep unique records instantly — no formulas needed. Download the cleaned file immediately." />
+    <link rel="canonical" href="https://exceltoolstack.com/remove-duplicates-excel" />
+</HeadContent>
+
+<ExcelUpload Accept=".xlsx,.xls,.csv"
+             ProcessButtonLabel="Remove Duplicates"
+             ProcessingMessage="Finding and removing duplicate rows..."
+             ReadyStateMessage="Drop in an Excel or CSV file to remove duplicate rows."
+             ReadyStateSubMessage="Header row is always preserved. Choose case sensitivity below."
+             Steps="@(new[] { "Upload", "Configure", "Deduplicate", "Download" })"
+             CurrentStep="@_step"
+             IsProcessing="@_isProcessing"
+             Result="@_result"
+             OutputFileName="@_outputFileName"
+             OnFileReady="HandleFileReady"
+             OnProcessClicked="DeduplicateAsync"
+             OnReset="Reset">
+
+    <ConfigContent>
+        <div style="display:grid;gap:10px;">
+            <p style="margin:0;color:var(--text-primary);font-size:0.88rem;font-weight:850;">Options</p>
+            <label style="display:flex;align-items:center;gap:10px;cursor:pointer;color:var(--text-muted);font-size:0.88rem;">
+                <input type="checkbox" @bind="_caseSensitive" style="width:16px;height:16px;accent-color:var(--brand-primary);" />
+                Case-sensitive ("Apple" ≠ "apple")
+            </label>
+            <label style="display:flex;align-items:center;gap:10px;cursor:pointer;color:var(--text-muted);font-size:0.88rem;">
+                <input type="checkbox" @bind="_keepFirst" style="width:16px;height:16px;accent-color:var(--brand-primary);" />
+                Keep first occurrence (uncheck to keep last)
+            </label>
+            @if (_removedCount > 0)
+            {
+                <div style="padding:10px 14px;border:1px solid rgba(0,184,148,0.3);border-radius:8px;background:rgba(0,184,148,0.06);">
+                    <span style="color:var(--brand-primary);font-weight:900;font-size:0.88rem;">@_removedCount duplicate @(_removedCount == 1 ? "row" : "rows") removed</span>
+                </div>
+            }
+        </div>
+    </ConfigContent>
+
+    <SidebarContent>
+        <p class="tool-panel__kicker">HOW IT WORKS</p>
+        <h3 style="margin:0 0 12px;color:var(--text-primary);font-size:1.1rem;font-weight:900;">Smart deduplication</h3>
+        <p style="margin:0 0 20px;color:var(--text-muted);font-size:0.9rem;line-height:1.6;">Finds and removes rows where every column matches another row — whole-row comparison, not single column.</p>
+        <div style="display:grid;gap:12px;">
+            <div style="display:flex;align-items:start;gap:10px;">
+                <span style="display:inline-grid;place-items:center;width:22px;height:22px;border-radius:999px;background:var(--brand-primary-soft);color:var(--brand-primary-strong);font-size:0.7rem;font-weight:900;flex-shrink:0;margin-top:1px;">✓</span>
+                <div>
+                    <p style="margin:0;color:var(--text-primary);font-size:0.88rem;font-weight:850;">Header always kept</p>
+                    <p style="margin:4px 0 0;color:var(--text-muted);font-size:0.82rem;line-height:1.45;">First row treated as header — never removed regardless of duplicates</p>
+                </div>
+            </div>
+            <div style="display:flex;align-items:start;gap:10px;">
+                <span style="display:inline-grid;place-items:center;width:22px;height:22px;border-radius:999px;background:var(--brand-primary-soft);color:var(--brand-primary-strong);font-size:0.7rem;font-weight:900;flex-shrink:0;margin-top:1px;">✓</span>
+                <div>
+                    <p style="margin:0;color:var(--text-primary);font-size:0.88rem;font-weight:850;">Whole-row comparison</p>
+                    <p style="margin:4px 0 0;color:var(--text-muted);font-size:0.82rem;line-height:1.45;">A row is only removed if every cell matches another row exactly</p>
+                </div>
+            </div>
+            <div style="display:flex;align-items:start;gap:10px;">
+                <span style="display:inline-grid;place-items:center;width:22px;height:22px;border-radius:999px;background:var(--brand-primary-soft);color:var(--brand-primary-strong);font-size:0.7rem;font-weight:900;flex-shrink:0;margin-top:1px;">✓</span>
+                <div>
+                    <p style="margin:0;color:var(--text-primary);font-size:0.88rem;font-weight:850;">Removal count shown</p>
+                    <p style="margin:4px 0 0;color:var(--text-muted);font-size:0.82rem;line-height:1.45;">Exact count of removed rows displayed after processing</p>
+                </div>
+            </div>
+            <div style="display:flex;align-items:start;gap:10px;">
+                <span style="display:inline-grid;place-items:center;width:22px;height:22px;border-radius:999px;background:var(--brand-primary-soft);color:var(--brand-primary-strong);font-size:0.7rem;font-weight:900;flex-shrink:0;margin-top:1px;">✓</span>
+                <div>
+                    <p style="margin:0;color:var(--text-primary);font-size:0.88rem;font-weight:850;">Works on CSV too</p>
+                    <p style="margin:4px 0 0;color:var(--text-muted);font-size:0.82rem;line-height:1.45;">Upload .csv and get back a deduplicated .csv file</p>
+                </div>
+            </div>
+        </div>
+    </SidebarContent>
+
+</ExcelUpload>
+
+<section class="section-shell section-shell--accent">
+    <div class="section-heading section-heading--center">
+        <p class="eyebrow">Use Cases</p>
+        <h2>When to remove duplicates</h2>
+    </div>
+    <div class="workflow-steps">
+        <article>
+            <span>📇</span>
+            <h3>Contact lists</h3>
+            <p>Email lists and CRM exports often contain duplicate contacts. Clean them before importing or mailing.</p>
+        </article>
+        <article>
+            <span>🧾</span>
+            <h3>Transaction data</h3>
+            <p>Accounting exports sometimes duplicate rows. Remove them before reconciliation to avoid double-counting.</p>
+        </article>
+        <article>
+            <span>📦</span>
+            <h3>Product catalogs</h3>
+            <p>Inventory and product exports from multiple systems often overlap. Deduplicate before merging.</p>
+        </article>
+    </div>
+</section>
+
+<section class="section-shell">
+    <div class="section-heading section-heading--center">
+        <p class="eyebrow">FAQ</p>
+        <h2>Common questions</h2>
+    </div>
+    <div class="faq-grid">
+        <article>
+            <h3>Is the header row affected?</h3>
+            <p>No. The first row is always treated as a header and kept regardless of duplicates.</p>
+        </article>
+        <article>
+            <h3>What counts as a duplicate?</h3>
+            <p>Two rows are duplicates if every cell in both rows matches. Partial row matches are not removed.</p>
+        </article>
+        <article>
+            <h3>Does case sensitivity matter?</h3>
+            <p>By default, "Apple" and "apple" are treated as the same. Enable case-sensitive mode to treat them as different values.</p>
+        </article>
+        <article>
+            <h3>Are my files stored?</h3>
+            <p>No. Files are processed in memory and never stored. Your data stays private.</p>
+        </article>
+    </div>
+</section>
+
+@code {
+    private byte[]? _fileBytes;
+    private string? _fileName;
+    private byte[]? _result;
+    private string? _outputFileName;
+    private bool _isProcessing;
+    private int _step = 1;
+    private bool _caseSensitive;
+    private bool _keepFirst = true;
+    private int _removedCount;
+
+    private void HandleFileReady((byte[] Bytes, string FileName) args)
+    {
+        _fileBytes = args.Bytes;
+        _fileName = args.FileName;
+        _removedCount = 0;
+        _step = 2;
+    }
+
+    private async Task DeduplicateAsync()
+    {
+        if (_fileBytes is null || _fileName is null) return;
+
+        _isProcessing = true;
+        _step = 3;
+        StateHasChanged();
+
+        try
+        {
+            var content = new MultipartFormDataContent();
+            content.Add(new ByteArrayContent(_fileBytes), "file", _fileName);
+            var url = $"api/excel/remove-duplicates?caseSensitive={_caseSensitive}&keepFirst={_keepFirst}";
+            var response = await ApiService.PostRawAsync(url, content);
+
+            if (response.IsSuccessStatusCode)
+            {
+                _result = await response.Content.ReadAsByteArrayAsync();
+                var ext = _fileName.EndsWith(".csv", StringComparison.OrdinalIgnoreCase) ? ".csv" : ".xlsx";
+                _outputFileName = Path.GetFileNameWithoutExtension(_fileName) + "_deduped" + ext;
+                _step = 4;
+
+                if (response.Headers.TryGetValues("X-Rows-Removed", out var vals) &&
+                    int.TryParse(vals.FirstOrDefault(), out var count))
+                    _removedCount = count;
+            }
+        }
+        catch { }
+        finally { _isProcessing = false; }
+    }
+
+    private void Reset()
+    {
+        _fileBytes = null;
+        _fileName = null;
+        _result = null;
+        _outputFileName = null;
+        _isProcessing = false;
+        _step = 1;
+        _removedCount = 0;
+        _caseSensitive = false;
+        _keepFirst = true;
+    }
+}

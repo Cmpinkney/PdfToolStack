@@ -1,0 +1,417 @@
+@page "/ai-excel-formula-generator"
+@inject ProductBranding Branding
+@inject FormulaApiService FormulaApi
+@inject FormulaUsageService UsageService
+
+<PageTitle>AI Excel Formula Generator and Formula Copilot - @Branding.SiteName</PageTitle>
+<HeadContent>
+    <meta name="description" content="Use ExcelToolStack AI Formula Copilot to turn plain English into Excel and Google Sheets formulas with concise explanations." />
+    <link rel="canonical" href="@($"{Branding.SiteUrl}/ai-excel-formula-generator")" />
+    <meta property="og:title" content="@($"AI Excel Formula Generator and Formula Copilot - {Branding.SiteName}")" />
+    <meta property="og:description" content="Generate Excel and Google Sheets formulas from plain English, then review a concise explanation of the logic." />
+</HeadContent>
+
+<section class="tool-hero formula-hero">
+    <div class="tool-hero-copy">
+        <p class="eyebrow">AI Formula Copilot</p>
+        <h1>Turn plain English into spreadsheet formulas with more confidence.</h1>
+        <p class="lead">
+            Describe the spreadsheet logic you need and @Branding.SiteName will generate a formula for Excel or Google Sheets,
+            with a short explanation you can review before pasting it into your workbook.
+        </p>
+        <div class="hero-actions">
+            <a class="button button--primary" href="/tools">Explore all tools</a>
+            <a class="button button--secondary" href="/blog">Read spreadsheet guides</a>
+        </div>
+        <div class="hero-proof" aria-label="Formula Copilot capabilities">
+            <span>Plain English to formula</span>
+            <span>Formula explanation</span>
+            <span>Formula debugging</span>
+            <span>Excel and Google Sheets</span>
+        </div>
+    </div>
+
+    <div class="copilot-console copilot-console--interactive" aria-label="AI formula copilot frontend preview">
+        <div class="console-header">
+            <span>Formula workspace</span>
+            <strong>Live API</strong>
+        </div>
+
+        <FormulaUsageMeter />
+
+        <div class="platform-selector" aria-label="Spreadsheet platform">
+            <button class="@(SelectedPlatform == ExcelPlatform ? "is-selected" : "")" type="button" @onclick="() => SetPlatform(ExcelPlatform)">
+                Excel
+            </button>
+            <button class="@(SelectedPlatform == GoogleSheetsPlatform ? "is-selected" : "")" type="button" @onclick="() => SetPlatform(GoogleSheetsPlatform)">
+                Google Sheets
+            </button>
+        </div>
+
+        <label for="formulaPrompt">Describe the formula you need</label>
+        <textarea id="formulaPrompt" @bind="Prompt" @bind:event="oninput" disabled="@IsProcessing"></textarea>
+
+        <div class="prompt-actions">
+            @foreach (var example in Examples)
+            {
+                <button class="@(SelectedExample == example.Key ? "is-selected" : "")" type="button" @onclick="@(() => SelectExample(example.Key))">
+                    @example.Label
+                </button>
+            }
+        </div>
+
+        <button class="button button--primary" type="button" disabled="@(IsProcessing || string.IsNullOrWhiteSpace(Prompt))" @onclick="GenerateFormula">
+            @(IsProcessing ? "Generating formula..." : "Generate formula")
+        </button>
+
+        @if (IsProcessing)
+        {
+            <div class="processing-state" role="status" aria-live="polite">
+                <span></span>
+                <span></span>
+                <span></span>
+                <p>Sending your prompt to the formula generator.</p>
+            </div>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(ErrorMessage))
+        {
+            <p class="error-note" role="alert">@ErrorMessage</p>
+        }
+
+        <p class="disabled-note">
+            No workbook upload is needed. Include cell references, ranges, and the expected result for the best formula.
+        </p>
+    </div>
+</section>
+
+<section class="section-shell section-shell--tight">
+    <div class="formula-output-layout">
+        <article class="formula-result-panel">
+            <div class="result-panel-header">
+                <div>
+                    <p class="eyebrow">Generated formula</p>
+                    <h2>@SelectedPlatform formula</h2>
+                </div>
+                <span>@CurrentExample.Category</span>
+            </div>
+            <pre><code>@FormulaPreview</code></pre>
+            <p>@FormulaContext</p>
+        </article>
+
+        <article class="formula-result-panel formula-result-panel--explanation">
+            <p class="eyebrow">Formula explanation</p>
+            <h2>What the formula does</h2>
+            <ol class="explanation-list">
+                @foreach (var step in ExplanationSteps)
+                {
+                    <li>@step</li>
+                }
+            </ol>
+        </article>
+    </div>
+</section>
+
+<section class="section-shell section-shell--accent">
+    <div class="section-heading section-heading--split">
+        <div>
+            <p class="eyebrow">Example prompts</p>
+            <h2>Start from practical spreadsheet work, not a blank chat box.</h2>
+            <p>Choose a prompt, adjust the details, then generate a formula from the live API.</p>
+        </div>
+        <a class="text-link" href="/templates">Pair with templates</a>
+    </div>
+    <div class="prompt-grid prompt-grid--interactive">
+        @foreach (var example in Examples)
+        {
+            <article class="@(SelectedExample == example.Key ? "is-selected" : "")">
+                <span>@example.Category</span>
+                <h3>@example.Label</h3>
+                <p>@example.Prompt</p>
+                <button type="button" @onclick="@(() => SelectExample(example.Key))">Use this prompt</button>
+            </article>
+        }
+    </div>
+</section>
+
+<section class="section-shell">
+    <div class="section-heading">
+        <p class="eyebrow">Formula debugging</p>
+        <h2>Mock debugging examples for formulas that almost work.</h2>
+        <p>
+            Debugging is treated as a first-class workflow: identify the failure mode, explain the likely cause,
+            and show a cleaner replacement pattern.
+        </p>
+    </div>
+    <div class="debug-grid">
+        <article>
+            <span>#N/A lookup</span>
+            <h3>XLOOKUP cannot find a visible value</h3>
+            <p><strong>Likely issue:</strong> hidden spaces, mismatched data types, or lookup range direction.</p>
+            <code>=XLOOKUP(TRIM(A2),TRIM(Customers[Email]),Customers[Status],"Missing")</code>
+        </article>
+        <article>
+            <span>#VALUE!</span>
+            <h3>Date math breaks on text dates</h3>
+            <p><strong>Likely issue:</strong> imported dates are stored as text instead of serial dates.</p>
+            <code>=IFERROR(TODAY()-DATEVALUE(A2),"Check date")</code>
+        </article>
+        <article>
+            <span>Nested IF</span>
+            <h3>Conditions are hard to audit</h3>
+            <p><strong>Likely issue:</strong> too many nested branches for reviewers to trust quickly.</p>
+            <code>=IFS(B2&gt;=90,"A",B2&gt;=80,"B",B2&gt;=70,"C",TRUE,"Review")</code>
+        </article>
+    </div>
+</section>
+
+<section class="section-shell section-shell--accent">
+    <div class="section-heading">
+        <p class="eyebrow">Use cases</p>
+        <h2>Designed for the moments where formulas slow the work down.</h2>
+        <p>
+            The planned copilot is positioned for analysts, operators, founders, students, and teams who need
+            clear spreadsheet logic without turning every task into a formula research session.
+        </p>
+    </div>
+    <div class="workflow-steps">
+        <article>
+            <span>01</span>
+            <h3>Plain English to Excel formula</h3>
+            <p>Describe the goal, columns, conditions, and desired output before converting it into spreadsheet logic.</p>
+        </article>
+        <article>
+            <span>02</span>
+            <h3>Formula explanation</h3>
+            <p>Break down formulas into human-readable steps so workbook owners can review logic before sharing.</p>
+        </article>
+        <article>
+            <span>03</span>
+            <h3>Formula debugging</h3>
+            <p>Plan support for fixing syntax, mismatched ranges, nested conditions, lookup errors, and unclear references.</p>
+        </article>
+    </div>
+</section>
+
+<section class="section-shell">
+    <div class="section-heading">
+        <p class="eyebrow">Excel and Google Sheets</p>
+        <h2>Built for spreadsheet logic, not one app silo.</h2>
+        <p>
+            The future tool is positioned for Excel-first workflows while acknowledging teams often move between
+            Microsoft Excel and Google Sheets. Formula syntax, function availability, and collaboration habits can differ.
+        </p>
+    </div>
+    <div class="category-grid">
+        <article>
+            <span class="category-kicker">Excel</span>
+            <h3>Business-grade workbook formulas</h3>
+            <p>Support planned for common Excel logic patterns including lookups, conditional logic, dates, and summaries.</p>
+            <a href="/tools">See tool categories</a>
+        </article>
+        <article>
+            <span class="category-kicker">Google Sheets</span>
+            <h3>Cloud spreadsheet variations</h3>
+            <p>Positioned to help with Sheets-compatible formulas where functions, separators, or array behavior differ.</p>
+            <a href="/blog">Read workflow guides</a>
+        </article>
+        <article>
+            <span class="category-kicker">Review</span>
+            <h3>Explain before you ship</h3>
+            <p>Formula explanation and debugging are planned as first-class workflows for trust and handoff.</p>
+            <a href="/pricing">View launch preview</a>
+        </article>
+    </div>
+</section>
+
+<section class="section-shell section-shell--accent">
+    <div class="section-heading">
+        <p class="eyebrow">FAQ</p>
+        <h2>AI Formula Copilot questions.</h2>
+    </div>
+    <div class="faq-grid">
+        <article>
+            <h3>Can this page generate formulas today?</h3>
+            <p>Yes. It calls the ExcelToolStack formula API and returns a generated formula with a concise explanation.</p>
+        </article>
+        <article>
+            <h3>Will it work for both Excel and Google Sheets?</h3>
+            <p>The product positioning covers both Excel and Google Sheets, with Excel as the primary spreadsheet workflow surface.</p>
+        </article>
+        <article>
+            <h3>Can it explain an existing formula?</h3>
+            <p>Formula explanation is a planned workflow so users can understand nested logic, lookups, ranges, and conditions.</p>
+        </article>
+        <article>
+            <h3>Can it debug formula errors?</h3>
+            <p>The intended workflow includes identifying common issues such as #N/A lookups, text-formatted dates, mismatched ranges, and nested IF logic.</p>
+        </article>
+        <article>
+            <h3>What kinds of formulas are good candidates?</h3>
+            <p>Conditional logic, lookups, date calculations, cleanup formulas, commission rules, reporting labels, and summary formulas are natural fits.</p>
+        </article>
+        <article>
+            <h3>Will users need an account?</h3>
+            <p>No. This first version does not add authentication, billing, quotas, persistence, chat history, or workbook storage.</p>
+        </article>
+    </div>
+</section>
+
+<section class="cta-section">
+    <p class="eyebrow">Formula copilot</p>
+    <h2>Explore the formula generator inside the broader ExcelToolStack shell.</h2>
+    <p>
+        The tool page now connects to the backend formula endpoint while staying focused on one simple workflow:
+        natural language to spreadsheet formula.
+    </p>
+    <div class="hero-actions">
+        <a class="button button--primary" href="/tools">Back to tools</a>
+        <a class="button button--secondary" href="/">Return home</a>
+    </div>
+</section>
+
+@code {
+    private const string ExcelPlatform = "Excel";
+    private const string GoogleSheetsPlatform = "Google Sheets";
+
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthenticationStateTask { get; set; }
+
+    private string SelectedPlatform { get; set; } = ExcelPlatform;
+    private string SelectedExample { get; set; } = "commission";
+    private string Prompt { get; set; } = "Calculate commission when revenue in B2 is above 50000, using 8%, otherwise 3%.";
+    private bool IsProcessing { get; set; }
+    private string? ErrorMessage { get; set; }
+    private string FormulaPreview { get; set; } = "Your generated formula will appear here.";
+    private string FormulaContext { get; set; } = "Choose a platform, describe the formula you need, and generate a result.";
+    private string[] ExplanationSteps { get; set; } =
+    [
+        "The explanation will appear after formula generation."
+    ];
+
+    private ExamplePrompt CurrentExample => Examples.First(example => example.Key == SelectedExample);
+
+    private IReadOnlyList<ExamplePrompt> Examples { get; } =
+    [
+        new(
+            "commission",
+            "Sales commission",
+            "Sales",
+            "Calculate commission when revenue in B2 is above 50000, using 8%, otherwise 3%.",
+            "=IF(B2>50000,B2*8%,B2*3%)",
+            "=IF(B2>50000,B2*8%,B2*3%)",
+            "Uses a simple threshold rule to calculate a higher commission rate when revenue clears the target.",
+            [
+                "Checks whether the revenue value in B2 is greater than 50000.",
+                "Applies an 8% commission rate when the condition is true.",
+                "Falls back to a 3% commission rate when the condition is false."
+            ]),
+        new(
+            "overdue",
+            "Overdue task flag",
+            "Operations",
+            "Flag tasks as overdue when status in C2 is Open and due date in D2 is before today.",
+            "=IF(AND(C2=\"Open\",D2<TODAY()),\"Overdue\",\"On track\")",
+            "=IF(AND(C2=\"Open\",D2<TODAY()),\"Overdue\",\"On track\")",
+            "Combines status and due date checks so the sheet highlights only open work that has passed its deadline.",
+            [
+                "Confirms the task status is exactly Open.",
+                "Checks whether the due date is earlier than today's date.",
+                "Returns Overdue only when both checks pass; otherwise it returns On track."
+            ]),
+        new(
+            "lookup",
+            "Customer status lookup",
+            "Lookups",
+            "Find the account status for the customer email in A2 from a customer table with Email and Status columns.",
+            "=XLOOKUP(A2,Customers[Email],Customers[Status],\"Missing\")",
+            "=IFNA(VLOOKUP(A2,Customers!A:B,2,FALSE),\"Missing\")",
+            "Looks up a customer by email and returns a readable fallback when the email is not found.",
+            [
+                "Uses the email in A2 as the lookup value.",
+                "Searches the customer email column for an exact match.",
+                "Returns the status column, or Missing if no matching customer exists."
+            ]),
+        new(
+            "cleanup",
+            "Extract email domain",
+            "Cleanup",
+            "Extract the domain from the email address in A2 and return blank when the cell is empty.",
+            "=IF(A2=\"\",\"\",TEXTAFTER(A2,\"@\"))",
+            "=IF(A2=\"\",\"\",REGEXEXTRACT(A2,\"@(.+)$\"))",
+            "Creates a reusable cleanup formula for separating company domains from email addresses.",
+            [
+                "Checks for a blank email cell before doing any text work.",
+                "Finds the text that appears after the @ symbol.",
+                "Returns a blank result when there is no email to process."
+            ])
+    ];
+
+    private void SetPlatform(string platform)
+    {
+        SelectedPlatform = platform;
+        ClearGeneratedResult();
+    }
+
+    private void SelectExample(string key)
+    {
+        SelectedExample = key;
+        Prompt = CurrentExample.Prompt;
+        ClearGeneratedResult();
+    }
+
+    private async Task GenerateFormula()
+    {
+        IsProcessing = true;
+        ErrorMessage = null;
+
+        try
+        {
+            var response = await FormulaApi.GenerateFormulaAsync(
+                new FormulaApiRequest(Prompt, SelectedPlatform),
+                CancellationToken.None);
+
+            FormulaPreview = response.GeneratedFormula;
+            FormulaContext = "Generated for " + SelectedPlatform + ". Review the references and ranges before using it in a live workbook.";
+            ExplanationSteps = [response.Explanation];
+            await UsageService.RecordGenerationAsync(await IsAuthenticatedAsync());
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            IsProcessing = false;
+        }
+    }
+
+    private void ClearGeneratedResult()
+    {
+        ErrorMessage = null;
+        FormulaPreview = "Your generated formula will appear here.";
+        FormulaContext = "Choose a platform, describe the formula you need, and generate a result.";
+        ExplanationSteps = ["The explanation will appear after formula generation."];
+    }
+
+    private async Task<bool> IsAuthenticatedAsync()
+    {
+        if (AuthenticationStateTask is null)
+        {
+            return false;
+        }
+
+        var authState = await AuthenticationStateTask;
+        return authState.User.Identity?.IsAuthenticated == true;
+    }
+
+    private sealed record ExamplePrompt(
+        string Key,
+        string Label,
+        string Category,
+        string Prompt,
+        string ExcelFormula,
+        string GoogleSheetsFormula,
+        string Context,
+        string[] ExplanationSteps);
+}
