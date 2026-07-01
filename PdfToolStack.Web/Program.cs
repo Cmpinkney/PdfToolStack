@@ -1,22 +1,11 @@
 ﻿using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
-using PdfToolStack.Domain.Configuration;
 using PdfToolStack.Web;
 using PdfToolStack.Web.Services;
 using Syncfusion.Blazor;
 using Syncfusion.Licensing;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
-
-builder.Services.Configure<ProductOptions>(
-    builder.Configuration.GetSection(ProductOptions.SectionName));
-
-var productOptions = builder.Configuration
-    .GetSection(ProductOptions.SectionName)
-    .Get<ProductOptions>() ?? new ProductOptions();
-builder.Services.AddSingleton(productOptions);
-builder.Services.AddSingleton<IProductContext>(
-    new ProductContext(productOptions));
 
 var syncfusionKey = builder.Configuration["Syncfusion:LicenseKey"];
 if (!string.IsNullOrWhiteSpace(syncfusionKey))

@@ -3,9 +3,7 @@
 @inject NavigationManager Navigation
 @inject AuthenticationStateProvider Auth
 @using Microsoft.AspNetCore.Components.Authorization
-@using PdfToolStack.Domain.Configuration
 @using PdfToolStack.Web.Services
-@inject IProductContext Product
 
 <div class="upgrade-shell">
     <div class="upgrade-card">
@@ -427,12 +425,12 @@
             }
             else
             {
-                _error = $"Could not start checkout. Please try again or email {Product.SupportEmail}.";
+                _error = "Could not start checkout. Please try again or email support@pdftoolstack.com.";
             }
         }
         catch
         {
-            _error = $"Something went wrong. Please email {Product.SupportEmail}.";
+            _error = "Something went wrong. Please email support@pdftoolstack.com.";
         }
         finally
         {
@@ -474,12 +472,12 @@
             }
             else
             {
-                _error = $"Could not start checkout. Please try again or email {Product.SupportEmail}.";
+                _error = "Could not start checkout. Please try again or email support@pdftoolstack.com.";
             }
         }
         catch
         {
-            _error = $"Something went wrong. Please email {Product.SupportEmail}.";
+            _error = "Something went wrong. Please email support@pdftoolstack.com.";
         }
         finally
         {

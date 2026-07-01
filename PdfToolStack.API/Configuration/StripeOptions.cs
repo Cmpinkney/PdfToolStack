@@ -18,7 +18,6 @@
 
         // Teams plan
         public string TeamsMonthlyPriceId { get; set; } = string.Empty;
-        public string BundleMonthlyPriceId { get; set; } = string.Empty;
         public string TeamsYearlyPriceId { get; set; } = string.Empty;
 
         // AI Credit Top-Up — one-time purchases

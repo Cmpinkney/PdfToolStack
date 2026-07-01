@@ -1,5 +1,7 @@
 <section class="ai-workflow-hero" aria-label="AI document intelligence workflow visualization">
     <div class="ai-workflow-shell">
+        <div class="ai-workflow-ambient" aria-hidden="true"></div>
+
         <nav class="ai-workflow-steps" aria-label="Workflow steps">
             <span>Upload PDF</span>
             <span class="is-active">AI Analyze</span>
@@ -207,6 +209,23 @@
         background-image: radial-gradient(circle, rgba(99, 102, 241, 0.18) 1px, transparent 1.2px);
         background-size: 18px 18px;
         mask-image: linear-gradient(180deg, transparent, #000 18%, #000 88%, transparent);
+        pointer-events: none;
+        z-index: -1;
+    }
+
+    .ai-workflow-ambient {
+        position: absolute;
+        width: 390px;
+        height: 390px;
+        left: 130px;
+        top: 92px;
+        border-radius: 999px;
+        background:
+            radial-gradient(circle at 44% 42%, rgba(139, 92, 246, 0.16), transparent 38%),
+            radial-gradient(circle at 65% 62%, rgba(37, 99, 235, 0.1), transparent 44%);
+        filter: blur(8px);
+        opacity: 0.8;
+        animation: workflowAmbient 12s ease-in-out infinite alternate;
         pointer-events: none;
         z-index: -1;
     }
@@ -754,6 +773,11 @@
         animation: workflowMeterPulse 2.6s ease-in-out infinite;
     }
 
+    @@keyframes workflowAmbient {
+        0% { opacity: 0.62; transform: translate3d(-1%, -1%, 0) scale(0.98); }
+        100% { opacity: 0.88; transform: translate3d(1%, 1%, 0) scale(1.02); }
+    }
+
     @@keyframes workflowStepPulse {
         0%, 100% { box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.08), 0 10px 24px rgba(139, 92, 246, 0.12); }
         50% { box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.14), 0 12px 32px rgba(139, 92, 246, 0.2); }
@@ -835,6 +859,14 @@
         background-image: radial-gradient(circle, rgba(191, 219, 254, 0.16) 1px, transparent 1.2px);
         opacity: 0.72;
         mask-image: linear-gradient(180deg, transparent, #000 16%, #000 90%, transparent);
+    }
+
+    [data-theme="dark"] .ai-workflow-ambient {
+        background:
+            radial-gradient(circle at 42% 40%, rgba(167, 139, 250, 0.2), transparent 38%),
+            radial-gradient(circle at 67% 62%, rgba(45, 212, 191, 0.13), transparent 45%);
+        filter: blur(10px);
+        opacity: 0.72;
     }
 
     [data-theme="dark"] .ai-workflow-steps {
@@ -1038,6 +1070,7 @@
     }
 
     @@media (prefers-reduced-motion: reduce) {
+        .ai-workflow-ambient,
         .ai-workflow-steps .is-active,
         .workflow-line,
         .workflow-document-card,

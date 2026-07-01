@@ -1,8 +1,6 @@
 ﻿@inject ApiService ApiService
 @inject IJSRuntime JS
 @inject ILogger<SupportChat> Logger
-@using PdfToolStack.Domain.Configuration
-@inject IProductContext Product
 
 
 <div class="support-chat-wrap">
@@ -61,7 +59,7 @@
 
             <div class="support-chat-footer">
                 Can't find your answer?
-                <a href="@SupportMailTo">Email support</a>
+                <a href="mailto:support@pdftoolstack.com">Email support</a>
             </div>
 
             <form class="support-chat-input-row" @onsubmit="Send" @onsubmit:preventDefault="true">
@@ -170,7 +168,7 @@
         {
             Logger.LogError(ex, "Support chat request failed");
             _messages.Add(new(
-                $"Something went wrong. Please email {Product.SupportEmail} for help.",
+                "Something went wrong. Please email support@pdftoolstack.com for help.",
                 false));
         }
         finally
@@ -184,7 +182,6 @@
     private record ChatMsg(string Text, bool IsUser);
     private record HistoryMsg(string Role, string Content);
     private class SupportResponse { public string Answer { get; set; } = string.Empty; }
-    private string SupportMailTo => $"mailto:{Product.SupportEmail}";
 
     // Concrete types so System.Text.Json can serialize without reflection/trimming issues
     private record SupportChatRequest(string Message, List<SupportHistoryEntry> History);

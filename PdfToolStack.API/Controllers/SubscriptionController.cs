@@ -5,7 +5,6 @@ using Microsoft.Extensions.Options;
 using PdfToolStack.API.Configuration;
 using System.Security.Claims;
 using PdfToolStack.Application.DTOs;
-using PdfToolStack.Domain.Configuration;
 using PdfToolStack.Infrastructure.Services;
 
 namespace PdfToolStack.API.Controllers
@@ -16,23 +15,17 @@ namespace PdfToolStack.API.Controllers
     {
         private readonly SubscriptionService? _service;
         private readonly StripeOptions _stripeOptions;
-        private readonly BillingCatalogOptions _billingCatalogOptions;
-        private readonly IProductContext _productContext;
         private readonly IConfiguration _config;
         private readonly ILogger<SubscriptionController> _logger;
 
         public SubscriptionController(
             IOptions<StripeOptions> stripeOptions,
-            IOptions<BillingCatalogOptions> billingCatalogOptions,
-            IProductContext productContext,
             IConfiguration config,
             ILogger<SubscriptionController> logger,
             SubscriptionService? service = null)
         {
             _service = service;
             _stripeOptions = stripeOptions.Value;
-            _billingCatalogOptions = billingCatalogOptions.Value;
-            _productContext = productContext;
             _config = config;
             _logger = logger;
         }
@@ -272,21 +265,47 @@ namespace PdfToolStack.API.Controllers
         [HttpGet("plans")]
         public IActionResult GetPlans()
         {
-            var plans = _billingCatalogOptions.GetSubscriptionPlans()
-                .ToDictionary(plan => plan.Id, StringComparer.OrdinalIgnoreCase);
-
-            var monthly = GetPlanResponse(plans, "monthly");
-            var yearly = GetPlanResponse(plans, "yearly");
-            var teamsMonthly = GetPlanResponse(plans, "teamsMonthly");
-            var teamsYearly = GetPlanResponse(plans, "teamsYearly");
+            if (string.IsNullOrEmpty(_stripeOptions.ProMonthlyPriceIdV2))
+                _logger.LogWarning("Stripe__ProMonthlyPriceIdV2 is not configured.");
+            if (string.IsNullOrEmpty(_stripeOptions.ProYearlyPriceIdV2))
+                _logger.LogWarning("Stripe__ProYearlyPriceIdV2 is not configured.");
+            if (string.IsNullOrEmpty(_stripeOptions.TeamsMonthlyPriceId))
+                _logger.LogWarning("Stripe__TeamsMonthlyPriceId is not configured.");
+            if (string.IsNullOrEmpty(_stripeOptions.TeamsYearlyPriceId))
+                _logger.LogWarning("Stripe__TeamsYearlyPriceId is not configured.");
 
             return Ok(new
             {
-                monthly,
-                yearly,
-                teams = teamsMonthly,
-                teamsMonthly,
-                teamsYearly
+                monthly = new
+                {
+                    priceId = _stripeOptions.ProMonthlyPriceIdV2,
+                    amount = 1900,
+                    label = "$19 / month"
+                },
+                yearly = new
+                {
+                    priceId = _stripeOptions.ProYearlyPriceIdV2,
+                    amount = 15200,
+                    label = "$152 / year"
+                },
+                teams = new
+                {
+                    priceId = _stripeOptions.TeamsMonthlyPriceId,
+                    amount = 2900,
+                    label = "$29 / month"
+                },
+                teamsMonthly = new
+                {
+                    priceId = _stripeOptions.TeamsMonthlyPriceId,
+                    amount = 2900,
+                    label = "$29 / month"
+                },
+                teamsYearly = new
+                {
+                    priceId = _stripeOptions.TeamsYearlyPriceId,
+                    amount = 23200,
+                    label = "$232 / year"
+                }
             });
         }
 
@@ -295,15 +314,32 @@ namespace PdfToolStack.API.Controllers
         [HttpGet("addons")]
         public IActionResult GetAddons()
         {
-            var addOns = _billingCatalogOptions.GetAddOns()
-                .ToDictionary(addOn => addOn.Id, StringComparer.OrdinalIgnoreCase);
-
             return Ok(new
             {
-                largeFile = GetAddOnResponse(addOns, "largeFile"),
-                aiDayPass = GetAddOnResponse(addOns, "aiDayPass"),
-                aiCredits50 = GetAddOnResponse(addOns, "aiCredits50"),
-                batchUnlock = GetAddOnResponse(addOns, "batchUnlock")
+                largeFile = new
+                {
+                    priceId = _stripeOptions.LargeFilePriceId,
+                    amount = 199,
+                    label = "$1.99"
+                },
+                aiDayPass = new
+                {
+                    priceId = _stripeOptions.AiDayPassPriceId,
+                    amount = 499,
+                    label = "$4.99"
+                },
+                aiCredits50 = new
+                {
+                    priceId = _stripeOptions.AiCredits50PriceId,
+                    amount = 999,
+                    label = "$9.99"
+                },
+                batchUnlock = new
+                {
+                    priceId = _stripeOptions.BatchUnlockPriceId,
+                    amount = 499,
+                    label = "$4.99"
+                }
             });
         }
 
@@ -323,72 +359,14 @@ namespace PdfToolStack.API.Controllers
             return adminIds.Contains(callerId);
         }
 
-        private bool IsSafeUrl(string url) =>
-            _productContext.IsAllowedReturnUrl(url);
-
-        private object GetPlanResponse(
-            IReadOnlyDictionary<string, BillingCatalogPlanOptions> plans,
-            string id)
+        private static bool IsSafeUrl(string url)
         {
-            var plan = plans.TryGetValue(id, out var configuredPlan)
-                ? configuredPlan
-                : BillingCatalogOptions.DefaultSubscriptionPlans()
-                    .First(defaultPlan => defaultPlan.Id.Equals(id, StringComparison.OrdinalIgnoreCase));
+            if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
+                return false;
 
-            var priceId = ResolveStripePriceId(plan.StripePriceKey);
-            LogMissingStripePrice(plan.StripePriceKey, priceId);
-
-            return new
-            {
-                priceId,
-                amount = plan.Amount,
-                label = plan.Label
-            };
+            var allowedHosts = new[] { "localhost", "pdftoolstack.com", "www.pdftoolstack.com" };
+            return allowedHosts.Any(h => uri.Host.Equals(h, StringComparison.OrdinalIgnoreCase));
         }
-
-        private object? GetAddOnResponse(
-            IReadOnlyDictionary<string, BillingCatalogAddonOptions> addOns,
-            string id)
-        {
-            var addOn = addOns.TryGetValue(id, out var configuredAddOn)
-                ? configuredAddOn
-                : BillingCatalogOptions.DefaultAddOns()
-                    .First(defaultAddOn => defaultAddOn.Id.Equals(id, StringComparison.OrdinalIgnoreCase));
-
-            if (!addOn.IsPublic)
-                return null;
-
-            return new
-            {
-                priceId = ResolveStripePriceId(addOn.StripePriceKey),
-                amount = addOn.Amount,
-                label = addOn.Label
-            };
-        }
-
-        private void LogMissingStripePrice(string stripePriceKey, string priceId)
-        {
-            if (string.IsNullOrWhiteSpace(priceId))
-                _logger.LogWarning("Stripe__{StripePriceKey} is not configured.", stripePriceKey);
-        }
-
-        private string ResolveStripePriceId(string stripePriceKey) =>
-            stripePriceKey switch
-            {
-                nameof(StripeOptions.ProMonthlyPriceId) => _stripeOptions.ProMonthlyPriceId,
-                nameof(StripeOptions.ProYearlyPriceId) => _stripeOptions.ProYearlyPriceId,
-                nameof(StripeOptions.ProMonthlyPriceIdV2) => _stripeOptions.ProMonthlyPriceIdV2,
-                nameof(StripeOptions.ProYearlyPriceIdV2) => _stripeOptions.ProYearlyPriceIdV2,
-                nameof(StripeOptions.TeamsMonthlyPriceId) => _stripeOptions.TeamsMonthlyPriceId,
-                nameof(StripeOptions.TeamsYearlyPriceId) => _stripeOptions.TeamsYearlyPriceId,
-                nameof(StripeOptions.BundleMonthlyPriceId) => _stripeOptions.BundleMonthlyPriceId,
-                nameof(StripeOptions.AiCredits50PriceId) => _stripeOptions.AiCredits50PriceId,
-                nameof(StripeOptions.AiCredits200PriceId) => _stripeOptions.AiCredits200PriceId,
-                nameof(StripeOptions.AiDayPassPriceId) => _stripeOptions.AiDayPassPriceId,
-                nameof(StripeOptions.BatchUnlockPriceId) => _stripeOptions.BatchUnlockPriceId,
-                nameof(StripeOptions.LargeFilePriceId) => _stripeOptions.LargeFilePriceId,
-                _ => string.Empty
-            };
 
         private bool IsValidSubscriptionPriceId(string priceId)
         {
@@ -399,7 +377,6 @@ namespace PdfToolStack.API.Controllers
             AddIfSet(allowed, _stripeOptions.ProYearlyPriceIdV2);
             AddIfSet(allowed, _stripeOptions.TeamsMonthlyPriceId);
             AddIfSet(allowed, _stripeOptions.TeamsYearlyPriceId);
-            AddIfSet(allowed, _stripeOptions.BundleMonthlyPriceId);
             // Legacy price IDs kept for existing subscriber flows
             AddIfSet(allowed, _stripeOptions.ProMonthlyPriceId);
             AddIfSet(allowed, _stripeOptions.ProYearlyPriceId);
@@ -423,17 +400,11 @@ namespace PdfToolStack.API.Controllers
             if (string.Equals(priceId, _stripeOptions.TeamsYearlyPriceId, StringComparison.Ordinal))
                 return "teams_annual";
 
-            if (string.Equals(priceId, _stripeOptions.BundleMonthlyPriceId, StringComparison.Ordinal))
-                return "bundle_monthly";
-
             return "subscription";
         }
 
         private string GetSubscriptionPlanType(string priceId)
         {
-            if (string.Equals(priceId, _stripeOptions.BundleMonthlyPriceId, StringComparison.Ordinal))
-                return "bundle";
-
             if (string.Equals(priceId, _stripeOptions.TeamsMonthlyPriceId, StringComparison.Ordinal) ||
                 string.Equals(priceId, _stripeOptions.TeamsYearlyPriceId, StringComparison.Ordinal))
                 return "teams";
