@@ -4,14 +4,6 @@
   },
   "routes": [
     {
-      "route": "/*",
-      "redirect": "https://pdftoolstack.com{request.path}",
-      "statusCode": 301,
-      "conditions": {
-        "isClientSecure": false
-      }
-    },
-    {
       "route": "/robots.txt",
       "rewrite": "/robots.txt",
       "headers": {
@@ -54,7 +46,15 @@
     { "route": "/pdf-to-excel-extractor",        "redirect": "/extract-invoice-data", "statusCode": 301 },
     { "route": "/extract-data-from-pdf",         "redirect": "/extract-invoice-data", "statusCode": 301 },
     { "route": "/combine-pdf-files",             "redirect": "/merge-pdf",            "statusCode": 301 },
-    { "route": "/merge-pdfs-for-submission",     "redirect": "/merge-pdf",            "statusCode": 301 }
+    { "route": "/merge-pdfs-for-submission",     "redirect": "/merge-pdf",            "statusCode": 301 },
+    {
+      "route": "/*",
+      "redirect": "https://pdftoolstack.com{request.path}",
+      "statusCode": 301,
+      "conditions": {
+        "isClientSecure": false
+      }
+    }
   ],
   "navigationFallback": {
     "rewrite": "/index.html",
