@@ -28949,3 +28949,131 @@ body {
 :is([data-theme="dark"], body.dark-theme, .dark) .tool-input::placeholder {
     color: var(--input-placeholder, #94a3b8);
 }
+
+/* ── PdfToolStack dedicated hero namespace ───────────────────────────────── */
+.pdf-hero-full {
+    background: linear-gradient(160deg, #0f172a 0%, #1e1b4b 60%, #312e81 100%);
+    padding: 4rem 2rem;
+    position: relative;
+    overflow: visible;
+}
+
+.pdf-hero-full-inner {
+    max-width: 1280px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 5fr 6fr;
+    gap: 3rem;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+}
+
+.pdf-hero-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.pdf-hero-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: fit-content;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.16);
+    color: rgba(255,255,255,0.9);
+    padding: 0.5rem 1rem;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+}
+
+.pdf-hero-display {
+    font-family: 'Plus Jakarta Sans', Inter, sans-serif;
+    font-size: clamp(2.5rem, 4.5vw, 4.25rem);
+    font-weight: 800;
+    color: #ffffff;
+    letter-spacing: -0.04em;
+    line-height: 1.08;
+    margin: 0 0 1.5rem;
+}
+
+.pdf-hero-display-accent {
+    background: linear-gradient(90deg, #60a5fa 0%, #38bdf8 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.pdf-hero-body {
+    color: rgba(255,255,255,0.75);
+    font-size: 1.1rem;
+    line-height: 1.6;
+    max-width: 480px;
+    margin: 0 0 2rem;
+}
+
+.pdf-hero-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+}
+
+.pdf-hero-stats {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    width: fit-content;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 16px;
+    padding: 1rem 1.5rem;
+}
+
+.pdf-hero-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.pdf-stat-value {
+    color: #ffffff;
+    font-size: 1.5rem;
+    font-weight: 800;
+}
+
+.pdf-stat-label {
+    color: rgba(255,255,255,0.65);
+    font-size: 0.75rem;
+}
+
+.pdf-hero-stat-divider {
+    width: 1px;
+    height: 36px;
+    background: rgba(255,255,255,0.2);
+}
+
+.pdf-hero-visual {
+    width: 100%;
+    max-width: none;
+    overflow: visible;
+}
+
+@media (max-width: 1100px) {
+    .pdf-hero-full-inner {
+        grid-template-columns: 1fr;
+        text-align: center;
+    }
+
+    .pdf-hero-content {
+        align-items: center;
+    }
+
+    .pdf-hero-actions {
+        justify-content: center;
+    }
+}
